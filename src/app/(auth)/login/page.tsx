@@ -23,9 +23,20 @@ function LoginForm() {
   const [error, setError] = React.useState("")
   const { setToken, setUser } = useAuth()
 
+  const ADMIN_DOMAIN = "@bentahub.com"
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+
+    // Block admin accounts from customer sign-in
+    if (!isAdminRedirect && email.toLowerCase().endsWith(ADMIN_DOMAIN)) {
+      setError(
+        "Admin accounts cannot sign in here. Please use the Admin Sign In below."
+      )
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -176,6 +187,15 @@ function LoginForm() {
                 <LogIn className="size-4" />
               </Button>
             </div>
+
+            {!isAdminRedirect && (
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                Are you an admin?{" "}
+                <Link href="/login?redirect=/admin" className="text-primary hover:underline font-medium">
+                  Sign in here
+                </Link>
+              </p>
+            )}
           </form>
 
           {!isAdminRedirect && (

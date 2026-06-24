@@ -1,6 +1,7 @@
 "use client"
 
-import { usePathname } from "next/navigation"
+import { useEffect } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { 
   DashboardSidebar, 
@@ -14,7 +15,18 @@ export default function CustomerLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const { isLoading, isAuthenticated } = useAuth()
+  const router = useRouter()
+  const { user, isLoading, isAuthenticated } = useAuth()
+
+  // Protect customer routes — block admin users
+  useEffect(() => {
+    if (isLoading) return
+    if (!isAuthenticated) {
+      router.push("/login")
+    } else if (user?.role === "admin") {
+      router.push("/admin")
+    }
+  }, [isLoading, isAuthenticated, user, router])
 
   // Show loading state while verifying authentication
   if (isLoading) {
@@ -28,10 +40,7 @@ export default function CustomerLayout({
     )
   }
 
-  // This component will not render if not authenticated (useAuth redirects)
-  if (!isAuthenticated) {
-    return null
-  }
+  if (!isAuthenticated || user?.role === "admin") return null
 
   return (
     <div className="min-h-screen bg-background">

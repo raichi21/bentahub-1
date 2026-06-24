@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-provider"
 import { AdminSidebar, AdminTopbar } from "@/features/admin-dashboard"
 
 export default function AdminLayout({
@@ -10,7 +11,27 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { user, isLoading, isAuthenticated } = useAuth()
+
+  // Protect admin routes — only users with role "admin"
+  useEffect(() => {
+    if (isLoading) return
+    if (!isAuthenticated || user?.role !== "admin") {
+      router.push("/login?redirect=/admin")
+    }
+  }, [isLoading, isAuthenticated, user, router])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated || user?.role !== "admin") return null
 
   return (
     <div className="min-h-screen bg-background">
