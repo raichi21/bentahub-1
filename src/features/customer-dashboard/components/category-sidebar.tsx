@@ -1,21 +1,23 @@
 "use client"
 
-import { useState } from "react"
 import { cn } from "@/lib/utils"
 
-export function CategorySidebar() {
-  const [activeCategory, setActiveCategory] = useState("All Products")
+const categories = [
+  { name: "All Products", count: 248 },
+  { name: "Coffee", count: 12 },
+  { name: "Condiments", count: 45 },
+  { name: "Baking Ingredients", count: 28 },
+  { name: "Canned Goods", count: 89 },
+  { name: "Sauces", count: 35 },
+  { name: "Household Supplies", count: 22 },
+]
 
-  const categories = [
-    { name: "All Products", count: 248 },
-    { name: "Coffee", count: 12 },
-    { name: "Condiments", count: 45 },
-    { name: "Baking Ingredients", count: 28 },
-    { name: "Canned Goods", count: 89 },
-    { name: "Sauces", count: 35 },
-    { name: "Household Supplies", count: 22 },
-  ]
+interface CategorySidebarProps {
+  activeCategory: string
+  onSelectCategory: (category: string) => void
+}
 
+export function CategorySidebar({ activeCategory, onSelectCategory }: CategorySidebarProps) {
   return (
     <div className="w-56 shrink-0 hidden md:flex flex-col gap-6 p-4 border-r border-border min-h-[calc(100vh-8rem)]">
       {/* Categories */}
@@ -27,7 +29,7 @@ export function CategorySidebar() {
           {categories.map((category) => (
             <button
               key={category.name}
-              onClick={() => setActiveCategory(category.name)}
+              onClick={() => onSelectCategory(category.name)}
               className={cn(
                 "flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors",
                 activeCategory === category.name

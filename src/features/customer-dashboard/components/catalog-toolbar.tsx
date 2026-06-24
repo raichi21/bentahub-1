@@ -3,7 +3,13 @@
 import { useState } from "react"
 import { MapPin, ChevronDown, Grid3X3, List } from "lucide-react"
 
-export function CatalogToolbar() {
+interface CatalogToolbarProps {
+  showingFrom: number
+  showingTo: number
+  totalProducts: number
+}
+
+export function CatalogToolbar({ showingFrom, showingTo, totalProducts }: CatalogToolbarProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
   return (
@@ -21,7 +27,8 @@ export function CatalogToolbar() {
       {/* Right side: Count & View Toggle */}
       <div className="flex items-center justify-between sm:justify-end gap-4">
         <span className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">1-12</span> of <span className="font-medium text-foreground">248</span> products
+          Showing <span className="font-medium text-foreground">{showingFrom}</span>-
+          <span className="font-medium text-foreground">{showingTo}</span> of <span className="font-medium text-foreground">{totalProducts}</span> products
         </span>
 
         <div className="flex items-center border border-border rounded-lg overflow-hidden bg-background">
