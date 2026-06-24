@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import {
   LayoutDashboard,
   Activity,
@@ -15,9 +14,10 @@ import {
   Settings,
   LogOut,
   Store,
-  X
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/components/auth-provider"
 
 interface AdminSidebarProps {
   activePath: string
@@ -26,16 +26,14 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps) {
-  const router = useRouter()
+  const { logout } = useAuth()
 
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" })
-    } catch {
-      // Proceed even if API call fails
-    }
-    router.push("/login")
+    await logout()
+    // Redirect to admin sign-in (with ?redirect=/admin)
+    window.location.href = "/login?redirect=/admin"
   }
+
 
   const sections = [
     {

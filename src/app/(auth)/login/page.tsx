@@ -152,21 +152,23 @@ function LoginForm() {
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <label htmlFor="remember" className="text-sm text-muted-foreground">
-                  Remember me
-                </label>
+            {!isAdminRedirect && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="remember" className="text-sm text-muted-foreground">
+                    Remember me
+                  </label>
+                </div>
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                  Forgot Password?
+                </Link>
               </div>
-              <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot Password?
-              </Link>
-            </div>
+            )}
 
             <div className="pt-2">
               <Button type="submit" className="w-full flex items-center justify-center gap-2 p-5" disabled={isLoading}>
@@ -176,12 +178,14 @@ function LoginForm() {
             </div>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary font-bold hover:underline">
-              Create an account
-            </Link>
-          </p>
+          {!isAdminRedirect && (
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="text-primary font-bold hover:underline">
+                Create an account
+              </Link>
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
