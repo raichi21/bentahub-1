@@ -6,7 +6,9 @@ import {
   products,
   branchInventory,
   transactions,
+  users,
 } from "../src/servers/schemas"
+import { hashPassword } from "../src/lib/auth-utils"
 import { sql } from "drizzle-orm"
 
 const envPath = path.resolve(process.cwd(), ".env.local")
@@ -80,9 +82,25 @@ async function seedData(): Promise<void> {
   await db.delete(branchInventory)
   await db.delete(products)
   await db.delete(branches)
+  await db.delete(users)
 
   const now = new Date()
   const branchIds: string[] = []
+
+  console.log("Seeding admin user...")
+  const adminPassword = await hashPassword("admin123")
+  await db.insert(users).values({
+    id: generateId(),
+    email: "admin@bentahub.com",
+    password: adminPassword,
+    fullName: "Admin User",
+    role: "admin",
+    isEmailVerified: true,
+    isActive: true,
+    createdAt: new Date(now.getFullYear() - 1, 0, 1),
+    updatedAt: now,
+  })
+  console.log("   - ✅ Admin account: admin@bentahub.com / admin123")
 
   console.log("Seeding branches...")
   for (const b of BRANCHES) {
@@ -191,6 +209,7 @@ async function seedData(): Promise<void> {
   }
 
   console.log(`✅ Seeded admin data:`)
+  console.log(`   - 1 admin user (admin@bentahub.com / admin123)`)
   console.log(`   - ${BRANCHES.length} branches`)
   console.log(`   - ${PRODUCTS.length} products`)
   console.log(`   - ${inventoryCount} inventory records`)

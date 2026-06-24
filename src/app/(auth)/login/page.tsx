@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { LogIn, Mail } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { LogIn, Mail, Shield } from "lucide-react"
 import { AuthHeader, PasswordInput } from "@/features/user-mgmt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,8 +11,12 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirect") || ""
+  const isAdminRedirect = redirectTo.startsWith("/admin")
+
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
@@ -76,9 +80,13 @@ export default function LoginPage() {
         setUser(user)
       }
 
-      // Success - client-side navigation to dashboard
-      console.log("Login successful, redirecting to /customer")
-      router.push("/customer")
+      // Success - redirect based on role or redirect param
+      const userRole = user?.role
+      if (userRole === "admin") {
+        router.push(redirectTo || "/admin")
+      } else {
+        router.push(redirectTo || "/customer")
+      }
     } catch (err) {
       console.error("Login error:", err)
       setError("An unexpected error occurred. Please try again.")
@@ -88,7 +96,17 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <AuthHeader subtitle="Lourdes Sari-Sari Store" />
+      {isAdminRedirect ? (
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
+            <Shield className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sign in to manage BentaHub</p>
+        </div>
+      ) : (
+        <AuthHeader subtitle="Lourdes Sari-Sari Store" />
+      )}
 
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
@@ -170,3 +188,14 @@ export default function LoginPage() {
   )
 }
 
+export default function LoginPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    }>
+      <LoginForm />
+    </React.Suspense>
+  )
+}

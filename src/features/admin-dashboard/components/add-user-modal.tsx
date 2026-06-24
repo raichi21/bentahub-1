@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState } from "react"
-import { UserPlus, X, Eye, EyeOff } from "lucide-react"
+import { UserPlus, X, Eye, EyeOff, Loader2 } from "lucide-react"
+import { useAuth } from "@/components/auth-provider"
 
 interface AddUserModalProps {
   isOpen: boolean
@@ -15,26 +16,64 @@ interface AddUserModalProps {
 }
 
 export function AddUserModal({ isOpen, onClose, onAdd }: AddUserModalProps) {
+  const { token } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [emailUsername, setEmailUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState<"Admin" | "Cashier" | "Staff">("Admin")
+  const [role, setRole] = useState<"Admin" | "Cashier" | "Staff">("Cashier")
   const [branch, setBranch] = useState("All Branches")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
 
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !password) return
-    onAdd?.({ name, email, role, branch })
-    // Reset state & close
-    setName("")
-    setEmail("")
-    setPassword("")
-    setRole("Admin")
-    setBranch("All Branches")
-    onClose()
+    const finalEmail = email || `${emailUsername}@bentahub.com`
+    if (!name || !finalEmail || !password) return
+
+    setSaving(true)
+    setError("")
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          fullName: name,
+          email: finalEmail,
+          password,
+          role: role.toLowerCase(),
+          branch: branch === "All Branches" ? undefined : branch,
+        }),
+      })
+
+      const json = await res.json()
+
+      if (!json.success) {
+        setError(json.message || "Failed to create user")
+        setSaving(false)
+        return
+      }
+
+      onAdd?.({ name, email: finalEmail, role, branch })
+      setName("")
+      setEmail("")
+      setEmailUsername("")
+      setPassword("")
+      setRole("Cashier")
+      setBranch("All Branches")
+      setError("")
+      onClose()
+    } catch {
+      setError("An unexpected error occurred")
+      setSaving(false)
+    }
   }
 
   return (
@@ -51,6 +90,7 @@ export function AddUserModal({ isOpen, onClose, onAdd }: AddUserModalProps) {
           <button
             className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             onClick={onClose}
+            disabled={saving}
           >
             <X className="h-5 w-5" />
           </button>
@@ -59,31 +99,71 @@ export function AddUserModal({ isOpen, onClose, onAdd }: AddUserModalProps) {
         {/* Modal Body / Form */}
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-6">
+            {error && (
+              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
             <div className="space-y-4">
               {/* Full Name */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Full Name</label>
                 <input
                   className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
-                  placeholder="e.g. Robert Fox"
+                  placeholder="e.g. Juana Cruz"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  disabled={saving}
                 />
               </div>
 
               {/* Email Address */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</label>
-                <input
-                  className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
-                  placeholder="robert.fox@example.com"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                {!email ? (
+                  <div className="flex items-center gap-0">
+                    <input
+                      className="w-full h-11 px-4 rounded-l-lg border border-r-0 border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
+                      placeholder="username"
+                      type="text"
+                      value={emailUsername}
+                      onChange={(e) => setEmailUsername(e.target.value)}
+                      disabled={saving}
+                    />
+                    <span className="inline-flex items-center h-11 px-3 rounded-r-lg border border-border bg-muted text-sm text-muted-foreground font-medium whitespace-nowrap">
+                      @bentahub.com
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={saving}
+                  />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {email ? (
+                    <button
+                      type="button"
+                      className="text-primary underline underline-offset-2 hover:no-underline"
+                      onClick={() => setEmail("")}
+                    >
+                      Use @bentahub.com instead
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-primary underline underline-offset-2 hover:no-underline"
+                      onClick={() => { setEmail("custom"); setTimeout(() => setEmail(""), 0) }}
+                    >
+                      Use a custom email instead
+                    </button>
+                  )}
+                </p>
               </div>
 
               {/* Password */}
@@ -97,6 +177,7 @@ export function AddUserModal({ isOpen, onClose, onAdd }: AddUserModalProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={saving}
                   />
                   <button
                     type="button"
@@ -116,18 +197,20 @@ export function AddUserModal({ isOpen, onClose, onAdd }: AddUserModalProps) {
                     className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
                     value={role}
                     onChange={(e) => setRole(e.target.value as "Admin" | "Cashier" | "Staff")}
+                    disabled={saving}
                   >
-                    <option value="Admin">Admin</option>
                     <option value="Cashier">Cashier</option>
                     <option value="Staff">Staff</option>
+                    <option value="Admin">Admin</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch Assignment</label>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch</label>
                   <select
                     className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
+                    disabled={saving}
                   >
                     <option value="All Branches">All Branches</option>
                     <option value="Lourdes Main Branch">Lourdes Main Branch</option>
@@ -145,14 +228,17 @@ export function AddUserModal({ isOpen, onClose, onAdd }: AddUserModalProps) {
               type="button"
               className="h-11 px-6 rounded-lg text-sm font-bold text-muted-foreground hover:bg-muted transition-all"
               onClick={onClose}
+              disabled={saving}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="h-11 px-8 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all"
+              className="h-11 px-8 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all inline-flex items-center gap-2"
+              disabled={saving}
             >
-              Add User
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {saving ? "Creating..." : "Add User"}
             </button>
           </div>
         </form>
