@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import { StaffKpiCards } from "@/features/staff-dashboard/components/staff-kpi-cards"
 import { staffProducts, getStockStatus } from "@/features/staff-dashboard/data/products"
@@ -10,18 +10,21 @@ import type { Product } from "@/types/cashier"
 
 const STORAGE_KEY = "bentahub-staff-products"
 
-function loadProducts() {
-  if (typeof window === "undefined") return staffProducts
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try { return JSON.parse(stored) }
-    catch { return staffProducts }
-  }
-  return staffProducts
-}
-
 export default function StaffPage() {
-  const [products] = useState<Product[]>(loadProducts)
+  const [products, setProducts] = useState<Product[]>(staffProducts)
+
+  // Load from localStorage only after hydration to avoid mismatches
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setProducts(JSON.parse(stored))
+      } catch {
+        // fall back to default
+      }
+    }
+  }, [])
 
   const lowStockCount = useMemo(() => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").length, [products])
 
