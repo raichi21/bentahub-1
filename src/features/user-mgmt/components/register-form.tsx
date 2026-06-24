@@ -16,6 +16,7 @@ export function RegisterForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState("")
+  const [success, setSuccess] = React.useState("")
   const [formData, setFormData] = React.useState({
     email: "",
     password: "",
@@ -30,34 +31,35 @@ export function RegisterForm() {
       [name]: value,
     }))
     setError("")
+    setSuccess("")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setSuccess("")
     setIsLoading(true)
 
+    // Client-side validations
+    if (!formData.email || !formData.password || !formData.fullName) {
+      setError("All fields are required")
+      setIsLoading(false)
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long")
+      setIsLoading(false)
+      return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      setIsLoading(false)
+      return
+    }
+
     try {
-      // Client-side validation
-      if (!formData.email || !formData.password || !formData.fullName) {
-        setError("All fields are required")
-        setIsLoading(false)
-        return
-      }
-
-      if (formData.password.length < 8) {
-        setError("Password must be at least 8 characters long")
-        setIsLoading(false)
-        return
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        setError("Passwords do not match")
-        setIsLoading(false)
-        return
-      }
-
-      // Call server action
       const result = await registerUser(formData as RegisterPayload)
 
       if (!result.success) {
@@ -66,8 +68,15 @@ export function RegisterForm() {
         return
       }
 
-      // Redirect to login page so user can sign in with their new account
-      router.push("/login?registered=true")
+      setSuccess(result.message)
+      
+      // Store in session storage for the verify email page
+      sessionStorage.setItem("pendingVerificationEmail", formData.email)
+
+      // Redirect to email verification page after 1.5 seconds
+      setTimeout(() => {
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`)
+      }, 1500)
     } catch (err) {
       setError("An unexpected error occurred. Please try again.")
       console.error(err)
@@ -79,21 +88,27 @@ export function RegisterForm() {
     <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
       <AuthHeader subtitle="Create your BentaHub Account" />
 
-      <Card className="border-border shadow-sm">
+      <Card className="border-border shadow-md">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold">Create an account</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg animate-in fade-in duration-200">
                 <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg animate-in fade-in duration-200">
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">{success}</p>
               </div>
             )}
 
             {/* Full Name */}
             <div className="space-y-1.5">
-              <Label htmlFor="fullName" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="fullName" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 Full Name
               </Label>
               <div className="relative">
@@ -114,7 +129,7 @@ export function RegisterForm() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 Email Address
               </Label>
               <div className="relative">
@@ -135,7 +150,7 @@ export function RegisterForm() {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="password" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 Password
               </Label>
               <PasswordInput
@@ -152,7 +167,7 @@ export function RegisterForm() {
 
             {/* Confirm Password */}
             <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                 Confirm Password
               </Label>
               <PasswordInput

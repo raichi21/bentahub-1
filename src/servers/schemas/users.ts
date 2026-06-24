@@ -1,4 +1,4 @@
-import { pgTable, timestamp, varchar, boolean, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, timestamp, varchar, boolean, pgEnum, index } from "drizzle-orm/pg-core"
 import { createInsertSchema, createSelectSchema } from "drizzle-zod"
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "cashier", "staff", "customer"])
@@ -18,7 +18,9 @@ export const users = pgTable("users", {
     .defaultNow()
     .notNull()
     .$onUpdate(() => new Date()),
-})
+}, (table) => ({
+  emailIdx: index("users_email_idx").on(table.email),
+}))
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true })
 export const selectUserSchema = createSelectSchema(users)

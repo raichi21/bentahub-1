@@ -40,7 +40,12 @@ export const useCartStore = create<CartState>((set, get) => ({
   error: null,
 
   setItems: (items) => {
-    set({ items })
+    const coerced = items.map((item) => ({
+      ...item,
+      price: Number(item.price),
+      subtotal: Number(item.subtotal),
+    }))
+    set({ items: coerced })
     get().calculateTotals()
   },
 
@@ -101,8 +106,8 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   calculateTotals: () => {
     const { items } = get()
-    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-    const total = items.reduce((sum, item) => sum + item.subtotal, 0)
+    const itemCount = items.reduce((sum, item) => sum + Number(item.quantity), 0)
+    const total = items.reduce((sum, item) => sum + Number(item.subtotal), 0)
     set({ itemCount, total })
   },
 }))

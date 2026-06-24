@@ -8,7 +8,7 @@ import type { Product } from "@/types/cashier"
 
 const STORAGE_KEY = "bentahub-staff-products"
 
-function loadProducts(): Product[] {
+function loadFromStorage(): Product[] {
   if (typeof window === "undefined") return staffProducts
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored) {
@@ -19,11 +19,22 @@ function loadProducts(): Product[] {
 }
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState<Product[]>(loadProducts)
+  const [products, setProducts] = useState<Product[]>(staffProducts)
+  const [hydrated, setHydrated] = useState(false)
 
+  // Hydrate from localStorage after mount — prevents SSR mismatch
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products))
-  }, [products])
+    const stored = loadFromStorage()
+    setProducts(stored)
+    setHydrated(true)
+  }, [])
+
+  // Persist to localStorage whenever products change (but skip the initial hydration write)
+  useEffect(() => {
+    if (hydrated) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(products))
+    }
+  }, [products, hydrated])
 
   const handleStockUpdate = (productId: string, newStock: number, newReorderLevel: number) => {
     setProducts((prev) =>

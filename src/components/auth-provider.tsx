@@ -112,8 +112,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // If the server returned a non-OK status, avoid parsing as JSON
         if (!response.ok) {
-          const text = await response.text().catch(() => "<unable to read response>")
-          console.error("/api/auth/verify returned non-OK status:", response.status, text)
+          if (response.status !== 401) {
+            const text = await response.text().catch(() => "<unable to read response>")
+            console.error("/api/auth/verify returned non-OK status:", response.status, text)
+          }
           clearStoredToken()
           if (!cancelled) setIsLoading(false)
           return

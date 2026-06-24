@@ -1,117 +1,137 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { db } from "@/servers/db"
-import { users, emailVerificationCodes } from "@/servers/schemas"
+import { users, emailVerifications } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { generateId, generateVerificationCode, hashPassword } from "@/lib/auth-utils"
+import { generateId, generateVerificationCode, hashPassword, hashVerificationCode } from "@/lib/auth-utils"
 import { sendVerificationEmail } from "@/lib/email-service"
-import type { AuthResponse, RegisterPayload } from "@/types/auth"
+import type { AuthResponse } from "@/types/auth"
 
-/** Minimum password length enforced at registration. */
-const MIN_PASSWORD_LENGTH = 8
-
-/** Verification code expiry in minutes. */
-const VERIFICATION_CODE_EXPIRY_MINUTES = 15
+const registerSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
+  confirmPassword: z.string(),
+  fullName: z.string().min(2, "Full name must be at least 2 characters long"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+})
 
 /**
  * POST /api/auth/register
- *
- * Creates a new customer account and sends a 6-digit email verification code.
- * The user must verify their email before they can log in (enforced in production).
+ * Creates a new customer account, saves a secure hashed 6-digit OTP code to PostgreSQL,
+ * and sends it via the configured nodemailer transporter.
  */
 export async function POST(request: NextRequest): Promise<NextResponse<AuthResponse>> {
   try {
-    const body: RegisterPayload = await request.json()
+    const body = await request.json()
 
-    // --- Input validation ---------------------------------------------------
-
-    if (!body.email || !body.password || !body.fullName) {
+    // 1. Zod validation
+    const parsed = registerSchema.safeParse(body)
+    if (!parsed.success) {
+      const errorMap = parsed.error.flatten().fieldErrors
+      const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
       return NextResponse.json(
-        { success: false, message: "Email, password, and full name are required" },
+        { success: false, message: firstError },
         { status: 400 }
       )
     }
 
-    if (body.password !== body.confirmPassword) {
-      return NextResponse.json(
-        { success: false, message: "Passwords do not match" },
-        { status: 400 }
-      )
-    }
+    const { email, password, fullName } = parsed.data
 
-    if (body.password.length < MIN_PASSWORD_LENGTH) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
-        },
-        { status: 400 }
-      )
-    }
-
-    // --- Check email uniqueness ---------------------------------------------
-
+    // 2. Check if email already registered
     const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, body.email),
+      where: eq(users.email, email),
     })
 
     if (existingUser) {
+      if (!existingUser.isEmailVerified) {
+        // Recycle unverified account by invalidating previous OTPs
+        await db.delete(emailVerifications).where(eq(emailVerifications.userId, existingUser.id))
+
+        // Create new OTP
+        const verificationCode = generateVerificationCode()
+        const hashedCode = hashVerificationCode(verificationCode)
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes expiry
+
+        await db.insert(emailVerifications).values({
+          id: generateId(),
+          userId: existingUser.id,
+          code: hashedCode,
+          email: existingUser.email,
+          expiresAt,
+          attempts: 0,
+        })
+
+        await sendVerificationEmail(existingUser.email, verificationCode, existingUser.fullName)
+
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Account already exists but is unverified. A new verification code has been sent.",
+            data: {
+              userId: existingUser.id,
+              email: existingUser.email,
+              requiresEmailVerification: true,
+            },
+          },
+          { status: 201 }
+        )
+      }
+
       return NextResponse.json(
-        { success: false, message: "Email already registered" },
+        { success: false, message: "Email already registered and verified." },
         { status: 409 }
       )
     }
 
-    // --- Create user --------------------------------------------------------
-
-    const hashedPassword = await hashPassword(body.password)
+    // 3. Hash password
+    const hashedPassword = await hashPassword(password)
     const userId = generateId()
 
+    // 4. Insert user
     await db.insert(users).values({
       id: userId,
-      email: body.email,
+      email,
       password: hashedPassword,
-      fullName: body.fullName,
+      fullName,
       role: "customer",
+      isEmailVerified: false,
     })
 
-    // --- Generate & store verification code ---------------------------------
-
+    // 5. Generate and store OTP code (expires in 5 minutes)
     const verificationCode = generateVerificationCode()
-    const expiresAt = new Date(Date.now() + VERIFICATION_CODE_EXPIRY_MINUTES * 60 * 1000)
+    const hashedCode = hashVerificationCode(verificationCode)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
 
-    await db.insert(emailVerificationCodes).values({
+    await db.insert(emailVerifications).values({
       id: generateId(),
       userId,
-      code: verificationCode,
-      email: body.email,
+      code: hashedCode,
+      email,
       expiresAt,
+      attempts: 0,
     })
 
-    // --- Send verification email --------------------------------------------
-
-    const emailSent = await sendVerificationEmail(body.email, verificationCode, body.fullName)
-
-    if (!emailSent) {
-      return NextResponse.json(
-        { success: false, message: "Failed to send verification email" },
-        { status: 500 }
-      )
-    }
+    // 6. Send verification email (non-blocking)
+    const emailSent = await sendVerificationEmail(email, verificationCode, fullName)
 
     return NextResponse.json(
       {
         success: true,
-        message: "Registration successful. Please check your email for the verification code.",
+        message: emailSent
+          ? "Registration successful. Please check your email for the verification code."
+          : "Account created! We couldn't send the verification email right now. You can request a new code from the login page.",
         data: {
           userId,
-          email: body.email,
+          email,
           requiresEmailVerification: true,
         },
       },
       { status: 201 }
     )
   } catch (error) {
-    console.error("Registration error:", error)
+    console.error("❌ Registration API Route Handler Error:", error)
     return NextResponse.json(
       { success: false, message: "An error occurred during registration" },
       { status: 500 }

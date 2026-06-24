@@ -69,7 +69,7 @@ export default function CartPage() {
     router.push(`/customer/checkout?branch=${encodeURIComponent(selectedBranch)}`)
   }
 
-  const subtotal = total
+  const subtotal = Number(total) || 0
   const serviceFee = +(subtotal * 0.01).toFixed(2)
   const bond = 50.00
   const totalDue = subtotal + serviceFee + bond
