@@ -45,7 +45,7 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
     {
       label: "Transaction History",
       icon: Receipt,
-      path: "/customer/transactions",
+      path: "/customer/orders",
     },
   ]
 

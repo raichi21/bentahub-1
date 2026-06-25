@@ -36,7 +36,7 @@ export function ReservationSummary() {
           </div>
         </div>
 
-        <Button className="w-full mt-4" variant="outline" size="sm" onClick={() => router.push("/customer/transactions")}>
+        <Button className="w-full mt-4" variant="outline" size="sm" onClick={() => router.push("/customer/orders")}>
           View All History
         </Button>
       </div>

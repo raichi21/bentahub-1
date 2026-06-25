@@ -98,7 +98,7 @@ export function TransactionTable() {
             {paginatedTransactions.map((transaction) => (
               <tr
                 key={transaction.id}
-                onClick={() => router.push("/customer/transactions")}
+                onClick={() => router.push("/customer/orders")}
                 className="hover:bg-muted/50 transition-colors cursor-pointer"
               >
                 <td className="p-3 text-sm font-mono text-foreground">

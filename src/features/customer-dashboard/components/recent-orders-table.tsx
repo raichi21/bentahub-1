@@ -74,7 +74,7 @@ export function RecentOrdersTable() {
       <div className="flex items-center justify-between p-4 md:p-6 border-b border-border">
         <h2 className="font-heading text-lg font-bold">Recent Orders</h2>
         <Link 
-          href="/customer/transactions" 
+          href="/customer/orders" 
           className="text-sm font-medium text-primary hover:underline"
         >
           View All
@@ -100,7 +100,7 @@ export function RecentOrdersTable() {
               {displayOrders.map((order) => (
                 <tr 
                   key={order.id}
-                  onClick={() => router.push("/customer/transactions")}
+                  onClick={() => router.push("/customer/orders")}
                   className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <td className="px-4 md:px-6 py-4 font-mono text-sm text-foreground">

@@ -46,7 +46,7 @@ export default function CheckoutPage() {
       setTimeout(() => {
         clearCart()
         setTimeout(() => {
-          router.push("/customer/transactions")
+          router.push("/customer/orders")
         }, 1500)
       }, 2000)
     } catch (err) {

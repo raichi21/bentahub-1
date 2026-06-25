@@ -11,7 +11,7 @@ export function SummaryCards() {
       icon: ShoppingBag,
       iconBg: "bg-accent",
       iconColor: "text-accent-foreground",
-      href: "/customer/transactions",
+      href: "/customer/orders",
     },
     {
       label: "Active Reservations",
