@@ -1,326 +1,322 @@
-# BENTAHUB: Centralized Inventory Management and POS System
+# BentaHub — Unified Developer Reference Manual
 
-Welcome to the **BENTAHUB** developer documentation. This project is a centralized inventory management and point-of-sale (POS) system built for the Lourdes Sari-Sari Store and its branches. It replaces manual, paper-based processes with a unified, modern digital platform.
+Welcome to the **BentaHub** developer reference manual. This document serves as the single source of truth for our system architecture, data models, developer guidelines, API specifications, and implementation status.
 
 ---
 
-# 🏗️ Architecture: Feature-Sliced Design (FSD)
+## 1. Tech Stack
 
-This project strictly follows the **Feature-Sliced Design (FSD)** architectural pattern to ensure scalability, maintainability, and clear separation of concerns across the multi-user platform.
+| Category | Technology | Description |
+|---|---|---|
+| **Framework** | Next.js 16 | App Router (with Turbopack), Server Actions, and API routes |
+| **Styling & UI** | Tailwind CSS v4, Radix UI (shadcn) | Custom HSL-tailored theme UI, dark mode support, and clean animations |
+| **Database** | PostgreSQL | Relational database storage |
+| **ORM** | Drizzle ORM | Database schema definitions, migrations, and seeders |
+| **Language** | TypeScript | Strong typing for client and server code |
+| **Containerization** | Docker | Docker Compose for local database & app setup |
+| **Package Manager** | pnpm | Fast, disk-efficient package management |
+| **Architecture** | Feature-Sliced Design (FSD) | Structural modularity, low coupling, and isolation |
+
+---
+
+## 2. User Workflows & Permission Loops
+
+The application enforces four distinct user permission loops based on role-based access control (RBAC): Admin, Staff, Cashier, and Customer.
 
 ```text
-BENTAHUB/
-├── src/
-│   ├── app/                        # Next.js App Router (Pages, Layouts, API Routes)
-│   │   ├── admin/                  # Admin dashboard & centralized monitoring panels
-│   │   ├── cashier/                # Cashier POS, barcode scanning, and transaction processing
-│   │   ├── staff/                  # Staff inventory updates and pickup preparation interfaces
-│   │   ├── customer/               # Customer product catalog and reservation portal
-│   │   └── auth/                   # Centralized login and user registration
-│   ├── components/                 # Shared UI primitives (Shadcn UI, Tailwind classes)
-│   ├── config/                     # Global configurations (Environment variables, App constants)
-│   ├── servers/                    # Database Operations & ORM
-│   │   ├── db/                     # Drizzle ORM instance and connection setup
-│   │   └── schemas/                # Drizzle schemas (Categories, Products, Transactions, etc.)
-│   ├── features/                   # Domain-Specific Business Logic (The Core FSD Layer)
-│   │   ├── centralized-monitoring/ # Real-time cross-branch stock & sales synchronization
-│   │   ├── qr-pos/                 # QR/Barcode generation, scanning, and checkout computation
-│   │   ├── reservations/           # Managing product reservations, GCash/Cash payments, & pickup status
-│   │   ├── analytics/              # Data inventory analytics and branch performance report generation
-│   │   └── user-mgmt/              # Role-based access control and account management
-│   ├── lib/                        # Third-party library wrappers (e.g., clsx, tailwind-merge)
-│   └── types/                      # Global TypeScript definitions
-└── drizzle.config.ts               # Drizzle ORM configuration
+               ┌──────────────────────────────┐
+               │         Secure Login          │
+               └──────────────┬───────────────┘
+                              │
+        ┌──────────┬──────────┼──────────┬──────────┐
+        ▼          ▼          ▼          ▼          ▼
+ ┌────────────┐ ┌────────┐ ┌────────┐ ┌────────────┐
+ │   Admin    │ │ Staff  │ │ Cashier│ │  Customer  │
+ │(Global RBAC)│ │(Branch-│ │(Branch-│ │(Self-Service│
+ └──────┬─────┘ │ Locked)│ │ Locked)│ └──────┬─────┘
+        │       └───┬────┘ └───┬────┘        │
+        ▼           ▼          ▼              ▼
+ ┌────────────┐ ┌────────┐ ┌────────┐ ┌────────────┐
+ │ Analytics, │ │ Stock  │ │ POS    │ │ Catalog,   │
+ │ User Mgmt, │ │ Mgmt,  │ │ Check- │ │ Cart,      │
+ │ Settings,  │ │ Pickups│ │ out    │ │ Reservations│
+ │ Monitoring │ └────────┘ └────────┘ └────────────┘
+ └────────────┘
+```
+
+### 👑 Admin Workflow (`/admin/*`)
+1. **Secure Login**: Accesses the global administrative panel with cross-branch privileges via `/login?redirect=/admin`. Admin accounts use `@bentahub.com` email domain.
+2. **Analytics & Monitoring**: Centralized dashboard with overview KPIs, sales tracking, and live monitoring. Drills down into individual branch metrics.
+3. **User Management**: Creates staff and cashier accounts (enforced `@bentahub.com` email domain), manages credentials, and activates/deactivates users.
+4. **Settings**: Configures store-wide settings (store name, address, contact info, currency, business hours, notification preferences, security rules).
+5. **Sales & History**: Views all transactions cross-branch, manages payments, pickups, and reservations.
+
+### 👨‍💼 Staff Workflow (`/staff/*`)
+1. **Branch-Locked Access**: Logs into a branch-specific interface. Cannot query or mutate data from other branches.
+2. **Inventory Management**: Tracks branch-specific stock numbers, manages low-stock warnings, views product catalog.
+3. **Pickup Validation**: Resolves and releases customer-reserved pickup items.
+
+### 🧾 Cashier Workflow (`/cashier/*`)
+1. **Branch-Locked Access**: Logs into a branch-specific POS interface.
+2. **POS Checkout**: Scans/searches products, dynamically updates checkout totals, processes payments (Cash or GCash).
+3. **Transaction Management**: Views today's transactions, processes refunds if needed.
+
+### 👤 Customer Workflow (`/customer/*`)
+1. **Registration & Login**: Registers via `/register` (Gmail or any non-admin email), verifies email with OTP code, then logs in at `/login`.
+2. **Catalog Browsing**: Views live product catalog with stock availability.
+3. **Cart & Reservation**: Adds items to cart, chooses payment method, and reserves stock for pickup.
+4. **In-Store Pickup**: Visits the physical branch to claim reserved items.
+
+---
+
+## 3. System Rules & Constraints
+
+To prevent scope creep and support efficient storefront operations, developers must adhere to these structural constraints:
+
+- 💸 **Strict Payment Methods**: Operations are strictly restricted to **Cash** and **GCash**. Do not integrate Credit Cards, Maya, or other digital wallets without formal scrum review.
+- 🚚 **No Delivery Architecture**: Operations focus purely on walk-in and in-store pickup. Do not build shipping modules, fleet tracking, customer address managers, or dispatch pipelines.
+- 🔒 **Role-Based Security**: Staff and cashier users must be branch-locked; they must never query or mutate data belonging to other branches. Only Admins possess cross-branch query privileges.
+- 📧 **Admin Email Domain**: Only `@bentahub.com` email addresses are allowed for admin, staff, and cashier accounts. Customer accounts use any other email (typically Gmail).
+
+---
+
+## 4. Backend & Auth Implementation
+
+Authentication is driven by client-side hooks (`useAuth` / `AuthProvider`) reading JWT tokens from `localStorage` and Bearer auth headers.
+
+### 📊 Database Schema (Drizzle ORM)
+
+#### Users Table (`src/servers/schemas/users.ts`)
+```typescript
+export const userRoleEnum = pgEnum("user_role", ["admin", "cashier", "staff", "customer"])
+
+export const users = pgTable("users", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  role: userRoleEnum("role").default("customer").notNull(),
+  branch: varchar("branch", { length: 50 }),
+  isEmailVerified: boolean("is_email_verified").default(false).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+})
+```
+
+#### Other Schemas (`src/servers/schemas/`)
+| Schema | File | Description |
+|---|---|---|
+| **email_verifications** | `email-verification.ts` | Email OTP verification codes (hashed, 5-min expiry) |
+| **password_reset** | `password-reset.ts` | Password reset tokens |
+| **branches** | `branches.ts` | Store branch records |
+| **branch_inventory** | `branch-inventory.ts` | Per-branch stock/inventory tracking |
+| **products** | `products.ts` | Product catalog |
+| **transactions** | `transactions.ts` | Sales transactions |
+| **cart_items** | `cart-items.ts` | Temporary cart storage |
+| **notifications** | `notifications.ts` | User notification records |
+| **orders** | `orders.ts` | Customer order records |
+
+### 🚦 Registration & Verification Flow
+1. **Submit Signup**: User registers with name, email, and password (min 8 chars).
+2. **Generate OTP**: System creates an unverified account, generates a 6-digit verification code with 5-minute expiration, and sends via email.
+3. **Verify OTP**: User inputs the code. System validates and marks email as verified.
+4. **Issue JWT**: On success, a JWT token is returned stored in `localStorage` (key: `bentahub_token`).
+
+### 🚦 Login Flow
+1. **Customer Login** (`/login`): Accepts any non-`@bentahub.com` email. `@bentahub.com` emails are blocked with a hint to use the Admin Sign In page.
+2. **Admin Login** (`/login?redirect=/admin`): Accepts admin/staff/cashier accounts (`@bentahub.com` domain).
+3. **Role-Based Redirect**: After successful login — admin goes to `/admin`, staff to `/staff`, cashier to `/cashier`, customer to `/customer`.
+
+---
+
+## 5. Route Structure
+
+```text
+src/app/
+├── (auth)/                        # Authentication pages
+│   ├── login/page.tsx             # Login form (supports ?redirect=/admin param)
+│   ├── register/page.tsx          # Customer registration
+│   ├── verify-email/page.tsx      # Email OTP verification
+│   └── forgot-password/page.tsx   # Password reset flow
+├── (landing)/                     # Public landing page
+│   └── page.tsx
+├── admin/                         # Admin dashboard (role: "admin")
+│   ├── page.tsx                   # Overview dashboard
+│   ├── monitoring/page.tsx        # Live monitoring
+│   ├── notifications/page.tsx     # System notifications
+│   ├── sales/page.tsx             # Sales tracking
+│   ├── users/page.tsx             # User management
+│   ├── reservations/page.tsx      # Reservation management
+│   ├── payments/page.tsx          # Payment management
+│   ├── pickups/page.tsx           # Pickup management
+│   └── settings/page.tsx          # Store settings
+├── staff/                         # Staff dashboard (role: "staff")
+│   ├── page.tsx                   # Dashboard with KPIs
+│   └── inventory/page.tsx         # Inventory management
+├── cashier/                       # Cashier POS (role: "cashier")
+│   ├── page.tsx                   # POS checkout interface
+│   └── transactions/page.tsx      # Transaction history
+├── customer/                      # Customer portal (role: "customer")
+│   ├── page.tsx                   # Dashboard
+│   ├── catalog/page.tsx           # Product catalog
+│   ├── cart/page.tsx              # Shopping cart
+│   ├── reservations/page.tsx      # My reservations
+│   └── orders/page.tsx            # Order history
+└── api/                           # API routes
+    └── auth/
+        ├── login/route.ts
+        ├── register/route.ts
+        ├── logout/route.ts
+        ├── verify/route.ts
+        ├── verify-email/route.ts
+        ├── forgot-password/route.ts
+        ├── verify-reset-code/route.ts
+        └── reset-password/route.ts
+    └── admin/
+        ├── settings/route.ts      # Store settings GET/PUT
+        └── users/route.ts         # Admin user creation POST
+
 ```
 
 ---
 
-# 🚀 Key Features
+## 6. Directory & FSD Guidelines
 
-The BentaHub system consolidates store operations into five core modules.
+This repository strictly implements **Feature-Sliced Design (FSD)** guidelines to decouple features and shared utilities.
 
----
-
-## Centralized Monitoring Module (`features/centralized-monitoring/`)
-
-- Multi-branch stock visibility connecting all 3 branches into a single data layer.
-- Consolidated real-time product inventory data synchronization.
-
----
-
-## Real-Time Inventory Updating (`features/centralized-monitoring/`)
-
-- Automatic stock deduction immediately upon successful checkout transactions.
-- Automated fast-moving and low-stock indicators to streamline replenishment schedules.
-
----
-
-## QR & Point of Sale (POS) Module (`features/qr-pos/`)
-
-- Instant product scanning compatibility via external scanners to bypass manual code typing.
-- Dynamic automated cart compilation and transaction subtotal/total calculations.
-
----
-
-## Payment & Pick-Up Module (`features/reservations/`)
-
-- Dual payment flow logic built specifically around Cash and GCash.
-- Organized status staging for item preparation and customer in-store order release tracking.
-
----
-
-## Data Inventory Analytics Module (`features/analytics/`)
-
-- Comprehensive data inventory analytics providing real-time stock level insights, product movement tracking, and branch-level inventory performance summaries with historical trend analysis.
-
----
-
-# 💻 Tech Stack
-
-| Category | Technology |
-|---|---|
-| Framework | Next.js (App Router, Server Actions) |
-| Styling & UI | Tailwind CSS, Shadcn UI |
-| Database | PostgreSQL |
-| ORM | Drizzle ORM |
-| Language | TypeScript |
-| Containerization | Docker |
-| Architecture | Feature-Sliced Design (FSD) |
-
----
-
-# 🔄 User Workflows
-
-Development workflows must conform with the four distinct user permission loops defined by the application architecture.
-
----
-
-## Admin Workflow (`app/admin/`)
-
+### 📂 Structural Directory Mapping
 ```text
-[Secure Login]
-        ↓
-[View Analytics Dashboard]
-        ↓
-[Manage Cross-Branch Stock Distributions / Create Staff Accounts]
+src/
+├── app/                              # 🌐 [App Layer] Next.js Router
+│   ├── (auth)/                       # Login, Register, Verification, Forgot Password
+│   ├── admin/                        # Admin portal dashboard pages
+│   ├── staff/                        # Staff inventory & pickup pages
+│   ├── cashier/                      # Cashier POS & transaction pages
+│   ├── customer/                     # Customer catalog, cart, and checkout pages
+│   ├── (landing)/                    # Public landing page
+│   └── api/                          # Next.js API endpoints
+├── features/                         # 🏗️ [Feature Layer] Isolated FSD business modules
+│   ├── admin-dashboard/              # Admin analytics, sidebar, user management
+│   ├── staff-dashboard/              # Staff inventory views, KPIs
+│   ├── cashier-dashboard/            # Cashier POS terminal
+│   ├── customer-dashboard/           # Catalog views, product cards, order history
+│   ├── user-mgmt/                    # Registration, sign-in, and account components
+│   ├── reservations/                 # Reserved stock manager
+│   ├── analytics/                    # Sales analytics charts
+│   ├── centralized-monitoring/       # Live monitoring dashboard
+│   ├── qr-pos/                       # QR-based POS features
+│   └── landing/                      # Landing page components
+├── components/                       # ✅ [Shared Layer] UI Primitives & Providers
+│   ├── ui/                           # Radix/Shadcn UI primitives
+│   └── auth-provider.tsx             # Global auth context (useAuth hook)
+├── hooks/                            # ✅ [Shared Layer] Global React Hooks
+│   ├── useCart.ts                    # Cart state management
+│   ├── useOrders.ts                  # Orders state management
+│   ├── useProducts.ts                # Products state management
+│   ├── useNotifications.ts           # Notifications state management
+│   └── useAuth.ts                    # Re-exports useAuth from auth-provider
+├── stores/                           # ✅ [Shared Layer] Global Zustand Stores
+│   ├── cartStore.ts
+│   ├── ordersStore.ts
+│   ├── productsStore.ts
+│   └── notificationsStore.ts
+├── servers/                          # ✅ [Shared Layer] Server-side code
+│   ├── db/index.ts                   # PostgreSQL connection & Drizzle client
+│   └── schemas/                      # Drizzle ORM table schemas
+├── lib/                              # ✅ [Shared Layer] Utilities
+│   ├── auth-utils.ts                 # JWT, bcrypt hashing, code generation
+│   ├── email-service.ts              # Nodemailer email transport
+│   └── utils.ts                      # Shared utility functions (cn, etc.)
+├── types/                            # ✅ [Shared Layer] TypeScript types
+│   ├── admin.ts                      # Admin API & KPI types
+│   ├── auth.ts                       # Auth response & payload types
+│   └── cashier.ts                    # Cashier POS & product types
+├── proxy.ts                          # 🌐 [App Layer] Dev proxy to redirect /api calls
+└── scripts/                          # 🛠️ Database seed & utility CLI scripts
+    ├── seed-admin-data.ts            # Seeds admin user, branches, products, inventory, transactions
+    └── check-database.ts             # Database connection checker
 ```
 
-### Steps
-
-1. Logs in securely to open the administrative control panel.
-2. Inspects centralized performance figures and drills down into individual branch performance reports.
-3. Updates master inventory data parameters (pricing, global metadata) or overrides role credentials via the user management view.
-
----
-
-## Cashier Workflow (`app/cashier/`)
-
-```text
-[Branch-Locked Login]
-        ↓
-[Scan Product Barcodes via POS]
-        ↓
-[Select Cash/GCash]
-        ↓
-[Confirm & Print Receipt]
-```
-
-### Steps
-
-1. Authenticates into a branch-locked endpoint.
-2. Uses the POS interface to scan checkout items, instantly populating shopping totals.
-3. Inputs payment execution method (Cash or verified GCash input reference).
-4. Dispatches transaction payload to automatically update branch-assigned stock counts in real time.
+### 🛑 Coding & Import Rules
+- **Layer imports**: Feature folders may import from the Shared layer (`components/`, `hooks/`, `lib/`, `servers/`), but **never** from other features. Cross-feature imports are strictly forbidden.
+- **Shared Code Promotion**: If `features/customer-dashboard` needs a helper from `features/user-mgmt`, that helper MUST be refactored and moved to the Shared layer (e.g. `src/hooks/`, `src/lib/`, or `src/components/`).
+- **Server Actions**: Use Next.js Server Actions inside features (`src/features/[name]/actions/`) for mutations where possible, with API route fallbacks for admin operations.
 
 ---
 
-## Staff Workflow (`app/staff/`)
+## 7. Environment & Setup
 
-```text
-[Staff Login]
-        ↓
-[Monitor Low-Stock Warnings]
-        ↓
-[Update Inventory Increments]
-        ↓
-[Prepare Reservation Deliveries]
-```
+### Prerequisites
+- Node.js 22+
+- pnpm 11+
+- Docker Desktop (for PostgreSQL)
 
-### Steps
-
-1. Logs in to access branch-specific stock-keeping interfaces.
-2. Edits product record updates or updates standard floor counts upon warehouse arrivals.
-3. Flags and reviews incoming validated reservations to bundle and package items cleanly for pending client handovers.
-
----
-
-## Customer Workflow (`app/customer/`)
-
-```text
-[Register/Login]
-        ↓
-[Browse Real-time Catalog]
-        ↓
-[Reserve Items]
-        ↓
-[Pay via Cash/GCash]
-        ↓
-[In-Store Pickup]
-```
-
-### Steps
-
-1. Registers/logs into the user portal and lands on the interactive localized catalog homepage.
-2. Views live availability of items per branch before making selection decisions.
-3. Sets aside active product reservations and routes through checkout.
-4. Visits the physical designated branch to complete in-store pickup verification.
-
----
-
-# ⚙️ Developer Setup & Git Practices
-
-The project uses the **Agile Scrum Methodology** to accommodate evolving store operations and user feedback.
-
----
-
-## 1. Local Setup
-
-### Clone the Repository
-
+### Quick Start
 ```bash
-git clone <repository-url>
-```
+# 1. Start PostgreSQL
+docker compose up -d db
 
-### Install Dependencies
-
-```bash
-npm install
-```
-
-_or_
-
-```bash
+# 2. Install dependencies
 pnpm install
+
+# 3. Push database schemas
+pnpm db:push
+
+# 4. Seed admin data
+pnpm db:seed
+
+# 5. Start dev server
+pnpm dev
 ```
 
-_or_
+### Default Admin Credentials (after seed)
+| Field | Value |
+|---|---|
+| **Email** | `admin@bentahub.com` |
+| **Password** | `admin123` |
 
-```bash
-yarn install
-```
+### Key Scripts
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start Next.js dev server (Turbopack) |
+| `pnpm build` | Production build |
+| `pnpm typecheck` | TypeScript type checking |
+| `pnpm lint` | ESLint validation |
+| `pnpm db:push` | Push Drizzle schemas to database |
+| `pnpm db:seed` | Seed database with admin user & sample data |
+| `pnpm validate` | Run lint + typecheck |
 
-### Start PostgreSQL
-
-Ensure you have a PostgreSQL instance running locally.
-
-### Configure Environment Variables
-
-Copy `.env.example` into `.env` and configure database connection strings.
-
-### Push Database Schema via Drizzle ORM
-
-```bash
-npm run db:push
-```
-
-### Run Development Server
-
-```bash
-npm run dev
+### Environment Variables (`.env.local`)
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/bentahub
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 ```
 
 ---
 
-## 2. Feature Development (FSD Rules)
+## 8. Implementation Status
 
-### Domain Separation
-
-- Never mix domains.
-- Logic for reservations belongs strictly inside `features/reservations/`.
-- Pages inside the `app/` layer should only consume exposed boundaries from `features/` and `components/`.
-
-### Server Actions
-
-- Use Next.js Server Actions securely inside feature boundaries for database modifications.
-- Avoid unnecessary decoupled HTTP API route structures.
-
-### UI Consistency
-
-- Use the shared atomic component layer inside `src/components/`.
-- Maintain styling consistency with Tailwind CSS and Shadcn UI primitives.
-
----
-
-## 3. Version Control & Git Workflow
-
-### Branch Naming
-
-Use descriptive branch tags:
-
-```text
-feature/qr-pos
-bugfix/admin-analytics
-ui/customer-catalog
-```
-
-### Commit Standards
-
-- Write clear, single-purpose commits.
-- Describe functional code changes accurately.
-
-### Pull Requests
-
-Before merging:
-
-- Pass type checks:
-
-```bash
-npm run typecheck
-```
-
-- Verify successful server builds.
-- Ensure at least one peer-review approval before merging into staging.
-
----
-
-# 📋 System Rules & Constraints
-
-## Strict Payment Methods
-
-The project scope is intentionally limited to:
-
-- Cash
-- GCash
-
-Do not integrate alternate payment methods (Credit Card, Maya, etc.) without formal scrum team evaluation.
-
----
-
-## No Delivery Architecture
-
-Operations follow a strict walk-in and in-store pickup process.
-
-Do not implement:
-
-- Shipping modules
-- Delivery tracking
-- Address management
-- Fleet tracking systems
-
----
-
-## Role-Based Security
-
-- Cashier and Staff accounts must only access records assigned to their branch.
-- Cross-branch monitoring and consolidated analytics are exclusive to authorized Admin accounts.
-
----
-
-# 👨‍💻 Maintained By
-
-**BentaHub Development Team**
-
-- Buemia
-- Gunio
-- Lim
-- Lozano
+| Feature | Status | Notes |
+|---|---|---|
+| Auth (login/register/verify) | ✅ Done | JWT-based, localStorage token |
+| Admin Dashboard | ✅ Done | Overview, monitoring, sales, users, settings |
+| Staff Dashboard | ✅ Done | Inventory management, pickup validation |
+| Cashier POS | ✅ Done | Checkout, transaction management |
+| Customer Portal | ✅ Done | Catalog, cart, reservations, orders |
+| Admin User Management | ✅ Done | Create staff/cashier accounts via API |
+| Admin Settings | ✅ Done | Store configuration (name, contact, notifications, security) |
+| Role-Based Route Protection | ✅ Done | Layout-level guards for all roles |
+| Email Verification | ✅ Done | OTP-based, Nodemailer transport |
+| Forgot / Reset Password | ✅ Done | Email code + reset flow |
+| Product Management | ✅ Done | Branch-specific inventory tracking |
+| Sales Transactions | ✅ Done | Cross-branch admin view |
+| Notifications | ✅ Done | Per-user notification system |
+| QR POS | 🚧 In Progress | QR-based checkout enhancements |
+| E2E Tests | ❌ Not Started | Playwright test suite |
+| CI/CD Pipeline | ❌ Not Started | GitHub Actions |
