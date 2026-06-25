@@ -62,7 +62,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<AuthRespon
       { status: 200 }
     )
   } catch (error) {
-    console.error("Token verification error:", error)
+    const message = error instanceof Error ? error.message : String(error)
+    console.error("Token verification error:", message, error)
+
+    // Distinguish DB connection errors from other failures
+    if (message.includes("connect") || message.includes("ECONNREFUSED") || message.includes("getaddrinfo")) {
+      return NextResponse.json(
+        { success: false, message: "Database connection failed. Please ensure PostgreSQL is running." },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
       { success: false, message: "An error occurred during verification" },
       { status: 500 }
