@@ -62,7 +62,7 @@ The application enforces four distinct user permission loops based on role-based
 3. **Transaction Management**: Views today's transactions, processes refunds if needed.
 
 ### 👤 Customer Workflow (`/customer/*`)
-1. **Registration & Login**: Registers via `/register` (Gmail or any non-admin email), verifies email with OTP code, then logs in at `/login`.
+1. **Registration & Login**: Registers via `/register` (Gmail only), verifies email with OTP code, then logs in at `/login`.
 2. **Catalog Browsing**: Views live product catalog with stock availability.
 3. **Cart & Reservation**: Adds items to cart, chooses payment method, and reserves stock for pickup.
 4. **In-Store Pickup**: Visits the physical branch to claim reserved items.
@@ -76,7 +76,7 @@ To prevent scope creep and support efficient storefront operations, developers m
 - 💸 **Strict Payment Methods**: Operations are strictly restricted to **Cash** and **GCash**. Do not integrate Credit Cards, Maya, or other digital wallets without formal scrum review.
 - 🚚 **No Delivery Architecture**: Operations focus purely on walk-in and in-store pickup. Do not build shipping modules, fleet tracking, customer address managers, or dispatch pipelines.
 - 🔒 **Role-Based Security**: Staff and cashier users must be branch-locked; they must never query or mutate data belonging to other branches. Only Admins possess cross-branch query privileges.
-- 📧 **Admin Email Domain**: Only `@bentahub.com` email addresses are allowed for admin, staff, and cashier accounts. Customer accounts use any other email (typically Gmail).
+- 📧 **Email Domain Rules**: `@bentahub.com` — admin, staff, and cashier accounts only. **Gmail only** — customer/regular user accounts.
 
 ---
 
@@ -125,8 +125,8 @@ export const users = pgTable("users", {
 4. **Issue JWT**: On success, a JWT token is returned stored in `localStorage` (key: `bentahub_token`).
 
 ### 🚦 Login Flow
-1. **Customer Login** (`/login`): Accepts any non-`@bentahub.com` email. `@bentahub.com` emails are blocked with a hint to use the Admin Sign In page.
-2. **Admin Login** (`/login?redirect=/admin`): Accepts admin/staff/cashier accounts (`@bentahub.com` domain).
+1. **Customer Login** (`/login`): Accepts Gmail accounts only. `@bentahub.com` emails are blocked with a hint to use the Admin Sign In page.
+2. **Admin Login** (`/login?redirect=/admin`): Accepts admin/staff/cashier accounts (must use `@bentahub.com` domain).
 3. **Role-Based Redirect**: After successful login — admin goes to `/admin`, staff to `/staff`, cashier to `/cashier`, customer to `/customer`.
 
 ---
