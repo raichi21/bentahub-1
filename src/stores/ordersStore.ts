@@ -20,6 +20,7 @@ export interface Order {
   notes: string
   isPaid: boolean
   paidAt: Date | null
+  pickupDeadline: Date | null
   items: OrderItem[]
   createdAt: Date
   updatedAt: Date

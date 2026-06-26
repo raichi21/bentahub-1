@@ -109,6 +109,14 @@ export async function POST(request: NextRequest) {
 
     // Create order
     const orderId = generateId()
+    const now = new Date()
+    const pickupDeadline = new Date(now)
+    pickupDeadline.setHours(17, 0, 0, 0) // 5:00 PM
+    if (now >= pickupDeadline) {
+      // Past 5PM — deadline is tomorrow 5PM
+      pickupDeadline.setDate(pickupDeadline.getDate() + 1)
+    }
+
     const newOrder = {
       id: orderId,
       userId,
@@ -119,6 +127,7 @@ export async function POST(request: NextRequest) {
       notes: notes || null,
       isPaid: paymentMethod === "gcash" ? false : false,
       paidAt: null,
+      pickupDeadline,
     }
 
     const createdOrder = await db

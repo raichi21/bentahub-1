@@ -34,6 +34,7 @@ export function useOrders() {
       const orders: Order[] = (data.data ?? []).map((o: any) => ({
         ...o,
         paidAt: o.paidAt ? new Date(o.paidAt) : null,
+        pickupDeadline: o.pickupDeadline ? new Date(o.pickupDeadline) : null,
         createdAt: new Date(o.createdAt),
         updatedAt: new Date(o.updatedAt),
         items: o.items?.map((item: any) => ({
@@ -89,6 +90,7 @@ export function useOrders() {
         const order: Order = {
           ...orderPayload,
           paidAt: orderPayload.paidAt ? new Date(orderPayload.paidAt) : null,
+          pickupDeadline: orderPayload.pickupDeadline ? new Date(orderPayload.pickupDeadline) : null,
           createdAt: new Date(orderPayload.createdAt),
           updatedAt: new Date(orderPayload.updatedAt),
           items: orderPayload.items?.map((item: any) => ({

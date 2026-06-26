@@ -66,6 +66,22 @@ export default function CheckoutPage() {
   const bond = 50.00
   const totalDue = subtotal + serviceFee + bond
 
+  // Compute pickup deadline: today at 5PM, or tomorrow at 5PM if past 5PM
+  const pickupDeadline = new Date()
+  pickupDeadline.setHours(17, 0, 0, 0)
+  if (new Date() >= pickupDeadline) {
+    pickupDeadline.setDate(pickupDeadline.getDate() + 1)
+  }
+  const formattedDeadline = pickupDeadline.toLocaleTimeString("en-PH", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+  const formattedDeadlineDate = pickupDeadline.toLocaleDateString("en-PH", {
+    month: "short",
+    day: "numeric",
+  })
+
   if (orderSuccess) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
@@ -85,6 +101,15 @@ export default function CheckoutPage() {
                 <span className="text-sm font-mono font-bold text-foreground">{formatOrderId(createdOrderId)}</span>
               </div>
             )}
+            {/* Pickup Deadline */}
+            <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-lg">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                ⏰ Pickup deadline: <strong>{formattedDeadline}</strong> ({formattedDeadlineDate})
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                Reserve must be claimed before 5:00 PM or it will be cancelled.
+              </p>
+            </div>
           </div>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -134,7 +159,9 @@ export default function CheckoutPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-foreground">{branch}</p>
-                <p className="text-sm text-muted-foreground">Bulacan Branch</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pickup available until <strong>{formattedDeadline}</strong> ({formattedDeadlineDate})
+                </p>
               </div>
               <Link
                 href={`/customer/cart?branch=${encodeURIComponent(branch)}`}

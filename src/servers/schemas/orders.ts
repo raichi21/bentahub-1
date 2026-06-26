@@ -18,6 +18,7 @@ export const orders = pgTable("orders", {
   notes: varchar("notes", { length: 500 }),
   isPaid: boolean("is_paid").default(false).notNull(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
+  pickupDeadline: timestamp("pickup_deadline", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
