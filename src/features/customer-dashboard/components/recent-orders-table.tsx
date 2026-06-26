@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { cn, formatOrderId } from "@/lib/utils"
 import { useOrders } from "@/hooks/useOrders"
 import { Loader2 } from "lucide-react"
 
@@ -50,7 +50,7 @@ export function RecentOrdersTable() {
         .filter((o) => o.status !== "cancelled")
         .slice(0, 3)
         .map((order) => ({
-          id: order.id.substring(0, 20),
+          id: formatOrderId(order.id),
           date: new Date(order.createdAt).toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",

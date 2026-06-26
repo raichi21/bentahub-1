@@ -6,7 +6,7 @@ import {
   ReservationSummary 
 } from "@/features/customer-dashboard"
 import type { ReservationData } from "@/features/customer-dashboard/components/reservation-card"
-import { cn } from "@/lib/utils"
+import { cn, formatOrderId, formatOrderTitle } from "@/lib/utils"
 import { useOrders } from "@/hooks/useOrders"
 import { Loader2 } from "lucide-react"
 
@@ -63,8 +63,8 @@ export default function ReservationsPage() {
   const reservations: ReservationData[] = useMemo(() => {
     if (orders.length > 0) {
       return orders.map((order) => ({
-        id: order.id.substring(0, 20),
-        title: `Order #${order.id.substring(0, 8)}`,
+        id: formatOrderId(order.id),
+        title: formatOrderTitle(order.id),
         description: `${order.items?.length || 0} items • Total: ₱${Number(order.totalAmount).toFixed(2)}`,
         status: (order.status === "completed" ? "completed" : order.status === "ready" ? "ready" : "processing") as "processing" | "ready" | "completed",
         date: new Date(order.createdAt).toLocaleDateString("en-US", {

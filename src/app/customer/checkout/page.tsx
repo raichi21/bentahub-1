@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useOrders } from "@/hooks/useOrders"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { cn, formatOrderId } from "@/lib/utils"
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -82,7 +82,7 @@ export default function CheckoutPage() {
             {createdOrderId && (
               <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border border-border">
                 <span className="text-sm text-muted-foreground">Order ID:</span>
-                <span className="text-sm font-mono font-bold text-foreground">{createdOrderId.substring(0, 16)}...</span>
+                <span className="text-sm font-mono font-bold text-foreground">{formatOrderId(createdOrderId)}</span>
               </div>
             )}
           </div>

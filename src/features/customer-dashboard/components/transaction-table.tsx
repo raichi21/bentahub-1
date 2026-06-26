@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { FileText, MoreHorizontal, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatOrderId } from "@/lib/utils"
 import { useOrders } from "@/hooks/useOrders"
 import { TransactionActionModal } from "./transaction-action-modal"
 import type { Order } from "@/stores/ordersStore"
@@ -56,7 +56,7 @@ export function TransactionTable() {
     ? orders
         .filter((o) => o.status !== "cancelled")
         .map((order) => ({
-          id: order.id.substring(0, 20),
+          id: formatOrderId(order.id),
           date: new Date(order.createdAt).toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",

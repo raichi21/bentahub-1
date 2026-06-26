@@ -54,19 +54,21 @@ export const useCartStore = create<CartState>((set, get) => ({
     const existingItem = items.find((i) => i.productId === item.productId)
 
     if (existingItem) {
+      // API already merged quantity — use returned data directly
       const updated = items.map((i) =>
         i.productId === item.productId
           ? {
               ...i,
-              quantity: i.quantity + item.quantity,
-              subtotal: (i.quantity + item.quantity) * i.price,
+              quantity: item.quantity,
+              price: Number(item.price),
+              subtotal: Number(item.subtotal),
               updatedAt: new Date(),
             }
           : i
       )
       set({ items: updated })
     } else {
-      set({ items: [...items, item] })
+      set({ items: [...items, { ...item, price: Number(item.price), subtotal: Number(item.subtotal) }] })
     }
 
     get().calculateTotals()
