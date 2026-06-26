@@ -7,8 +7,6 @@ import {
   Minus, 
   Plus, 
   Trash2, 
-  MapPin, 
-  Info, 
   HelpCircle, 
   Bookmark, 
   ShieldCheck 
@@ -19,7 +17,6 @@ import { useCart } from "@/hooks/useCart"
 export default function CartPage() {
   const router = useRouter()
   const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()
-  const [selectedBranch, setSelectedBranch] = useState<string>("Main Branch")
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Fetch cart on mount
@@ -66,7 +63,7 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (items.length === 0) return
-    router.push(`/customer/checkout?branch=${encodeURIComponent(selectedBranch)}`)
+    router.push("/customer/checkout?branch=Lourdes%20Main%20Branch")
   }
 
   const subtotal = Number(total) || 0
@@ -165,30 +162,6 @@ export default function CartPage() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </section>
-
-            {/* Pickup Schedule Section */}
-            <section className="bg-card rounded-lg border border-border p-6 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center text-primary">
-                  <MapPin className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-foreground">Pickup Location</h3>
-                  <p className="text-base text-foreground mt-1">{selectedBranch}</p>
-                  <p className="text-sm text-muted-foreground">Bulacan Branch</p>
-                  <div className="mt-4 p-4 bg-muted rounded-lg border border-primary/10 flex gap-3">
-                    <Info className="h-5 w-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-muted-foreground italic">Note: You will be asked to select a specific date and time window for your pickup on the next confirmation step.</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => router.push("/customer/catalog")}
-                  className="text-primary text-sm font-bold hover:underline shrink-0"
-                >
-                  Change Branch
-                </button>
               </div>
             </section>
           </div>
