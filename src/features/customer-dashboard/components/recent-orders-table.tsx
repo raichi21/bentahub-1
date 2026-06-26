@@ -43,27 +43,29 @@ export function RecentOrdersTable() {
     }
   }, [fetchOrders, isLoading, orders.length])
 
-  // Convert orders to display format
+  // Convert orders to display format (hide cancelled)
   const displayOrders = useMemo(() => {
     if (orders.length > 0) {
-      return orders.slice(0, 3).map((order) => ({
-        id: order.id.substring(0, 20),
-        date: new Date(order.createdAt).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric"
-        }),
-        total: `₱${Number(order.totalAmount).toFixed(2)}`,
-        status: 
-          order.status === "ready" ? "Ready for Pickup" :
-          order.status === "completed" ? "Completed" :
-          order.status === "cancelled" ? "Cancelled" :
-          "Processing",
-        statusVariant: 
-          order.status === "ready" ? "primary" :
-          order.status === "completed" ? "secondary" :
-          "warning" as "primary" | "secondary" | "warning",
-      }))
+      return orders
+        .filter((o) => o.status !== "cancelled")
+        .slice(0, 3)
+        .map((order) => ({
+          id: order.id.substring(0, 20),
+          date: new Date(order.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          }),
+          total: `₱${Number(order.totalAmount).toFixed(2)}`,
+          status: 
+            order.status === "ready" ? "Ready for Pickup" :
+            order.status === "completed" ? "Completed" :
+            "Processing",
+          statusVariant: 
+            order.status === "ready" ? "primary" :
+            order.status === "completed" ? "secondary" :
+            "warning" as "primary" | "secondary" | "warning",
+        }))
     }
     return demoOrders
   }, [orders])

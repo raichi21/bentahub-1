@@ -131,7 +131,6 @@ export function useOrders() {
 
         if (!response.ok) throw new Error("Failed to cancel order")
 
-        const data = await response.json()
         ordersStore.updateOrder(orderId, { status: "cancelled" })
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error"

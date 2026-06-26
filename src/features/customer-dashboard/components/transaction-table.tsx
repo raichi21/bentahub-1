@@ -5,11 +5,18 @@ import { useRouter } from "next/navigation"
 import { FileText, MoreHorizontal, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useOrders } from "@/hooks/useOrders"
+import { TransactionActionModal } from "./transaction-action-modal"
+import type { Order } from "@/stores/ordersStore"
 
 export function TransactionTable() {
   const router = useRouter()
-  const { orders, fetchOrders, isLoading } = useOrders()
+  const { orders, fetchOrders, isLoading, cancelOrder } = useOrders()
   const [page, setPage] = useState(1)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<{
+    id: string; date: string; amount: string; status: string; method: string
+  } | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     if (!isLoading && orders.length === 0) {
@@ -42,18 +49,25 @@ export function TransactionTable() {
     }
   ]
 
-  // Convert orders to transaction format
-  const transactions = orders.length > 0 ? orders.map((order) => ({
-    id: order.id.substring(0, 20),
-    date: new Date(order.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    }),
-    amount: `₱${Number(order.totalAmount).toFixed(2)}`,
-    status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
-    method: order.paymentMethod === "cash" ? "Cash on Pickup" : "GCash",
-  })) : demoTransactions
+  // Convert orders to transaction format (hide cancelled)
+  const transactions: Array<{
+    id: string; date: string; amount: string; status: string; method: string; rawOrder?: Order
+  }> = orders.length > 0
+    ? orders
+        .filter((o) => o.status !== "cancelled")
+        .map((order) => ({
+          id: order.id.substring(0, 20),
+          date: new Date(order.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          }),
+          amount: `₱${Number(order.totalAmount).toFixed(2)}`,
+          status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+          method: order.paymentMethod === "cash" ? "Cash on Pickup" : "GCash",
+          rawOrder: order,
+        }))
+    : demoTransactions.map((t) => ({ ...t, rawOrder: undefined }))
 
   const itemsPerPage = 10
   const startIdx = (page - 1) * itemsPerPage
@@ -129,7 +143,12 @@ export function TransactionTable() {
                 </td>
                 <td className="p-3 text-sm text-right">
                   <button
-                    onClick={(e) => { e.stopPropagation(); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedOrder(transaction.rawOrder ?? null)
+                      setSelectedTransaction(transaction)
+                      setIsModalOpen(true)
+                    }}
                     className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted"
                   >
                     <MoreHorizontal className="h-4 w-4" />
@@ -165,6 +184,21 @@ export function TransactionTable() {
           </button>
         </div>
       </div>
+
+      {isModalOpen && selectedTransaction && (
+        <TransactionActionModal
+          key={selectedOrder?.id ?? selectedTransaction.id}
+          order={selectedOrder}
+          transaction={selectedTransaction}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedOrder(null)
+            setSelectedTransaction(null)
+          }}
+          onCancelOrder={cancelOrder}
+        />
+      )}
     </div>
   )
 }

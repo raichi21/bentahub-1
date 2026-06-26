@@ -7,12 +7,17 @@ import {
   CreditCard, 
   Banknote, 
   CheckCircle,
-  Loader2
+  Loader2,
+  Store,
+  FileText,
+  ShoppingBag,
+  ShieldCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useOrders } from "@/hooks/useOrders"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -63,38 +68,49 @@ export default function CheckoutPage() {
 
   if (orderSuccess) {
     return (
-      <div className="max-w-2xl mx-auto min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-6">
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="text-center space-y-8 max-w-md mx-auto px-4">
+          {/* Animated success icon */}
           <div className="flex justify-center">
-            <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-200/50 dark:shadow-emerald-900/30 animate-bounce [animation-duration:1.5s]">
+              <CheckCircle className="w-14 h-14 text-white" />
             </div>
           </div>
-          <div>
-            <h2 className="text-3xl font-bold text-foreground">Order Submitted!</h2>
-            <p className="text-muted-foreground mt-2">Your order has been successfully created.</p>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold text-foreground">Order Submitted! 🎉</h2>
+            <p className="text-muted-foreground">Your order has been placed successfully.</p>
             {createdOrderId && (
-              <p className="text-sm text-muted-foreground mt-1">Order ID: <span className="font-mono text-foreground">{createdOrderId}</span></p>
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border border-border">
+                <span className="text-sm text-muted-foreground">Order ID:</span>
+                <span className="text-sm font-mono font-bold text-foreground">{createdOrderId.substring(0, 16)}...</span>
+              </div>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">Redirecting to transactions...</p>
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Redirecting to your orders...
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <header className="mb-8">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-4"
+          className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Cart
+          <div className="p-1 rounded-lg border border-border group-hover:bg-muted transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-medium">Back to Cart</span>
         </button>
-        <h1 className="text-3xl font-bold text-foreground">Checkout</h1>
-        <p className="text-muted-foreground mt-1">Complete your order details</p>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Checkout</h1>
+          <p className="text-muted-foreground mt-1.5">Review your order and complete payment</p>
+        </div>
       </header>
 
       {orderError && (
@@ -108,83 +124,131 @@ export default function CheckoutPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Pickup Branch */}
           <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4">Pickup Branch</h2>
-            <div className="p-4 bg-muted rounded-lg border border-border">
-              <p className="font-semibold text-foreground">{branch}</p>
-              <p className="text-sm text-muted-foreground mt-1">Bulacan Branch</p>
+            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <Store className="h-5 w-5 text-muted-foreground" />
+              Pickup Branch
+            </h2>
+            <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/5 to-transparent rounded-xl border border-primary/10">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Store className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-foreground">{branch}</p>
+                <p className="text-sm text-muted-foreground">Bulacan Branch</p>
+              </div>
+              <Link
+                href={`/customer/cart?branch=${encodeURIComponent(branch)}`}
+                className="text-xs font-medium text-primary hover:text-primary/80 hover:underline shrink-0"
+              >
+                Change
+              </Link>
             </div>
-            <Link
-              href={`/customer/cart?branch=${encodeURIComponent(branch)}`}
-              className="text-primary text-sm hover:underline mt-3 inline-block"
-            >
-              Change Branch
-            </Link>
           </section>
 
           {/* Payment Method */}
           <section className="bg-card border border-border rounded-lg p-6">
             <h2 className="text-lg font-bold text-foreground mb-4">Payment Method</h2>
-            <div className="space-y-3">
-              <label className="flex items-center p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => setPaymentMethod("cash")}>
-                <input
-                  type="radio"
-                  name="payment"
-                  value="cash"
-                  checked={paymentMethod === "cash"}
-                  onChange={(e) => setPaymentMethod(e.target.value as "cash" | "gcash")}
-                  className="w-4 h-4"
-                />
-                <div className="ml-4 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Banknote className="h-5 w-5 text-primary" />
-                    <span className="font-semibold text-foreground">Cash</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("cash")}
+                className={cn(
+                  "relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
+                  paymentMethod === "cash"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
+                )}
+              >
+                {paymentMethod === "cash" && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-3 w-3 text-white" />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">Pay at pickup location</p>
+                )}
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
+                  paymentMethod === "cash" ? "bg-primary/10" : "bg-muted"
+                )}>
+                  <Banknote className={cn(
+                    "h-6 w-6",
+                    paymentMethod === "cash" ? "text-primary" : "text-muted-foreground"
+                  )} />
                 </div>
-              </label>
+                <div>
+                  <p className="font-bold text-foreground">Cash</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pay at pickup</p>
+                </div>
+              </button>
 
-              <label className="flex items-center p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => setPaymentMethod("gcash")}>
-                <input
-                  type="radio"
-                  name="payment"
-                  value="gcash"
-                  checked={paymentMethod === "gcash"}
-                  onChange={(e) => setPaymentMethod(e.target.value as "cash" | "gcash")}
-                  className="w-4 h-4"
-                />
-                <div className="ml-4 flex-1">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    <span className="font-semibold text-foreground">GCash</span>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("gcash")}
+                className={cn(
+                  "relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
+                  paymentMethod === "gcash"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
+                )}
+              >
+                {paymentMethod === "gcash" && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-3 w-3 text-white" />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">Mobile payment via GCash</p>
+                )}
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
+                  paymentMethod === "gcash" ? "bg-primary/10" : "bg-muted"
+                )}>
+                  <CreditCard className={cn(
+                    "h-6 w-6",
+                    paymentMethod === "gcash" ? "text-primary" : "text-muted-foreground"
+                  )} />
                 </div>
-              </label>
+                <div>
+                  <p className="font-bold text-foreground">GCash</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Mobile payment</p>
+                </div>
+              </button>
             </div>
           </section>
 
           {/* Order Notes */}
           <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4">Additional Notes (Optional)</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              Additional Notes <span className="text-sm font-normal text-muted-foreground">(Optional)</span>
+            </h2>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any special requests or notes for your order..."
-              className="w-full p-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              rows={4}
+              className="w-full p-3.5 border border-border rounded-xl bg-background text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none text-sm"
+              rows={3}
             />
           </section>
 
           {/* Order Items Summary */}
           <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4">Order Items</h2>
-            <div className="space-y-3 max-h-48 overflow-y-auto">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">
-                    {item.productName} <span className="text-foreground font-mono">x{item.quantity}</span>
-                  </span>
-                  <span className="text-foreground font-mono">₱{(item.subtotal).toFixed(2)}</span>
+            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+              Order Items
+              <span className="ml-auto text-sm font-normal text-muted-foreground">{items.length} item{items.length !== 1 ? "s" : ""}</span>
+            </h2>
+            <div className="divide-y divide-border max-h-56 overflow-y-auto -mx-1">
+              {items.map((item, idx) => (
+                <div key={item.id} className={cn(
+                  "flex justify-between items-center py-3 px-1 rounded-lg",
+                  idx % 2 === 0 ? "bg-transparent" : "bg-muted/20"
+                )}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-muted-foreground">{item.quantity}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{item.productName}</p>
+                      <p className="text-xs text-muted-foreground">₱{Number(item.price).toFixed(2)} each</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-foreground font-mono shrink-0 ml-4">₱{(item.subtotal).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -193,45 +257,65 @@ export default function CheckoutPage() {
 
         {/* Right: Order Summary (Sticky) */}
         <aside className="lg:col-span-1">
-          <div className="bg-card border border-border rounded-lg p-6 sticky top-24">
-            <h3 className="text-lg font-bold text-foreground mb-6">Order Summary</h3>
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-mono text-foreground">₱{subtotal.toFixed(2)}</span>
+          <div className="bg-card border border-border rounded-xl p-6 sticky top-24 shadow-sm">
+            <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              Order Summary
+            </h3>
+
+            {/* Breakdown */}
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Subtotal</span>
+                <span className="text-sm font-mono text-foreground">₱{subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Service Fee</span>
-                <span className="font-mono text-foreground">₱{serviceFee.toFixed(2)}</span>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Service Fee (1%)</span>
+                <span className="text-sm font-mono text-foreground">₱{serviceFee.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Reservation Bond</span>
-                <span className="font-mono text-foreground">₱{bond.toFixed(2)}</span>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Reservation Bond</span>
+                <span className="text-sm font-mono text-foreground">₱{bond.toFixed(2)}</span>
               </div>
             </div>
+
+            {/* Total */}
             <div className="pt-4 border-t border-border mb-6">
               <div className="flex justify-between items-center">
                 <span className="font-bold text-foreground">Total Due</span>
-                <span className="text-xl font-bold text-primary">₱{totalDue.toFixed(2)}</span>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-primary">₱{totalDue.toFixed(2)}</span>
+                </div>
               </div>
             </div>
+
+            {/* Proceed Button */}
             <Button
               onClick={handleSubmitOrder}
               disabled={isLoading}
-              className="w-full bg-primary text-white py-4 rounded-lg font-bold active:scale-[0.99] transition-all shadow-sm hover:brightness-110 disabled:opacity-50"
+              size="lg"
+              className="w-full bg-primary text-white py-6 rounded-xl font-bold text-base active:scale-[0.98] transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:shadow-none"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                   Processing...
                 </span>
               ) : (
-                "Confirm Order"
+                <span className="flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5" />
+                  Proceed to Checkout
+                </span>
               )}
             </Button>
-            <p className="text-xs text-muted-foreground text-center mt-3">
-              By confirming, you agree to our terms and conditions
-            </p>
+
+            {/* Trust badges */}
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Secure checkout</span>
+              </div>
+            </div>
           </div>
         </aside>
       </div>
