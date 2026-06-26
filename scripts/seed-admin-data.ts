@@ -100,31 +100,38 @@ async function seedData(): Promise<void> {
   }
 
   console.log("Seeding products...")
+  const branchNames = BRANCHES.map((b) => b.name)
   const productIds: string[] = []
   const productPrices = new Map<string, number>()
-  for (const p of PRODUCTS) {
-    const id = generateId()
-    productIds.push(id)
-    productPrices.set(id, p.price)
-    await db.insert(products).values({
-      id,
-      name: p.name,
-      sku: p.sku,
-      price: p.price.toFixed(2),
-      category: p.category,
-      branch: "Lourdes Main Branch",
-      isActive: true,
-      createdAt: new Date(now.getFullYear() - 1, 0, 1),
-      updatedAt: now,
-    })
+
+  for (const branchName of branchNames) {
+    for (const p of PRODUCTS) {
+      const id = generateId()
+      productIds.push(id)
+      productPrices.set(id, p.price)
+      await db.insert(products).values({
+        id,
+        name: p.name,
+        sku: p.sku,
+        price: p.price.toFixed(2),
+        category: p.category,
+        branch: branchName,
+        isActive: true,
+        createdAt: new Date(now.getFullYear() - 1, 0, 1),
+        updatedAt: now,
+      })
+    }
   }
 
   console.log("Seeding inventory...")
+  const productsPerBranch = PRODUCTS.length
   let inventoryCount = 0
-  for (const branchId of branchIds) {
-    for (let i = 0; i < PRODUCTS.length; i++) {
+  for (let bi = 0; bi < branchIds.length; bi++) {
+    const branchId = branchIds[bi]
+    const offset = bi * productsPerBranch
+    for (let i = 0; i < productsPerBranch; i++) {
       const product = PRODUCTS[i]
-      const pid = productIds[i]
+      const pid = productIds[offset + i]
       const isLowStock = Math.random() < 0.2
       const quantity = isLowStock
         ? Math.floor(Math.random() * 8) + 1
@@ -192,7 +199,7 @@ async function seedData(): Promise<void> {
 
   console.log(`✅ Seeded admin data:`)
   console.log(`   - ${BRANCHES.length} branches`)
-  console.log(`   - ${PRODUCTS.length} products`)
+  console.log(`   - ${PRODUCTS.length} products per branch (${PRODUCTS.length * BRANCHES.length} total)`)
   console.log(`   - ${inventoryCount} inventory records`)
   console.log(`   - ${transactionCount} transactions`)
   console.log(`\nDatabase: postgresql://postgres:postgres@localhost:5432/bentahub`)

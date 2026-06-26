@@ -16,6 +16,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 const ITEMS_PER_PAGE = 12
 const DEFAULT_CATEGORY = "All Products"
+const DEFAULT_BRANCH = "Lourdes Main Branch"
 
 export default function CatalogPage() {
   const { products: fetchedProducts, fetchProducts, isLoading, error } = useProducts()
@@ -24,13 +25,15 @@ export default function CatalogPage() {
   const searchParams = useSearchParams()
 
   const currentCategory = searchParams.get("category") ?? DEFAULT_CATEGORY
+  const currentBranch = searchParams.get("branch") ?? DEFAULT_BRANCH
   const rawPage = Number(searchParams.get("page") ?? "1")
   const currentPage = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage)
 
   const queryString = useCallback(
-    (category: string, page: number) => {
+    (category: string, branch: string, page: number) => {
       const params = new URLSearchParams()
       if (category !== DEFAULT_CATEGORY) params.set("category", category)
+      if (branch !== DEFAULT_BRANCH) params.set("branch", branch)
       if (page > 1) params.set("page", String(page))
       const query = params.toString()
       return `/customer/catalog${query ? `?${query}` : ""}`
@@ -51,20 +54,29 @@ export default function CatalogPage() {
 
   const categoryChanged = useCallback(
     (category: string) => {
-      router.push(queryString(category, 1))
+      router.push(queryString(category, currentBranch, 1))
     },
-    [queryString, router]
+    [currentBranch, queryString, router]
   )
 
-  // Filter products client-side based on selected category
+  const branchChanged = useCallback(
+    (branch: string) => {
+      router.push(queryString(currentCategory, branch, 1))
+    },
+    [currentCategory, queryString, router]
+  )
+
+  // Filter products client-side based on selected category & branch
   const displayProducts: ProductCardProps[] = useMemo(() => {
     const source = fetchedProducts.length > 0 ? fetchedProducts : []
 
-    const filtered = currentCategory === DEFAULT_CATEGORY
+    const byCategory = currentCategory === DEFAULT_CATEGORY
       ? source
       : source.filter((p) => p.category === currentCategory)
 
-    return filtered.map((p) => ({
+    const byBranch = byCategory.filter((p) => p.branch === currentBranch)
+
+    return byBranch.map((p) => ({
       id: p.id,
       name: p.name,
       category: p.category,
@@ -74,7 +86,7 @@ export default function CatalogPage() {
       weight: p.weight,
       branch: p.branch,
     }))
-  }, [fetchedProducts, currentCategory])
+  }, [fetchedProducts, currentCategory, currentBranch])
 
   const totalProducts = displayProducts.length
   const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE))
@@ -84,9 +96,9 @@ export default function CatalogPage() {
 
   useEffect(() => {
     if (currentPage !== safePage) {
-      router.replace(queryString(currentCategory, safePage))
+      router.replace(queryString(currentCategory, currentBranch, safePage))
     }
-  }, [currentCategory, currentPage, queryString, router, safePage])
+  }, [currentBranch, currentCategory, currentPage, queryString, router, safePage])
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (safePage - 1) * ITEMS_PER_PAGE
@@ -95,9 +107,9 @@ export default function CatalogPage() {
 
   const pageChanged = useCallback(
     (page: number) => {
-      router.push(queryString(currentCategory, page))
+      router.push(queryString(currentCategory, currentBranch, page))
     },
-    [currentCategory, queryString, router]
+    [currentBranch, currentCategory, queryString, router]
   )
 
   return (
@@ -107,6 +119,8 @@ export default function CatalogPage() {
         showingFrom={showingFrom}
         showingTo={showingTo}
         totalProducts={totalProducts}
+        activeBranch={currentBranch}
+        onBranchChange={branchChanged}
       />
 
       {/* Main Content Area with Sidebar */}
