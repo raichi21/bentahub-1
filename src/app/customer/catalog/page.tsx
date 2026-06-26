@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import {
   CatalogToolbar,
   CategorySidebar,
@@ -38,15 +38,16 @@ export default function CatalogPage() {
     []
   )
 
+  // Fetch ALL products once on mount — filter client-side
+  const hasFetched = useRef(false)
   useEffect(() => {
-    fetchProducts(
-      currentCategory === DEFAULT_CATEGORY
-        ? undefined
-        : { category: currentCategory }
-    ).catch((error: unknown) => {
-      console.error("Failed to fetch products:", error)
-    })
-  }, [fetchProducts, currentCategory])
+    if (!hasFetched.current && !isLoading) {
+      hasFetched.current = true
+      fetchProducts().catch((error: unknown) => {
+        console.error("Failed to fetch products:", error)
+      })
+    }
+  }, [fetchProducts, isLoading])
 
   const categoryChanged = useCallback(
     (category: string) => {
@@ -55,95 +56,25 @@ export default function CatalogPage() {
     [queryString, router]
   )
 
+  // Filter products client-side based on selected category
   const displayProducts: ProductCardProps[] = useMemo(() => {
-    if (fetchedProducts.length > 0) {
-      return fetchedProducts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        price: `₱${Number(p.price).toFixed(2)}`,
-        image: p.image || "/images/dashboard/kopiko-blanca-twin-v2.png",
-        stockStatus: p.stockStatus,
-        weight: p.weight,
-        branch: p.branch,
-      }))
-    }
+    const source = fetchedProducts.length > 0 ? fetchedProducts : []
 
-    return [
-      {
-        id: "1",
-        name: "Kopiko Blanca TWIN",
-        category: "Coffee",
-        price: "₱15.00",
-        image: "/images/dashboard/kopiko-blanca-twin-v2.png",
-        stockStatus: "in-stock",
-        weight: "52g",
-      },
-      {
-        id: "2",
-        name: "Ajinamoto Seasoning",
-        category: "Condiments",
-        price: "₱5.00",
-        image: "/images/dashboard/ajinomoto-seasoning.png",
-        stockStatus: "in-stock",
-        weight: "10g",
-      },
-      {
-        id: "3",
-        name: "Graham Crushed",
-        category: "Baking Ingredients",
-        price: "₱50.00",
-        image: "/images/dashboard/graham-crushed-v2.png",
-        stockStatus: "low-stock",
-        weight: "200g",
-      },
-      {
-        id: "4",
-        name: "Ligo Sardines Red",
-        category: "Canned Goods",
-        price: "₱28.00",
-        image: "/images/dashboard/ligo-sardines-red.png",
-        stockStatus: "out-of-stock",
-        weight: "155g",
-      },
-      {
-        id: "5",
-        name: "Tomato Sauce",
-        category: "Sauces",
-        price: "₱22.00",
-        image: "/images/dashboard/tomato-sauce.png",
-        stockStatus: "in-stock",
-        weight: "250g",
-      },
-      {
-        id: "6",
-        name: "Maxglow Dishwashing",
-        category: "Household Supplies",
-        price: "₱20.00",
-        image: "/images/dashboard/maxglow-dishwashing.png",
-        stockStatus: "in-stock",
-        weight: "500ml",
-      },
-      {
-        id: "7",
-        name: "Datu Toyo",
-        category: "Condiments",
-        price: "₱12.00",
-        image: "/images/dashboard/datu-toyo.png",
-        stockStatus: "in-stock",
-        weight: "340ml",
-      },
-      {
-        id: "8",
-        name: "All-Purpose Flour",
-        category: "Baking Ingredients",
-        price: "₱35.00",
-        image: "/images/dashboard/all-purpose-flour-v2.png",
-        stockStatus: "in-stock",
-        weight: "1kg",
-      },
-    ]
-  }, [fetchedProducts])
+    const filtered = currentCategory === DEFAULT_CATEGORY
+      ? source
+      : source.filter((p) => p.category === currentCategory)
+
+    return filtered.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      price: `₱${Number(p.price).toFixed(2)}`,
+      image: p.image || "/images/dashboard/kopiko-blanca-twin-v2.png",
+      stockStatus: p.stockStatus,
+      weight: p.weight,
+      branch: p.branch,
+    }))
+  }, [fetchedProducts, currentCategory])
 
   const totalProducts = displayProducts.length
   const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE))
@@ -184,6 +115,7 @@ export default function CatalogPage() {
         <CategorySidebar
           activeCategory={currentCategory}
           onSelectCategory={categoryChanged}
+          products={fetchedProducts}
         />
 
         {/* Product Grid Area */}

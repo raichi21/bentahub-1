@@ -1,52 +1,104 @@
 "use client"
 
+import { useEffect, useState, use } from "react"
+import { Loader2, Heart } from "lucide-react"
 import { ProductBreadcrumb } from "@/features/customer-dashboard/components/product-breadcrumb"
 import { ProductImageGallery } from "@/features/customer-dashboard/components/product-image-gallery"
 import { ProductPricing } from "@/features/customer-dashboard/components/product-pricing"
 import { ProductActions } from "@/features/customer-dashboard/components/product-actions"
 import { ProductDetailsSection } from "@/features/customer-dashboard/components/product-details-section"
 import { ProductSidebarSection } from "@/features/customer-dashboard/components/product-sidebar-section"
-import { Heart } from "lucide-react"
-import { useState, use } from "react"
 import { useCart } from "@/hooks/useCart"
+
+interface ProductData {
+  id: string
+  name: string
+  description: string
+  category: string
+  price: number
+  bulkPrice?: number
+  weight: string
+  image: string
+  stockStatus: "in-stock" | "low-stock" | "out-of-stock"
+  quantity: number
+  branch: string
+  sku: string
+}
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { addToCart } = useCart()
   const [isFavorite, setIsFavorite] = useState(false)
 
-  // Demo product data
-  const product = {
-    id,
-    name: "Del Monte Tomato Sauce",
-    category: "Pantry Essentials",
-    price: "₱45.50",
-    originalPrice: "₱48.00",
-    bulkPrice: "₱41.25",
-    image: "/images/dashboard/tomato-sauce.png",
-    stockCount: 85,
-    sku: "DMT-250G-V01",
-    status: "Available",
-    branch: "Main Branch",
-    description: "Del Monte Tomato Sauce is the perfect base for your everyday dishes. Made with 100% real tomatoes, it contains no MSG and is naturally rich in Lycopene. Its rich, thick consistency and savory flavor make it ideal for pasta sauces, stews, and traditional Filipino recipes like Menudo and Afritada.",
-    features: [
-      "No Artificial Preservatives",
-      "Rich in Vitamin A & C",
-      "Non-GMO Tomatoes",
-      "Halal Certified",
-    ],
-    specs: [
-      { label: "Weight / Volume", value: "250g Pouch" },
-      { label: "Exp.Date", value: "12 Months" },
-      { label: "Brand Origin", value: "Philippines" },
-      { label: "Storage", value: "Cool, Dry Place" },
-    ],
-    relatedProducts: [
-      { id: "1", name: "Datu Puti Soy Sauce", price: "₱32.00", image: "/images/dashboard/datu-toyo.png" },
-      { id: "2", name: "Golden Fiesta Palm Oil", price: "₱68.50", image: "/images/dashboard/product-2.png" },
-      { id: "3", name: "Las Pinas Iodized Salt", price: "₱15.00", image: "/images/dashboard/product-3.png" },
-    ]
+  const [product, setProduct] = useState<ProductData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setIsLoading(true)
+    setError(null)
+
+    fetch(`/api/customer/products/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Product not found")
+        return res.json()
+      })
+      .then((data) => {
+        if (cancelled) return
+        const payload = data.data ?? data
+        setProduct({
+          id: payload.id,
+          name: payload.name,
+          description: payload.description || "",
+          category: payload.category || "Uncategorized",
+          price: Number(payload.price),
+          bulkPrice: payload.bulkPrice ? Number(payload.bulkPrice) : undefined,
+          weight: payload.weight || "",
+          image: payload.image || "/images/dashboard/kopiko-blanca-twin-v2.png",
+          stockStatus: payload.stockStatus || "in-stock",
+          quantity: Number(payload.quantity) || 0,
+          branch: payload.branch || "Main Branch",
+          sku: payload.sku || "",
+        })
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : "Failed to load product")
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [id])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
+
+  if (error || !product) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="text-muted-foreground">{error || "Product not found"}</p>
+        <a href="/customer/catalog" className="text-primary hover:underline text-sm">
+          Back to Catalog
+        </a>
+      </div>
+    )
+  }
+
+  const retailPrice = `₱${product.price.toFixed(2)}`
+  const bulkPriceStr = product.bulkPrice ? `₱${product.bulkPrice.toFixed(2)}` : undefined
+  const stockCount = product.quantity
+
+  const features = product.description
+    ? product.description.split(". ").filter(Boolean).slice(0, 4).map((s) => s.trim())
+    : []
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,26 +116,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div>
               <h1 className="text-2xl font-bold text-foreground mb-1">{product.name}</h1>
               <span className="text-sm text-muted-foreground">{product.category}</span>
-              <button
-                onClick={() => setIsFavorite(!isFavorite)}
-                className="p-2 rounded-full hover:bg-muted transition-colors"
-                aria-label="Toggle favorite"
-              >
-                <Heart className={`h-6 w-6 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-              </button>
             </div>
+            <button
+              onClick={() => setIsFavorite(!isFavorite)}
+              className="p-2 rounded-full hover:bg-muted transition-colors"
+              aria-label="Toggle favorite"
+            >
+              <Heart className={`h-6 w-6 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+            </button>
           </div>
 
           <ProductPricing
-            retailPrice={product.price}
-            originalPrice={product.originalPrice}
-            bulkPrice={product.bulkPrice}
+            retailPrice={retailPrice}
+            bulkPrice={bulkPriceStr || retailPrice}
           />
 
           <ProductActions
-            stockCount={product.stockCount}
+            stockCount={stockCount}
             sku={product.sku}
-            status={product.status}
+            status={stockCount > 0 ? "Available" : "Out of Stock"}
             onAddToCart={async (quantity) => {
               await addToCart(product.id, quantity, product.branch)
             }}
@@ -96,12 +147,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="lg:col-span-2">
           <ProductDetailsSection
             description={product.description}
-            features={product.features}
-            specs={product.specs}
+            features={features.length > 0 ? features : [product.weight ? `${product.weight}` : ""].filter(Boolean)}
+            specs={[
+              { label: "Weight / Volume", value: product.weight || "N/A" },
+              { label: "SKU", value: product.sku || "N/A" },
+              { label: "Category", value: product.category },
+              { label: "Branch", value: product.branch },
+            ]}
           />
         </div>
         <div className="lg:col-span-1">
-          <ProductSidebarSection relatedProducts={product.relatedProducts} />
+          <ProductSidebarSection relatedProducts={[]} />
         </div>
       </div>
     </div>

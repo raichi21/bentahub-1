@@ -1,23 +1,30 @@
 "use client"
 
+import { useMemo } from "react"
 import { cn } from "@/lib/utils"
-
-const categories = [
-  { name: "All Products", count: 248 },
-  { name: "Coffee", count: 12 },
-  { name: "Condiments", count: 45 },
-  { name: "Baking Ingredients", count: 28 },
-  { name: "Canned Goods", count: 89 },
-  { name: "Sauces", count: 35 },
-  { name: "Household Supplies", count: 22 },
-]
+import type { Product } from "@/stores/productsStore"
 
 interface CategorySidebarProps {
   activeCategory: string
   onSelectCategory: (category: string) => void
+  products?: Product[]
 }
 
-export function CategorySidebar({ activeCategory, onSelectCategory }: CategorySidebarProps) {
+export function CategorySidebar({ activeCategory, onSelectCategory, products }: CategorySidebarProps) {
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>()
+    let allCount = 0
+    if (products && products.length > 0) {
+      for (const p of products) {
+        if (p.isActive === false) continue
+        allCount++
+        counts.set(p.category, (counts.get(p.category) || 0) + 1)
+      }
+    }
+    const list = Array.from(counts, ([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+    return [{ name: "All Products", count: allCount }, ...list]
+  }, [products])
+
   return (
     <div className="w-56 shrink-0 hidden md:flex flex-col gap-6 p-4 border-r border-border min-h-[calc(100vh-8rem)]">
       {/* Categories */}
