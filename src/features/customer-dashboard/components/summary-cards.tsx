@@ -2,12 +2,20 @@
 
 import Link from "next/link"
 import { ShoppingBag, Calendar } from "lucide-react"
+import { useOrders } from "@/hooks/useOrders"
 
 export function SummaryCards() {
+  const { orders } = useOrders()
+
+  const totalOrders = orders.filter((o) => o.status !== "cancelled").length
+  const activeReservations = orders.filter(
+    (o) => o.status === "pending" || o.status === "processing"
+  ).length
+
   const cards = [
     {
       label: "Total Orders",
-      value: "42",
+      value: totalOrders,
       icon: ShoppingBag,
       iconBg: "bg-accent",
       iconColor: "text-accent-foreground",
@@ -15,7 +23,7 @@ export function SummaryCards() {
     },
     {
       label: "Active Reservations",
-      value: "3",
+      value: activeReservations,
       icon: Calendar,
       iconBg: "bg-amber-100 dark:bg-amber-900/30",
       iconColor: "text-amber-600 dark:text-amber-400",
