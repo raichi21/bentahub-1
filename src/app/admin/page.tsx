@@ -5,6 +5,7 @@ import { KPICard, SalesChart, StockTable } from "@/features/admin-dashboard"
 import { BranchStockOverview } from "@/features/analytics"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
 import type { AdminOverviewData } from "@/types/admin"
+import { PageHeader } from "@/components/layouts"
 
 export default function AdminPage() {
   const [data, setData] = useState<AdminOverviewData | null>(null)
@@ -41,6 +42,11 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Dashboard"
+        description="Overview of your store performance."
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <KPICard
           title="Total Revenue"

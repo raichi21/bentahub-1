@@ -9,6 +9,7 @@ import {
   Bell,
   Store as StoreIcon,
   ShoppingCart,
+  Settings,
   LogOut
 } from "lucide-react"
 import { APP_NAME } from "@/config"
@@ -21,31 +22,26 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
   const router = useRouter()
 
-  const navItems = [
+  const sections = [
     {
-      label: "Home",
-      icon: LayoutDashboard,
-      path: "/customer",
+      title: "Dashboard",
+      items: [
+        { label: "Home", icon: LayoutDashboard, path: "/customer" },
+        { label: "Notifications", icon: Bell, path: "/customer/notifications" },
+      ]
     },
     {
-      label: "Notifications",
-      icon: Bell,
-      path: "/customer/notifications",
+      title: "Shop",
+      items: [
+        { label: "Browse Catalog", icon: Store, path: "/customer/catalog" },
+        { label: "Cart", icon: ShoppingCart, path: "/customer/cart" },
+      ]
     },
     {
-      label: "Browse Catalog",
-      icon: Store,
-      path: "/customer/catalog",
-    },
-    {
-      label: "Cart",
-      icon: ShoppingCart,
-      path: "/customer/cart",
-    },
-    {
-      label: "Transaction History",
-      icon: Receipt,
-      path: "/customer/orders",
+      title: "Records",
+      items: [
+        { label: "Transaction History", icon: Receipt, path: "/customer/orders" },
+      ]
     },
   ]
 
@@ -59,49 +55,73 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-64 fixed left-0 top-0 bottom-0 bg-muted border-r border-border z-30">
-      {/* Logo & Header */}
-      <div className="h-16 flex items-center gap-2 px-6 border-b border-border">
-        <StoreIcon className="h-6 w-6 text-primary" />
-        <div>
-          <h1 className="font-bold text-lg tracking-tight">{APP_NAME}</h1>
-          <p className="text-xs text-muted-foreground">Lourdes Sari-Sari Store</p>
+    <aside className="hidden md:flex flex-col w-[280px] bg-[#0c1221] text-white fixed inset-y-0 left-0 z-40">
+      {/* Header */}
+      <div className="px-6 py-8 flex items-center gap-3">
+        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+          <StoreIcon className="h-6 w-6 text-white" />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="font-bold text-lg tracking-tight truncate">{APP_NAME}</span>
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest">Customer Portal</span>
         </div>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 p-4 flex flex-col gap-1">
-        {navItems.map((item) => {
-          const isActive = activePath === item.path
-          const Icon = item.icon
+      {/* Navigation */}
+      <div className="flex-1 px-4 overflow-y-auto custom-scrollbar">
+        {sections.map((section) => (
+          <div key={section.title} className="mb-6">
+            <p className="px-4 mb-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              {section.title}
+            </p>
+            <nav className="space-y-1">
+              {section.items.map((item) => {
+                const isActive = activePath === item.path
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm font-medium",
+                      isActive
+                        ? "bg-primary text-white"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
+          </div>
+        ))}
+      </div>
 
-          return (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-accent text-primary font-bold"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-              )}
-            >
-              <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")} />
-              {item.label}
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* Logout */}
-      <div className="p-4 border-t border-border">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground w-full text-left"
-        >
-          <LogOut className="h-5 w-5" />
-          Logout
-        </button>
+      {/* Footer */}
+      <div className="p-4 mt-auto">
+        <nav className="space-y-1">
+          <Link
+            href="/customer/settings"
+            className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm font-medium",
+              activePath === "/customer/settings"
+                ? "bg-primary text-white"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            )}
+          >
+            <Settings className="h-5 w-5" />
+            <span>Settings</span>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all text-sm font-medium w-full text-left"
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </button>
+        </nav>
       </div>
     </aside>
   )

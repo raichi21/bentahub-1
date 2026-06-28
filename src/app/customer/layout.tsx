@@ -1,11 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
-import { 
-  DashboardSidebar, 
-  DashboardTopbar, 
-  DashboardMobileNav 
+import {
+  DashboardSidebar,
+  DashboardTopbar,
+  DashboardMobileNav
 } from "@/features/customer-dashboard"
 
 export default function CustomerLayout({
@@ -15,6 +16,7 @@ export default function CustomerLayout({
 }) {
   const pathname = usePathname()
   const { isLoading, isAuthenticated } = useAuth()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   // Show loading state while verifying authentication
   if (isLoading) {
@@ -39,9 +41,9 @@ export default function CustomerLayout({
       <DashboardSidebar activePath={pathname} />
 
       {/* Main Content Area */}
-      <div className="md:ml-64 flex flex-col min-h-screen">
+      <div className="md:ml-[280px] flex flex-col min-h-screen">
         {/* Topbar - Sticky */}
-        <DashboardTopbar />
+        <DashboardTopbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 pb-24 md:pb-6">
