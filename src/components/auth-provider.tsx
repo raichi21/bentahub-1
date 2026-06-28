@@ -16,6 +16,8 @@ interface AuthUser {
   userId: string
   email: string
   fullName: string
+  phone: string | null
+  branch: string | null
   role: string
   isEmailVerified: boolean
 }

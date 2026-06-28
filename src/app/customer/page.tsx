@@ -16,7 +16,6 @@ export default function CustomerPage() {
     <div className="space-y-6">
       <PageHeader
         title={`Hello, ${displayName}!`}
-        description="Welcome back to your dashboard. Here&apos;s what&apos;s happening with your account."
       />
 
       <SummaryCards />

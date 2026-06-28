@@ -27,6 +27,8 @@ export interface AuthContext {
   userId: string
   email: string
   fullName: string
+  phone: string | null
+  branch: string | null
   role: string
   isEmailVerified: boolean
 }
@@ -69,6 +71,8 @@ export interface LoginResponseData {
     userId: string
     email: string
     fullName: string
+    phone: string | null
+    branch: string | null
     role: string
     isEmailVerified: boolean
   }

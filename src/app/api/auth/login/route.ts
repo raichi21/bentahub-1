@@ -77,6 +77,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
             userId: user.id,
             email: user.email,
             fullName: user.fullName,
+            phone: user.phone,
+            branch: user.branch,
             role: user.role,
             isEmailVerified: user.isEmailVerified,
           },

@@ -55,6 +55,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<AuthRespon
           userId: user.id,
           email: user.email,
           fullName: user.fullName,
+          phone: user.phone,
+          branch: user.branch,
           role: user.role,
           isEmailVerified: user.isEmailVerified,
         },
