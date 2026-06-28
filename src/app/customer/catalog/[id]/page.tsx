@@ -1,163 +1,207 @@
 "use client"
 
-import { useEffect, useState, use } from "react"
-import { Loader2, Heart } from "lucide-react"
-import { ProductBreadcrumb } from "@/features/customer-dashboard/components/product-breadcrumb"
-import { ProductImageGallery } from "@/features/customer-dashboard/components/product-image-gallery"
-import { ProductPricing } from "@/features/customer-dashboard/components/product-pricing"
-import { ProductActions } from "@/features/customer-dashboard/components/product-actions"
-import { ProductDetailsSection } from "@/features/customer-dashboard/components/product-details-section"
-import { ProductSidebarSection } from "@/features/customer-dashboard/components/product-sidebar-section"
+import { useEffect } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
+import { ArrowLeft, ShoppingCart, Package, Store, Tag, Weight, Loader2, CheckCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useProducts } from "@/hooks/useProducts"
 import { useCart } from "@/hooks/useCart"
+import { cn } from "@/lib/utils"
 
-interface ProductData {
-  id: string
-  name: string
-  description: string
-  category: string
-  price: number
-  bulkPrice?: number
-  weight: string
-  image: string
-  stockStatus: "in-stock" | "low-stock" | "out-of-stock"
-  quantity: number
-  branch: string
-  sku: string
-}
+export default function ProductDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { currentProduct, fetchProductById, isLoading, error } = useProducts()
+  const { addToCart, isLoading: cartLoading } = useCart()
 
-export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const { addToCart } = useCart()
-  const [isFavorite, setIsFavorite] = useState(false)
-
-  const [product, setProduct] = useState<ProductData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const productId = params.id as string
 
   useEffect(() => {
-    let cancelled = false
-    setIsLoading(true)
-    setError(null)
+    if (productId) {
+      fetchProductById(productId).catch(() => {
+        // Product not found — handled via error state
+      })
+    }
+  }, [productId, fetchProductById])
 
-    fetch(`/api/customer/products/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Product not found")
-        return res.json()
-      })
-      .then((data) => {
-        if (cancelled) return
-        const payload = data.data ?? data
-        setProduct({
-          id: payload.id,
-          name: payload.name,
-          description: payload.description || "",
-          category: payload.category || "Uncategorized",
-          price: Number(payload.price),
-          bulkPrice: payload.bulkPrice ? Number(payload.bulkPrice) : undefined,
-          weight: payload.weight || "",
-          image: payload.image || "/images/dashboard/kopiko-blanca-twin-v2.png",
-          stockStatus: payload.stockStatus || "in-stock",
-          quantity: Number(payload.quantity) || 0,
-          branch: payload.branch || "Main Branch",
-          sku: payload.sku || "",
-        })
-      })
-      .catch((err) => {
-        if (cancelled) return
-        setError(err instanceof Error ? err.message : "Failed to load product")
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false)
-      })
-
-    return () => { cancelled = true }
-  }, [id])
+  const handleAddToCart = async () => {
+    if (!currentProduct) return
+    try {
+      await addToCart(currentProduct.id, 1, currentProduct.branch)
+    } catch (err) {
+      console.error("Failed to add to cart:", err)
+    }
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading product details...</p>
+        </div>
       </div>
     )
   }
 
-  if (error || !product) {
+  if (error || !currentProduct) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-muted-foreground">{error || "Product not found"}</p>
-        <a href="/customer/catalog" className="text-primary hover:underline text-sm">
+      <div className="max-w-2xl mx-auto text-center py-20">
+        <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-foreground mb-2">Product Not Found</h2>
+        <p className="text-muted-foreground mb-6">This product may be unavailable or no longer exists.</p>
+        <Button onClick={() => router.push("/customer/catalog")}>
           Back to Catalog
-        </a>
+        </Button>
       </div>
     )
   }
 
-  const retailPrice = `₱${product.price.toFixed(2)}`
-  const bulkPriceStr = product.bulkPrice ? `₱${product.bulkPrice.toFixed(2)}` : undefined
-  const stockCount = product.quantity
-
-  const features = product.description
-    ? product.description.split(". ").filter(Boolean).slice(0, 4).map((s) => s.trim())
-    : []
+  const isOutOfStock = currentProduct.stockStatus === "out-of-stock"
 
   return (
-    <div className="flex flex-col gap-6">
-      <ProductBreadcrumb category={product.category} productName={product.name} />
+    <div className="max-w-6xl mx-auto">
+      {/* Back button */}
+      <button
+        onClick={() => router.back()}
+        className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+      >
+        <div className="p-1 rounded-lg border border-border group-hover:bg-muted transition-colors">
+          <ArrowLeft className="h-4 w-4" />
+        </div>
+        <span className="text-sm font-medium">Back</span>
+      </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Image Gallery */}
-        <div className="lg:col-span-7">
-          <ProductImageGallery image={product.image} name={product.name} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+        {/* Left: Product Image */}
+        <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted border border-border">
+          <Image
+            src={currentProduct.image || "/images/dashboard/kopiko-blanca-twin-v2.png"}
+            alt={currentProduct.name}
+            fill
+            className={cn(
+              "object-cover",
+              isOutOfStock && "grayscale opacity-75"
+            )}
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+
+          {/* Stock Badge */}
+          <div className="absolute top-4 left-4">
+            {currentProduct.stockStatus === "in-stock" && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <CheckCircle className="h-3 w-3" />
+                In Stock
+              </span>
+            )}
+            {currentProduct.stockStatus === "low-stock" && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                Low Stock
+              </span>
+            )}
+            {isOutOfStock && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                Out of Stock
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Right Column: Info & Actions */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground mb-1">{product.name}</h1>
-              <span className="text-sm text-muted-foreground">{product.category}</span>
-            </div>
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className="p-2 rounded-full hover:bg-muted transition-colors"
-              aria-label="Toggle favorite"
-            >
-              <Heart className={`h-6 w-6 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-            </button>
+        {/* Right: Product Details */}
+        <div className="flex flex-col">
+          {/* Category */}
+          <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2">
+            {currentProduct.category}
+          </span>
+
+          {/* Name */}
+          <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
+            {currentProduct.name}
+          </h1>
+
+          {/* Description */}
+          {currentProduct.description && (
+            <p className="text-muted-foreground mb-6 leading-relaxed">
+              {currentProduct.description}
+            </p>
+          )}
+
+          {/* Price */}
+          <div className="mb-6">
+            <span className="text-4xl font-bold text-primary">
+              ₱{Number(currentProduct.price).toFixed(2)}
+            </span>
+            {currentProduct.bulkPrice && (
+              <span className="ml-3 text-sm text-muted-foreground line-through">
+                ₱{Number(currentProduct.bulkPrice).toFixed(2)}
+              </span>
+            )}
           </div>
 
-          <ProductPricing
-            retailPrice={retailPrice}
-            bulkPrice={bulkPriceStr || retailPrice}
-          />
+          {/* Product Details Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border">
+              <Tag className="h-5 w-5 text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Category</p>
+                <p className="text-sm font-medium text-foreground">{currentProduct.category}</p>
+              </div>
+            </div>
+            {currentProduct.weight && (
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border">
+                <Weight className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Weight</p>
+                  <p className="text-sm font-medium text-foreground">{currentProduct.weight}</p>
+                </div>
+              </div>
+            )}
+            {currentProduct.branch && (
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border">
+                <Store className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Branch</p>
+                  <p className="text-sm font-medium text-foreground">{currentProduct.branch}</p>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border">
+              <Package className="h-5 w-5 text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Stock</p>
+                <p className="text-sm font-medium text-foreground">
+                  {currentProduct.quantity} available
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <ProductActions
-            stockCount={stockCount}
-            sku={product.sku}
-            status={stockCount > 0 ? "Available" : "Out of Stock"}
-            onAddToCart={async (quantity) => {
-              await addToCart(product.id, quantity, product.branch)
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
-        <div className="lg:col-span-2">
-          <ProductDetailsSection
-            description={product.description}
-            features={features.length > 0 ? features : [product.weight ? `${product.weight}` : ""].filter(Boolean)}
-            specs={[
-              { label: "Weight / Volume", value: product.weight || "N/A" },
-              { label: "SKU", value: product.sku || "N/A" },
-              { label: "Category", value: product.category },
-              { label: "Branch", value: product.branch },
-            ]}
-          />
-        </div>
-        <div className="lg:col-span-1">
-          <ProductSidebarSection relatedProducts={[]} />
+          {/* Add to Cart Button */}
+          <div className="mt-auto space-y-3">
+            {isOutOfStock ? (
+              <Button size="lg" className="w-full" disabled>
+                Temporarily Unavailable
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                className="w-full gap-2"
+                onClick={handleAddToCart}
+                disabled={cartLoading}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartLoading ? "Adding..." : "Add to Cart"}
+              </Button>
+            )}
+            <Link
+              href="/customer/catalog"
+              className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Continue Browsing
+            </Link>
+          </div>
         </div>
       </div>
     </div>
