@@ -11,6 +11,7 @@ export async function GET() {
         id: true,
         name: true,
         location: true,
+        capacity: true,
       },
     })
 
