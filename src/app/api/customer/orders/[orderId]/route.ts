@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { orders } from "@/servers/schemas"
+import { orders, orderItems } from "@/servers/schemas"
 import { eq, and } from "drizzle-orm"
 import { extractToken, verifyToken } from "@/lib/auth-utils"
 
@@ -10,6 +10,44 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
   const decoded = verifyToken(token)
   if (!decoded) return null
   return decoded.userId
+}
+
+/**
+ * GET /api/customer/orders/[orderId]
+ * Retrieve a single order with its items for the authenticated user
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ orderId: string }> }
+) {
+  try {
+    const userId = await getUserIdFromToken(request)
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+    }
+
+    const { orderId } = await params
+
+    const existingOrders = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+
+    if (existingOrders.length === 0) {
+      return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 })
+    }
+
+    const order = existingOrders[0]
+    const items = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, orderId))
+
+    return NextResponse.json({ success: true, data: { ...order, items } }, { status: 200 })
+  } catch (error) {
+    console.error("Error fetching order:", error)
+    return NextResponse.json({ success: false, message: "Failed to fetch order" }, { status: 500 })
+  }
 }
 
 /**

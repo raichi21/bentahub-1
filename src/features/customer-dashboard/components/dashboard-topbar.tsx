@@ -1,10 +1,11 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Search, Bell, Menu } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/hooks/useAuth"
+import { useNotifications } from "@/hooks/useNotifications"
+import { cn } from "@/lib/utils"
 
 function getInitials(fullName: string): string {
   return fullName
@@ -21,6 +22,7 @@ interface DashboardTopbarProps {
 export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
   const router = useRouter()
   const { user } = useAuth()
+  const { unreadCount } = useNotifications()
   const displayName = user?.fullName || ""
   const initials = displayName ? getInitials(displayName) : "U"
 
@@ -43,16 +45,6 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
 
       {/* Right side */}
       <div className="flex items-center gap-4 md:gap-6">
-        {/* Search */}
-        <div className="relative w-[180px] lg:w-[300px] hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <Input
-            type="search"
-            placeholder="Search products..."
-            className="pl-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:border-blue-500 rounded-lg text-sm text-slate-800 dark:text-slate-200"
-          />
-        </div>
-
         {/* Theme Toggle */}
         <ThemeToggle />
 
@@ -62,7 +54,14 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
           className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-200 dark:border-slate-800 relative flex-shrink-0"
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
+          {unreadCount > 0 && (
+            <span className={cn(
+              "absolute -top-1 -right-1 rounded-full bg-red-500 text-white text-[10px] font-bold ring-2 ring-white dark:ring-slate-900 flex items-center justify-center",
+              unreadCount > 9 ? "min-w-[20px] h-5 px-1" : "w-5 h-5"
+            )}>
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
 
         {/* Vertical Divider */}

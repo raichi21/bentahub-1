@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   CatalogToolbar,
   CategorySidebar,
@@ -28,6 +28,7 @@ export default function CatalogPage() {
   const currentBranch = searchParams.get("branch") ?? DEFAULT_BRANCH
   const rawPage = Number(searchParams.get("page") ?? "1")
   const currentPage = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const queryString = useCallback(
     (category: string, branch: string, page: number) => {
@@ -66,7 +67,7 @@ export default function CatalogPage() {
     [currentCategory, queryString, router]
   )
 
-  // Filter products client-side based on selected category & branch
+  // Filter products client-side based on selected category, branch & search
   const displayProducts: ProductCardProps[] = useMemo(() => {
     const source = fetchedProducts.length > 0 ? fetchedProducts : []
 
@@ -76,7 +77,12 @@ export default function CatalogPage() {
 
     const byBranch = byCategory.filter((p) => p.branch === currentBranch)
 
-    return byBranch.map((p) => ({
+    const query = searchQuery.toLowerCase().trim()
+    const bySearch = query
+      ? byBranch.filter((p) => p.name.toLowerCase().includes(query))
+      : byBranch
+
+    return bySearch.map((p) => ({
       id: p.id,
       name: p.name,
       category: p.category,
@@ -86,7 +92,7 @@ export default function CatalogPage() {
       weight: p.weight,
       branch: p.branch,
     }))
-  }, [fetchedProducts, currentCategory, currentBranch])
+  }, [fetchedProducts, currentCategory, currentBranch, searchQuery])
 
   const totalProducts = displayProducts.length
   const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE))
@@ -121,6 +127,8 @@ export default function CatalogPage() {
         totalProducts={totalProducts}
         activeBranch={currentBranch}
         onBranchChange={branchChanged}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       {/* Main Content Area with Sidebar */}

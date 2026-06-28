@@ -1,8 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Search, Bell, Menu } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 interface AdminTopbarProps {
@@ -62,16 +61,6 @@ export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopba
 
       {/* Right side */}
       <div className="flex items-center gap-4 md:gap-6">
-        {/* Search */}
-        <div className="relative w-[180px] lg:w-[300px] hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <Input
-            type="search"
-            placeholder="Search anything..."
-            className="pl-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:border-blue-500 rounded-lg text-sm text-slate-800 dark:text-slate-200"
-          />
-        </div>
-
         {/* Theme Toggle */}
         <ThemeToggle />
 
