@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { useNotificationsStore, type Notification } from "@/stores/notificationsStore"
 import { useAuth } from "./useAuth"
 
@@ -14,6 +14,7 @@ function authHeaders(token: string): HeadersInit {
 export function useNotifications() {
   const { user, token } = useAuth()
   const notificationsStore = useNotificationsStore()
+  const isFetchingRef = useRef(false)
 
   /**
    * Fetch user's notifications from backend
@@ -22,9 +23,10 @@ export function useNotifications() {
     async (unreadOnly: boolean = false) => {
       if (!user) return
       if (!token) return
-      if (notificationsStore.isLoading) return
+      if (isFetchingRef.current) return
 
       try {
+        isFetchingRef.current = true
         notificationsStore.setLoading(true)
         notificationsStore.setError(null)
 
@@ -59,6 +61,7 @@ export function useNotifications() {
         console.error("Failed to fetch notifications:", error)
         throw error
       } finally {
+        isFetchingRef.current = false
         notificationsStore.setLoading(false)
       }
     },

@@ -33,6 +33,7 @@ export function useOrders() {
       const data = await response.json()
       const orders: Order[] = (data.data ?? []).map((o: any) => ({
         ...o,
+        totalAmount: Number(o.totalAmount),
         paidAt: o.paidAt ? new Date(o.paidAt) : null,
         pickupDeadline: o.pickupDeadline ? new Date(o.pickupDeadline) : null,
         createdAt: new Date(o.createdAt),
@@ -89,6 +90,7 @@ export function useOrders() {
         const orderPayload = payload.order ?? {}
         const order: Order = {
           ...orderPayload,
+          totalAmount: Number(orderPayload.totalAmount),
           paidAt: orderPayload.paidAt ? new Date(orderPayload.paidAt) : null,
           pickupDeadline: orderPayload.pickupDeadline ? new Date(orderPayload.pickupDeadline) : null,
           createdAt: new Date(orderPayload.createdAt),
@@ -146,6 +148,41 @@ export function useOrders() {
     [user, token, ordersStore]
   )
 
+  /**
+   * Delete an order from transaction history
+   */
+  const deleteOrder = useCallback(
+    async (orderId: string) => {
+      if (!user) throw new Error("User not authenticated")
+      if (!token) throw new Error("No authentication token found")
+
+      try {
+        ordersStore.setLoading(true)
+        ordersStore.setError(null)
+
+        const response = await fetch(`/api/customer/orders/${orderId}`, {
+          method: "DELETE",
+          headers: authHeaders(token ?? ""),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.message || "Failed to delete order")
+        }
+
+        ordersStore.removeOrder(orderId)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error"
+        ordersStore.setError(message)
+        console.error("Failed to delete order:", error)
+        throw error
+      } finally {
+        ordersStore.setLoading(false)
+      }
+    },
+    [user, token, ordersStore]
+  )
+
   return {
     // State
     orders: ordersStore.orders,
@@ -157,5 +194,6 @@ export function useOrders() {
     fetchOrders,
     createOrder,
     cancelOrder,
+    deleteOrder,
   }
 }

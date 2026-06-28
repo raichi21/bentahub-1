@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/servers/db"
-import { products } from "@/servers/schemas"
+import { NextRequest } from "next/server"
+import { db } from "@/drizzle/db"
+import { products } from "@/drizzle/schema"
 import { eq, and } from "drizzle-orm"
+import { apiResponse, apiError } from "@/lib/api-response"
 
 /**
  * GET /api/customer/products
@@ -32,19 +33,16 @@ export async function GET(request: NextRequest) {
       .where(conditions.length > 1 ? and(...conditions) : conditions[0])
       .orderBy(products.createdAt)
 
-    // Format the response to return numeric prices
-    const formattedProducts = allProducts.map((p) => ({
+    // Format to return numeric prices
+    const formatted = allProducts.map((p) => ({
       ...p,
       price: Number(p.price),
       bulkPrice: p.bulkPrice ? Number(p.bulkPrice) : undefined,
     }))
 
-    return NextResponse.json(formattedProducts, { status: 200 })
+    return apiResponse(formatted)
   } catch (error) {
     console.error("Error fetching products:", error)
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch products" },
-      { status: 500 }
-    )
+    return apiError("Failed to fetch products", 500)
   }
 }

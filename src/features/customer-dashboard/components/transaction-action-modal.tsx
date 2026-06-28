@@ -173,10 +173,10 @@ export function TransactionActionModal({
       </div>
       <div className="flex gap-3">
         <Button variant="outline" className="flex-1" onClick={() => setStep("detail")}>
-          No, Keep It
+          Cancel
         </Button>
         <Button variant="destructive" className="flex-1" onClick={handleCancelOrder}>
-          Yes, Cancel Order
+          Yes
         </Button>
       </div>
     </div>

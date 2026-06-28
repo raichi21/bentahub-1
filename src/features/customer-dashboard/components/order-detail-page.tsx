@@ -6,6 +6,7 @@ import { ArrowLeft, Store, FileText, CreditCard, Calendar, Clock, ShoppingBag, A
 import { Button } from "@/components/ui/button"
 import { PageHeader, ContentCard } from "@/components/layouts"
 import { OrderTracker } from "./order-tracker"
+import { CancelOrderModal } from "./cancel-order-modal"
 import { useOrders } from "@/hooks/useOrders"
 import { formatOrderId, cn } from "@/lib/utils"
 import type { Order } from "@/stores/ordersStore"
@@ -24,10 +25,10 @@ const statusColorMap: Record<string, string> = {
 
 export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
   const router = useRouter()
-  const { orders, fetchOrders } = useOrders()
+  const { orders, fetchOrders, cancelOrder } = useOrders()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
-  const [cancelling, setCancelling] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -43,7 +44,9 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
           const res = await fetch(`/api/customer/orders/${orderId}`)
           const data = await res.json()
           if (data.success) setOrder(data.data)
-        } catch {}
+        } catch (err) {
+          console.error("Failed to fetch order:", err)
+        }
       }
       setLoading(false)
     }
@@ -83,21 +86,8 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
 
   const canCancel = order.status === "pending" || order.status === "processing"
 
-  async function handleCancel() {
-    if (!confirm("Are you sure you want to cancel this order?")) return
-    setCancelling(true)
-    try {
-      const res = await fetch(`/api/customer/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "cancelled" }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setOrder({ ...order, status: "cancelled" as const } as Order)
-      }
-    } catch {}
-    setCancelling(false)
+  async function handleConfirmCancel() {
+    await cancelOrder(orderId)
   }
 
   return (
@@ -184,11 +174,20 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
       {/* Actions */}
       {canCancel && (
         <div className="flex justify-end">
-          <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
-            {cancelling ? "Cancelling..." : "Cancel Order"}
+          <Button variant="destructive" onClick={() => setShowCancelModal(true)}>
+            Cancel Order
           </Button>
         </div>
       )}
+
+      <CancelOrderModal
+        orderId={orderId}
+        orderLabel={formatOrderId(orderId)}
+        amount={`₱${Number(order.totalAmount).toFixed(2)}`}
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleConfirmCancel}
+      />
     </div>
   )
 }

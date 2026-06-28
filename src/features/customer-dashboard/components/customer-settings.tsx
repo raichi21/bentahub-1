@@ -74,7 +74,7 @@ export function CustomerSettings() {
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: authHeaders(),
-        body: JSON.stringify({ fullName, phone: phone || null, branch: null }),
+        body: JSON.stringify({ fullName, phone: phone || null }),
       })
       const data = await res.json()
       setProfileMessage(data.success ? "Saved!" : data.message)

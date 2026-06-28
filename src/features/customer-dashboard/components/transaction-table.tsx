@@ -1,73 +1,81 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, MoreHorizontal, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { FileText, Eye, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { cn, formatOrderId } from "@/lib/utils"
 import { useOrders } from "@/hooks/useOrders"
 import { TransactionActionModal } from "./transaction-action-modal"
+import { DeleteTransactionModal } from "./delete-transaction-modal"
 import type { Order } from "@/stores/ordersStore"
 
-export function TransactionTable() {
+interface TransactionFilters {
+  activeTab: string
+  searchQuery: string
+  dateFilter: string
+}
+
+export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   const router = useRouter()
-  const { orders, fetchOrders, isLoading, cancelOrder } = useOrders()
+  const { orders, fetchOrders, isLoading, cancelOrder, deleteOrder } = useOrders()
   const [page, setPage] = useState(1)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedTransaction, setSelectedTransaction] = useState<{
     id: string; date: string; amount: string; status: string; method: string
   } | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [transactionToDelete, setTransactionToDelete] = useState<{ rawId: string; displayId: string } | null>(null)
+  const hasFetched = useRef(false)
 
   useEffect(() => {
-    if (!isLoading && orders.length === 0) {
+    if (!isLoading && orders.length === 0 && !hasFetched.current) {
+      hasFetched.current = true
       fetchOrders()
     }
   }, [fetchOrders, isLoading, orders.length])
 
-  // Demo transactions fallback
-  const demoTransactions = [
-    {
-      id: "#BH-0001",
-      date: "May 15, 2026",
-      amount: "₱1,250.00",
-      status: "Successful",
-      method: "GCash",
-    },
-    {
-      id: "#BH-0002",
-      date: "May 12, 2026",
-      amount: "₱450.50",
-      status: "Successful",
-      method: "Cash on Pickup",
-    },
-    {
-      id: "#BH-0003",
-      date: "May 10, 2026",
-      amount: "₱890.00",
-      status: "Processing",
-      method: "GCash",
-    }
-  ]
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [filters.activeTab, filters.searchQuery, filters.dateFilter])
 
-  // Convert orders to transaction format (hide cancelled)
-  const transactions: Array<{
-    id: string; date: string; amount: string; status: string; method: string; rawOrder?: Order
-  }> = orders.length > 0
-    ? orders
-        .filter((o) => o.status !== "cancelled")
-        .map((order) => ({
-          id: formatOrderId(order.id),
-          date: new Date(order.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric"
-          }),
-          amount: `₱${Number(order.totalAmount).toFixed(2)}`,
-          status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
-          method: order.paymentMethod === "cash" ? "Cash on Pickup" : "GCash",
-          rawOrder: order,
-        }))
-    : demoTransactions.map((t) => ({ ...t, rawOrder: undefined }))
+  // Convert orders to transaction format
+  const allTransactions = useMemo(() => {
+    return orders
+      .filter((o) => o.status === "completed" || o.status === "cancelled")
+      .map((order) => ({
+        id: formatOrderId(order.id),
+        date: new Date(order.createdAt).toLocaleDateString("en-US", {
+          year: "numeric", month: "long", day: "numeric"
+        }),
+        amount: `₱${Number(order.totalAmount).toFixed(2)}`,
+        status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+        method: order.paymentMethod === "cash" ? "Cash on Pickup" : "GCash",
+        rawOrder: order,
+      }))
+  }, [orders])
+
+  // Apply filters
+  const transactions = useMemo(() => {
+    const query = filters.searchQuery.toLowerCase().trim()
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    return allTransactions.filter((t) => {
+      if (filters.activeTab === "Completed" && t.status !== "Completed") return false
+      if (filters.activeTab === "Cancelled" && t.status !== "Cancelled") return false
+
+      if (query && !t.id.toLowerCase().includes(query) && !t.amount.toLowerCase().includes(query)) return false
+
+      if (filters.dateFilter === "Last 30 Days" && t.rawOrder) {
+        const orderDate = new Date(t.rawOrder.createdAt)
+        if (orderDate < thirtyDaysAgo) return false
+      }
+
+      return true
+    })
+  }, [allTransactions, filters])
 
   const itemsPerPage = 10
   const startIdx = (page - 1) * itemsPerPage
@@ -88,37 +96,28 @@ export function TransactionTable() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                Transaction ID
-              </th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                Date
-              </th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                Amount
-              </th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                Payment Method
-              </th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                Status
-              </th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase text-right">
-                Actions
-              </th>
+              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Transaction ID</th>
+              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Date</th>
+              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Amount</th>
+              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Payment Method</th>
+              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Status</th>
+              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
+            {paginatedTransactions.length === 0 && (
+              <tr>
+                <td colSpan={6} className="p-12 text-center text-sm text-muted-foreground">
+                  No transactions found.
+                </td>
+              </tr>
+            )}
             {paginatedTransactions.map((transaction) => (
               <tr
                 key={transaction.id}
                 onClick={() => {
                   const raw = (transaction as any).rawOrder
-                  if (raw?.id) {
-                    router.push(`/customer/orders/${raw.id}`)
-                  } else {
-                    router.push("/customer/orders")
-                  }
+                  if (raw?.id) router.push(`/customer/orders/${raw.id}`)
                 }}
                 className="hover:bg-muted/50 transition-colors cursor-pointer"
               >
@@ -128,39 +127,47 @@ export function TransactionTable() {
                     <span>{transaction.id}</span>
                   </div>
                 </td>
-                <td className="p-3 text-sm text-muted-foreground">
-                  {transaction.date}
-                </td>
-                <td className="p-3 text-sm font-bold text-foreground">
-                  {transaction.amount}
-                </td>
-                <td className="p-3 text-sm text-muted-foreground">
-                  {transaction.method}
-                </td>
+                <td className="p-3 text-sm text-muted-foreground">{transaction.date}</td>
+                <td className="p-3 text-sm font-bold text-foreground">{transaction.amount}</td>
+                <td className="p-3 text-sm text-muted-foreground">{transaction.method}</td>
                 <td className="p-3 text-sm">
                   <span className={cn(
                     "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
                     transaction.status === "Completed" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                    (transaction.status === "Successful" || transaction.status === "Ready") && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                    (transaction.status === "Processing" || transaction.status === "Pending") && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
                     transaction.status === "Cancelled" && "bg-destructive/10 text-destructive"
                   )}>
                     {transaction.status}
                   </span>
                 </td>
                 <td className="p-3 text-sm text-right">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedOrder(transaction.rawOrder ?? null)
-                      setSelectedTransaction(transaction)
-                      setIsModalOpen(true)
-                    }}
-                    className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Actions</span>
-                  </button>
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedOrder(transaction.rawOrder ?? null)
+                        setSelectedTransaction(transaction)
+                        setIsModalOpen(true)
+                      }}
+                      className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted"
+                      title="View details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const raw = (transaction as any).rawOrder
+                        if (raw?.id) {
+                          setTransactionToDelete({ rawId: raw.id, displayId: transaction.id })
+                          setDeleteModalOpen(true)
+                        }
+                      }}
+                      className="text-muted-foreground hover:text-destructive p-1.5 rounded-full hover:bg-destructive/10"
+                      title="Delete transaction"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -168,12 +175,10 @@ export function TransactionTable() {
         </table>
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
         <span className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{Math.min(itemsPerPage, paginatedTransactions.length)}</span> of <span className="font-medium text-foreground">{transactions.length}</span>
+          Showing {Math.min(itemsPerPage, paginatedTransactions.length)} of {transactions.length}
         </span>
-
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -194,19 +199,24 @@ export function TransactionTable() {
 
       {isModalOpen && selectedTransaction && (
         <TransactionActionModal
-          key={selectedOrder?.id ?? selectedTransaction.id}
           order={selectedOrder}
           transaction={selectedTransaction}
           isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false)
-            setSelectedOrder(null)
-            setSelectedTransaction(null)
-          }}
+          onClose={() => { setIsModalOpen(false); setSelectedOrder(null); setSelectedTransaction(null) }}
           onCancelOrder={cancelOrder}
+        />
+      )}
+
+      {deleteModalOpen && transactionToDelete && (
+        <DeleteTransactionModal
+          transactionId={transactionToDelete.displayId}
+          isOpen={deleteModalOpen}
+          onClose={() => { setDeleteModalOpen(false); setTransactionToDelete(null) }}
+          onConfirm={async () => {
+            await deleteOrder(transactionToDelete.rawId)
+          }}
         />
       )}
     </div>
   )
 }
-

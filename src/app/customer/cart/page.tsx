@@ -13,9 +13,11 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function CartPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -63,7 +65,7 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (items.length === 0) return
-    router.push("/customer/checkout?branch=Lourdes%20Main%20Branch")
+    router.push(`/customer/checkout?branch=${encodeURIComponent(user?.branch || "Lourdes Main Branch")}`)
   }
 
   const subtotal = Number(total) || 0

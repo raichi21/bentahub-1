@@ -11,13 +11,8 @@ interface CatalogToolbarProps {
   onBranchChange: (branch: string) => void
   searchQuery: string
   onSearchChange: (query: string) => void
+  branches: string[]
 }
-
-const BRANCHES = [
-  "Lourdes Main Branch",
-  "Lourdes Second Branch",
-  "Lourdes Third Branch",
-]
 
 export function CatalogToolbar({
   showingFrom,
@@ -27,6 +22,7 @@ export function CatalogToolbar({
   onBranchChange,
   searchQuery = "",
   onSearchChange = () => {},
+  branches,
 }: CatalogToolbarProps) {
   return (
     <div className="bg-muted border-b border-border">
@@ -40,7 +36,7 @@ export function CatalogToolbar({
               onChange={(e) => onBranchChange(e.target.value)}
               className="w-44 rounded-lg border border-input bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors cursor-pointer"
             >
-              {BRANCHES.map((b) => (
+              {branches.map((b) => (
                 <option key={b} value={b}>
                   {b}
                 </option>

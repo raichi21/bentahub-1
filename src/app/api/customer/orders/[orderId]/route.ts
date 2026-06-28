@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/servers/db"
-import { orders, orderItems } from "@/servers/schemas"
+import { NextRequest } from "next/server"
+import { db } from "@/drizzle/db"
+import { orders, orderItems } from "@/drizzle/schema"
 import { eq, and } from "drizzle-orm"
 import { extractToken, verifyToken } from "@/lib/auth-utils"
+import { apiResponse, apiError } from "@/lib/api-response"
 
-async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
+function getUserIdFromToken(request: NextRequest): string | null {
   const token = extractToken(request)
   if (!token) return null
   const decoded = verifyToken(token)
@@ -20,12 +21,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
-  try {
-    const userId = await getUserIdFromToken(request)
-    if (!userId) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
-    }
+  const userId = getUserIdFromToken(request)
+  if (!userId) return apiError("Unauthorized", 401)
 
+  try {
     const { orderId } = await params
 
     const existingOrders = await db
@@ -34,7 +33,7 @@ export async function GET(
       .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
 
     if (existingOrders.length === 0) {
-      return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 })
+      return apiError("Order not found", 404)
     }
 
     const order = existingOrders[0]
@@ -43,10 +42,10 @@ export async function GET(
       .from(orderItems)
       .where(eq(orderItems.orderId, orderId))
 
-    return NextResponse.json({ success: true, data: { ...order, items } }, { status: 200 })
+    return apiResponse({ success: true, data: { ...order, items } })
   } catch (error) {
     console.error("Error fetching order:", error)
-    return NextResponse.json({ success: false, message: "Failed to fetch order" }, { status: 500 })
+    return apiError("Failed to fetch order", 500)
   }
 }
 
@@ -59,68 +58,81 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
-  try {
-    const userId = await getUserIdFromToken(request)
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      )
-    }
+  const userId = getUserIdFromToken(request)
+  if (!userId) return apiError("Unauthorized", 401)
 
+  try {
     const { orderId } = await params
     const body = await request.json()
 
     if (body.status !== "cancelled") {
-      return NextResponse.json(
-        { success: false, message: "Invalid status update" },
-        { status: 400 }
-      )
+      return apiError("Invalid status update")
     }
 
-    // Fetch the order and verify it belongs to this user
     const existingOrders = await db
       .select()
       .from(orders)
       .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
 
     if (existingOrders.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "Order not found" },
-        { status: 404 }
-      )
+      return apiError("Order not found", 404)
     }
 
     const order = existingOrders[0]
 
-    // Only allow cancelling pending or processing orders
     if (order.status !== "pending" && order.status !== "processing") {
-      return NextResponse.json(
-        { success: false, message: "Order cannot be cancelled in its current state" },
-        { status: 400 }
-      )
+      return apiError("Order cannot be cancelled in its current state")
     }
 
-    // Update order status to cancelled
-    const updatedOrders = await db
+    const [updated] = await db
       .update(orders)
       .set({ status: "cancelled" })
       .where(eq(orders.id, orderId))
       .returning()
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Order cancelled successfully",
-        data: updatedOrders[0],
-      },
-      { status: 200 }
-    )
+    return apiResponse({ success: true, message: "Order cancelled successfully", data: updated })
   } catch (error) {
     console.error("Error cancelling order:", error)
-    return NextResponse.json(
-      { success: false, message: "Failed to cancel order" },
-      { status: 500 }
-    )
+    return apiError("Failed to cancel order", 500)
+  }
+}
+
+/**
+ * DELETE /api/customer/orders/[orderId]
+ * Delete an order from transaction history (completed/cancelled only)
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ orderId: string }> }
+) {
+  const userId = getUserIdFromToken(request)
+  if (!userId) return apiError("Unauthorized", 401)
+
+  try {
+    const { orderId } = await params
+
+    const existingOrders = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+
+    if (existingOrders.length === 0) {
+      return apiError("Order not found", 404)
+    }
+
+    // Only allow deleting completed or cancelled orders
+    const order = existingOrders[0]
+    if (order.status !== "completed" && order.status !== "cancelled") {
+      return apiError("Only completed or cancelled orders can be deleted")
+    }
+
+    // Delete order items first, then the order
+    await db.delete(orderItems).where(eq(orderItems.orderId, orderId))
+    await db.delete(orders).where(eq(orders.id, orderId))
+
+    return apiResponse({ success: true, message: "Order deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting order:", error)
+    return apiError("Failed to delete order", 500)
   }
 }

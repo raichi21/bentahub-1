@@ -29,6 +29,19 @@ export default function CatalogPage() {
   const rawPage = Number(searchParams.get("page") ?? "1")
   const currentPage = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage)
   const [searchQuery, setSearchQuery] = useState("")
+  const [branches, setBranches] = useState<string[]>([])
+
+  // Fetch branches from API
+  useEffect(() => {
+    fetch("/api/branches")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setBranches(data.data.map((b: { name: string }) => b.name))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const queryString = useCallback(
     (category: string, branch: string, page: number) => {
@@ -42,16 +55,16 @@ export default function CatalogPage() {
     []
   )
 
-  // Fetch ALL products once on mount — filter client-side
-  const hasFetched = useRef(false)
+  // Fetch products for the current branch
+  const lastBranchRef = useRef("")
   useEffect(() => {
-    if (!hasFetched.current && !isLoading) {
-      hasFetched.current = true
-      fetchProducts().catch((error: unknown) => {
-        console.error("Failed to fetch products:", error)
-      })
-    }
-  }, [fetchProducts, isLoading])
+    if (isLoading) return
+    if (lastBranchRef.current === currentBranch && fetchedProducts.length > 0) return
+    lastBranchRef.current = currentBranch
+    fetchProducts({ branch: currentBranch }).catch((error: unknown) => {
+      console.error("Failed to fetch products:", error)
+    })
+  }, [fetchProducts, isLoading, currentBranch])
 
   const categoryChanged = useCallback(
     (category: string) => {
@@ -129,6 +142,7 @@ export default function CatalogPage() {
         onBranchChange={branchChanged}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        branches={branches.length > 0 ? branches : ["Lourdes Main Branch", "Lourdes Second Branch", "Lourdes Third Branch"]}
       />
 
       {/* Main Content Area with Sidebar */}

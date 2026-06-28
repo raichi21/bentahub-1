@@ -16,15 +16,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useOrders } from "@/hooks/useOrders"
+import { useAuth } from "@/hooks/useAuth"
 import Link from "next/link"
 import { cn, formatOrderId } from "@/lib/utils"
 
 export default function CheckoutPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const branch = searchParams.get("branch") || "Main Branch"
+  const { user } = useAuth()
+  const branch = searchParams.get("branch") || user?.branch || "Lourdes Main Branch"
 
-  const { items, total, clearCart } = useCart()
+  const { items, total, clearCart, isLoading: cartLoading } = useCart()
   const { createOrder, isLoading } = useOrders()
 
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
@@ -34,10 +36,10 @@ export default function CheckoutPage() {
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (!cartLoading && items.length === 0) {
       router.push("/customer/cart")
     }
-  }, [items, router])
+  }, [items, cartLoading, router])
 
   const handleSubmitOrder = async () => {
     try {

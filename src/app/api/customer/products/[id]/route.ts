@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/servers/db"
-import { products } from "@/servers/schemas"
+import { NextRequest } from "next/server"
+import { db } from "@/drizzle/db"
+import { products } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
+import { apiResponse, apiError } from "@/lib/api-response"
 
 /**
  * GET /api/customer/products/[id]
@@ -21,10 +22,7 @@ export async function GET(
       .limit(1)
 
     if (!product.length) {
-      return NextResponse.json(
-        { success: false, message: "Product not found" },
-        { status: 404 }
-      )
+      return apiError("Product not found", 404)
     }
 
     const p = product[0]
@@ -34,12 +32,9 @@ export async function GET(
       bulkPrice: p.bulkPrice ? Number(p.bulkPrice) : undefined,
     }
 
-    return NextResponse.json({ success: true, data: formatted }, { status: 200 })
+    return apiResponse({ success: true, data: formatted })
   } catch (error) {
     console.error("Error fetching product:", error)
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch product" },
-      { status: 500 }
-    )
+    return apiError("Failed to fetch product", 500)
   }
 }

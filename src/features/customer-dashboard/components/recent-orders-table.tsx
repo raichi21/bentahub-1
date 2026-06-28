@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { cn, formatOrderId } from "@/lib/utils"
@@ -10,64 +10,39 @@ import { Loader2 } from "lucide-react"
 export function RecentOrdersTable() {
   const router = useRouter()
   const { orders, fetchOrders, isLoading } = useOrders()
-
-  // Demo orders fallback
-  const demoOrders = [
-    {
-      id: "#BH-0001",
-      date: "May 15, 2026",
-      total: "₱1,250.00",
-      status: "Ready for Pickup",
-      statusVariant: "primary",
-    },
-    {
-      id: "#BH-0002",
-      date: "May 12, 2026",
-      total: "₱450.50",
-      status: "Completed",
-      statusVariant: "secondary",
-    },
-    {
-      id: "#BH-0003",
-      date: "May 10, 2026",
-      total: "₱890.00",
-      status: "Pending",
-      statusVariant: "warning",
-    },
-  ]
+  const hasFetched = useRef(false)
 
   // Fetch orders on component mount
   useEffect(() => {
-    if (!isLoading && orders.length === 0) {
+    if (!isLoading && orders.length === 0 && !hasFetched.current) {
+      hasFetched.current = true
       fetchOrders()
     }
   }, [fetchOrders, isLoading, orders.length])
 
   // Convert orders to display format (hide cancelled)
   const displayOrders = useMemo(() => {
-    if (orders.length > 0) {
-      return orders
-        .filter((o) => o.status !== "cancelled")
-        .slice(0, 3)
-        .map((order) => ({
-          id: formatOrderId(order.id),
-          date: new Date(order.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric"
-          }),
-          total: `₱${Number(order.totalAmount).toFixed(2)}`,
-          status: 
-            order.status === "ready" ? "Ready for Pickup" :
-            order.status === "completed" ? "Completed" :
-            "Processing",
-          statusVariant: 
-            order.status === "ready" ? "primary" :
-            order.status === "completed" ? "secondary" :
-            "warning" as "primary" | "secondary" | "warning",
-        }))
-    }
-    return demoOrders
+    return orders
+      .filter((o) => o.status !== "cancelled")
+      .slice(0, 3)
+      .map((order) => ({
+        id: formatOrderId(order.id),
+        rawId: order.id,
+        date: new Date(order.createdAt).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        }),
+        total: `₱${Number(order.totalAmount).toFixed(2)}`,
+        status: 
+          order.status === "ready" ? "Ready for Pickup" :
+          order.status === "completed" ? "Completed" :
+          "Processing",
+        statusVariant: 
+          order.status === "ready" ? "primary" :
+          order.status === "completed" ? "secondary" :
+          "warning" as "primary" | "secondary" | "warning",
+      }))
   }, [orders])
 
   return (
@@ -83,7 +58,7 @@ export function RecentOrdersTable() {
         </Link>
       </div>
 
-      {isLoading && displayOrders === demoOrders ? (
+      {isLoading && orders.length === 0 ? (
         <div className="flex items-center justify-center h-40">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
@@ -99,10 +74,17 @@ export function RecentOrdersTable() {
               </tr>
             </thead>
             <tbody>
-              {displayOrders.map((order) => (
+              {displayOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-6 text-center text-sm text-muted-foreground">
+                    No recent orders yet.
+                  </td>
+                </tr>
+              ) : (
+                displayOrders.map((order) => (
                 <tr 
                   key={order.id}
-                  onClick={() => router.push("/customer/orders")}
+                  onClick={() => router.push(`/customer/orders/${order.rawId}`)}
                   className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <td className="px-4 md:px-6 py-4 font-mono text-sm text-foreground">
@@ -127,7 +109,7 @@ export function RecentOrdersTable() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

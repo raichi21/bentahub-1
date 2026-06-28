@@ -79,18 +79,27 @@ export async function PUT(request: NextRequest) {
 
     const { fullName, phone, branch } = parsed.data
 
+    const updateData: Record<string, any> = {
+      fullName,
+      phone: phone ?? null,
+    }
+    if (branch !== undefined) {
+      updateData.branch = branch
+    }
+
     await db.update(users)
-      .set({
-        fullName,
-        phone: phone ?? null,
-        branch: branch ?? null,
-      })
+      .set(updateData)
       .where(eq(users.id, userId))
+
+    const responseData: Record<string, any> = { userId, fullName, phone: phone ?? null }
+    if (branch !== undefined) {
+      responseData.branch = branch
+    }
 
     return NextResponse.json({
       success: true,
       message: "Profile updated successfully",
-      data: { userId, fullName, phone: phone ?? null, branch: branch ?? null },
+      data: responseData,
     }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)

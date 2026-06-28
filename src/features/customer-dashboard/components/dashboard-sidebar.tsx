@@ -9,6 +9,7 @@ import {
   Bell,
   Store as StoreIcon,
   ShoppingCart,
+  CalendarDays,
   Settings,
   LogOut
 } from "lucide-react"
@@ -40,6 +41,7 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
     {
       title: "Records",
       items: [
+        { label: "My Reservations", icon: CalendarDays, path: "/customer/reservations" },
         { label: "Transaction History", icon: Receipt, path: "/customer/orders" },
       ]
     },

@@ -37,6 +37,7 @@ export interface OrdersState {
   setCurrentOrder: (order: Order | null) => void
   addOrder: (order: Order) => void
   updateOrder: (id: string, updates: Partial<Order>) => void
+  removeOrder: (id: string) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
 }
@@ -61,6 +62,11 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
       o.id === id ? { ...o, ...updates } : o
     )
     set({ orders: updated })
+  },
+
+  removeOrder: (id) => {
+    const { orders } = get()
+    set({ orders: orders.filter((o) => o.id !== id) })
   },
 
   setLoading: (loading) => set({ isLoading: loading }),
