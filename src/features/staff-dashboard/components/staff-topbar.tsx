@@ -38,7 +38,7 @@ export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        <button onClick={() => router.push("/staff/notifications")} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors border border-border relative flex-shrink-0">
+        <button onClick={() => router.push("/staff/notifications")} aria-label="Notifications" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors border border-border relative flex-shrink-0">
           <Bell className="w-5 h-5" />
           <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-card"></span>
         </button>

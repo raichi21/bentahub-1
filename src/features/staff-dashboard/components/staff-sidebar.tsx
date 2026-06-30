@@ -65,7 +65,7 @@ export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
               Staff Panel
             </span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors md:hidden flex-shrink-0">
+          <button onClick={onClose} aria-label="Close sidebar" className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors md:hidden flex-shrink-0">
             <X className="h-5 w-5" />
           </button>
         </div>

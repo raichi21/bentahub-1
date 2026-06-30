@@ -1,41 +1,120 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import { StaffKpiCards } from "@/features/staff-dashboard/components/staff-kpi-cards"
-import { staffProducts, getStockStatus } from "@/features/staff-dashboard/data/products"
+import { getStockStatus } from "@/features/staff-dashboard/data/products"
 import { AlertTriangle, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 import type { Product } from "@/types/cashier"
-
-const STORAGE_KEY = "bentahub-staff-products"
-
-function loadProducts() {
-  if (typeof window === "undefined") return staffProducts
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try { return JSON.parse(stored) }
-    catch { return staffProducts }
-  }
-  return staffProducts
-}
+import type { StaffDashboardData, StaffProductItem } from "@/types/staff"
 
 export default function StaffPage() {
-  const [products] = useState<Product[]>(loadProducts)
+  const { token, isLoading: authLoading } = useAuth()
+  const [dashboard, setDashboard] = useState<StaffDashboardData | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [fetched, setFetched] = useState(false)
 
-  const lowStockCount = useMemo(() => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").length, [products])
+  useEffect(() => {
+    if (authLoading) return
+    if (!token) return
 
-  const lowStockItems = useMemo(() => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").slice(0, 5), [products])
+    let cancelled = false
+
+    async function fetchData() {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+
+        const [dashboardRes, productsRes] = await Promise.all([
+          fetch("/api/staff/dashboard", { headers }),
+          fetch("/api/staff/products", { headers }),
+        ])
+
+        if (!dashboardRes.ok || !productsRes.ok) {
+          throw new Error("Failed to load dashboard data")
+        }
+
+        const dashboardJson = await dashboardRes.json()
+        const productsJson = await productsRes.json()
+
+        if (cancelled) return
+
+        setDashboard(dashboardJson.data)
+
+        const mappedProducts: Product[] = (productsJson.data?.products || []).map(
+          (p: StaffProductItem) => ({
+            id: p.id,
+            sku: p.sku,
+            name: p.name,
+            price: p.price,
+            category: p.category as Product["category"],
+            stock: p.stock,
+            reorderLevel: p.reorderLevel,
+            image: p.image || "",
+            unit: "pcs",
+          }),
+        )
+        setProducts(mappedProducts)
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "An error occurred")
+        }
+      } finally {
+        if (!cancelled) {
+          setFetched(true)
+        }
+      }
+    }
+
+    fetchData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token, authLoading])
+
+  const isLoading = authLoading || (token !== null && !fetched && !error)
+
+  const lowStockCount = useMemo(
+    () => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").length,
+    [products],
+  )
+
+  const lowStockItems = useMemo(
+    () => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").slice(0, 5),
+    [products],
+  )
 
   const recentChanges = useMemo(() => products.filter((p) => p.stock < 10).slice(0, 5), [products])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-6 animate-pulse">
+              <div className="h-4 bg-muted rounded w-24 mb-4" />
+              <div className="h-8 bg-muted rounded w-16 mb-2" />
+              <div className="h-3 bg-muted rounded w-20" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <StaffKpiCards
         products={products}
-        lowStockCount={lowStockCount}
-        pendingPickups={3}
-        todayRevenue={3650.50}
+        lowStockCount={dashboard?.kpis.lowStockCount ?? lowStockCount}
+        pendingPickups={dashboard?.kpis.pendingPickups ?? 0}
+        todayRevenue={dashboard?.kpis.todayRevenue ?? 0}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -107,22 +186,6 @@ export default function StaffPage() {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Package className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-base font-bold text-foreground">System & Operational Alerts</h2>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <span className="w-2 h-2 rounded-full bg-green-500"></span>
-            <p className="text-xs text-green-700">All systems operational — POS, Inventory, and Payment services running normally.</p>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-            <p className="text-xs text-amber-700">Re-stock reminder: 3 products below minimum threshold. Check Inventory page.</p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

@@ -2,39 +2,71 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { InventoryUpdateTable } from "@/features/staff-dashboard/components/inventory-update-table"
-import { staffProducts } from "@/features/staff-dashboard/data/products"
 import { getStockStatus } from "@/features/staff-dashboard/data/products"
+import { useAuth } from "@/hooks/useAuth"
 import type { Product } from "@/types/cashier"
-
-const STORAGE_KEY = "bentahub-staff-products"
-
-function loadFromStorage(): Product[] {
-  if (typeof window === "undefined") return staffProducts
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try { return JSON.parse(stored) as Product[] }
-    catch { return staffProducts }
-  }
-  return staffProducts
-}
+import type { StaffProductItem } from "@/types/staff"
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState<Product[]>(staffProducts)
-  const [hydrated, setHydrated] = useState(false)
+  const { token, isLoading: authLoading } = useAuth()
+  const [products, setProducts] = useState<Product[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [fetched, setFetched] = useState(false)
 
-  // Hydrate from localStorage after mount — prevents SSR mismatch
   useEffect(() => {
-    const stored = loadFromStorage()
-    setProducts(stored)
-    setHydrated(true)
-  }, [])
+    if (authLoading) return
+    if (!token) return
 
-  // Persist to localStorage whenever products change (but skip the initial hydration write)
-  useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(products))
+    let cancelled = false
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/staff/products", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+
+        if (!res.ok) throw new Error("Failed to load products")
+
+        const json = await res.json()
+
+        if (cancelled) return
+
+        const mapped: Product[] = (json.data?.products || []).map(
+          (p: StaffProductItem) => ({
+            id: p.id,
+            sku: p.sku,
+            name: p.name,
+            price: p.price,
+            category: p.category as Product["category"],
+            stock: p.stock,
+            reorderLevel: p.reorderLevel,
+            image: p.image || "",
+            unit: "pcs",
+          }),
+        )
+        setProducts(mapped)
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "An error occurred")
+        }
+      } finally {
+        if (!cancelled) {
+          setFetched(true)
+        }
+      }
     }
-  }, [products, hydrated])
+
+    fetchProducts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token, authLoading])
+
+  const isLoading = authLoading || (token !== null && !fetched && !error)
 
   const handleStockUpdate = (productId: string, newStock: number, newReorderLevel: number) => {
     setProducts((prev) =>
@@ -69,7 +101,16 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-5 animate-pulse">
+                <div className="h-4 bg-muted rounded w-20 mb-4" />
+                <div className="h-7 bg-muted rounded w-12 mb-2" />
+                <div className="h-3 bg-muted rounded w-24" />
+              </div>
+            ))
+          : <>
+              <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
           <span className="text-sm font-medium text-muted-foreground">Total Products</span>
           <h3 className="text-2xl font-extrabold text-foreground mt-1">{stockSummary.total}</h3>
           <span className="text-xs text-muted-foreground font-medium">All SKUs</span>
@@ -89,9 +130,13 @@ export default function InventoryPage() {
           <h3 className="text-2xl font-extrabold text-red-600 mt-1">{stockSummary.outOfStock}</h3>
           <span className="text-xs text-red-500 font-medium">Critical</span>
         </div>
+            </>
+        }
       </div>
 
-      <InventoryUpdateTable products={products} onStockUpdate={handleStockUpdate} onAddProduct={handleAddProduct} />
+      {!isLoading && (
+        <InventoryUpdateTable products={products} onStockUpdate={handleStockUpdate} onAddProduct={handleAddProduct} />
+      )}
     </div>
   )
 }
