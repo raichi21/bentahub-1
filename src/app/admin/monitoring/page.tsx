@@ -1,15 +1,18 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MonitoringMetrics, InventoryStatusTable, SystemAlerts } from "@/features/admin-dashboard"
+import { MonitoringMetrics, InventoryStatusTable } from "@/features/admin-dashboard"
 import { Download, FileSpreadsheet, FileText } from "lucide-react"
 import type { MonitoringData, InventoryStatusItem } from "@/types/admin"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function MonitoringPage() {
+  const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<MonitoringData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [selectedBranch, setSelectedBranch] = useState("all")
   const [exportOpen, setExportOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [fetched, setFetched] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
 
   function exportCSV() {
@@ -62,6 +65,7 @@ export default function MonitoringPage() {
     setExportOpen(false)
   }
 
+  // Close export dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
@@ -70,17 +74,32 @@ export default function MonitoringPage() {
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
 
+  // Fetch monitoring data
   useEffect(() => {
-    fetch("/api/admin/monitoring")
+    if (!token) return
+
+    setFetched(false)
+
+    const params = selectedBranch !== "all" ? `?branchId=${selectedBranch}` : ""
+    fetch(`/api/admin/monitoring${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((json) => {
-        if (json.success && json.data) setData(json.data)
+        if (json.success && json.data) {
+          setData(json.data)
+          setError(null)
+        } else {
+          setError(json.message || "Failed to load monitoring data")
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [])
+      .catch(() => setError("Failed to load monitoring data"))
+      .finally(() => setFetched(true))
+  }, [token, selectedBranch])
 
-  if (loading) {
+  const isLoading = authLoading || (token && !fetched && !error)
+
+  if (isLoading) {
     return (
       <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -92,6 +111,14 @@ export default function MonitoringPage() {
           ))}
         </div>
         <div className="bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center max-w-7xl mx-auto w-full">
+        <p className="text-sm text-red-500">{error}</p>
       </div>
     )
   }
@@ -112,14 +139,9 @@ export default function MonitoringPage() {
             className="w-full md:w-64 rounded-lg border-border bg-background focus:ring-primary focus:border-primary text-sm p-2.5"
           >
             <option value="all">All Branches</option>
-            {(data?.branches ?? []).map((b) => {
-              const displayName = b.name
-                .replace("Second", "2nd")
-                .replace("Third", "3rd")
-              return (
-                <option key={b.id} value={b.id}>{displayName}</option>
-              )
-            })}
+            <option value="d2a256f5-e56c-4592-a2a1-37e3626a916a">Lourdes Main Branch</option>
+            <option value="b302b4a8-1847-4d3c-b0d8-7b663d4ea2f3">Lourdes Second Branch</option>
+            <option value="a95f3855-206a-4c85-8476-4366a78ff6a5">Lourdes Third Branch</option>
           </select>
         </div>
         <div ref={exportRef} className="relative">
@@ -152,8 +174,6 @@ export default function MonitoringPage() {
       </div>
 
       <InventoryStatusTable data={data?.inventoryStatus ?? []} />
-
-      <SystemAlerts data={data?.alerts ?? []} />
     </div>
   )
 }

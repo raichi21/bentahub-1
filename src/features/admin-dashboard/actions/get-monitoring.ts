@@ -28,6 +28,7 @@ interface RawInventory {
 
 interface RawTransaction {
   id: string
+  branchId: string
   totalAmount: string
   paymentMethod: string
   status: string
@@ -38,11 +39,24 @@ function formatCurrency(amount: number): string {
   return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export async function getMonitoringData(): Promise<MonitoringData> {
+export async function getMonitoringData(branchId?: string): Promise<MonitoringData> {
   const allBranches = await db.query.branches.findMany() as RawBranch[]
   const allProducts = await db.query.products.findMany() as RawProduct[]
   const allInventory = await db.query.branchInventory.findMany() as RawInventory[]
   const allTransactions = await db.query.transactions.findMany() as RawTransaction[]
+
+  // Filter by branch if specified
+  const filteredInventory = branchId
+    ? allInventory.filter((i: RawInventory) => i.branchId === branchId)
+    : allInventory
+
+  const filteredTransactions = branchId
+    ? allTransactions.filter((t: RawTransaction) => t.branchId === branchId)
+    : allTransactions
+
+  const selectedBranch = branchId
+    ? allBranches.find((b: RawBranch) => b.id === branchId)
+    : null
 
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -55,7 +69,7 @@ export async function getMonitoringData(): Promise<MonitoringData> {
   let totalValue = 0
   const productAggregator = new Map<string, { totalQty: number; lastUpdated: Date; thresholds: number[] }>()
 
-  for (const inv of allInventory) {
+  for (const inv of filteredInventory) {
     const price = productPriceMap.get(inv.productId) || 0
     totalValue += price * inv.quantity
 
@@ -67,17 +81,16 @@ export async function getMonitoringData(): Promise<MonitoringData> {
   }
 
   // --- Low Stock Items ---
-  const lowStockRecords = allInventory.filter((i: RawInventory) => i.quantity < i.lowStockThreshold)
-  const lowStockProductIds = new Set(lowStockRecords.map((i: RawInventory) => i.productId))
+  const lowStockRecords = filteredInventory.filter((i: RawInventory) => i.quantity < i.lowStockThreshold)
   const totalLowStockCount = lowStockRecords.length
 
   // --- Pending Reservations (using pending transactions as proxy) ---
-  const pendingTransactions = allTransactions.filter((t: RawTransaction) => t.status === "pending")
+  const pendingTransactions = filteredTransactions.filter((t: RawTransaction) => t.status === "pending")
   const todayPending = pendingTransactions.filter(
     (t: RawTransaction) => new Date(t.createdAt) >= todayStart
   ).length
 
-  // --- Inventory Status (per product across all branches) ---
+  // --- Inventory Status (per product in filtered inventory) ---
   const inventoryStatus: InventoryStatusItem[] = []
   for (const [productId, agg] of productAggregator) {
     const name = productNameMap.get(productId) || "Unknown"
@@ -114,7 +127,7 @@ export async function getMonitoringData(): Promise<MonitoringData> {
     alerts.push({
       type: "critical",
       title: `Stock Critical: ${p.productName}`,
-      description: `Only ${p.totalQuantity} units across all branches. Reorder level: ${p.reorderLevel}.`,
+      description: `Only ${p.totalQuantity} units${branchId ? "" : " across all branches"}. Reorder level: ${p.reorderLevel}.`,
     })
   }
 
@@ -127,10 +140,11 @@ export async function getMonitoringData(): Promise<MonitoringData> {
     })
   }
 
+  const locationLabel = selectedBranch ? selectedBranch.name : "All branches"
   alerts.push({
     type: "success",
-    title: "Stock Sync Successful",
-    description: `All ${allBranches.length} branches synchronized at ${now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}.`,
+    title: `Stock Sync Successful`,
+    description: `${locationLabel} synchronized at ${now.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}.`,
   })
 
   // --- Branches for selector ---
