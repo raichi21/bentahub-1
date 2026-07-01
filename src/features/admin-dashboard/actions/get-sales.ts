@@ -18,6 +18,7 @@ export interface SalesOverview {
 
 export interface SalesTransactionRow {
   id: string
+  displayId: string
   branchName: string
   createdAt: Date
   totalAmount: string
@@ -102,8 +103,9 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
 
   const offset = (filters.page - 1) * filters.pageSize
   const pageRows = allMatched.slice(offset, offset + filters.pageSize)
-  const transactionsList: SalesTransactionRow[] = pageRows.map((t) => ({
+  const transactionsList: SalesTransactionRow[] = pageRows.map((t, idx) => ({
     id: t.id,
+    displayId: `BH-${String(allMatched.length - offset - idx).padStart(4, "0")}`,
     branchName: branchMap.get(t.branchId) || "Unknown",
     createdAt: t.createdAt,
     totalAmount: t.totalAmount,

@@ -1,6 +1,6 @@
 "use client"
 
-import { Filter, MoreVertical, FileX, Loader2 } from "lucide-react"
+import { FileX, Loader2 } from "lucide-react"
 import type { SalesTransactionRowData } from "@/types/admin"
 
 interface TransactionDetailsTableProps {
@@ -26,14 +26,6 @@ export function TransactionDetailsTable({
     <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mt-6">
       <div className="px-6 py-3 bg-muted/20 border-b border-border flex justify-between items-center">
         <h3 className="text-sm font-bold text-foreground">Transaction Details</h3>
-        <div className="flex gap-2">
-          <button className="p-1.5 hover:bg-muted rounded text-muted-foreground transition-colors">
-            <Filter className="h-5 w-5" />
-          </button>
-          <button className="p-1.5 hover:bg-muted rounded text-muted-foreground transition-colors">
-            <MoreVertical className="h-5 w-5" />
-          </button>
-        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -72,7 +64,7 @@ export function TransactionDetailsTable({
             ) : (
               transactions.map((t) => (
                 <tr key={t.id} className="hover:bg-muted/20 transition-colors group">
-                  <td className="px-6 py-4 font-mono text-sm text-foreground">{t.id.slice(0, 8)}...</td>
+                  <td className="px-6 py-4 font-mono text-sm text-foreground">{t.displayId}</td>
                   <td className="px-6 py-4 text-sm text-foreground">{t.branchName}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
                     {new Date(t.createdAt).toLocaleDateString("en-PH", {

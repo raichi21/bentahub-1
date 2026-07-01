@@ -69,6 +69,7 @@ export interface SalesOverviewData {
 
 export interface SalesTransactionRowData {
   id: string
+  displayId: string
   branchName: string
   createdAt: Date
   totalAmount: string
