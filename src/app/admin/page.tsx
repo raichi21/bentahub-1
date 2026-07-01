@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { KPICard, SalesChart, StockTable, TopProductsCard, LowStockByCategoryCard } from "@/features/admin-dashboard"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
 import type { AdminOverviewData, TopProductData, LowStockByCategoryData } from "@/types/admin"
-import { PageHeader } from "@/components/layouts"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function AdminPage() {
@@ -78,11 +77,6 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Dashboard"
-        description="Overview of your store performance."
-      />
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <KPICard
           title="Total Revenue"
