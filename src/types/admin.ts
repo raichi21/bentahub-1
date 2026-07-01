@@ -197,6 +197,86 @@ export interface PaymentApiData {
   totalCount: number
 }
 
+export interface HistoryMetricsData {
+  totalTransactions: number
+  totalTransactionsDisplay: string
+  totalSales: number
+  totalSalesDisplay: string
+  trend: string
+}
+
+export interface HistoryTransactionItemData {
+  productName: string
+  quantity: number
+  price: number
+  subtotal: number
+}
+
+export interface HistoryTransactionRowData {
+  id: string
+  displayId: string
+  date: Date
+  dateDisplay: string
+  branchName: string
+  itemsCount: number
+  items: HistoryTransactionItemData[]
+  subtotal: number
+  subtotalDisplay: string
+  totalAmount: number
+  totalAmountDisplay: string
+  paymentMethod: string
+  paymentMethodDisplay: string
+  status: string
+  statusDisplay: string
+}
+
+export interface HistoryApiData {
+  metrics: HistoryMetricsData
+  transactions: HistoryTransactionRowData[]
+  totalCount: number
+  branches: { id: string; name: string }[]
+}
+
+export interface PickupMetricsData {
+  total: number
+  totalTrend: string
+  completed: number
+  completedRate: string
+  pending: number
+  urgentCount: number
+  delayed: number
+}
+
+export interface PickupItemData {
+  productName: string
+  quantity: number
+  price: number
+  subtotal: number
+}
+
+export interface PickupRowData {
+  id: string
+  displayId: string
+  customerName: string
+  customerInitials: string
+  customerEmail: string
+  branch: string
+  itemsCount: number
+  items: PickupItemData[]
+  totalAmount: string
+  pickupDeadline: string | null
+  status: string
+  statusDisplay: string
+  createdAt: Date
+}
+
+export interface PickupApiData {
+  metrics: PickupMetricsData
+  pickups: PickupRowData[]
+  totalCount: number
+  branches: { id: string; name: string }[]
+}
+
 export interface AdminApiResponse<T = unknown> {
   success: boolean
   message: string
