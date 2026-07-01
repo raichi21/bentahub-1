@@ -1,200 +1,165 @@
-import { Search, Eye, Pencil, ChevronLeft, ChevronRight } from "lucide-react"
+"use client"
 
-interface Reservation {
-  id: string
-  customerName: string
-  initials: string
-  avatarBg: string
-  avatarText: string
-  branch: string
-  itemsCount: number
-  pickupDate: string
-  status: "Pending" | "Completed" | "Confirmed" | "Cancelled"
+import { useState } from "react"
+import { Search, Eye, Pencil, FileX, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import type { ReservationRowData } from "@/types/admin"
+
+interface ReservationTableProps {
+  reservations: ReservationRowData[]
+  totalCount: number
+  page: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  onSearch: (query: string) => void
+  loading: boolean
 }
 
-const mockReservations: Reservation[] = [
-  {
-    id: "#BH-7821",
-    customerName: "Juan Dela Cruz",
-    initials: "JD",
-    avatarBg: "bg-accent/40",
-    avatarText: "text-primary",
-    branch: "Quezon City Main",
-    itemsCount: 5,
-    pickupDate: "Oct 24, 2023 • 14:30",
-    status: "Pending",
-  },
-  {
-    id: "#BH-7822",
-    customerName: "Maria Santos",
-    initials: "MS",
-    avatarBg: "bg-muted/80",
-    avatarText: "text-muted-foreground",
-    branch: "Makati Business Hub",
-    itemsCount: 2,
-    pickupDate: "Oct 24, 2023 • 11:00",
-    status: "Completed",
-  },
-  {
-    id: "#BH-7823",
-    customerName: "Antonio Luna",
-    initials: "AL",
-    avatarBg: "bg-primary/10",
-    avatarText: "text-primary",
-    branch: "Cebu IT Park",
-    itemsCount: 12,
-    pickupDate: "Oct 25, 2023 • 09:00",
-    status: "Confirmed",
-  },
-  {
-    id: "#BH-7824",
-    customerName: "Elena Reyes",
-    initials: "ER",
-    avatarBg: "bg-destructive/10",
-    avatarText: "text-destructive",
-    branch: "Davao City Branch",
-    itemsCount: 1,
-    pickupDate: "Oct 23, 2023 • 17:45",
-    status: "Cancelled",
-  },
-]
+const STATUS_STYLES: Record<string, string> = {
+  pending: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  processing: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  ready: "bg-primary/10 text-primary",
+  completed: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  cancelled: "bg-destructive/10 text-destructive",
+}
 
-export function ReservationTable() {
+export function ReservationTable({
+  reservations,
+  totalCount,
+  page,
+  pageSize,
+  onPageChange,
+  onSearch,
+  loading,
+}: ReservationTableProps) {
+  const [searchInput, setSearchInput] = useState("")
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSearch(searchInput)
+  }
+
   return (
     <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mt-6">
       <div className="px-6 py-4 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/5">
         <h4 className="text-base font-bold text-foreground">All Reservations</h4>
-        <div className="relative w-full sm:w-64">
+        <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search ID or Customer..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="w-full pl-9 pr-4 py-1.5 bg-background border border-border rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none"
           />
-        </div>
+        </form>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead className="bg-muted/10 border-b border-border">
             <tr>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Reservation ID
-              </th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Customer
-              </th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Branch
-              </th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Items
-              </th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Pickup Date
-              </th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reservation ID</th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Customer</th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch</th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Items</th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Total</th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Pickup Date</th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {mockReservations.map((reservation) => {
-              const statusStyles = (() => {
-                switch (reservation.status) {
-                  case "Pending":
-                    return "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  case "Completed":
-                    return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  case "Confirmed":
-                    return "bg-primary/10 text-primary"
-                  case "Cancelled":
-                    return "bg-destructive/10 text-destructive"
-                  default:
-                    return "bg-muted text-muted-foreground"
-                }
-              })()
+            {loading ? (
+              <tr>
+                <td className="px-6 py-20 text-center" colSpan={8}>
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
+                </td>
+              </tr>
+            ) : reservations.length === 0 ? (
+              <tr className="hover:bg-muted/20 transition-colors group">
+                <td className="px-6 py-20 text-center" colSpan={8}>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                      <FileX className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground">No reservations found.</p>
+                      <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or search.</p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              reservations.map((r) => {
+                const statusStyle = STATUS_STYLES[r.status] || "bg-muted text-muted-foreground"
+                const pickupDisplay = r.pickupDeadline
+                  ? new Date(r.pickupDeadline).toLocaleDateString("en-PH", {
+                      month: "short", day: "numeric", year: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    })
+                  : "—"
 
-              return (
-                <tr
-                  key={reservation.id}
-                  className="hover:bg-muted/10 transition-colors"
-                >
-                  <td className="px-6 py-4 font-mono text-sm text-primary font-bold">
-                    {reservation.id}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full ${reservation.avatarBg} ${reservation.avatarText} flex items-center justify-center font-bold text-xs`}
-                      >
-                        {reservation.initials}
+                return (
+                  <tr key={r.id} className="hover:bg-muted/10 transition-colors">
+                    <td className="px-6 py-4 font-mono text-sm text-primary font-bold">{r.displayId}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                          {r.customerInitials}
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{r.customerName}</span>
                       </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {reservation.customerName}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{r.branch}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{r.itemsCount} {r.itemsCount === 1 ? "Item" : "Items"}</td>
+                    <td className="px-6 py-4 font-mono text-sm font-bold text-foreground">
+                      ₱{parseFloat(r.totalAmount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{pickupDisplay}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle}`}>
+                        {r.status}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {reservation.branch}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {reservation.itemsCount} {reservation.itemsCount === 1 ? "Item" : "Items"}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {reservation.pickupDate}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyles}`}
-                    >
-                      {reservation.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="p-1 hover:bg-muted rounded text-primary transition-colors"
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        title="Edit"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="p-1 hover:bg-muted rounded text-primary transition-colors" title="View Details">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors" title="Edit">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })
+            )}
           </tbody>
         </table>
       </div>
 
       <div className="px-6 py-4 bg-muted/5 border-t border-border flex justify-between items-center">
         <p className="text-xs text-muted-foreground font-medium">
-          Showing 1-4 of 1,284 results
+          Showing {reservations.length > 0 ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, totalCount)} of {totalCount} results
         </p>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 border border-border rounded hover:bg-muted transition-colors text-muted-foreground">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            className="p-1.5 border border-border rounded hover:bg-muted transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button className="px-3 py-1 bg-primary text-primary-foreground rounded text-xs font-bold">
-            1
-          </button>
-          <button className="px-3 py-1 hover:bg-muted rounded text-xs font-bold">
-            2
-          </button>
-          <button className="px-3 py-1 hover:bg-muted rounded text-xs font-bold">
-            3
-          </button>
-          <button className="p-1.5 border border-border rounded hover:bg-muted transition-colors text-muted-foreground">
+          <span className="px-3 py-1 text-xs font-bold text-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className="p-1.5 border border-border rounded hover:bg-muted transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>

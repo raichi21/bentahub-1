@@ -1,131 +1,106 @@
 "use client"
 
-import { useState } from "react"
-import { Search, SlidersHorizontal, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { useState, useRef } from "react"
+import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 import { AddUserModal } from "./add-user-modal"
 import { EditUserModal } from "./edit-user-modal"
 import { DeleteUserModal } from "./delete-user-modal"
+import type { UserRowData } from "@/types/admin"
 
-interface User {
-  name: string
-  initials: string
-  avatarBg: string
-  avatarText: string
-  email: string
-  role: "Admin" | "Cashier" | "Staff"
-  branch: string
-  status: "Active" | "Inactive"
-  joinDate: string
+interface UserTableProps {
+  users: UserRowData[]
+  totalCount: number
+  page: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  onSearch: (q: string) => void
+  onRefresh: () => void
+  loading: boolean
+  token: string | null
 }
 
-const mockUsers: User[] = [
-  {
-    name: "John Doe",
-    initials: "JD",
-    avatarBg: "bg-primary/10",
-    avatarText: "text-primary",
-    email: "john.doe@bentahub.com",
-    role: "Admin",
-    branch: "All Branches",
-    status: "Active",
-    joinDate: "2023-10-12",
-  },
-  {
-    name: "Sarah Cruz",
-    initials: "SC",
-    avatarBg: "bg-amber-500/10",
-    avatarText: "text-amber-600 dark:text-amber-400",
-    email: "sarah.c@bentahub.com",
-    role: "Cashier",
-    branch: "Manila Central",
-    status: "Active",
-    joinDate: "2024-01-05",
-  },
-  {
-    name: "Mike Reyes",
-    initials: "MR",
-    avatarBg: "bg-muted/80",
-    avatarText: "text-muted-foreground",
-    email: "m.reyes@gmail.com",
-    role: "Staff",
-    branch: "Quezon City Hub",
-    status: "Inactive",
-    joinDate: "2023-11-20",
-  },
+export function UserTable({
+  users,
+  totalCount,
+  page,
+  pageSize,
+  onPageChange,
+  onSearch,
+  onRefresh,
+  loading,
+  token,
+}: UserTableProps) {
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserRowData | null>(null)
+  const [deletingUser, setDeletingUser] = useState<UserRowData | null>(null)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-]
+  const totalPages = Math.ceil(totalCount / pageSize)
+  const start = (page - 1) * pageSize + 1
+  const end = Math.min(page * pageSize, totalCount)
 
-export function UserTable() {
-  const [users, setUsers] = useState<User[]>(mockUsers)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [deletingUser, setDeletingUser] = useState<User | null>(null)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => onSearch(e.target.value), 300)
+  }
 
-  const handleAddUser = (newUser: {
-    name: string
-    email: string
-    role: "Admin" | "Cashier" | "Staff"
-    branch: string
-  }) => {
-    const initials = newUser.name
+  const roleStyles: Record<string, string> = {
+    admin: "bg-primary/10 text-primary border border-primary/20",
+    cashier: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+    staff: "bg-muted/80 text-muted-foreground border border-border",
+    customer: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20",
+  }
+
+  const getInitials = (name: string) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .substring(0, 2)
       .toUpperCase() || "UN"
 
-    const createdUser: User = {
-      name: newUser.name,
-      initials,
-      avatarBg: "bg-primary/10",
-      avatarText: "text-primary",
-      email: newUser.email,
-      role: newUser.role,
-      branch: newUser.branch,
-      status: "Active",
-      joinDate: new Date().toISOString().split("T")[0],
+  const formatDate = (d: Date) =>
+    new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+
+  const paginationButtons = () => {
+    const maxVisible = 5
+    const half = Math.floor(maxVisible / 2)
+    let s = Math.max(1, page - half)
+    let e = Math.min(totalPages, s + maxVisible - 1)
+    if (e - s + 1 < maxVisible) s = Math.max(1, e - maxVisible + 1)
+    const buttons: React.ReactNode[] = []
+
+    if (s > 1) {
+      buttons.push(
+        <button key={1} onClick={() => onPageChange(1)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted text-xs font-bold">1</button>
+      )
+      if (s > 2) buttons.push(<span key="dots-s" className="px-1 text-xs text-muted-foreground">...</span>)
     }
 
-    setUsers((prev) => [createdUser, ...prev])
+    for (let i = s; i <= e; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => onPageChange(i)}
+          className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${
+            i === page ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted"
+          }`}
+        >{i}</button>
+      )
+    }
+
+    if (e < totalPages) {
+      if (e < totalPages - 1) buttons.push(<span key="dots-e" className="px-1 text-xs text-muted-foreground">...</span>)
+      buttons.push(
+        <button key={totalPages} onClick={() => onPageChange(totalPages)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted text-xs font-bold">{totalPages}</button>
+      )
+    }
+
+    return buttons
   }
 
-  const handleEditUser = (updatedUser: {
-    name: string
-    email: string
-    role: "Admin" | "Cashier" | "Staff"
-    branch: string
-  }) => {
-    if (!editingUser) return
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.email === editingUser.email) {
-          const initials = updatedUser.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .substring(0, 2)
-            .toUpperCase() || "UN"
-          return {
-            ...u,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            role: updatedUser.role,
-            branch: updatedUser.branch,
-            initials,
-          }
-        }
-        return u
-      })
-    )
-  }
-
-  const handleDeleteUser = (email: string) => {
-    setUsers((prev) => prev.filter((u) => u.email !== email))
-    setDeletingUser(null)
-  }
   return (
     <div className="flex flex-col gap-6">
-      {/* Table Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full max-w-[536px]">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
@@ -133,15 +108,12 @@ export function UserTable() {
             className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary shadow-sm transition-all text-sm h-12"
             placeholder="Search by name or email..."
             type="text"
+            onChange={handleSearchChange}
           />
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button className="flex items-center justify-center gap-2 h-12 px-6 bg-card border border-border text-foreground rounded-lg text-xs font-bold hover:bg-muted transition-all">
-            <SlidersHorizontal className="h-[18px] w-[18px]" />
-            Filters
-          </button>
-          <button 
-            onClick={() => setIsModalOpen(true)}
+          <button
+            onClick={() => setIsAddOpen(true)}
             className="flex flex-1 sm:flex-initial items-center justify-center gap-2 h-12 px-8 bg-primary text-primary-foreground rounded-lg font-bold text-xs shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all"
           >
             <Plus className="h-[18px] w-[18px]" />
@@ -150,107 +122,66 @@ export function UserTable() {
         </div>
       </div>
 
-      {/* Data Table Card */}
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden mb-8">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-muted/10 border-b border-border">
-              <tr>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  Name
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  Email
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">
-                  Role
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  Branch
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">
-                  Join Date
-                </th>
-                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {users.map((user) => {
-                const roleStyles = (() => {
-                  switch (user.role) {
-                    case "Admin":
-                      return "bg-primary/10 text-primary border border-primary/20"
-                    case "Cashier":
-                      return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                    case "Staff":
-                      return "bg-muted/80 text-muted-foreground border border-border"
-                    default:
-                      return "bg-muted text-muted-foreground"
-                  }
-                })()
-
-                const statusStyles = user.status === "Active"
-                  ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
-                  : "bg-destructive/10 text-destructive border border-destructive/20"
-
-                const dotColor = user.status === "Active" ? "bg-green-500" : "bg-destructive"
-
-                return (
-                  <tr
-                    key={user.email}
-                    className="hover:bg-muted/5 transition-colors group"
-                  >
+          {loading && users.length === 0 ? (
+            <div className="p-12 text-center text-sm text-muted-foreground animate-pulse">Loading users...</div>
+          ) : users.length === 0 ? (
+            <div className="p-12 text-center text-sm text-muted-foreground">No users found.</div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-muted/10 border-b border-border">
+                <tr>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Name</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Email</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Role</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Branch</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Join Date</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {users.map((u) => (
+                  <tr key={u.id} className="hover:bg-muted/5 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-full ${user.avatarBg} ${user.avatarText} flex items-center justify-center font-bold text-sm`}
-                        >
-                          {user.initials}
+                        <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                          {getInitials(u.fullName)}
                         </div>
-                        <span className="text-sm font-medium text-foreground">
-                          {user.name}
-                        </span>
+                        <span className="text-sm font-medium text-foreground">{u.fullName}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {user.email}
-                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{u.email}</td>
                     <td className="px-6 py-4 text-center">
-                      <span
-                        className={`inline-flex px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-tight ${roleStyles}`}
-                      >
-                        {user.role}
+                      <span className={`inline-flex px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-tight ${roleStyles[u.role] || "bg-muted text-muted-foreground"}`}>
+                        {u.role}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">
-                      {user.branch}
+                      {u.branch || "—"}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${statusStyles}`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-                        {user.status}
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${
+                        u.isActive
+                          ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
+                          : "bg-destructive/10 text-destructive border border-destructive/20"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-green-500" : "bg-destructive"}`} />
+                        {u.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center font-mono text-sm text-muted-foreground">
-                      {user.joinDate}
-                    </td>
+                    <td className="px-6 py-4 text-center font-mono text-sm text-muted-foreground">{formatDate(u.createdAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => setEditingUser(user)}
+                          onClick={() => setEditingUser(u)}
                           className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => setDeletingUser(user)}
+                          onClick={() => setDeletingUser(u)}
                           className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -258,61 +189,60 @@ export function UserTable() {
                       </div>
                     </td>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Pagination Footer */}
-        <div className="px-6 py-4 flex items-center justify-between bg-muted/5 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            Showing <span className="font-bold text-foreground">1-4</span> of{" "}
-            <span className="font-bold text-foreground">42</span> users
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              className="p-1 rounded border border-border hover:bg-muted disabled:opacity-30 disabled:pointer-events-none h-8 w-8 flex items-center justify-center"
-              disabled
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded bg-primary text-primary-foreground font-bold text-xs shadow-sm">
-              1
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted text-xs font-bold">
-              2
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted text-xs font-bold">
-              3
-            </button>
-            <span className="px-1 text-xs text-muted-foreground">...</span>
-            <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted text-xs font-bold">
-              11
-            </button>
-            <button className="p-1 rounded border border-border hover:bg-muted h-8 w-8 flex items-center justify-center">
-              <ChevronRight className="h-4 w-4" />
-            </button>
+        {totalCount > pageSize && (
+          <div className="px-6 py-4 flex items-center justify-between bg-muted/5 border-t border-border">
+            <p className="text-xs text-muted-foreground">
+              Showing <span className="font-bold text-foreground">{start}–{end}</span> of{" "}
+              <span className="font-bold text-foreground">{totalCount}</span> users
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onPageChange(page - 1)}
+                disabled={page <= 1}
+                className="p-1 rounded border border-border hover:bg-muted disabled:opacity-30 disabled:pointer-events-none h-8 w-8 flex items-center justify-center"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {paginationButtons()}
+              <button
+                onClick={() => onPageChange(page + 1)}
+                disabled={page >= totalPages}
+                className="p-1 rounded border border-border hover:bg-muted disabled:opacity-30 disabled:pointer-events-none h-8 w-8 flex items-center justify-center"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
       <AddUserModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAdd={handleAddUser}
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        token={token}
+        onSuccess={() => { setIsAddOpen(false); onRefresh() }}
       />
       <EditUserModal
-        key={editingUser?.email || "none"}
+        key={editingUser?.id || "none"}
         isOpen={editingUser !== null}
         onClose={() => setEditingUser(null)}
         user={editingUser}
-        onSave={handleEditUser}
+        token={token}
+        onSuccess={() => { setEditingUser(null); onRefresh() }}
       />
       <DeleteUserModal
         isOpen={deletingUser !== null}
         onClose={() => setDeletingUser(null)}
-        userName={deletingUser?.name}
-        onConfirm={() => deletingUser && handleDeleteUser(deletingUser.email)}
+        userId={deletingUser?.id || ""}
+        userName={deletingUser?.fullName || ""}
+        token={token}
+        onSuccess={() => { setDeletingUser(null); onRefresh() }}
       />
     </div>
   )

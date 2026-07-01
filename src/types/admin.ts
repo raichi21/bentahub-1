@@ -105,6 +105,98 @@ export interface LowStockByCategoryData {
   lowStockPercentage: number
 }
 
+export interface ReservationMetricsData {
+  total: number
+  totalTrend: string
+  pending: number
+  completed: number
+  cancelled: number
+}
+
+export interface ReservationRowData {
+  id: string
+  displayId: string
+  customerName: string
+  customerInitials: string
+  branch: string
+  itemsCount: number
+  totalAmount: string
+  pickupDeadline: string | null
+  status: string
+  createdAt: Date
+}
+
+export interface ReservationApiData {
+  metrics: ReservationMetricsData
+  reservations: ReservationRowData[]
+  totalCount: number
+  branches: { id: string; name: string }[]
+}
+
+export interface UserRowData {
+  id: string
+  fullName: string
+  email: string
+  role: string
+  branch: string | null
+  isActive: boolean
+  createdAt: Date
+}
+
+export interface UserMetricsData {
+  total: number
+  active: number
+  newThisWeek: number
+  adminCount: number
+  cashierCount: number
+  staffCount: number
+  customerCount: number
+}
+
+export interface UsersApiData {
+  metrics: UserMetricsData
+  users: UserRowData[]
+  totalCount: number
+}
+
+export interface PaymentMetricsData {
+  totalAmount: number
+  totalAmountDisplay: string
+  cashTotal: number
+  cashTotalDisplay: string
+  gcashTotal: number
+  gcashTotalDisplay: string
+  cashPercentage: number
+  gcashPercentage: number
+  completedCount: number
+  pendingCount: number
+  cancelledCount: number
+  totalCount: number
+}
+
+export interface PaymentRowData {
+  id: string
+  displayId: string
+  transactionId: string
+  transactionDisplayId: string
+  amount: number
+  amountDisplay: string
+  method: string
+  methodDisplay: string
+  dateTime: Date
+  dateTimeDisplay: string
+  branchId: string
+  branchName: string
+  status: string
+  statusDisplay: string
+}
+
+export interface PaymentApiData {
+  metrics: PaymentMetricsData
+  payments: PaymentRowData[]
+  totalCount: number
+}
+
 export interface AdminApiResponse<T = unknown> {
   success: boolean
   message: string
