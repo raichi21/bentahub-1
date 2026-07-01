@@ -83,7 +83,7 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
             <span className="font-bold text-lg tracking-tight truncate">BentaHub</span>
             <span className="text-[10px] text-slate-400 uppercase tracking-widest">Admin Panel</span>
           </div>
-          <button onClick={onClose} className="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors md:hidden">
+          <button onClick={onClose} aria-label="Close sidebar" className="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors md:hidden">
             <X className="h-5 w-5" />
           </button>
         </div>

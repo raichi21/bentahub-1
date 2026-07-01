@@ -7,7 +7,8 @@ import type { MonitoringData, InventoryStatusItem } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function MonitoringPage() {
-  const { token, isLoading: authLoading } = useAuth()
+  // ── All hooks must be before any early return ──
+  const { token, isLoading: authLoading, isAuthenticated } = useAuth()
   const [data, setData] = useState<MonitoringData | null>(null)
   const [selectedBranch, setSelectedBranch] = useState("all")
   const [exportOpen, setExportOpen] = useState(false)
@@ -15,6 +16,51 @@ export default function MonitoringPage() {
   const [fetched, setFetched] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
 
+  // Fetch monitoring data
+  useEffect(() => {
+    if (!token) return
+
+    setFetched(false)
+
+    const params = selectedBranch !== "all" ? `?branchId=${selectedBranch}` : ""
+
+    fetch(`/api/admin/monitoring${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text().catch(() => "")
+          throw new Error(`API ${res.status}: ${text.slice(0, 200)}`)
+        }
+        return res.json()
+      })
+      .then((json) => {
+        if (json.success && json.data) {
+          setData(json.data)
+          setError(null)
+        } else {
+          setError(json.message || "API returned success=false")
+        }
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : String(err))
+      })
+      .finally(() => setFetched(true))
+  }, [token, selectedBranch])
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
+  // ── Derived state ──
+  const isLoading = authLoading || (!authLoading && token && !fetched && !error)
+
+  // ── Helper functions ──
   function exportCSV() {
     if (!data) return
     const rows = data.inventoryStatus.map((i: InventoryStatusItem) =>
@@ -65,39 +111,15 @@ export default function MonitoringPage() {
     setExportOpen(false)
   }
 
-  // Close export dropdown on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [])
-
-  // Fetch monitoring data
-  useEffect(() => {
-    if (!token) return
-
-    setFetched(false)
-
-    const params = selectedBranch !== "all" ? `?branchId=${selectedBranch}` : ""
-    fetch(`/api/admin/monitoring${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setData(json.data)
-          setError(null)
-        } else {
-          setError(json.message || "Failed to load monitoring data")
-        }
-      })
-      .catch(() => setError("Failed to load monitoring data"))
-      .finally(() => setFetched(true))
-  }, [token, selectedBranch])
-
-  const isLoading = authLoading || (token && !fetched && !error)
+  // ── Render ──
+  if (!authLoading && !token) {
+    return (
+      <div className="p-8 text-center max-w-7xl mx-auto w-full">
+        <p className="text-sm text-red-500">Not authenticated. Auth state: loading={String(authLoading)}, hasToken={String(!!token)}, isAuth={String(isAuthenticated)}</p>
+        <p className="text-sm text-red-500 mt-2">Try going to <a href="/login" className="underline">/login</a> to log in again.</p>
+      </div>
+    )
+  }
 
   if (isLoading) {
     return (
@@ -118,7 +140,7 @@ export default function MonitoringPage() {
   if (error) {
     return (
       <div className="p-8 text-center max-w-7xl mx-auto w-full">
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500">Error: {error}</p>
       </div>
     )
   }
