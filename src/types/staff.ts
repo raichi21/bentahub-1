@@ -32,6 +32,14 @@ export interface StaffProductsData {
   }
 }
 
+export interface StaffTransactionItem {
+  id: string
+  date: string
+  paymentMethod: "cash" | "gcash"
+  total: number
+  status: "completed" | "voided" | "pending"
+}
+
 export interface StaffApiResponse<T = unknown> {
   success: boolean
   message: string

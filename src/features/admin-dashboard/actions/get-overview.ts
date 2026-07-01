@@ -1,5 +1,4 @@
 import { db } from "@/servers/db"
-import { branches, branchInventory, transactions } from "@/servers/schemas"
 import type { AdminOverviewData, BranchStockData, SalesTrendData } from "@/types/admin"
 
 interface RawTransaction {
@@ -88,7 +87,6 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
   const uniqueProducts = new Set(allInventory.map((i: RawInventory) => i.productId)).size
 
   const lowStockItems = allInventory.filter((i: RawInventory) => i.quantity < i.lowStockThreshold)
-  const lowStockProductCount = new Set(lowStockItems.map((i: RawInventory) => i.productId)).size
 
   // --- Sales Trend (last 12 months) ---
   const salesTrend: SalesTrendData[] = []
@@ -112,22 +110,21 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     .filter((b: RawBranch) => b.isActive)
     .map((b: RawBranch) => {
       const branchInv = allInventory.filter((i: RawInventory) => i.branchId === b.id)
-      const totalItems = branchInv.reduce((sum: number, i: RawInventory) => sum + i.quantity, 0)
+      const totalProducts = branchInv.length
       const lowInBranch = branchInv.filter((i: RawInventory) => i.quantity < i.lowStockThreshold).length
-      const percentage = b.capacity > 0 ? Math.round((totalItems / b.capacity) * 100) : 0
-      const pct = Math.min(percentage, 100)
+      const pct = b.capacity > 0 ? Math.round((totalProducts / b.capacity) * 100) : 0
 
       let status: "Healthy" | "Warning" | "Critical" = "Healthy"
-      if (lowInBranch > 5) status = "Critical"
+      if (lowInBranch > 15) status = "Critical"
       else if (lowInBranch > 0) status = "Warning"
 
       return {
         id: b.id,
         name: b.name,
-        totalItems,
+        totalItems: totalProducts,
         capacity: b.capacity,
         lowStockItems: lowInBranch,
-        percentage: pct,
+        percentage: Math.min(pct, 100),
         status,
       }
     })
@@ -140,12 +137,12 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
         trendType: revenueTrend.trendType,
       },
       totalInventory: {
-        value: `${totalStock} items`,
-        trend: `${uniqueProducts} unique products`,
+        value: `${uniqueProducts} products`,
+        trend: `${totalStock} items across ${allBranches.length} branches`,
         trendType: "up",
       },
       lowStockAlerts: {
-        value: lowStockProductCount,
+        value: lowStockItems.length,
       },
     },
     salesTrend,

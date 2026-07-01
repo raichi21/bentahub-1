@@ -2,26 +2,38 @@
 
 import { useState, useEffect } from "react"
 import { KPICard, SalesChart, StockTable } from "@/features/admin-dashboard"
-import { BranchStockOverview } from "@/features/analytics"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
 import type { AdminOverviewData } from "@/types/admin"
 import { PageHeader } from "@/components/layouts"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function AdminPage() {
+  const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<AdminOverviewData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [fetched, setFetched] = useState(false)
 
   useEffect(() => {
-    fetch("/api/admin/overview")
+    if (!token) return
+
+    fetch("/api/admin/overview", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((json) => {
-        if (json.success && json.data) setData(json.data)
+        if (json.success && json.data) {
+          setData(json.data)
+        } else {
+          setError(json.message)
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [])
+      .catch(() => setError("Failed to load overview"))
+      .finally(() => setFetched(true))
+  }, [token])
 
-  if (loading) {
+  const isLoading = authLoading || (token && !fetched && !error)
+
+  if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -36,6 +48,14 @@ export default function AdminPage() {
           <div className="lg:col-span-8 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
           <div className="lg:col-span-4 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-sm text-red-500">{error}</p>
       </div>
     )
   }
@@ -71,13 +91,8 @@ export default function AdminPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8">
-          <SalesChart data={data?.salesTrend} />
-        </div>
-        <div className="lg:col-span-4">
-          <BranchStockOverview data={data?.branchStock} />
-        </div>
+      <div className="grid grid-cols-1 gap-6">
+        <SalesChart data={data?.salesTrend} />
       </div>
 
       <div className="grid grid-cols-1 gap-6">

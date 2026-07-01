@@ -76,9 +76,18 @@ export default function LoginPage() {
         setUser(user)
       }
 
-      // Success - client-side navigation to dashboard
-      console.log("Login successful, redirecting to /customer")
-      router.push("/customer")
+      // Success - client-side navigation based on role
+      const role = user?.role
+      console.log("Login successful, redirecting to", role)
+      if (role === "admin") {
+        router.push("/admin")
+      } else if (role === "staff") {
+        router.push("/staff")
+      } else if (role === "cashier") {
+        router.push("/cashier")
+      } else {
+        router.push("/customer")
+      }
     } catch (err) {
       console.error("Login error:", err)
       setError("An unexpected error occurred. Please try again.")

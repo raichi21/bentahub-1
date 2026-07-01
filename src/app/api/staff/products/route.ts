@@ -26,13 +26,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<StaffApiRe
       )
     }
 
-    if (payload.role !== "staff" && payload.role !== "admin") {
-      return NextResponse.json(
-        { success: false, message: "Staff or admin access required" },
-        { status: 403 },
-      )
-    }
-
     const user = await db.query.users.findFirst({
       where: eq(users.id, payload.userId),
     })
@@ -44,14 +37,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<StaffApiRe
       )
     }
 
-    if (!user.branch) {
-      return NextResponse.json(
-        { success: false, message: "No branch assigned to this user" },
-        { status: 400 },
-      )
-    }
+    const branch = user.branch || "Lourdes Main Branch"
 
-    const data = await getStaffProducts(user.branch)
+    const data = await getStaffProducts(branch)
 
     return NextResponse.json(
       { success: true, message: "Products retrieved successfully", data },

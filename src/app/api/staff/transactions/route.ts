@@ -3,10 +3,10 @@ import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { getStaffDashboard } from "@/features/staff-dashboard/actions/get-dashboard"
-import type { StaffApiResponse, StaffDashboardData } from "@/types/staff"
+import { getTransactions } from "@/features/staff-dashboard/actions/get-transactions"
+import type { StaffApiResponse, StaffTransactionItem } from "@/types/staff"
 
-export async function GET(request: NextRequest): Promise<NextResponse<StaffApiResponse<StaffDashboardData>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<StaffApiResponse<StaffTransactionItem[]>>> {
   try {
     const token = extractToken(request)
 
@@ -39,16 +39,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<StaffApiRe
 
     const branch = user.branch || "Lourdes Main Branch"
 
-    const data = await getStaffDashboard(branch)
+    const data = await getTransactions(branch)
 
     return NextResponse.json(
-      { success: true, message: "Dashboard data retrieved successfully", data },
+      { success: true, message: "Transactions retrieved successfully", data },
       { status: 200 },
     )
   } catch (error) {
-    console.error("Staff dashboard error:", error)
+    console.error("Staff transactions error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching dashboard data" },
+      { success: false, message: "An error occurred while fetching transactions" },
       { status: 500 },
     )
   }
