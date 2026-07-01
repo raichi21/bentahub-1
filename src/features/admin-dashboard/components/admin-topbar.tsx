@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useAdminNotifications } from "@/hooks/useAdminNotifications"
 
 interface AdminTopbarProps {
   pathname?: string
@@ -10,6 +11,7 @@ interface AdminTopbarProps {
 }
 
 export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopbarProps) {
+  const { unreadCount } = useAdminNotifications()
   const router = useRouter()
   let title = "Dashboard Overview"
   let subtitle = ""
@@ -67,7 +69,11 @@ export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopba
         {/* Notifications */}
         <button onClick={() => router.push("/admin/notifications")} aria-label="View notifications" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-200 dark:border-slate-800 relative flex-shrink-0">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+          {unreadCount > 0 && (
+            <span className={`absolute -top-1 -right-1 rounded-full bg-red-500 text-white text-[10px] font-bold ring-2 ring-white dark:ring-slate-900 ${unreadCount > 9 ? "min-w-[20px] h-5 px-1" : "w-5 h-5"} flex items-center justify-center`}>
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
 
         {/* Vertical Divider - hidden on very small screens */}
