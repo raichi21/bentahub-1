@@ -1,6 +1,7 @@
 import crypto from "crypto"
 import bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken"
+import { NextResponse } from "next/server"
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET
@@ -96,4 +97,26 @@ export function extractToken(request: { headers: { get: (name: string) => string
     return null
   }
   return header.slice(7)
+}
+
+// ---------------------------------------------------------------------------
+// Admin auth helper (replaces duplicated checkAuth in admin API routes)
+// ---------------------------------------------------------------------------
+
+/**
+ * Verify that the request has a valid admin JWT.
+ * Returns `{ userId, error }` — if `error` is set, return it immediately.
+ */
+export function checkAdminAuth(token: string | null): { userId?: string; error?: NextResponse } {
+  if (!token) {
+    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
+  }
+  const payload = verifyToken(token)
+  if (!payload) {
+    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
+  }
+  if (payload.role !== "admin") {
+    return { error: NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 }) }
+  }
+  return { userId: payload.userId }
 }

@@ -1,25 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { verifyToken, extractToken } from "@/lib/auth-utils"
+import { extractToken, checkAdminAuth } from "@/lib/auth-utils"
 import { getHistory } from "@/features/admin-dashboard/actions/get-history"
-
-function checkAuth(token: string | null): { userId?: string; error?: NextResponse } {
-  if (!token) {
-    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
-  }
-  const payload = verifyToken(token)
-  if (!payload) {
-    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
-  }
-  if (payload.role !== "admin") {
-    return { error: NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 }) }
-  }
-  return { userId: payload.userId }
-}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const token = extractToken(request)
-    const auth = checkAuth(token)
+    const auth = checkAdminAuth(token)
     if (auth.error) return auth.error
 
     const { searchParams } = new URL(request.url)

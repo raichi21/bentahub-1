@@ -10,10 +10,12 @@ export default function MonitoringPage() {
   // ── All hooks must be before any early return ──
   const { token, isLoading: authLoading, isAuthenticated } = useAuth()
   const [data, setData] = useState<MonitoringData | null>(null)
+  const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([])
   const [selectedBranch, setSelectedBranch] = useState("all")
   const [exportOpen, setExportOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
+  const [branchesFetched, setBranchesFetched] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
 
   // Fetch monitoring data
@@ -47,6 +49,20 @@ export default function MonitoringPage() {
       })
       .finally(() => setFetched(true))
   }, [token, selectedBranch])
+
+  // Fetch branches for filter dropdown
+  useEffect(() => {
+    if (branchesFetched) return
+    fetch("/api/branches")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setBranches(json.data)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setBranchesFetched(true))
+  }, [branchesFetched])
 
   // Close export dropdown on outside click
   useEffect(() => {
@@ -161,9 +177,9 @@ export default function MonitoringPage() {
             className="w-full md:w-64 rounded-lg border-border bg-background focus:ring-primary focus:border-primary text-sm p-2.5"
           >
             <option value="all">All Branches</option>
-            <option value="d2a256f5-e56c-4592-a2a1-37e3626a916a">Lourdes Main Branch</option>
-            <option value="b302b4a8-1847-4d3c-b0d8-7b663d4ea2f3">Lourdes Second Branch</option>
-            <option value="a95f3855-206a-4c85-8476-4366a78ff6a5">Lourdes Third Branch</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
           </select>
         </div>
         <div ref={exportRef} className="relative">

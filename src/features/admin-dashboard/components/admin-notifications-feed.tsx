@@ -1,10 +1,7 @@
 "use client"
 
-"use client"
-
 import {
   AlertTriangle, Package, Bell, RefreshCw,
-  MoreHorizontal
 } from "lucide-react"
 import { useAdminNotifications } from "@/hooks/useAdminNotifications"
 import type { AdminNotificationItem } from "@/features/admin-dashboard/actions/get-admin-notifications"
@@ -203,9 +200,6 @@ export function AdminNotificationsFeed() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button className="p-1.5 rounded-lg hover:bg-surface-variant text-muted-foreground transition-colors">
-                        <MoreHorizontal className="w-[18px] h-[18px]" />
-                      </button>
                       <button
                         onClick={() => markAsRead(n.id)}
                         className={`p-1.5 rounded-lg transition-colors ${!n.isRead ? "text-primary hover:bg-primary/10" : "text-muted-foreground/30 cursor-default"}`}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { verifyToken, extractToken, hashPassword, generateId } from "@/lib/auth-utils"
+import { extractToken, checkAdminAuth, hashPassword, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
@@ -20,24 +20,10 @@ const createUserSchema = z.object({
   branch: z.string().optional(),
 })
 
-function checkAuth(token: string | null): { userId?: string; error?: NextResponse } {
-  if (!token) {
-    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
-  }
-  const payload = verifyToken(token)
-  if (!payload) {
-    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
-  }
-  if (payload.role !== "admin") {
-    return { error: NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 }) }
-  }
-  return { userId: payload.userId }
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const token = extractToken(request)
-    const auth = checkAuth(token)
+    const auth = checkAdminAuth(token)
     if (auth.error) return auth.error
 
     const { searchParams } = new URL(request.url)
@@ -58,7 +44,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const token = extractToken(request)
-    const auth = checkAuth(token)
+    const auth = checkAdminAuth(token)
     if (auth.error) return auth.error
 
     const body = await request.json()
