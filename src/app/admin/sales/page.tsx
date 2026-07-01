@@ -1,44 +1,74 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { SalesFilters, SalesMetrics, TransactionDetailsTable } from "@/features/admin-dashboard"
+import { useAuth } from "@/hooks/useAuth"
 import type { SalesApiData } from "@/types/admin"
 
 export default function SalesPage() {
+  const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<SalesApiData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [fetched, setFetched] = useState(false)
   const [branchId, setBranchId] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [page, setPage] = useState(1)
+  const fetchedRef = useRef(false)
 
   const fetchData = useCallback(async () => {
-    setLoading(true)
+    if (!token) return
+    fetchedRef.current = false
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (branchId) params.set("branchId", branchId)
       if (dateFrom) params.set("dateFrom", dateFrom)
       if (dateTo) params.set("dateTo", dateTo)
 
-      const res = await fetch(`/api/admin/sales?${params}`)
+      const res = await fetch(`/api/admin/sales?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       const json = await res.json()
       if (json.success && json.data) {
         setData(json.data)
       }
     } finally {
-      setLoading(false)
+      fetchedRef.current = true
+      setFetched(true)
     }
-  }, [branchId, dateFrom, dateTo, page])
+  }, [token, branchId, dateFrom, dateTo, page])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  const isLoading = authLoading || Boolean(token && !fetched && !data) || Boolean(token && !fetchedRef.current)
 
   const handleFilter = (fBranchId: string, fDateFrom: string, fDateTo: string) => {
     setBranchId(fBranchId)
     setDateFrom(fDateFrom)
     setDateTo(fDateTo)
     setPage(1)
+  }
+
+  const handleExport = () => {
+    const transactions = data?.transactions || []
+    if (transactions.length === 0) return
+    const rows = [
+      ["Transaction ID", "Branch", "Date & Time", "Total", "Payment Method", "Status"],
+      ...transactions.map((t) => [
+        t.id, t.branchName,
+        new Date(t.createdAt).toISOString(),
+        t.totalAmount, t.paymentMethod, t.status,
+      ]),
+    ]
+    const csv = rows.map((r) => r.join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `sales-export-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -50,8 +80,9 @@ export default function SalesPage() {
           branchId={branchId}
           dateFrom={dateFrom}
           dateTo={dateTo}
+          onExport={handleExport}
         />
-        <SalesMetrics overview={data?.overview || null} loading={loading} />
+        <SalesMetrics overview={data?.overview || null} loading={isLoading} />
       </div>
       <TransactionDetailsTable
         transactions={data?.transactions || []}
@@ -59,7 +90,7 @@ export default function SalesPage() {
         page={page}
         pageSize={15}
         onPageChange={setPage}
-        loading={loading}
+        loading={isLoading}
       />
     </div>
   )

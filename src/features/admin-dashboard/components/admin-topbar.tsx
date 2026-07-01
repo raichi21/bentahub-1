@@ -11,7 +11,7 @@ interface AdminTopbarProps {
 }
 
 export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopbarProps) {
-  const { unreadCount } = useAdminNotifications()
+  const { unreadCount } = useAdminNotifications({ pollInterval: 0 })
   const router = useRouter()
   let title = "Dashboard Overview"
   let subtitle = ""
