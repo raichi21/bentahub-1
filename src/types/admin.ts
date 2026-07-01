@@ -89,6 +89,21 @@ export interface SalesApiData {
   salesTrend: SalesTrendPointData[]
 }
 
+export interface TopProductData {
+  productId: string
+  productName: string
+  totalSold: number
+  totalRevenue: number
+  rank: number
+}
+
+export interface LowStockByCategoryData {
+  category: string
+  totalItems: number
+  lowStockCount: number
+  lowStockPercentage: number
+}
+
 export interface AdminApiResponse<T = unknown> {
   success: boolean
   message: string

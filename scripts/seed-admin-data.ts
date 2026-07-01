@@ -22,7 +22,7 @@ if (fs.existsSync(envPath)) {
 }
 
 // Dynamic import to avoid ESM hoisting issue
-const [{ db }, { branches, products, branchInventory, transactions }] = await Promise.all([
+const [{ db }, { branches, products, branchInventory, transactions, transactionItems }] = await Promise.all([
   import("../src/servers/db") as Promise<{ db: import("../src/servers/db").Database }>,
   import("../src/servers/schemas"),
 ])
@@ -124,10 +124,24 @@ const PRODUCTS: ProductSeed[] = [
 
 async function seedData(): Promise<void> {
   console.log("Clearing existing data...")
+  await db.execute(sql`DROP TABLE IF EXISTS transaction_items CASCADE`)
   await db.delete(transactions)
   await db.delete(branchInventory)
   await db.delete(products)
   await db.delete(branches)
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS transaction_items (
+      id VARCHAR(36) PRIMARY KEY,
+      transaction_id VARCHAR(36) NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+      product_id VARCHAR(36) NOT NULL,
+      product_name VARCHAR(255) NOT NULL,
+      quantity INTEGER NOT NULL,
+      price NUMERIC(10,2) NOT NULL,
+      subtotal NUMERIC(10,2) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `)
 
   const now = new Date()
   const branchIds: string[] = []
@@ -213,11 +227,15 @@ async function seedData(): Promise<void> {
 
   console.log("Seeding transactions...")
   let transactionCount = 0
-  for (const branchId of branchIds) {
+  let transactionItemCount = 0
+  for (const [branchIdx, branchId] of branchIds.entries()) {
     const branchMultiplier =
       BRANCHES[0].name.includes("Main") ? 1.5
       : BRANCHES[1].name.includes("Second") ? 1.0
       : 0.7
+
+    const branchProductOffset = branchIdx * PRODUCTS.length
+    const branchProductIds = productIds.slice(branchProductOffset, branchProductOffset + PRODUCTS.length)
 
     for (let month = 0; month < 3; month++) {
       const transactionsPerMonth = Math.floor((Math.random() * 10 + 5) * branchMultiplier)
@@ -226,20 +244,36 @@ async function seedData(): Promise<void> {
         const day = Math.floor(Math.random() * 28) + 1
         const hour = Math.floor(Math.random() * 12) + 8
         const minute = Math.floor(Math.random() * 60)
-        const amount = Math.floor(Math.random() * 800 + 50) + Math.random()
 
         const transactionDate = new Date(now.getFullYear(), now.getMonth() - 11 + month, day, hour, minute)
 
         if (transactionDate > now) continue
 
-        const randomProductIndex = Math.floor(Math.random() * productIds.length)
-        const randomProductPrice = productPrices.get(productIds[randomProductIndex]) || 50
+        const transactionId = generateId()
 
-        const itemCount = 1
-        const totalAmount = randomProductPrice * itemCount
+        const itemCount = Math.floor(Math.random() * 3) + 1
+        let totalAmount = 0
+        const items: Array<{
+          productId: string
+          productName: string
+          quantity: number
+          price: number
+        }> = []
+
+        const usedIndices = new Set<number>()
+        for (let i = 0; i < itemCount; i++) {
+          let pi = Math.floor(Math.random() * branchProductIds.length)
+          const product = PRODUCTS[pi]
+          const pid = branchProductIds[pi]
+          const qty = Math.floor(Math.random() * 3) + 1
+          const price = productPrices.get(pid) || product.price
+          const lineTotal = price * qty
+          totalAmount += lineTotal
+          items.push({ productId: pid, productName: product.name, quantity: qty, price })
+        }
 
         await db.insert(transactions).values({
-          id: generateId(),
+          id: transactionId,
           branchId,
           totalAmount: totalAmount.toFixed(2),
           paymentMethod: Math.random() < 0.6 ? "cash" : "gcash",
@@ -247,6 +281,20 @@ async function seedData(): Promise<void> {
           createdAt: transactionDate,
         })
         transactionCount++
+
+        for (const item of items) {
+          await db.insert(transactionItems).values({
+            id: generateId(),
+            transactionId,
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            price: item.price.toFixed(2),
+            subtotal: (item.price * item.quantity).toFixed(2),
+            createdAt: transactionDate,
+          })
+          transactionItemCount++
+        }
       }
     }
   }
@@ -255,7 +303,8 @@ async function seedData(): Promise<void> {
   console.log(`   - ${BRANCHES.length} branches`)
   console.log(`   - ${PRODUCTS.length} products per branch (${PRODUCTS.length * BRANCHES.length} total)`)
   console.log(`   - ${inventoryCount} inventory records`)
-  console.log(`   - ${transactionCount} transactions`)
+  console.log(`   - ${transactionCount} transactions
+   - ${transactionItemCount} transaction items`)
   console.log(`\nDatabase: postgresql://postgres:postgres@localhost:5432/bentahub`)
 }
 

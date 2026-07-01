@@ -1,33 +1,49 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { KPICard, SalesChart, StockTable } from "@/features/admin-dashboard"
+import { KPICard, SalesChart, StockTable, TopProductsCard, LowStockByCategoryCard } from "@/features/admin-dashboard"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
-import type { AdminOverviewData } from "@/types/admin"
+import type { AdminOverviewData, TopProductData, LowStockByCategoryData } from "@/types/admin"
 import { PageHeader } from "@/components/layouts"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function AdminPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<AdminOverviewData | null>(null)
+  const [topProducts, setTopProducts] = useState<TopProductData[]>([])
+  const [lowStockByCategory, setLowStockByCategory] = useState<LowStockByCategoryData[]>([])
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
 
   useEffect(() => {
     if (!token) return
 
-    fetch("/api/admin/overview", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setData(json.data)
+    Promise.all([
+      fetch("/api/admin/overview", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+      fetch("/api/admin/top-products", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+      fetch("/api/admin/low-stock-by-category", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+    ])
+      .then(([overviewJson, topProductsJson, lowStockJson]) => {
+
+        if (overviewJson.success && overviewJson.data) {
+          setData(overviewJson.data)
         } else {
-          setError(json.message)
+          setError(overviewJson.message)
+        }
+        if (topProductsJson.success && topProductsJson.data) {
+          setTopProducts(topProductsJson.data)
+        }
+        if (lowStockJson.success && lowStockJson.data) {
+          setLowStockByCategory(lowStockJson.data)
         }
       })
-      .catch(() => setError("Failed to load overview"))
+      .catch(() => setError("Failed to load dashboard data"))
       .finally(() => setFetched(true))
   }, [token])
 
@@ -46,7 +62,7 @@ export default function AdminPage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
-          <div className="lg:col-span-4 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+          <div className="lg:col-span-4 bg-card border border-border rounded-xl p-6 h-[300px] animate-pulse" />
         </div>
       </div>
     )
@@ -91,8 +107,17 @@ export default function AdminPage() {
         />
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8">
+          <SalesChart data={data?.salesTrend} />
+        </div>
+        <div className="lg:col-span-4">
+          <TopProductsCard data={topProducts} />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-6">
-        <SalesChart data={data?.salesTrend} />
+        <LowStockByCategoryCard data={lowStockByCategory} />
       </div>
 
       <div className="grid grid-cols-1 gap-6">

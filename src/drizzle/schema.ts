@@ -288,12 +288,38 @@ export const transactions = pgTable("transactions", {
   createdAt,
 })
 
-export const transactionRelations = relations(transactions, ({ one }) => ({
+export const transactionItems = pgTable("transaction_items", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  transactionId: varchar("transaction_id", { length: 36 })
+    .notNull()
+    .references(() => transactions.id, { onDelete: "cascade" }),
+  productId: varchar("product_id", { length: 36 }).notNull(),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  quantity: integer("quantity").notNull(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
+  createdAt,
+})
+
+export const transactionRelations = relations(transactions, ({ one, many }) => ({
   branch: one(branches, {
     fields: [transactions.branchId],
     references: [branches.id],
   }),
+  items: many(transactionItems),
 }))
+
+export const transactionItemsRelations = relations(transactionItems, ({ one }) => ({
+  transaction: one(transactions, {
+    fields: [transactionItems.transactionId],
+    references: [transactions.id],
+  }),
+}))
+
+export const insertTransactionItemSchema = createInsertSchema(transactionItems).omit({ id: true, createdAt: true })
+export const selectTransactionItemSchema = createSelectSchema(transactionItems)
+export type TransactionItem = typeof transactionItems.$inferSelect
+export type InsertTransactionItem = typeof transactionItems.$inferInsert
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true })
 export const selectTransactionSchema = createSelectSchema(transactions)
