@@ -1,0 +1,27 @@
+
+             BENTAHUB RETAIL
+        Main Branch, Metro Manila
+         --- Official Receipt ---
+
+==========================================
+  Receipt No: BH-000061
+  Date:       Jul 2, 2026, 08:08 PM
+  Cashier:    Cashier
+  Status:     COMPLETED
+------------------------------------------
+  ITEM                  QTY    PRICE   TOTAL
+------------------------------------------
+  Canned Sardinas Test    1   P15.00  P15.00
+------------------------------------------
+  Subtotal:                     P15.00
+------------------------------------------
+  TOTAL:                        P15.00
+------------------------------------------
+  Payment:       GCASH
+  Amount Paid:                  P15.00
+  Change:                       P0.00
+
+  Thank you for shopping with BentaHub!
+Please keep this receipt for return/refund requests.
+
+
