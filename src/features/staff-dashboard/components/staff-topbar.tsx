@@ -15,6 +15,7 @@ const ROUTE_TITLES: Record<string, string> = {
 const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/staff": "Overview of branch performance and key metrics",
   "/staff/monitoring": "Real-time transaction monitoring and updates",
+  "/staff/inventory": "Manage and update product stock levels",
   "/staff/notifications": "Manage operational alerts",
 }
 
