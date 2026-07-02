@@ -21,7 +21,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     minute: "2-digit",
   })
 
-  const isVoided = transaction.status === "voided"
+  const isCancelled = transaction.status === "cancelled"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
@@ -39,10 +39,10 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
         {/* Paper Receipt Panel */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 font-sans relative">
-          {isVoided && (
+          {isCancelled && (
             <div className="absolute inset-0 bg-red-500/5 backdrop-blur-2xs flex items-center justify-center pointer-events-none select-none">
               <span className="text-3xl font-black text-red-600/30 uppercase tracking-widest border-4 border-red-600/30 p-2 rounded-xl transform -rotate-12">
-                Voided
+                Cancelled
               </span>
             </div>
           )}
@@ -71,7 +71,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
               <span
                 className={cn(
                   "font-bold uppercase tracking-wider text-[10px]",
-                  isVoided ? "text-red-500" : "text-green-600"
+                  isCancelled ? "text-red-500" : "text-green-600"
                 )}
               >
                 {transaction.status}

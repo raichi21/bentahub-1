@@ -93,7 +93,7 @@ export function TransactionsTable() {
           >
             <option value="All">Status: All</option>
             <option value="Completed">Completed</option>
-            <option value="Voided">Voided</option>
+            <option value="Cancelled">Cancelled</option>
             <option value="Refunded">Refunded</option>
           </select>
         </div>
@@ -185,7 +185,7 @@ export function TransactionsTable() {
                           "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs",
                           t.status === "completed"
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : t.status === "voided"
+                            : t.status === "cancelled"
                             ? "bg-red-50 text-red-700 border-red-200"
                             : "bg-slate-100 text-slate-700 border-slate-200"
                         )}

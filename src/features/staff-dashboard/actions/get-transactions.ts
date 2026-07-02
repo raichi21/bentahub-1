@@ -33,6 +33,6 @@ export async function getTransactions(branchName: string): Promise<StaffTransact
     date: t.createdAt.toISOString(),
     paymentMethod: t.paymentMethod,
     total: parseFloat(t.totalAmount),
-    status: t.status === "cancelled" ? "voided" : t.status,
+    status: t.status === "cancelled" ? "cancelled" : t.status,
   }))
 }

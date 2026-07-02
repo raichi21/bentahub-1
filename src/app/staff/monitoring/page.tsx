@@ -12,33 +12,39 @@ export default function MonitoringPage() {
   const [fetched, setFetched] = useState(false)
 
   useEffect(() => {
+    if (authLoading) return
     if (!token) return
+
+    let cancelled = false
 
     fetch("/api/staff/transactions", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json() as Promise<StaffApiResponse<StaffTransactionItem[]>>)
       .then((json) => {
+        if (cancelled) return
         if (json.success && json.data) {
           setTransactions(json.data)
         } else {
           setError(json.message)
         }
       })
-      .catch(() => setError("Failed to load transactions"))
-      .finally(() => setFetched(true))
-  }, [token])
+      .catch(() => { if (!cancelled) setError("Failed to load transactions") })
+      .finally(() => { if (!cancelled) setFetched(true) })
 
-  const isLoading = authLoading || (token && !fetched && !error)
+    return () => { cancelled = true }
+  }, [token, authLoading])
+
+  const isLoading = authLoading || (token !== null && !fetched && !error)
 
   const kpis = useMemo(() => {
     const completed = transactions.filter((t) => t.status === "completed")
-    const voided = transactions.filter((t) => t.status === "voided")
+    const cancelled = transactions.filter((t) => t.status === "cancelled")
     const revenue = completed.reduce((sum, t) => sum + t.total, 0)
     return {
       totalTransactions: transactions.length,
       totalRevenue: revenue,
-      totalVoided: voided.length,
+      totalCancelled: cancelled.length,
       completedCount: completed.length,
     }
   }, [transactions])
@@ -87,8 +93,8 @@ export default function MonitoringPage() {
           <span className="text-xs text-green-500 font-medium">Today&apos;s total</span>
         </div>
         <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-          <span className="text-sm font-medium text-muted-foreground">Voided Transactions</span>
-          <h3 className="text-2xl font-extrabold text-foreground mt-1">{kpis.totalVoided}</h3>
+          <span className="text-sm font-medium text-muted-foreground">Cancelled Transactions</span>
+          <h3 className="text-2xl font-extrabold text-foreground mt-1">{kpis.totalCancelled}</h3>
           <span className="text-xs text-red-500 font-medium">Requires attention</span>
         </div>
       </div>

@@ -60,7 +60,7 @@ export function StaffTransactionTable({ transactions }: StaffTransactionTablePro
           <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1) }} className="px-3 py-2 bg-background border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20">
             <option value="All">Status: All</option>
             <option value="Completed">Completed</option>
-            <option value="Voided">Voided</option>
+            <option value="Cancelled">Cancelled</option>
             <option value="Refunded">Refunded</option>
           </select>
           <div className="h-8 border-r border-border mx-1"></div>
@@ -110,7 +110,7 @@ export function StaffTransactionTable({ transactions }: StaffTransactionTablePro
                     </td>
                     <td className="p-4 text-sm font-mono font-bold text-foreground">₱{t.total.toFixed(2)}</td>
                     <td className="p-4">
-                      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border", t.status === "completed" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : t.status === "voided" ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-muted text-muted-foreground border-border")}>{t.status}</span>
+                      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border", t.status === "completed" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : t.status === "cancelled" ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-muted text-muted-foreground border-border")}>{t.status}</span>
                     </td>
                     <td className="p-4 text-right">
                       <button onClick={() => setSelectedTxn(t)} className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"><FileText className="w-3.5 h-3.5" /><span>View Receipt</span></button>

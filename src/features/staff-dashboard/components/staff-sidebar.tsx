@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   {
     category: "Operations",
     links: [
-      { href: "/staff/monitoring", label: "Live Monitoring", icon: Activity },
+      { href: "/staff/monitoring", label: "Transaction Monitoring", icon: Activity },
       { href: "/staff/notifications", label: "Notifications", icon: Bell },
       { href: "/staff/inventory", label: "Inventory Stock", icon: PackageSearch },
       { href: "/staff/history", label: "Past History", icon: History },

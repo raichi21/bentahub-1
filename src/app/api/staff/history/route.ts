@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         amountPaid: total,
         change: 0,
         cashier: payload.fullName || "Cashier",
-        status: t.status === "cancelled" ? "voided" : "completed",
+        status: t.status === "cancelled" ? "cancelled" : "completed",
       }
     })
 

@@ -93,7 +93,7 @@ export const transactions: Transaction[] = [
     amountPaid: 1000.0,
     change: 490.0,
     cashier: "Ron Lim",
-    status: "voided"
+    status: "cancelled"
   },
   {
     id: "TXN-1007",

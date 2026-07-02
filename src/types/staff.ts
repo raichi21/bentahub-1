@@ -37,7 +37,7 @@ export interface StaffTransactionItem {
   date: string
   paymentMethod: "cash" | "gcash"
   total: number
-  status: "completed" | "voided" | "pending"
+  status: "completed" | "cancelled" | "pending"
 }
 
 export interface StaffApiResponse<T = unknown> {

@@ -34,7 +34,7 @@ export interface CartItem {
 
 // ── Transactions ─────────────────────────────────────────────────────
 
-export type TransactionStatus = "completed" | "voided" | "refunded"
+export type TransactionStatus = "completed" | "cancelled" | "refunded"
 
 export interface TransactionItem {
   productId: string
