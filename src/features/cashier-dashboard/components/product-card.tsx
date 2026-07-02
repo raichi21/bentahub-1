@@ -1,7 +1,12 @@
 import type { Product } from "@/types/cashier"
-import { getStockStatus } from "@/features/cashier-dashboard/data/products"
 import { cn } from "@/lib/utils"
 import { Package } from "lucide-react"
+
+function getStockStatus(product: Product): "in-stock" | "low-stock" | "out-of-stock" {
+  if (product.stock === 0) return "out-of-stock"
+  if (product.stock <= product.reorderLevel) return "low-stock"
+  return "in-stock"
+}
 
 interface ProductCardProps {
   product: Product

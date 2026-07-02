@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
 import { StaffKpiCards } from "@/features/staff-dashboard/components/staff-kpi-cards"
-import { getStockStatus } from "@/features/staff-dashboard/data/products"
+import { getStockStatus } from "@/lib/staff-utils"
 import { AlertTriangle, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"

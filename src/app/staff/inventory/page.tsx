@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { InventoryUpdateTable } from "@/features/staff-dashboard/components/inventory-update-table"
-import { getStockStatus } from "@/features/staff-dashboard/data/products"
+import { getStockStatus } from "@/lib/staff-utils"
 import { useAuth } from "@/hooks/useAuth"
 import type { Product } from "@/types/cashier"
 import type { StaffProductItem } from "@/types/staff"

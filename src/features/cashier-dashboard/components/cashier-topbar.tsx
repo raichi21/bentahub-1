@@ -3,13 +3,19 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Bell, Menu } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 interface CashierTopbarProps {
   onToggleSidebar?: () => void
 }
 
 export function CashierTopbar({ onToggleSidebar }: CashierTopbarProps) {
+  const { user } = useAuth()
   const pathname = usePathname()
+
+  const userInitials = user?.fullName
+    ? user.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+    : "CA"
 
   let title = "POS System"
   if (pathname === "/cashier/stock-check") {
@@ -47,10 +53,10 @@ export function CashierTopbar({ onToggleSidebar }: CashierTopbarProps) {
         {/* User Pill */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-md shadow-primary/20 select-none flex-shrink-0">
-            RL
+            {userInitials}
           </div>
           <div className="flex-col hidden sm:flex">
-            <span className="text-sm font-bold text-slate-800 leading-tight">Ron Lim</span>
+            <span className="text-sm font-bold text-slate-800 leading-tight">{user?.fullName || "Cashier"}</span>
             <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
               Cashier
             </span>

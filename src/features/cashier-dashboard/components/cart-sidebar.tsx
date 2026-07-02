@@ -1,10 +1,13 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { ShoppingCart, QrCode, Coins, CheckCircle, Percent, X } from "lucide-react"
+import { ShoppingCart, QrCode, Coins, CheckCircle, Percent, X, Loader2 } from "lucide-react"
 import { CartItem } from "./cart-item"
+import { ReceiptModal } from "./receipt-modal"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 import type { UseCartReturn } from "../hooks/use-cart"
+import type { Transaction } from "@/types/cashier"
 
 interface CartSidebarProps {
   cart: UseCartReturn
@@ -12,6 +15,7 @@ interface CartSidebarProps {
 }
 
 export function CartSidebar({ cart, onClose }: CartSidebarProps) {
+  const { token } = useAuth()
   const {
     items,
     removeItem,
@@ -24,6 +28,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
     discountPercent,
     setDiscountPercent,
     subtotal,
+    discountAmount,
     total,
     changeDue,
   } = cart
@@ -31,8 +36,10 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
   const [checkoutSuccess, setCheckoutSuccess] = useState(false)
   const [successMsg, setSuccessMsg] = useState("")
   const [showPromoInput, setShowPromoInput] = useState(discountPercent > 0)
+  const [submitting, setSubmitting] = useState(false)
+  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null)
 
-  const completeSale = useCallback(() => {
+  const completeSale = useCallback(async () => {
     if (items.length === 0) return
     const paidVal = parseFloat(amountPaid) || 0
     if (paidVal < total && paymentMethod === "cash") {
@@ -40,43 +47,94 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
       return
     }
 
-    setSuccessMsg(
-      `Transaction Completed! Total Amount: ₱${total.toFixed(
-        2
-      )}. Payment Method: ${paymentMethod.toUpperCase()}`
-    )
-    setCheckoutSuccess(true)
-    clearCart()
+    setSubmitting(true)
 
-    setTimeout(() => {
-      setCheckoutSuccess(false)
-    }, 4000)
-  }, [items, amountPaid, total, paymentMethod, clearCart])
+    try {
+      const res = await fetch("/api/cashier/transactions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items,
+          totalAmount: total,
+          paymentMethod,
+          amountPaid: amountPaid || "0",
+          changeDue,
+          discountPercent,
+        }),
+      })
+
+      const json = await res.json()
+
+      if (!res.ok) {
+        throw new Error(json.message || "Transaction failed")
+      }
+
+      const transaction: Transaction = {
+        id: json.data.id,
+        date: new Date().toISOString(),
+        items: items.map((item) => ({
+          productId: item.product.id,
+          name: item.product.name,
+          qty: item.quantity,
+          price: item.product.price,
+        })),
+        subtotal,
+        discount: discountAmount,
+        total,
+        paymentMethod,
+        amountPaid: paidVal,
+        change: changeDue,
+        cashier: "Cashier",
+        status: "completed",
+      }
+
+      setLastTransaction(transaction)
+      setSuccessMsg(
+        `Transaction completed! Total: ₱${total.toFixed(2)}`
+      )
+      setCheckoutSuccess(true)
+      clearCart()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Transaction failed")
+    } finally {
+      setSubmitting(false)
+    }
+  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart])
 
   // Keyboard action shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !e.repeat) {
-        // Only trigger complete sale if not typing in inputs
         const activeTag = document.activeElement?.tagName.toLowerCase()
         if (activeTag !== "input" && activeTag !== "textarea") {
           e.preventDefault()
           completeSale()
         }
       }
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !submitting) {
         e.preventDefault()
         clearCart()
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [items, amountPaid, total, paymentMethod, completeSale, clearCart])
+  }, [items, amountPaid, total, paymentMethod, completeSale, clearCart, submitting])
 
   return (
     <aside className="w-full lg:w-[420px] bg-white border-l border-slate-200 flex flex-col z-20 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative">
-      {/* Checkout Toast overlay */}
-      {checkoutSuccess && (
+      {/* Receipt Modal */}
+      {lastTransaction && (
+        <ReceiptModal
+          transaction={lastTransaction}
+          onClose={() => setLastTransaction(null)}
+        />
+      )}
+
+      {/* Success Toast */}
+      {checkoutSuccess && !lastTransaction && (
         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 animate-bounce">
             <CheckCircle className="w-10 h-10" />
@@ -257,17 +315,21 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
         {/* Action button trigger blocks */}
         <div className="flex flex-col gap-1.5 pt-0.5">
           <button
-            disabled={items.length === 0}
+            disabled={items.length === 0 || submitting}
             onClick={completeSale}
             className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-black text-base shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
-            <CheckCircle className="w-5 h-5" />
-            COMPLETE SALE (ENTER)
+            {submitting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <CheckCircle className="w-5 h-5" />
+            )}
+            {submitting ? "PROCESSING..." : "COMPLETE SALE (ENTER)"}
           </button>
           <button
-            disabled={items.length === 0}
+            disabled={items.length === 0 || submitting}
             onClick={clearCart}
-            className="w-full bg-transparent text-slate-400 hover:text-red-500 hover:bg-red-50 py-2 rounded-xl text-sm font-bold transition-all"
+            className="w-full bg-transparent text-slate-400 hover:text-red-500 hover:bg-red-50 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Discard Transaction (ESC)
           </button>

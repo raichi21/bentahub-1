@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   {
     category: "Dashboard",
     links: [
-      { href: "/staff", label: "POS Dashboard", icon: LayoutGrid },
+      { href: "/staff", label: "Dashboard", icon: LayoutGrid },
     ],
   },
   {

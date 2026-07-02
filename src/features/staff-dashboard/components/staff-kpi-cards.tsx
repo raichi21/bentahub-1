@@ -2,7 +2,7 @@
 
 import { Package, AlertTriangle, ShoppingBag, TrendingUp } from "lucide-react"
 import type { Product } from "@/types/cashier"
-import { getStockStatus } from "@/features/staff-dashboard/data/products"
+import { getStockStatus } from "@/lib/staff-utils"
 
 interface StaffKpiCardsProps {
   products: Product[]
