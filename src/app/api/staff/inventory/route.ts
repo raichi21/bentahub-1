@@ -1,0 +1,168 @@
+import { NextRequest, NextResponse } from "next/server"
+import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
+import { db } from "@/servers/db"
+import { users, branches, products, branchInventory } from "@/servers/schemas"
+import { eq, and } from "drizzle-orm"
+
+const CATEGORY_SKU_PREFIX: Record<string, string> = {
+  groceries: "GRC",
+  beverages: "BVG",
+  household: "HOU",
+  pharmacy: "PHA",
+  snacks: "SNK",
+  bakery: "BAK",
+}
+
+function generateSku(category: string): string {
+  const prefix = CATEGORY_SKU_PREFIX[category.toLowerCase()] || "GEN"
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  let suffix = ""
+  for (let i = 0; i < 4; i++) {
+    suffix += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return `${prefix}-${suffix}`
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const token = extractToken(request)
+    if (!token) {
+      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
+    }
+
+    const payload = verifyToken(token)
+    if (!payload) {
+      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    }
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, payload.userId),
+    })
+    if (!user) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+    }
+
+    const branchName = user.branch || "Lourdes Main Branch"
+    const branchRecord = await db.query.branches.findFirst({
+      where: eq(branches.name, branchName),
+    })
+    if (!branchRecord) {
+      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+    }
+
+    const body = await request.json()
+    const { productId, stock, reorderLevel } = body
+
+    if (!productId || stock === undefined) {
+      return NextResponse.json({ success: false, message: "productId and stock are required" }, { status: 400 })
+    }
+
+    const stockQty = Math.max(0, stock)
+
+    await db
+      .update(branchInventory)
+      .set({
+        quantity: stockQty,
+        lowStockThreshold: reorderLevel !== undefined ? Math.max(0, reorderLevel) : undefined,
+      })
+      .where(
+        and(
+          eq(branchInventory.branchId, branchRecord.id),
+          eq(branchInventory.productId, productId),
+        )
+      )
+
+    const stockStatus = stockQty === 0 ? "out-of-stock" : reorderLevel !== undefined && stockQty <= reorderLevel ? "low-stock" : "in-stock"
+
+    await db
+      .update(products)
+      .set({
+        quantity: stockQty,
+        stockStatus,
+      })
+      .where(eq(products.id, productId))
+
+    return NextResponse.json({ success: true, message: "Stock updated successfully" })
+  } catch (error) {
+    console.error("Staff inventory PATCH error:", error)
+    return NextResponse.json(
+      { success: false, message: "An error occurred while updating stock" },
+      { status: 500 },
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const token = extractToken(request)
+    if (!token) {
+      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
+    }
+
+    const payload = verifyToken(token)
+    if (!payload) {
+      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    }
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, payload.userId),
+    })
+    if (!user) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+    }
+
+    const branchName = user.branch || "Lourdes Main Branch"
+    const branchRecord = await db.query.branches.findFirst({
+      where: eq(branches.name, branchName),
+    })
+    if (!branchRecord) {
+      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+    }
+
+    const body = await request.json()
+    const { name, sku: providedSku, category, stock, reorderLevel, unit, price, image } = body
+
+    if (!name || !category || price === undefined) {
+      return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })
+    }
+
+    const productId = generateId()
+    const sku = providedSku || generateSku(category)
+    const stockQty = Math.max(0, stock || 0)
+    const threshold = reorderLevel !== undefined ? Math.max(0, reorderLevel) : 10
+    const stockStatus = stockQty === 0 ? "out-of-stock" : stockQty <= threshold ? "low-stock" : "in-stock"
+
+    const productImage = image && typeof image === "string" ? image : null
+
+    await db.insert(products).values({
+      id: productId,
+      name,
+      description: null,
+      sku,
+      category,
+      price: price.toString(),
+      image: productImage,
+      quantity: stockQty,
+      stockStatus,
+      branch: branchName,
+      isActive: true,
+    })
+
+    await db.insert(branchInventory).values({
+      id: generateId(),
+      branchId: branchRecord.id,
+      productId,
+      quantity: stockQty,
+      lowStockThreshold: threshold,
+    })
+
+    return NextResponse.json({ success: true, message: "Product added successfully", data: { id: productId, sku } })
+  } catch (error) {
+    console.error("Staff inventory POST error:", error)
+    const message = error instanceof Error ? error.message : "An error occurred while adding product"
+    return NextResponse.json(
+      { success: false, message },
+      { status: 500 },
+    )
+  }
+}

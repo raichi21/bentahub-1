@@ -14,10 +14,11 @@ const ITEMS_PER_PAGE = 6
 interface InventoryUpdateTableProps {
   products: Product[]
   onStockUpdate: (productId: string, newStock: number, newReorderLevel: number) => void
-  onAddProduct?: (product: { name: string; sku: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string }) => void
+  onAddProduct?: (product: { name: string; sku?: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string }) => void
+  savingId?: string | null
 }
 
-export function InventoryUpdateTable({ products: initialProducts, onStockUpdate, onAddProduct }: InventoryUpdateTableProps) {
+export function InventoryUpdateTable({ products: initialProducts, onStockUpdate, onAddProduct, savingId }: InventoryUpdateTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -137,10 +138,11 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                     <td className="p-4 text-right">
                       <button
                         onClick={() => setEditingProduct(p)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-[10px] font-bold hover:bg-primary/95 transition-colors shadow-xs"
+                        disabled={savingId === p.id}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-[10px] font-bold hover:bg-primary/95 disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs"
                       >
                         <Edit3 className="w-3 h-3" />
-                        Edit Stock
+                        {savingId === p.id ? "Saving..." : "Edit Stock"}
                       </button>
                     </td>
                   </tr>

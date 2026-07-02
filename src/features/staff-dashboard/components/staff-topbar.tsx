@@ -9,7 +9,6 @@ const ROUTE_TITLES: Record<string, string> = {
   "/staff/monitoring": "Transaction Monitoring",
   "/staff/notifications": "Notifications",
   "/staff/inventory": "Inventory Updating",
-  "/staff/history": "Transaction History",
   "/staff/pickup": "Payments & Pickup",
 }
 

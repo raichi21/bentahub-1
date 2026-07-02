@@ -13,18 +13,19 @@ interface QuickStockModalProps {
   onSave: (productId: string, newStock: number, newReorderLevel: number) => void
 }
 
+const DEFAULT_THRESHOLD = 10
+
 export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStockModalProps) {
   const [stock, setStock] = useState(product?.stock ?? 0)
-  const [reorderLevel, setReorderLevel] = useState(product?.reorderLevel ?? 10)
 
   if (!isOpen || !product) return null
 
   const handleSave = () => {
-    onSave(product.id, Math.max(0, stock), Math.max(0, reorderLevel))
+    onSave(product.id, Math.max(0, stock), DEFAULT_THRESHOLD)
     onClose()
   }
 
-  const status = stock === 0 ? "out-of-stock" : stock <= reorderLevel ? "low-stock" : "in-stock"
+  const status = stock === 0 ? "out-of-stock" : stock <= DEFAULT_THRESHOLD ? "low-stock" : "in-stock"
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -62,8 +63,8 @@ export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStock
                 <Minus className="w-5 h-5" />
               </button>
               <input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
                 value={stock}
                 onChange={(e) => setStock(Math.max(0, parseInt(e.target.value) || 0))}
                 className="flex-1 h-12 text-center text-lg font-bold font-mono bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
@@ -89,16 +90,6 @@ export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStock
             </span>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Reorder Warning Threshold</label>
-            <input
-              type="number"
-              min={0}
-              value={reorderLevel}
-              onChange={(e) => setReorderLevel(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
-          </div>
         </div>
 
         <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end gap-3">

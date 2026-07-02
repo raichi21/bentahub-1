@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo } from "react"
 import Image from "next/image"
-import { X, Plus, Image as ImageIcon, ImagePlus } from "lucide-react"
+import { X, Plus, Image as ImageIcon, ImagePlus, Tag } from "lucide-react"
 
 interface ProductForm {
   name: string
@@ -23,19 +23,50 @@ interface AddStockModalProps {
 
 const CATEGORIES = ["Groceries", "Beverages", "Household", "Pharmacy", "Snacks", "Bakery"]
 
+const CATEGORY_SKU_PREFIX: Record<string, string> = {
+  Groceries: "GRC",
+  Beverages: "BVG",
+  Household: "HOU",
+  Pharmacy: "PHA",
+  Snacks: "SNK",
+  Bakery: "BAK",
+}
+
+function generateSkuSuffix(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  let suffix = ""
+  for (let i = 0; i < 4; i++) {
+    suffix += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return suffix
+}
+
 export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
   const [form, setForm] = useState<ProductForm>({
     name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: ""
   })
+  const [skuSuffix, setSkuSuffix] = useState(generateSkuSuffix())
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const generatedSku = useMemo(() => {
+    const prefix = CATEGORY_SKU_PREFIX[form.category] || "GEN"
+    return `${prefix}-${skuSuffix}`
+  }, [form.category, skuSuffix])
 
   if (!isOpen) return null
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.sku.trim()) return
-    onSave(form)
+    if (!form.name.trim()) return
+    onSave({ ...form, sku: generatedSku })
+    const newSuffix = generateSkuSuffix()
+    setSkuSuffix(newSuffix)
     setForm({ name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "" })
     onClose()
+  }
+
+  const handleCategoryChange = (cat: string) => {
+    setForm((f) => ({ ...f, category: cat }))
+    setSkuSuffix(generateSkuSuffix())
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +86,7 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
     e.target.value = ""
   }
 
-  const isValid = form.name.trim() && form.sku.trim()
+  const isValid = form.name.trim()
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -129,20 +160,18 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">SKU</label>
-              <input
-                type="text"
-                value={form.sku}
-                onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value.toUpperCase() }))}
-                placeholder="e.g. GRA-001"
-                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              />
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">SKU (auto-generated)</label>
+              <div className="flex items-center gap-2 h-11 px-4 bg-muted/30 border border-border rounded-lg text-sm font-mono text-foreground">
+                <Tag className="w-4 h-4 flex-shrink-0 text-primary" />
+                <span className="font-bold">{generatedSku}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Auto-generated SKU based on category.</p>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</label>
               <select
                 value={form.category}
-                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                onChange={(e) => handleCategoryChange(e.target.value)}
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               >
                 {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
@@ -151,8 +180,8 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Stock Quantity</label>
               <input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
                 value={form.stock}
                 onChange={(e) => setForm((f) => ({ ...f, stock: Math.max(0, parseInt(e.target.value) || 0) }))}
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
@@ -171,9 +200,8 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Price (₱)</label>
               <input
-                type="number"
-                min={0}
-                step={0.5}
+                type="text"
+                inputMode="decimal"
                 value={form.price}
                 onChange={(e) => setForm((f) => ({ ...f, price: Math.max(0, parseFloat(e.target.value) || 0) }))}
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"

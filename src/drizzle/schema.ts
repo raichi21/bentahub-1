@@ -146,7 +146,7 @@ export const products = pgTable("products", {
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   bulkPrice: numeric("bulk_price", { precision: 10, scale: 2 }),
   weight: varchar("weight", { length: 50 }),
-  image: varchar("image", { length: 500 }),
+  image: text("image"),
   stockStatus: productStockStatusEnum("stock_status").default("in-stock").notNull(),
   quantity: integer("quantity").default(0).notNull(),
   branch: varchar("branch", { length: 100 }).notNull(),

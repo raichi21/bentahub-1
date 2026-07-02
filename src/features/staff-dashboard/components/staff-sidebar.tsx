@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutGrid, Activity, Bell, PackageSearch, History, CheckCircle2, User, LogOut, X } from "lucide-react"
+import { LayoutGrid, Activity, Bell, PackageSearch, CheckCircle2, LogOut, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -18,7 +18,6 @@ const NAV_ITEMS = [
       { href: "/staff/monitoring", label: "Transaction Monitoring", icon: Activity },
       { href: "/staff/notifications", label: "Notifications", icon: Bell },
       { href: "/staff/inventory", label: "Inventory Stock", icon: PackageSearch },
-      { href: "/staff/history", label: "Past History", icon: History },
       { href: "/staff/pickup", label: "Payments & Pickups", icon: CheckCircle2 },
     ],
   },
@@ -104,14 +103,6 @@ export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
 
         <div className="p-4 mt-auto border-t border-slate-800/80">
           <nav className="space-y-1">
-            <Link
-              href="#"
-              onClick={handleNav}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all duration-200"
-            >
-              <User className="w-5 h-5" />
-              <span>Profile</span>
-            </Link>
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 w-full text-left"
