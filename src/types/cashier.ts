@@ -45,6 +45,7 @@ export interface TransactionItem {
 
 export interface Transaction {
   id: string
+  receiptNumber: number
   date: string
   items: TransactionItem[]
   subtotal: number

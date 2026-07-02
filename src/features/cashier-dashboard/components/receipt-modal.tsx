@@ -1,6 +1,7 @@
 "use client"
 
-import { X, Printer } from "lucide-react"
+import { useState } from "react"
+import { X, Printer, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import type { Transaction } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
@@ -9,7 +10,13 @@ interface ReceiptModalProps {
   onClose: () => void
 }
 
+const PRINT_SERVER_URL = process.env.NEXT_PUBLIC_PRINT_SERVER_URL || "http://localhost:3001"
+
 export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
+  const [printing, setPrinting] = useState(false)
+  const [printStatus, setPrintStatus] = useState<"idle" | "success" | "error">("idle")
+  const [printMessage, setPrintMessage] = useState("")
+
   if (!transaction) return null
 
   const dateObj = new Date(transaction.date)
@@ -22,6 +29,50 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
   })
 
   const isCancelled = transaction.status === "cancelled"
+
+  const handlePrint = async () => {
+    setPrinting(true)
+    setPrintStatus("idle")
+    setPrintMessage("")
+
+    try {
+      const res = await fetch(`${PRINT_SERVER_URL}/print`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          receiptNumber: transaction.receiptNumber,
+          date: formattedDate,
+          cashier: transaction.cashier,
+          status: transaction.status,
+          items: transaction.items,
+          subtotal: transaction.subtotal,
+          discount: transaction.discount,
+          total: transaction.total,
+          paymentMethod: transaction.paymentMethod,
+          amountPaid: transaction.amountPaid,
+          change: transaction.change,
+        }),
+      })
+
+      const json = await res.json()
+
+      if (json.success && json.printed) {
+        setPrintStatus("success")
+        setPrintMessage(json.message || "Receipt printed successfully")
+      } else if (json.success) {
+        setPrintStatus("success")
+        setPrintMessage(json.message || "Receipt saved to file")
+      } else {
+        setPrintStatus("error")
+        setPrintMessage(json.message || "Print failed")
+      }
+    } catch {
+      setPrintStatus("error")
+      setPrintMessage("Cannot connect to print server. Make sure it's running.")
+    } finally {
+      setPrinting(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
@@ -51,7 +102,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
           <div className="text-center">
             <h3 className="text-lg font-black text-slate-800 tracking-tight">BentaHub Retail</h3>
             <p className="text-[10px] text-slate-400 font-medium">Main Branch, Metro Manila</p>
-            <p className="text-[10px] text-slate-400 font-mono mt-1">Receipt ID: {transaction.id}</p>
+            <p className="text-[10px] text-slate-400 font-mono mt-1">Receipt No: BH-{String(transaction.receiptNumber).padStart(6, "0")}</p>
           </div>
 
           <div className="border-t border-dashed border-slate-200 my-4"></div>
@@ -143,14 +194,38 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
           </div>
         </div>
 
+        {/* Print Status Banner */}
+        {printStatus !== "idle" && (
+          <div
+            className={cn(
+              "px-4 py-2 text-xs font-bold flex items-center gap-2 border-b",
+              printStatus === "success"
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-red-50 text-red-700 border-red-200"
+            )}
+          >
+            {printStatus === "success" ? (
+              <CheckCircle className="w-4 h-4 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            )}
+            <span>{printMessage}</span>
+          </div>
+        )}
+
         {/* Action Panel */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-2">
           <button
-            onClick={() => alert("Connecting to system receipt printer...")}
-            className="flex-1 bg-primary text-primary-foreground rounded-xl py-2 text-xs font-bold hover:brightness-110 transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-primary/10"
+            onClick={handlePrint}
+            disabled={printing}
+            className="flex-1 bg-primary text-primary-foreground rounded-xl py-2 text-xs font-bold hover:brightness-110 transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-primary/10 disabled:opacity-60 disabled:cursor-wait"
           >
-            <Printer className="w-4 h-4" />
-            <span>Print Receipt</span>
+            {printing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Printer className="w-4 h-4" />
+            )}
+            <span>{printing ? "Printing..." : "Print Receipt"}</span>
           </button>
           <button
             onClick={onClose}

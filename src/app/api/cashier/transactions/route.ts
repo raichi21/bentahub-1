@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: "Transaction completed successfully",
-        data: { id: result.id },
+        data: { id: result.id, receiptNumber: result.receiptNumber },
       },
       { status: 201 },
     )

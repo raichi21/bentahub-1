@@ -74,6 +74,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
 
       const transaction: Transaction = {
         id: json.data.id,
+        receiptNumber: json.data.receiptNumber,
         date: new Date().toISOString(),
         items: items.map((item) => ({
           productId: item.product.id,

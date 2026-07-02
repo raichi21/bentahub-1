@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
 import { transactions, transactionItems, branchInventory } from "@/servers/schemas"
-import { eq, sql } from "drizzle-orm"
+import { eq, sql, max } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 import type { CartItem } from "@/types/cashier"
 
@@ -14,6 +14,15 @@ export interface CreateTransactionInput {
 export async function createTransaction(input: CreateTransactionInput) {
   const { branchId, items, totalAmount, paymentMethod } = input
   const transactionId = generateId()
+
+  // Get the next sequential receipt number for this branch
+  const maxResult = await db
+    .select({ maxReceipt: max(transactions.receiptNumber) })
+    .from(transactions)
+    .where(eq(transactions.branchId, branchId))
+
+  const nextReceiptNumber = (maxResult[0]?.maxReceipt ?? 0) + 1
+
   const transactionItemsData = items.map((item) => ({
     id: generateId(),
     transactionId,
@@ -27,6 +36,7 @@ export async function createTransaction(input: CreateTransactionInput) {
   await db.insert(transactions).values({
     id: transactionId,
     branchId,
+    receiptNumber: nextReceiptNumber,
     totalAmount: totalAmount.toString(),
     paymentMethod,
     status: "completed",
@@ -47,5 +57,5 @@ export async function createTransaction(input: CreateTransactionInput) {
       )
   }
 
-  return { id: transactionId }
+  return { id: transactionId, receiptNumber: nextReceiptNumber }
 }
