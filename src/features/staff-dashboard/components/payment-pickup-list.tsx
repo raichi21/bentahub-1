@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 type Tab = "payments" | "pickups"
 
-interface PaymentItem {
+export interface PaymentItem {
   id: string
   transactionId: string
   referenceNumber: string
@@ -18,7 +18,7 @@ interface PaymentItem {
   customerName?: string
 }
 
-interface PickupItem {
+export interface PickupItem {
   id: string
   transactionId: string
   customerName: string

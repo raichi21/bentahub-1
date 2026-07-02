@@ -1,57 +1,66 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { PaymentPickupList } from "@/features/staff-dashboard/components/payment-pickup-list"
 import { useAuth } from "@/hooks/useAuth"
+import type { PaymentItem, PickupItem } from "@/features/staff-dashboard/components/payment-pickup-list"
+
+function authHeaders(token: string): HeadersInit {
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  }
+}
 
 export default function PickupPage() {
   const { token, isLoading: authLoading } = useAuth()
-  const [payments, setPayments] = useState<any[]>([])
-  const [pickups, setPickups] = useState<any[]>([])
+  const [payments, setPayments] = useState<PaymentItem[]>([])
+  const [pickups, setPickups] = useState<PickupItem[]>([])
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
+  const isFetchingRef = useRef(false)
+
+  const fetchData = useCallback(async () => {
+    if (!token || isFetchingRef.current) return
+
+    try {
+      isFetchingRef.current = true
+      setError(null)
+
+      const res = await fetch("/api/staff/pickups", {
+        headers: authHeaders(token),
+      })
+
+      if (!res.ok) throw new Error("Failed to load pickups")
+
+      const json = await res.json()
+      setPayments(json.data?.payments || [])
+      setPickups(json.data?.pickups || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      isFetchingRef.current = false
+      setFetched(true)
+    }
+  }, [token])
 
   useEffect(() => {
-    if (authLoading) return
-    if (!token) return
-
-    let cancelled = false
-
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/staff/pickups", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
-
-        if (!res.ok) throw new Error("Failed to load pickups")
-
-        const json = await res.json()
-
-        if (cancelled) return
-        setPayments(json.data?.payments || [])
-        setPickups(json.data?.pickups || [])
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "An error occurred")
-        }
-      } finally {
-        if (!cancelled) setFetched(true)
-      }
+    if (authLoading || !token) {
+      if (!token) setFetched(true)
+      return
     }
 
     fetchData()
 
-    return () => {
-      cancelled = true
-    }
-  }, [token, authLoading])
+    const interval = setInterval(() => fetchData(), 30000)
+    return () => clearInterval(interval)
+  }, [token, authLoading, fetchData])
 
   const isLoading = authLoading || (token !== null && !fetched && !error)
 
   const handleVerifyPayment = useCallback(async (paymentId: string) => {
+    const prevPayments = payments
+
     setPayments((prev) =>
       prev.map((p) => (p.id === paymentId ? { ...p, status: "verified" } : p))
     )
@@ -59,17 +68,14 @@ export default function PickupPage() {
     try {
       const res = await fetch("/api/staff/pickups", {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: authHeaders(token!),
         body: JSON.stringify({ orderId: paymentId, action: "verify" }),
       })
 
       const json = await res.json()
       if (!res.ok) throw new Error(json.message)
 
-      const txn = payments.find((p) => p.id === paymentId)
+      const txn = prevPayments.find((p) => p.id === paymentId)
       if (txn) {
         setPickups((prev) => [
           ...prev,
@@ -99,10 +105,7 @@ export default function PickupPage() {
     try {
       const res = await fetch("/api/staff/pickups", {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: authHeaders(token!),
         body: JSON.stringify({ orderId: pickupId, action: "complete" }),
       })
 
