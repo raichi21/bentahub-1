@@ -13,6 +13,12 @@ const ROUTE_TITLES: Record<string, string> = {
   "/staff/pickup": "Payments & Pickup",
 }
 
+const ROUTE_DESCRIPTIONS: Record<string, string> = {
+  "/staff": "Overview of branch performance and key metrics",
+  "/staff/monitoring": "Real-time transaction monitoring and updates",
+  "/staff/notifications": "Manage operational alerts",
+}
+
 interface StaffTopbarProps {
   onToggleSidebar?: () => void
 }
@@ -32,7 +38,12 @@ export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold text-foreground truncate">{title}</h1>
+        <div className="flex flex-col">
+          <h1 className="text-xl font-bold text-foreground truncate">{title}</h1>
+          {ROUTE_DESCRIPTIONS[pathname] && (
+            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{ROUTE_DESCRIPTIONS[pathname]}</p>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-4 md:gap-6">
         {/* Theme Toggle */}
