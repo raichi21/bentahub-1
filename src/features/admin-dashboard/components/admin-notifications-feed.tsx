@@ -53,10 +53,6 @@ export function AdminNotificationsFeed() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <section>
-          <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage and review recent system, inventory, and user activities.</p>
-        </section>
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-5 animate-pulse">
@@ -81,10 +77,6 @@ export function AdminNotificationsFeed() {
   if (error) {
     return (
       <div className="space-y-6">
-        <section>
-          <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage and review recent system, inventory, and user activities.</p>
-        </section>
         <div className="bg-card rounded-xl border border-border p-8 text-center">
           <p className="text-sm text-red-500 mb-4">{error}</p>
           <button
@@ -100,13 +92,6 @@ export function AdminNotificationsFeed() {
 
   return (
     <div className="space-y-6">
-      <section>
-        <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage and review recent system, inventory, and user activities.
-        </p>
-      </section>
-
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start mb-3">
