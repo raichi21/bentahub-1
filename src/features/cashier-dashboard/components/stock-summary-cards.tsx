@@ -1,7 +1,8 @@
 import { Package, CheckCircle, AlertTriangle } from "lucide-react"
-import { products, getStockStatus } from "@/features/cashier-dashboard/data/products"
+import { getStockStatus } from "@/lib/staff-utils"
+import type { Product } from "@/types/cashier"
 
-export function StockSummaryCards() {
+export function StockSummaryCards({ products }: { products: Product[] }) {
   const totalSKUs = products.length
   
   const inStockCount = products.filter(

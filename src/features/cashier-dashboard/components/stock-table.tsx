@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react"
 import { Search, Download, ChevronLeft, ChevronRight, Package } from "lucide-react"
-import { products, getStockStatus } from "@/features/cashier-dashboard/data/products"
+import { getStockStatus } from "@/lib/staff-utils"
 import { cn } from "@/lib/utils"
+import type { Product } from "@/types/cashier"
 
 const ITEMS_PER_PAGE = 5
 
-export function StockTable() {
+export function StockTable({ products, isLoading }: { products: Product[]; isLoading?: boolean }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -17,7 +18,7 @@ export function StockTable() {
   const categories = useMemo(() => {
     const set = new Set(products.map((p) => p.category))
     return ["All", ...Array.from(set)]
-  }, [])
+  }, [products])
 
   // Filtered dataset
   const filteredProducts = useMemo(() => {
@@ -129,7 +130,27 @@ export function StockTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginatedProducts.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded bg-slate-200 animate-pulse" />
+                      <div className="space-y-2">
+                        <div className="h-4 w-40 bg-slate-200 rounded animate-pulse" />
+                        <div className="h-3 w-24 bg-slate-100 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-4"><div className="h-4 w-20 bg-slate-200 rounded animate-pulse" /></td>
+                  <td className="p-4"><div className="h-4 w-16 bg-slate-200 rounded animate-pulse" /></td>
+                  <td className="p-4"><div className="h-5 w-20 bg-slate-200 rounded-full animate-pulse" /></td>
+                  <td className="p-4"><div className="h-4 w-12 bg-slate-200 rounded animate-pulse" /></td>
+                  <td className="p-4"><div className="h-4 w-16 bg-slate-200 rounded animate-pulse ml-auto" /></td>
+                </tr>
+              ))
+            ) : (
+              paginatedProducts.length === 0 ? (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-xs text-slate-400">
                   No stock records matched your query
@@ -218,7 +239,7 @@ export function StockTable() {
                   </tr>
                 )
               })
-            )}
+            ))}
           </tbody>
         </table>
       </div>
