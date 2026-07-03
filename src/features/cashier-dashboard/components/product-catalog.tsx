@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
-import { Search, Package } from "lucide-react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
+import { Search, Package, QrCode, CheckCircle, AlertCircle } from "lucide-react"
 import { ProductCard } from "./product-card"
+import { BarcodeScanner } from "./barcode-scanner"
 import type { Product } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
@@ -18,9 +19,34 @@ const CATEGORIES = ["All", "Groceries", "Beverages", "Household", "Pharmacy", "S
 export function ProductCatalog({ products, isLoading, error, onAddProduct }: ProductCatalogProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
+  const [scanFeedback, setScanFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-  // Keyboard shortcut Ctrl+K to focus search bar
+  const productBySku = useMemo(() => {
+    const map = new Map<string, Product>()
+    for (const p of products) {
+      map.set(p.sku.toLowerCase(), p)
+    }
+    return map
+  }, [products])
+
+  const handleBarcodeScan = useCallback((barcode: string) => {
+    const trimmed = barcode.trim().toLowerCase()
+    const product = productBySku.get(trimmed)
+
+    if (product) {
+      onAddProduct(product)
+      setScanFeedback({ type: "success", message: `${product.name} added!` })
+    } else {
+      setScanFeedback({ type: "error", message: `No product found with barcode "${barcode}"` })
+    }
+
+    if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
+    feedbackTimeoutRef.current = setTimeout(() => setScanFeedback(null), 3000)
+  }, [productBySku, onAddProduct])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -29,7 +55,10 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
       }
     }
     window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
+    }
   }, [])
 
   const filteredProducts = useMemo(() => {
@@ -58,9 +87,35 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
             placeholder="Search products (Ctrl + K)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm shadow-sm"
+            className="w-full pl-12 pr-12 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm shadow-sm"
           />
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+            title="Scan barcode"
+          >
+            <QrCode className="w-5 h-5" />
+          </button>
         </div>
+
+        {/* Scan Feedback Toast */}
+        {scanFeedback && (
+          <div
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shadow-lg animate-in slide-in-from-top-2",
+              scanFeedback.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200",
+            )}
+          >
+            {scanFeedback.type === "success" ? (
+              <CheckCircle className="w-4 h-4" />
+            ) : (
+              <AlertCircle className="w-4 h-4" />
+            )}
+            {scanFeedback.message}
+          </div>
+        )}
 
         {/* Category Scroll Container */}
         <div className="flex gap-2 overflow-x-auto pb-1 select-none scrollbar-none items-center">
@@ -113,6 +168,13 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
           </div>
         )}
       </div>
+
+      {isScannerOpen && (
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          onClose={() => setIsScannerOpen(false)}
+        />
+      )}
     </div>
   )
 }
