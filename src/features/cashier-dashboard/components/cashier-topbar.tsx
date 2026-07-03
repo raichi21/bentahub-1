@@ -1,8 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 
 interface CashierTopbarProps {
@@ -20,12 +19,6 @@ export function CashierTopbar({ onToggleSidebar }: CashierTopbarProps) {
   let title = "POS System"
   if (pathname === "/cashier/stock-check") {
     title = "Stock Check"
-  } else if (pathname === "/cashier/payments") {
-    title = "Validate Payments"
-  } else if (pathname === "/cashier/transactions") {
-    title = "Transaction History"
-  } else if (pathname === "/cashier/notifications") {
-    title = "Notifications"
   }
 
   return (
@@ -41,15 +34,6 @@ export function CashierTopbar({ onToggleSidebar }: CashierTopbarProps) {
         <h1 className="text-2xl font-bold text-slate-800 truncate">{title}</h1>
       </div>
       <div className="flex items-center gap-4 md:gap-6">
-        {/* Notification Bell */}
-        <Link href="/cashier/notifications" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:text-primary transition-colors border border-slate-200 relative flex-shrink-0">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>
-        </Link>
-
-        {/* Vertical Divider */}
-        <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
-
         {/* User Pill */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-md shadow-primary/20 select-none flex-shrink-0">
