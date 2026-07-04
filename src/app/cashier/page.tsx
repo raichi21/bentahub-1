@@ -1,74 +1,16 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState } from "react"
 import { ProductCatalog } from "@/features/cashier-dashboard/components/product-catalog"
 import { CartSidebar } from "@/features/cashier-dashboard/components/cart-sidebar"
 import { useCart } from "@/features/cashier-dashboard/hooks/use-cart"
+import { useCashierProducts } from "@/features/cashier-dashboard/hooks/use-cashier-products"
 import { ShoppingCart } from "lucide-react"
-import { useAuth } from "@/hooks/useAuth"
-import type { Product } from "@/types/cashier"
-import type { StaffProductItem } from "@/types/staff"
 
 export default function CashierPage() {
-  const { token, isLoading: authLoading } = useAuth()
-  const [products, setProducts] = useState<Product[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [fetched, setFetched] = useState(false)
-
-  useEffect(() => {
-    if (authLoading) return
-    if (!token) return
-
-    let cancelled = false
-
-    async function fetchProducts() {
-      try {
-        const res = await fetch("/api/staff/products", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
-
-        if (!res.ok) throw new Error("Failed to load products")
-
-        const json = await res.json()
-
-        if (cancelled) return
-
-        const mapped: Product[] = (json.data?.products || []).map(
-          (p: StaffProductItem) => ({
-            id: p.id,
-            sku: p.sku,
-            name: p.name,
-            price: p.price,
-            category: p.category as Product["category"],
-            stock: p.stock,
-            reorderLevel: p.reorderLevel,
-            image: p.image || "",
-            unit: "pcs",
-          }),
-        )
-        setProducts(mapped)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "An error occurred")
-        }
-      } finally {
-        if (!cancelled) setFetched(true)
-      }
-    }
-
-    fetchProducts()
-
-    return () => {
-      cancelled = true
-    }
-  }, [token, authLoading])
-
+  const { products, isLoading, error } = useCashierProducts()
   const cart = useCart()
   const [isCartOpen, setIsCartOpen] = useState(false)
-  const isLoading = authLoading || (token !== null && !fetched && !error)
 
   return (
     <div className="flex flex-1 overflow-hidden h-full relative">
