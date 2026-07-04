@@ -15,7 +15,7 @@ interface CartSidebarProps {
 }
 
 export function CartSidebar({ cart, onClose }: CartSidebarProps) {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const {
     items,
     removeItem,
@@ -88,7 +88,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
         paymentMethod,
         amountPaid: paidVal,
         change: changeDue,
-        cashier: "Cashier",
+        cashier: user?.fullName || "Cashier",
         status: "completed",
       }
 
