@@ -1,18 +1,21 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, Download, ChevronLeft, ChevronRight, Package } from "lucide-react"
+import { Search, Download, ChevronLeft, ChevronRight, Package, Bell } from "lucide-react"
 import { getStockStatus } from "@/lib/staff-utils"
+import { useAuth } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils"
 import type { Product } from "@/types/cashier"
 
 const ITEMS_PER_PAGE = 5
 
 export function StockTable({ products, isLoading }: { products: Product[]; isLoading?: boolean }) {
+  const { token } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All")
   const [statusFilter, setStatusFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
+  const [notifyingMap, setNotifyingMap] = useState<Record<string, "idle" | "sending" | "sent" | "error">>({})
 
   // Unique categories for the dropdown filter
   const categories = useMemo(() => {
@@ -222,15 +225,52 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                     <td className="p-4 text-right">
                       {isOut || isLow ? (
                         <button
-                          onClick={() => alert(`Ordering stock replacement for SKU: ${p.sku}`)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 transition-colors shadow-2xs"
+                          onClick={async () => {
+                            if (notifyingMap[p.id] === "sent" || notifyingMap[p.id] === "sending") return
+                            setNotifyingMap((prev) => ({ ...prev, [p.id]: "sending" }))
+                            try {
+                              const res = await fetch("/api/cashier/notify-low-stock", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${token}`,
+                                },
+                                body: JSON.stringify({
+                                  productId: p.id,
+                                  productName: p.name,
+                                  sku: p.sku,
+                                }),
+                              })
+                              const json = await res.json()
+                              if (json.success) {
+                                setNotifyingMap((prev) => ({ ...prev, [p.id]: "sent" }))
+                              } else {
+                                setNotifyingMap((prev) => ({ ...prev, [p.id]: "error" }))
+                              }
+                            } catch {
+                              setNotifyingMap((prev) => ({ ...prev, [p.id]: "error" }))
+                            }
+                          }}
+                          className={cn(
+                            "px-3 py-1 rounded text-[10px] font-bold transition-colors shadow-2xs inline-flex items-center gap-1",
+                            notifyingMap[p.id] === "sent"
+                              ? "bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-default"
+                              : "bg-blue-600 text-white hover:bg-blue-700",
+                          )}
                         >
-                          Reorder Now
+                          <Bell className="w-3 h-3" />
+                          {notifyingMap[p.id] === "sending"
+                            ? "Notifying..."
+                            : notifyingMap[p.id] === "sent"
+                            ? "Notified"
+                            : notifyingMap[p.id] === "error"
+                            ? "Retry"
+                            : "Notify Staff"}
                         </button>
                       ) : (
                         <button
                           onClick={() => alert(`Viewing details of SKU: ${p.sku}`)}
-                          className="text-xs font-bold text-blue-600 hover:underline"
+                          className="px-3 py-1 rounded text-[10px] font-bold border border-slate-200 text-slate-500 hover:border-blue-600 hover:text-blue-600 transition-colors shadow-2xs"
                         >
                           View Details
                         </button>
