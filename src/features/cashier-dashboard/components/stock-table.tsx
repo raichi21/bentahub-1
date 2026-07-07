@@ -267,14 +267,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                             ? "Retry"
                             : "Notify Staff"}
                         </button>
-                      ) : (
-                        <button
-                          onClick={() => alert(`Viewing details of SKU: ${p.sku}`)}
-                          className="px-3 py-1 rounded text-[10px] font-bold border border-slate-200 text-slate-500 hover:border-blue-600 hover:text-blue-600 transition-colors shadow-2xs"
-                        >
-                          View Details
-                        </button>
-                      )}
+                      ) : null}
                     </td>
                   </tr>
                 )
