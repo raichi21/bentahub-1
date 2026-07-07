@@ -38,7 +38,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
 
       return matchesSearch && matchesCat && matchesStatus
     })
-  }, [searchQuery, categoryFilter, statusFilter])
+  }, [products, searchQuery, categoryFilter, statusFilter])
 
   // Pagination calculations
   const totalItems = filteredProducts.length
