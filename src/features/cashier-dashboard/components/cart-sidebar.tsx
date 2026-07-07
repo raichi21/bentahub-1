@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { ShoppingCart, QrCode, Coins, CheckCircle, Percent, X, Loader2 } from "lucide-react"
 import { CartItem } from "./cart-item"
 import { ReceiptModal } from "./receipt-modal"
+import { GcashPaymentModal } from "./gcash-payment-modal"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
 import type { UseCartReturn } from "../hooks/use-cart"
@@ -38,9 +39,54 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
   const [showPromoInput, setShowPromoInput] = useState(discountPercent > 0)
   const [submitting, setSubmitting] = useState(false)
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null)
+  const [gcashPayment, setGcashPayment] = useState<{
+    checkoutUrl: string
+    amount: number
+    receiptNumber: number
+    paymentIntentId: string
+    transactionId: string
+  } | null>(null)
 
   const completeSale = useCallback(async () => {
     if (items.length === 0) return
+
+    if (paymentMethod === "gcash") {
+      setSubmitting(true)
+      try {
+        const res = await fetch("/api/cashier/payments", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            items,
+            totalAmount: total,
+            discountPercent,
+          }),
+        })
+
+        const json = await res.json()
+
+        if (!res.ok) {
+          throw new Error(json.message || "Payment failed")
+        }
+
+        setGcashPayment({
+          checkoutUrl: json.data.checkoutUrl,
+          amount: json.data.amount,
+          receiptNumber: json.data.receiptNumber,
+          paymentIntentId: json.data.paymentIntentId,
+          transactionId: json.data.transactionId,
+        })
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Payment failed")
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
+
     const paidVal = parseFloat(amountPaid) || 0
     if (paidVal < total && paymentMethod === "cash") {
       alert("Insufficient payment amount!")
@@ -131,6 +177,44 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
         <ReceiptModal
           transaction={lastTransaction}
           onClose={() => setLastTransaction(null)}
+        />
+      )}
+
+      {/* GCash Payment Modal */}
+      {gcashPayment && (
+        <GcashPaymentModal
+          checkoutUrl={gcashPayment.checkoutUrl}
+          amount={gcashPayment.amount}
+          receiptNumber={gcashPayment.receiptNumber}
+          paymentIntentId={gcashPayment.paymentIntentId}
+          transactionId={gcashPayment.transactionId}
+          onSuccess={() => {
+            const transaction: Transaction = {
+              id: gcashPayment.transactionId,
+              receiptNumber: gcashPayment.receiptNumber,
+              date: new Date().toISOString(),
+              items: items.map((item) => ({
+                productId: item.product.id,
+                name: item.product.name,
+                qty: item.quantity,
+                price: item.product.price,
+              })),
+              subtotal,
+              discount: discountAmount,
+              total,
+              paymentMethod: "gcash",
+              amountPaid: total,
+              change: 0,
+              cashier: user?.fullName || "Cashier",
+              status: "completed",
+            }
+            setGcashPayment(null)
+            setLastTransaction(transaction)
+            setSuccessMsg(`Payment received! Total: ₱${total.toFixed(2)}`)
+            setCheckoutSuccess(true)
+            clearCart()
+          }}
+          onClose={() => setGcashPayment(null)}
         />
       )}
 

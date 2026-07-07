@@ -15,8 +15,10 @@ This document lists all environment variables configured for the BentaHub projec
 | `EMAIL_PORT` | No | SMTP port for sending emails | `1025` |
 | `NODE_ENV` | Yes | Environment setting (development, production, or test) | `development` |
 | `NEXT_PUBLIC_APP_URL` | Yes | Public URL of the application frontend | `http://localhost:3000` |
-| `STRIPE_SECRET_KEY` | No | Stripe API secret key for payment processing | `(None)` |
-| `STRIPE_PUBLIC_KEY` | No | Stripe API publishable key for frontend payments | `(None)` |
-| `GCASH_API_KEY` | No | API key for GCash payments integration | `(None)` |
+| `PAYMONGO_SECRET_KEY` | Yes (for GCash) | PayMongo API secret key for payment processing | `sk_test_xxx` |
+| `NEXT_PUBLIC_PAYMONGO_PUBLIC_KEY` | Yes (for GCash) | PayMongo API publishable key for frontend | `pk_test_xxx` |
+| `STRIPE_SECRET_KEY` | No | Stripe API secret key for payment processing (legacy) | `(None)` |
+| `STRIPE_PUBLIC_KEY` | No | Stripe API publishable key for frontend payments (legacy) | `(None)` |
+| `GCASH_API_KEY` | No | API key for GCash payments integration (legacy) | `(None)` |
 
 <!-- AUTO-GENERATED END -->

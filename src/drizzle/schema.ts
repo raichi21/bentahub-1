@@ -286,6 +286,7 @@ export const transactions = pgTable("transactions", {
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
   status: transactionStatusEnum("status").default("completed").notNull(),
+  gcashRef: varchar("gcash_ref", { length: 255 }),
   createdAt,
 })
 
