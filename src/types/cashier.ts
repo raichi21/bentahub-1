@@ -1,12 +1,12 @@
 // ── Product & Inventory ──────────────────────────────────────────────
 
 export const PRODUCT_CATEGORIES = [
-  "Groceries",
-  "Beverages",
-  "Household",
-  "Pharmacy",
-  "Snacks",
-  "Bakery",
+  "Coffee",
+  "Baking Ingredients",
+  "Condiments",
+  "Household & Laundry Supplies",
+  "Sauces",
+  "Canned Goods",
 ] as const
 
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number]

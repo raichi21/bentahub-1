@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { products } from "@/servers/schemas"
+import { products, branchInventory, branches } from "@/servers/schemas"
+import { eq } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 
 /**
@@ -747,21 +748,53 @@ export async function POST(request: NextRequest) {
       },
     ];
 
+    // Prepare product records with IDs
+    const productRecords = productData.map((p) => ({
+      ...p,
+      id: generateId(),
+      price: p.price.toFixed(2),
+      bulkPrice: p.bulkPrice !== null ? p.bulkPrice.toFixed(2) : null,
+    }))
+
     // Insert all products
-    const results = await db.insert(products).values(
-      productData.map((p) => ({
-        ...p,
-        id: generateId(),
-        price: p.price.toFixed(2),
-        bulkPrice: p.bulkPrice !== null ? p.bulkPrice.toFixed(2) : null,
-      }))
-    );
+    await db.insert(products).values(productRecords)
+
+    // Find or create the branch
+    let branchId: string | undefined
+
+    const existingBranch = await db.query.branches.findFirst({
+      where: eq(branches.name, "Main Branch"),
+    })
+
+    if (existingBranch) {
+      branchId = existingBranch.id
+    } else {
+      branchId = generateId()
+      await db.insert(branches).values({
+        id: branchId,
+        name: "Main Branch",
+        location: "Main Branch, Metro Manila",
+        capacity: 500,
+        isActive: true,
+      })
+    }
+
+    // Create branch inventory records linking products to the branch
+    const inventoryRecords = productRecords.map((p) => ({
+      id: generateId(),
+      branchId,
+      productId: p.id,
+      quantity: p.quantity,
+      lowStockThreshold: 10,
+    }))
+
+    await db.insert(branchInventory).values(inventoryRecords)
 
     return NextResponse.json(
       {
         success: true,
-        message: `✅ Successfully seeded ${productData.length} products!`,
-        count: productData.length,
+        message: `✅ Successfully seeded ${productRecords.length} products with branch inventory!`,
+        count: productRecords.length,
       },
       { status: 200 }
     );

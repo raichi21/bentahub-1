@@ -14,11 +14,14 @@ interface ProductCatalogProps {
   onAddProduct: (product: Product) => void
 }
 
-const CATEGORIES = ["All", "Groceries", "Beverages", "Household", "Pharmacy", "Snacks", "Bakery"]
-
 export function ProductCatalog({ products, isLoading, error, onAddProduct }: ProductCatalogProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+
+  const categories = useMemo(() => {
+    const set = new Set(products.map((p) => p.category))
+    return ["All", ...Array.from(set)]
+  }, [products])
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [scanFeedback, setScanFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -117,25 +120,18 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
           </div>
         )}
 
-        {/* Category Scroll Container */}
-        <div className="flex gap-2 overflow-x-auto pb-1 select-none scrollbar-none items-center">
-          {CATEGORIES.map((cat) => {
-            const isActive = selectedCategory === cat
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={cn(
-                  "px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all shadow-sm border",
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                    : "bg-white text-slate-600 border-slate-200 hover:border-primary hover:text-primary"
-                )}
-              >
-                {cat}
-              </button>
-            )
-          })}
+        {/* Category Filter Dropdown */}
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</label>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
       </div>
 

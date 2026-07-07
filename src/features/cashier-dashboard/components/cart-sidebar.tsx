@@ -275,14 +275,6 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Amount Paid
             </label>
-            {paymentMethod === "cash" && (
-              <button
-                onClick={() => setAmountPaid(total.toFixed(2))}
-                className="text-[10px] font-bold text-primary uppercase hover:underline transition-all"
-              >
-                Exact Amount
-              </button>
-            )}
           </div>
           <div className="flex items-baseline gap-1 border-b border-slate-100 pb-1.5">
             <span className="text-2xl font-bold text-slate-300 font-mono">₱</span>
