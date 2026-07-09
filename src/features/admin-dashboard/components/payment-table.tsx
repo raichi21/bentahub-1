@@ -36,7 +36,7 @@ export function PaymentTable({ payments, totalCount, page, pageSize, onPageChang
     const maxVisible = 5
     const half = Math.floor(maxVisible / 2)
     let s = Math.max(1, page - half)
-    let e = Math.min(totalPages, s + maxVisible - 1)
+    const e = Math.min(totalPages, s + maxVisible - 1)
     if (e - s + 1 < maxVisible) s = Math.max(1, e - maxVisible + 1)
     const buttons: React.ReactNode[] = []
 

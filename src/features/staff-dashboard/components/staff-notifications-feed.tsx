@@ -63,6 +63,7 @@ export function StaffNotificationsFeed() {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
+    clearAll,
   } = useStaffNotifications()
 
   const [typeFilter, setTypeFilter] = useState<string>("all")
@@ -143,6 +144,14 @@ export function StaffNotificationsFeed() {
                 </div>
               )}
             </div>
+            {notifications.length > 0 && (
+              <button
+                onClick={clearAll}
+                className="bg-surface-container px-3 py-1.5 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                Clear all
+              </button>
+            )}
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}

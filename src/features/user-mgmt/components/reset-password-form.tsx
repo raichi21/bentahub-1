@@ -16,17 +16,12 @@ export function ResetPasswordForm() {
   const initialToken = searchParams.get("token") || ""
 
   const [token, setToken] = React.useState(initialToken)
-  const [email, setEmail] = React.useState("")
+  const paramEmail = searchParams.get("email")
+  const sessionEmail = typeof window !== "undefined" ? sessionStorage.getItem("pendingResetEmail") : ""
+  const [email, setEmail] = React.useState(paramEmail || sessionEmail || "")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState("")
   const [success, setSuccess] = React.useState(false)
-
-  React.useEffect(() => {
-    // Get email from search params or session storage
-    const paramEmail = searchParams.get("email")
-    const sessionEmail = typeof window !== "undefined" ? sessionStorage.getItem("pendingResetEmail") : ""
-    setEmail(paramEmail || sessionEmail || "")
-  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

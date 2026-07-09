@@ -32,8 +32,8 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   // Load html5-qrcode from CDN
   useEffect(() => {
     if (typeof (window as any).Html5Qrcode !== "undefined") {
-      setLibLoaded(true)
-      return
+      const timer = setTimeout(() => setLibLoaded(true), 0)
+      return () => clearTimeout(timer)
     }
 
     const script = document.createElement("script")

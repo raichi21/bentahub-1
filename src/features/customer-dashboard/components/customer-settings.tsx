@@ -38,9 +38,12 @@ export function CustomerSettings() {
 
   useEffect(() => {
     if (!user) return
-    setFullName(user.fullName)
-    setPhone(user.phone ?? "")
-    setSelectedBranch(user.branch ?? "")
+    const timer = setTimeout(() => {
+      setFullName(user.fullName)
+      setPhone(user.phone ?? "")
+      setSelectedBranch(user.branch ?? "")
+    }, 0)
+    return () => clearTimeout(timer)
   }, [user])
 
   const authHeaders = useCallback(() => ({

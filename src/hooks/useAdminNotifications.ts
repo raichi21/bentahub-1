@@ -15,9 +15,9 @@ export function useAdminNotifications({ pollInterval = 30000 }: { pollInterval?:
   const { token } = useAuth()
   const [notifications, setNotifications] = useState<AdminNotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const isFetchingRef = useRef(false)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
 
   const fetchNotifications = useCallback(async (unreadOnly: boolean = false) => {
     if (!token) return
@@ -25,7 +25,6 @@ export function useAdminNotifications({ pollInterval = 30000 }: { pollInterval?:
 
     try {
       isFetchingRef.current = true
-      setIsLoading(true)
       setError(null)
 
       const params = new URLSearchParams()
@@ -53,25 +52,32 @@ export function useAdminNotifications({ pollInterval = 30000 }: { pollInterval?:
       console.error("Failed to fetch admin notifications:", err)
     } finally {
       isFetchingRef.current = false
-      setIsLoading(false)
+      setInitialLoadComplete(true)
     }
   }, [token])
 
+  const isLoading = token === undefined || (token !== null && !initialLoadComplete)
+
   useEffect(() => {
     if (!token) {
-      setIsLoading(false)
-      return
+      const timer = setTimeout(() => setInitialLoadComplete(true), 0)
+      return () => { clearTimeout(timer); return }
     }
 
-    fetchNotifications()
+    const timer = setTimeout(() => fetchNotifications(), 0)
 
     if (pollInterval > 0) {
       const interval = setInterval(() => {
         fetchNotifications()
       }, pollInterval)
 
-      return () => clearInterval(interval)
+      return () => {
+        clearTimeout(timer)
+        clearInterval(interval)
+      }
     }
+
+    return () => clearTimeout(timer)
   }, [token, fetchNotifications, pollInterval])
 
   const markAsRead = useCallback(async (notificationId: string) => {

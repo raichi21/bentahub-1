@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ReservationMetrics, ReservationFilters, ReservationTable } from "@/features/admin-dashboard"
 import { useAuth } from "@/hooks/useAuth"
 import type { ReservationApiData } from "@/types/admin"
@@ -8,18 +8,16 @@ import type { ReservationApiData } from "@/types/admin"
 export default function ReservationsPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<ReservationApiData | null>(null)
-  const [fetched, setFetched] = useState(false)
   const [branch, setBranch] = useState("")
   const [status, setStatus] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
-  const fetchedRef = useRef(false)
+  const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (!token) return
-    fetchedRef.current = false
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (branch) params.set("branch", branch)
@@ -36,8 +34,7 @@ export default function ReservationsPage() {
         setData(json.data)
       }
     } finally {
-      fetchedRef.current = true
-      setFetched(true)
+      setFirstLoadDone(true)
     }
   }, [token, branch, status, dateFrom, dateTo, search, page])
 
@@ -45,7 +42,7 @@ export default function ReservationsPage() {
     fetchData()
   }, [fetchData])
 
-  const isLoading = authLoading || Boolean(token && !fetched && !data) || Boolean(token && !fetchedRef.current)
+  const isLoading = authLoading || (token != null && !firstLoadDone)
 
   const handleFilter = (fBranch: string, fStatus: string, fDateFrom: string, fDateTo: string) => {
     setBranch(fBranch)

@@ -27,12 +27,14 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
   const [error, setError] = useState("")
 
   useEffect(() => {
-    if (user) {
+    if (!user) return
+    const timer = setTimeout(() => {
       setName(user.fullName)
       setEmail(user.email)
       setRole(user.role)
       setBranch(user.branch || "")
-    }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [user])
 
   useEffect(() => {

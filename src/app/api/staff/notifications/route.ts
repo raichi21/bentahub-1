@@ -175,3 +175,26 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = extractToken(request)
+    if (!token) {
+      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
+    }
+
+    const payload = verifyToken(token)
+    if (!payload) {
+      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    }
+
+    await db
+      .delete(notifications)
+      .where(eq(notifications.userId, payload.userId))
+
+    return NextResponse.json({ success: true, message: "All notifications cleared" })
+  } catch (error) {
+    console.error("Staff notifications delete error:", error)
+    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+  }
+}

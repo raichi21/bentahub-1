@@ -55,11 +55,9 @@ export default function InventoryPage() {
 
   useEffect(() => {
     if (authLoading) return
-    if (!token) {
-      setFetched(true)
-      return
-    }
-    fetchProducts(token)
+    if (!token) return
+    const timer = setTimeout(() => fetchProducts(token), 0)
+    return () => clearTimeout(timer)
   }, [token, authLoading, fetchProducts])
 
   const isLoading = authLoading || (token !== null && !fetched && !error)

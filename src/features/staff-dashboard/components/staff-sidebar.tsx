@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutGrid, Activity, Bell, PackageSearch, CheckCircle2, LogOut, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { NotificationBadge } from "./notification-badge"
 
 const NAV_ITEMS = [
   {
@@ -93,6 +94,7 @@ export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
                     >
                       <Icon className={cn("w-5 h-5", isActive ? "text-blue-500" : "text-slate-400")} />
                       <span>{link.label}</span>
+                      {link.href === "/staff/notifications" && <NotificationBadge />}
                     </Link>
                   )
                 })}

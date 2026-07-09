@@ -55,7 +55,9 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
 
   useEffect(() => {
     const found = orders.find((o) => o.id === orderId)
-    if (found) setOrder(found)
+    if (!found) return
+    const timer = setTimeout(() => setOrder(found), 0)
+    return () => clearTimeout(timer)
   }, [orders, orderId])
 
   if (loading) {

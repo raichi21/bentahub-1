@@ -37,7 +37,8 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
 
   // Reset page when filters change
   useEffect(() => {
-    setPage(1)
+    const timer = setTimeout(() => setPage(1), 0)
+    return () => clearTimeout(timer)
   }, [filters.activeTab, filters.searchQuery, filters.dateFilter])
 
   // Convert orders to transaction format

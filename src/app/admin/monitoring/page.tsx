@@ -15,14 +15,13 @@ export default function MonitoringPage() {
   const [exportOpen, setExportOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
+  const [firstLoadDone, setFirstLoadDone] = useState(false)
   const [branchesFetched, setBranchesFetched] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
 
   // Fetch monitoring data
   useEffect(() => {
     if (!token) return
-
-    setFetched(false)
 
     const params = selectedBranch !== "all" ? `?branchId=${selectedBranch}` : ""
 
@@ -47,7 +46,10 @@ export default function MonitoringPage() {
       .catch((err) => {
         setError(err instanceof Error ? err.message : String(err))
       })
-      .finally(() => setFetched(true))
+      .finally(() => {
+        setFetched(true)
+        setFirstLoadDone(true)
+      })
   }, [token, selectedBranch])
 
   // Fetch branches for filter dropdown

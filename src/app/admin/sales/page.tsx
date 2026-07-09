@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { SalesFilters, SalesMetrics, TransactionDetailsTable } from "@/features/admin-dashboard"
 import { useAuth } from "@/hooks/useAuth"
 import type { SalesApiData } from "@/types/admin"
@@ -8,16 +8,14 @@ import type { SalesApiData } from "@/types/admin"
 export default function SalesPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<SalesApiData | null>(null)
-  const [fetched, setFetched] = useState(false)
   const [branchId, setBranchId] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [page, setPage] = useState(1)
-  const fetchedRef = useRef(false)
+  const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (!token) return
-    fetchedRef.current = false
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (branchId) params.set("branchId", branchId)
@@ -32,8 +30,7 @@ export default function SalesPage() {
         setData(json.data)
       }
     } finally {
-      fetchedRef.current = true
-      setFetched(true)
+      setFirstLoadDone(true)
     }
   }, [token, branchId, dateFrom, dateTo, page])
 
@@ -41,7 +38,7 @@ export default function SalesPage() {
     fetchData()
   }, [fetchData])
 
-  const isLoading = authLoading || Boolean(token && !fetched && !data) || Boolean(token && !fetchedRef.current)
+  const isLoading = authLoading || (token != null && !firstLoadDone)
 
   const handleFilter = (fBranchId: string, fDateFrom: string, fDateTo: string) => {
     setBranchId(fBranchId)

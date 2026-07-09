@@ -45,15 +45,15 @@ export default function PickupPage() {
   }, [token])
 
   useEffect(() => {
-    if (authLoading || !token) {
-      if (!token) setFetched(true)
-      return
-    }
+    if (authLoading || !token) return
 
-    fetchData()
+    const timer = setTimeout(() => fetchData(), 0)
 
     const interval = setInterval(() => fetchData(), 30000)
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(timer)
+      clearInterval(interval)
+    }
   }, [token, authLoading, fetchData])
 
   const isLoading = authLoading || (token !== null && !fetched && !error)
