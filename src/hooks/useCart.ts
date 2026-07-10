@@ -31,11 +31,11 @@ export function useCart() {
       if (!response.ok) throw new Error("Failed to fetch cart")
 
       const data = await response.json()
-      const items: CartItem[] = data.data.items.map((item: any) => ({
+      const items: CartItem[] = data.data.items.map((item: Record<string, unknown>) => ({
         ...item,
-        addedAt: new Date(item.addedAt),
-        updatedAt: new Date(item.updatedAt),
-      }))
+        addedAt: new Date(item.addedAt as string),
+        updatedAt: new Date(item.updatedAt as string),
+      })) as CartItem[]
 
       cartStore.setItems(items)
     } catch (error) {

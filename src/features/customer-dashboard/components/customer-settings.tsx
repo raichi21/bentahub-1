@@ -6,7 +6,7 @@ import { ContentCard } from "@/components/layouts"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, Bell, User, MapPin, CheckCircle, XCircle } from "lucide-react"
+import { Loader2, Bell, CheckCircle, XCircle } from "lucide-react"
 
 interface Branch {
   id: string

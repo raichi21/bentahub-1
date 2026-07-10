@@ -3,6 +3,18 @@
 import { useEffect, useRef, useState } from "react"
 import { X, Camera, Loader2, ScanLine, Type } from "lucide-react"
 
+// CDN-loaded Html5Qrcode — no type definitions available
+interface Html5QrcodeInstance {
+  start(config: unknown, options: unknown, onScan: (text: string) => void, onError: () => void): Promise<void>
+  stop(): Promise<void>
+  scanFile(file: File, _: boolean): Promise<string>
+  clear(): void
+}
+
+type Html5QrcodeConstructor = new (id: string) => Html5QrcodeInstance
+
+const getHtml5Qrcode = (): Html5QrcodeConstructor => (window as unknown as { Html5Qrcode: Html5QrcodeConstructor }).Html5Qrcode
+
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void
   onClose: () => void
@@ -16,7 +28,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const [mode, setMode] = useState<Mode>("loading")
   const [decoding, setDecoding] = useState(false)
   const [manualBarcode, setManualBarcode] = useState("")
-  const scannerRef = useRef<any>(null)
+  const scannerRef = useRef<Html5QrcodeInstance | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const manualInputRef = useRef<HTMLInputElement>(null)
 
@@ -31,7 +43,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
   // Load html5-qrcode from CDN
   useEffect(() => {
-    if (typeof (window as any).Html5Qrcode !== "undefined") {
+    if (typeof getHtml5Qrcode() !== "undefined") {
       const timer = setTimeout(() => setLibLoaded(true), 0)
       return () => clearTimeout(timer)
     }
@@ -56,7 +68,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     const startScanner = async () => {
       try {
-        const Html5Qrcode = (window as any).Html5Qrcode
+        const Html5Qrcode = getHtml5Qrcode()
         const scanner = new Html5Qrcode("barcode-scanner-view")
         scannerRef.current = scanner
 
@@ -71,7 +83,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           () => {},
         )
         setMode("live")
-      } catch (err) {
+      } catch {
         // Camera failed — switch to photo mode
         setMode("photo")
       }
@@ -92,13 +104,13 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     setDecoding(true)
     try {
-      const Html5Qrcode = (window as any).Html5Qrcode
+      const Html5Qrcode = getHtml5Qrcode()
       const scanner = new Html5Qrcode("barcode-scanner-photo")
       const result = await scanner.scanFile(file, true)
       onScan(result)
       scanner.clear()
       onClose()
-    } catch (err) {
+    } catch {
       setDecoding(false)
     }
 

@@ -26,11 +26,11 @@ export function useProducts() {
         if (!response.ok) throw new Error("Failed to fetch products")
 
         const data = await response.json()
-        const products: Product[] = (data.data ?? data ?? []).map((p: any) => ({
+        const products: Product[] = (data.data ?? data ?? []).map((p: Record<string, unknown>) => ({
           ...p,
-          createdAt: new Date(p.createdAt),
-          updatedAt: new Date(p.updatedAt),
-        }))
+          createdAt: new Date(p.createdAt as string),
+          updatedAt: new Date(p.updatedAt as string),
+        })) as Product[]
 
         productsStore.setProducts(products)
         return products

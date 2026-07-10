@@ -42,6 +42,9 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   }, [filters.activeTab, filters.searchQuery, filters.dateFilter])
 
   // Convert orders to transaction format
+  interface TransactionRow {
+    id: string; date: string; amount: string; status: string; method: string; rawOrder: Order
+  }
   const allTransactions = useMemo(() => {
     return orders
       .filter((o) => o.status === "completed" || o.status === "cancelled")
@@ -54,7 +57,7 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
         status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
         method: order.paymentMethod === "cash" ? "Cash on Pickup" : "GCash",
         rawOrder: order,
-      }))
+      })) as TransactionRow[]
   }, [orders])
 
   // Apply filters
@@ -117,7 +120,7 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
               <tr
                 key={transaction.id}
                 onClick={() => {
-                  const raw = (transaction as any).rawOrder
+                  const raw = transaction.rawOrder
                   if (raw?.id) router.push(`/customer/orders/${raw.id}`)
                 }}
                 className="hover:bg-muted/50 transition-colors cursor-pointer"
@@ -157,7 +160,7 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        const raw = (transaction as any).rawOrder
+                        const raw = transaction.rawOrder
                         if (raw?.id) {
                           setTransactionToDelete({ rawId: raw.id, displayId: transaction.id })
                           setDeleteModalOpen(true)

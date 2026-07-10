@@ -19,7 +19,7 @@ export default function CartPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [isProcessing] = useState(false)
 
   // Fetch cart on mount
   useEffect(() => {

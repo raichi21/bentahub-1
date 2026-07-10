@@ -16,7 +16,6 @@ interface CancelOrderModalProps {
 }
 
 export function CancelOrderModal({
-  orderId,
   orderLabel,
   amount,
   isOpen,

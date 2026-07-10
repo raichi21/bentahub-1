@@ -18,7 +18,6 @@ export function GcashPaymentModal({
   amount,
   receiptNumber,
   paymentIntentId,
-  transactionId,
   onSuccess,
   onClose,
 }: GcashPaymentModalProps) {

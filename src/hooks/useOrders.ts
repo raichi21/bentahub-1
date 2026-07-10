@@ -31,18 +31,18 @@ export function useOrders() {
       if (!response.ok) throw new Error("Failed to fetch orders")
 
       const data = await response.json()
-      const orders: Order[] = (data.data ?? []).map((o: any) => ({
+      const orders: Order[] = (data.data ?? []).map((o: Record<string, unknown>) => ({
         ...o,
         totalAmount: Number(o.totalAmount),
-        paidAt: o.paidAt ? new Date(o.paidAt) : null,
-        pickupDeadline: o.pickupDeadline ? new Date(o.pickupDeadline) : null,
-        createdAt: new Date(o.createdAt),
-        updatedAt: new Date(o.updatedAt),
-        items: o.items?.map((item: any) => ({
+        paidAt: o.paidAt ? new Date(o.paidAt as string) : null,
+        pickupDeadline: o.pickupDeadline ? new Date(o.pickupDeadline as string) : null,
+        createdAt: new Date(o.createdAt as string),
+        updatedAt: new Date(o.updatedAt as string),
+        items: ((o.items as Record<string, unknown>[]) ?? []).map((item: Record<string, unknown>) => ({
           ...item,
-          createdAt: new Date(item.createdAt),
-        })) || [],
-      }))
+          createdAt: new Date(item.createdAt as string),
+        })),
+      })) as Order[]
 
       ordersStore.setOrders(orders)
       return orders
@@ -95,10 +95,10 @@ export function useOrders() {
           pickupDeadline: orderPayload.pickupDeadline ? new Date(orderPayload.pickupDeadline) : null,
           createdAt: new Date(orderPayload.createdAt),
           updatedAt: new Date(orderPayload.updatedAt),
-          items: orderPayload.items?.map((item: any) => ({
+          items: (orderPayload.items as Record<string, unknown>[] ?? []).map((item: Record<string, unknown>) => ({
             ...item,
-            createdAt: new Date(item.createdAt),
-          })) || [],
+            createdAt: new Date(item.createdAt as string),
+          })),
         }
 
         ordersStore.addOrder(order)

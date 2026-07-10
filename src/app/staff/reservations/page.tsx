@@ -58,7 +58,8 @@ export default function ReservationsPage() {
   useEffect(() => {
     if (authLoading) return
     if (!token) return
-    fetchReservations()
+    const timer = setTimeout(() => fetchReservations(), 0)
+    return () => clearTimeout(timer)
   }, [token, authLoading, fetchReservations])
 
   const handleAction = async (orderId: string, action: "confirm" | "deny" | "ready", reason?: string) => {

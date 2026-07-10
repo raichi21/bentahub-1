@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   CheckCircle, Wallet, AlertTriangle, Bell,
-  ArrowRight, Percent, ShoppingBag, Loader2, Inbox
+  Percent, Loader2, Inbox
 } from "lucide-react"
 import { useNotifications } from "@/hooks/useNotifications"
 

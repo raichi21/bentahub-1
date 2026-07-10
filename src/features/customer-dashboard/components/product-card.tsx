@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { ShoppingCart, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -30,24 +29,16 @@ export function ProductCard({
   weight,
   branch = "Lourdes Main Branch",
 }: ProductCardProps) {
-  const router = useRouter()
   const { addToCart, isLoading } = useCart()
   const [error, setError] = useState<string | null>(null)
 
   const isOutOfStock = stockStatus === "out-of-stock"
   const isLowStock = stockStatus === "low-stock"
-  const numPrice = typeof price === "string" ? parseFloat(price.replace(/[^\d.]/g, "")) : price
 
   const handleAddToCart = async () => {
     try {
       setError(null)
-      const numericPrice = typeof price === "string" 
-        ? parseFloat(price.replace(/[^\d.]/g, "")) 
-        : price
-
       await addToCart(id, 1, branch)
-      // Optionally navigate to cart to show item was added
-      // router.push("/customer/cart")
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to add to cart"
       setError(message)
