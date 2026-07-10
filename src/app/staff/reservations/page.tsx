@@ -111,10 +111,6 @@ export default function ReservationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Reservations</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage customer reservations for your branch</p>
-      </div>
 
       <div className="flex gap-1 bg-surface-container rounded-lg p-1 w-fit">
         <button

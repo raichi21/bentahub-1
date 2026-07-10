@@ -10,6 +10,7 @@ const ROUTE_TITLES: Record<string, string> = {
   "/staff/notifications": "Notifications",
   "/staff/inventory": "Inventory Updating",
   "/staff/pickup": "Payments & Pickups",
+  "/staff/reservations": "Reservations",
 }
 
 const ROUTE_DESCRIPTIONS: Record<string, string> = {
@@ -18,6 +19,7 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/staff/inventory": "Manage and update product stock levels",
   "/staff/notifications": "Manage operational alerts",
   "/staff/pickup": "Verify payments and manage order pickups",
+  "/staff/reservations": "Manage customer reservations for your branch",
 }
 
 interface StaffTopbarProps {
