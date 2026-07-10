@@ -83,3 +83,38 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+/**
+ * PATCH /api/customer/notifications
+ * Mark all notifications as read for the authenticated user
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const userId = await getUserIdFromToken(request)
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    await db
+      .update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(
+        and(eq(notifications.userId, userId), eq(notifications.isRead, false))
+      )
+
+    return NextResponse.json(
+      { success: true, message: "All notifications marked as read" },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error marking notifications as read:", error)
+    return NextResponse.json(
+      { success: false, message: "Failed to mark notifications as read" },
+      { status: 500 }
+    )
+  }
+}

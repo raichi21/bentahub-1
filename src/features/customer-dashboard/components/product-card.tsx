@@ -28,7 +28,7 @@ export function ProductCard({
   image,
   stockStatus,
   weight,
-  branch = "Main Branch",
+  branch = "Lourdes Main Branch",
 }: ProductCardProps) {
   const router = useRouter()
   const { addToCart, isLoading } = useCart()

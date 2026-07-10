@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useMemo, useRef } from "react"
 import { cn, formatOrderId, formatOrderTitle } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 import { useOrders } from "@/hooks/useOrders"
 import { Loader2, Package } from "lucide-react"
 
 const ACTIVE_ORDER_TABS = ["All", "Pending", "Processing", "Ready"]
 
 export default function ReservationsPage() {
+  const router = useRouter()
   const tabs = ACTIVE_ORDER_TABS
   const [activeTab, setActiveTab] = useState("All")
   const { orders, fetchOrders, isLoading } = useOrders()
@@ -82,7 +84,7 @@ export default function ReservationsPage() {
           {filtered.map((order) => (
             <div
               key={order.id}
-              onClick={() => window.location.href = `/customer/orders/${order.id}`}
+              onClick={() => router.push(`/customer/orders/${order.id}`)}
               className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-all cursor-pointer hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between mb-3">

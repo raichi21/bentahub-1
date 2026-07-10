@@ -15,7 +15,7 @@ const branches = [
   },
   {
     id: 2,
-    name: "Lourdes 2nd Branch",
+    name: "Lourdes Second Branch",
     location: "C. De Guzman St., Poblacion, Sta. Maria, Bulacan",
     manager: "Lourdes Gunio",
     stock: 85,
@@ -24,7 +24,7 @@ const branches = [
   },
   {
     id: 3,
-    name: "Lourdes 3rd Branch",
+    name: "Lourdes Third Branch",
     location: "C. De Guzman St., Poblacion, Sta. Maria, Bulacan",
     manager: "Lourdes Gunio",
     stock: 78,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Store, FileText, CreditCard, Calendar, Clock, ShoppingBag, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Store, CreditCard, Calendar, Clock, ShoppingBag, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader, ContentCard } from "@/components/layouts"
 import { OrderTracker } from "./order-tracker"
@@ -31,34 +31,41 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
   const [showCancelModal, setShowCancelModal] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+
     async function load() {
-      if (orders.length === 0) {
-        await fetchOrders()
-      }
+      if (cancelled) return
+
+      // Find order in the existing orders list
       const found = orders.find((o) => o.id === orderId)
       if (found) {
         setOrder(found)
-      } else {
-        // Try single-order fetch
-        try {
-          const res = await fetch(`/api/customer/orders/${orderId}`)
-          const data = await res.json()
-          if (data.success) setOrder(data.data)
-        } catch (err) {
-          console.error("Failed to fetch order:", err)
-        }
+        setLoading(false)
+        return
       }
-      setLoading(false)
+
+      // No orders loaded yet — fetch first
+      if (orders.length === 0) {
+        await fetchOrders()
+        if (cancelled) return
+        // Effect will re-run when orders state updates (dependency below)
+        return
+      }
+
+      // Not in the list — try single-order fetch as fallback
+      try {
+        const res = await fetch(`/api/customer/orders/${orderId}`)
+        const data = await res.json()
+        if (data.success && !cancelled) setOrder(data.data)
+      } catch (err) {
+        console.error("Failed to fetch order:", err)
+      }
+      if (!cancelled) setLoading(false)
     }
     load()
-  }, [orderId, orders, fetchOrders])
 
-  useEffect(() => {
-    const found = orders.find((o) => o.id === orderId)
-    if (!found) return
-    const timer = setTimeout(() => setOrder(found), 0)
-    return () => clearTimeout(timer)
-  }, [orders, orderId])
+    return () => { cancelled = true }
+  }, [orderId, orders, fetchOrders])
 
   if (loading) {
     return (
@@ -106,7 +113,7 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
 
       {/* Status Tracker */}
       <ContentCard title="Order Status">
-        <OrderTracker status={order.status as any} />
+        <OrderTracker status={order.status as "pending" | "processing" | "ready" | "completed" | "cancelled"} />
       </ContentCard>
 
       {/* Order Info */}

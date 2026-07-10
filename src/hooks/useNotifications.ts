@@ -46,12 +46,12 @@ export function useNotifications() {
 
         const data = await response.json()
         const payload = data.data ?? {}
-        const notifications: Notification[] = (payload.notifications ?? []).map((n: any) => ({
+        const notifications: Notification[] = (payload.notifications ?? []).map((n: Record<string, unknown>) => ({
           ...n,
-          readAt: n.readAt ? new Date(n.readAt) : null,
-          createdAt: new Date(n.createdAt),
-          expiresAt: n.expiresAt ? new Date(n.expiresAt) : null,
-        }))
+          readAt: n.readAt ? new Date(n.readAt as string) : null,
+          createdAt: new Date(n.createdAt as string),
+          expiresAt: n.expiresAt ? new Date(n.expiresAt as string) : null,
+        })) as Notification[]
 
         notificationsStore.setNotifications(notifications)
         return notifications
@@ -65,6 +65,7 @@ export function useNotifications() {
         notificationsStore.setLoading(false)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, token]
   )
 
@@ -107,7 +108,7 @@ export function useNotifications() {
         throw error
       }
     },
-    [user, token]
+    [user, token, notificationsStore]
   )
 
   /**
@@ -115,15 +116,23 @@ export function useNotifications() {
    */
   const markAllAsRead = useCallback(async () => {
     if (!user) return
+    if (!token) return
 
     try {
+      const response = await fetch("/api/customer/notifications", {
+        method: "PATCH",
+        headers: authHeaders(token),
+        body: JSON.stringify({ isRead: true }),
+      })
+
+      if (!response.ok) throw new Error("Failed to mark all notifications as read")
+
       notificationsStore.markAllAsRead()
-      // Optionally sync with backend if needed
     } catch (error) {
       console.error("Failed to mark all notifications as read:", error)
       throw error
     }
-  }, [user])
+  }, [user, token, notificationsStore])
 
   return {
     // State
