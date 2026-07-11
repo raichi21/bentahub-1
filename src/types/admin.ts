@@ -19,6 +19,16 @@ export interface SalesTrendData {
   revenue: number
 }
 
+export interface PaymentBreakdownData {
+  cashTotal: number
+  cashTotalDisplay: string
+  gcashTotal: number
+  gcashTotalDisplay: string
+  cashPercentage: number
+  gcashPercentage: number
+  totalDisplay: string
+}
+
 export interface AdminOverviewData {
   kpis: {
     totalRevenue: KpiData
@@ -27,6 +37,7 @@ export interface AdminOverviewData {
   }
   salesTrend: SalesTrendData[]
   branchStock: BranchStockData[]
+  paymentBreakdown: PaymentBreakdownData
 }
 
 export interface MonitoringMetricsData {

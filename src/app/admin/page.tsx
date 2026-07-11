@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { KPICard, SalesChart, StockTable, TopProductsCard, LowStockByCategoryCard } from "@/features/admin-dashboard"
+import { KPICard, SalesChart, StockTable, TopProductsCard, LowStockByCategoryCard, PaymentBreakdownCard } from "@/features/admin-dashboard"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
-import type { AdminOverviewData, TopProductData, LowStockByCategoryData } from "@/types/admin"
+import type { AdminOverviewData, TopProductData, LowStockByCategoryData, PaymentBreakdownData } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function AdminPage() {
@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [data, setData] = useState<AdminOverviewData | null>(null)
   const [topProducts, setTopProducts] = useState<TopProductData[]>([])
   const [lowStockByCategory, setLowStockByCategory] = useState<LowStockByCategoryData[]>([])
+  const [paymentBreakdown, setPaymentBreakdown] = useState<PaymentBreakdownData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
 
@@ -32,6 +33,7 @@ export default function AdminPage() {
 
         if (overviewJson.success && overviewJson.data) {
           setData(overviewJson.data)
+          setPaymentBreakdown(overviewJson.data.paymentBreakdown)
         } else {
           setError(overviewJson.message)
         }
@@ -60,8 +62,12 @@ export default function AdminPage() {
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
-          <div className="lg:col-span-4 bg-card border border-border rounded-xl p-6 h-[300px] animate-pulse" />
+          <div className="lg:col-span-12 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="lg:col-span-4 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+          ))}
         </div>
       </div>
     )
@@ -108,11 +114,14 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-4">
           <TopProductsCard data={topProducts} />
         </div>
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-4">
           <LowStockByCategoryCard data={lowStockByCategory} />
+        </div>
+        <div className="lg:col-span-4">
+          <PaymentBreakdownCard data={paymentBreakdown} />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { products, branchInventory, branches } from "@/servers/schemas"
+import { products, branchInventory, branches, transactions, transactionItems } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 
@@ -808,10 +808,61 @@ export async function POST(request: NextRequest) {
 
     await db.insert(branchInventory).values(inventoryRecords)
 
+    // ── Seed sample transactions ──
+    await db.delete(transactionItems)
+    await db.delete(transactions)
+
+    const transactionSamples = [
+      // July 2026 (current month)
+      { monthsAgo: 0, dayOfMonth: 11, method: "cash" as const, amount: 1250.00, branchIdx: 0 },
+      { monthsAgo: 0, dayOfMonth: 10, method: "gcash" as const, amount: 780.00, branchIdx: 1 },
+      { monthsAgo: 0, dayOfMonth: 8, method: "cash" as const, amount: 2150.00, branchIdx: 2 },
+      { monthsAgo: 0, dayOfMonth: 5, method: "cash" as const, amount: 340.00, branchIdx: 0 },
+      { monthsAgo: 0, dayOfMonth: 3, method: "gcash" as const, amount: 1100.00, branchIdx: 0 },
+      // June 2026
+      { monthsAgo: 1, dayOfMonth: 28, method: "cash" as const, amount: 1670.00, branchIdx: 0 },
+      { monthsAgo: 1, dayOfMonth: 20, method: "gcash" as const, amount: 890.00, branchIdx: 2 },
+      { monthsAgo: 1, dayOfMonth: 15, method: "cash" as const, amount: 3050.00, branchIdx: 1 },
+      { monthsAgo: 1, dayOfMonth: 10, method: "cash" as const, amount: 720.00, branchIdx: 1 },
+      { monthsAgo: 1, dayOfMonth: 5, method: "gcash" as const, amount: 560.00, branchIdx: 0 },
+      // May 2026
+      { monthsAgo: 2, dayOfMonth: 25, method: "cash" as const, amount: 2340.00, branchIdx: 2 },
+      { monthsAgo: 2, dayOfMonth: 18, method: "cash" as const, amount: 1950.00, branchIdx: 0 },
+      { monthsAgo: 2, dayOfMonth: 12, method: "gcash" as const, amount: 430.00, branchIdx: 2 },
+      { monthsAgo: 2, dayOfMonth: 5, method: "cash" as const, amount: 890.00, branchIdx: 1 },
+      // April 2026
+      { monthsAgo: 3, dayOfMonth: 22, method: "cash" as const, amount: 480.00, branchIdx: 0 },
+      { monthsAgo: 3, dayOfMonth: 15, method: "gcash" as const, amount: 2100.00, branchIdx: 1 },
+      { monthsAgo: 3, dayOfMonth: 8, method: "cash" as const, amount: 1560.00, branchIdx: 0 },
+      // March 2026
+      { monthsAgo: 4, dayOfMonth: 20, method: "gcash" as const, amount: 3400.00, branchIdx: 2 },
+      { monthsAgo: 4, dayOfMonth: 10, method: "cash" as const, amount: 1280.00, branchIdx: 0 },
+      // February 2026
+      { monthsAgo: 5, dayOfMonth: 15, method: "cash" as const, amount: 2750.00, branchIdx: 1 },
+      { monthsAgo: 5, dayOfMonth: 5, method: "cash" as const, amount: 890.00, branchIdx: 0 },
+    ]
+
+    const transactionRecords = transactionSamples.map((t) => {
+      const now = new Date()
+      const date = new Date(now.getFullYear(), now.getMonth() - t.monthsAgo, t.dayOfMonth)
+      date.setHours(9 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60))
+      return {
+        id: generateId(),
+        branchId: branchIds[t.branchIdx],
+        receiptNumber: Math.floor(1000 + Math.random() * 9000),
+        totalAmount: t.amount.toFixed(2),
+        paymentMethod: t.method,
+        status: "completed" as const,
+        createdAt: date,
+      }
+    })
+
+    await db.insert(transactions).values(transactionRecords)
+
     return NextResponse.json(
       {
         success: true,
-        message: `✅ Successfully seeded ${productRecords.length} products with branch inventory!`,
+        message: `✅ Successfully seeded ${productRecords.length} products with branch inventory and ${transactionRecords.length} transactions!`,
         count: productRecords.length,
       },
       { status: 200 }

@@ -129,6 +129,21 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       }
     })
 
+  // --- Payment Breakdown ---
+  const completedTransactions = allTransactions.filter((t) => t.status === "completed")
+
+  const cashTotal = completedTransactions
+    .filter((t) => t.paymentMethod === "cash")
+    .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
+
+  const gcashTotal = completedTransactions
+    .filter((t) => t.paymentMethod === "gcash")
+    .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
+
+  const totalPaymentRevenue = cashTotal + gcashTotal
+  const cashPct = totalPaymentRevenue > 0 ? Math.round((cashTotal / totalPaymentRevenue) * 100) : 0
+  const gcashPct = 100 - cashPct
+
   return {
     kpis: {
       totalRevenue: {
@@ -147,5 +162,14 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     },
     salesTrend,
     branchStock,
+    paymentBreakdown: {
+      cashTotal,
+      cashTotalDisplay: formatCurrency(cashTotal),
+      gcashTotal,
+      gcashTotalDisplay: formatCurrency(gcashTotal),
+      cashPercentage: cashPct,
+      gcashPercentage: gcashPct,
+      totalDisplay: formatCurrency(totalPaymentRevenue),
+    },
   }
 }
