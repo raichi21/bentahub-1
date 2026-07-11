@@ -67,7 +67,7 @@ export function SalesChart({ data }: SalesChartProps) {
           return (
             <div key={label} className="relative flex-1 flex flex-col items-center gap-2 group z-10">
               <div
-                className="w-full max-w-[32px] bg-primary/20 hover:bg-primary rounded-t-sm transition-all cursor-pointer relative"
+                className="w-full max-w-[48px] bg-primary/20 hover:bg-primary rounded-t-sm transition-all cursor-pointer relative"
                 style={{ height: `${height}%` }}
               >
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-border">

@@ -102,16 +102,18 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-12">
           <SalesChart data={data?.salesTrend} />
-        </div>
-        <div className="lg:col-span-4">
-          <TopProductsCard data={topProducts} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <LowStockByCategoryCard data={lowStockByCategory} />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-6">
+          <TopProductsCard data={topProducts} />
+        </div>
+        <div className="lg:col-span-6">
+          <LowStockByCategoryCard data={lowStockByCategory} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
