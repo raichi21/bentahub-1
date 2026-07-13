@@ -19,12 +19,12 @@ export function ProductCard({ product, onAdd, disabled }: ProductCardProps) {
       onClick={() => onAdd(product)}
       disabled={isOutOfStock || disabled}
       className={cn(
-        "flex flex-col bg-white rounded-2xl p-3 border border-slate-200 shadow-sm hover:shadow-md hover:border-primary transition-all duration-200 group text-left w-full relative overflow-hidden",
+        "flex flex-col bg-card rounded-2xl p-3 border border-border shadow-sm hover:shadow-md hover:border-primary transition-all duration-200 group text-left w-full relative overflow-hidden",
         isOutOfStock && "opacity-60 cursor-not-allowed"
       )}
     >
       {/* Product Image Panel */}
-      <div className="aspect-square w-full rounded-xl overflow-hidden mb-3 bg-slate-100 relative flex items-center justify-center">
+      <div className="aspect-square w-full rounded-xl overflow-hidden mb-3 bg-muted relative flex items-center justify-center">
         {product.image ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -33,7 +33,7 @@ export function ProductCard({ product, onAdd, disabled }: ProductCardProps) {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <Package className="w-12 h-12 text-slate-400 opacity-40" />
+          <Package className="w-12 h-12 text-muted-foreground opacity-40" />
         )}
 
         {/* Stock Badge */}
@@ -57,7 +57,7 @@ export function ProductCard({ product, onAdd, disabled }: ProductCardProps) {
 
       {/* Info */}
       <div className="flex-1 flex flex-col justify-between">
-        <h3 className="font-bold text-sm text-slate-800 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+        <h3 className="font-bold text-sm text-card-foreground line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
           {product.name}
         </h3>
         <div className="flex justify-between items-end mt-auto">

@@ -48,25 +48,25 @@ export function GcashPaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
             <QrCode className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-sm text-slate-800">GCash Payment</h3>
+            <h3 className="font-bold text-sm text-card-foreground">GCash Payment</h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+          <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-card-foreground hover:bg-muted transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6 flex flex-col items-center text-center space-y-4">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Ipakita ang QR sa customer para i-scan gamit ang GCash app
           </p>
 
-          <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div className="bg-card p-3 rounded-xl border border-border shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={qrUrl}
@@ -76,10 +76,10 @@ export function GcashPaymentModal({
           </div>
 
           <div className="space-y-1">
-            <p className="text-2xl font-black text-slate-800 font-mono">
+            <p className="text-2xl font-black text-card-foreground font-mono">
               ₱{amount.toFixed(2)}
             </p>
-            <p className="text-[10px] font-mono text-slate-400">
+            <p className="text-[10px] font-mono text-muted-foreground">
               Receipt #{receiptNumber}
             </p>
           </div>
@@ -105,7 +105,7 @@ export function GcashPaymentModal({
             {checking ? "Checking..." : "Check Payment Status"}
           </button>
 
-          <p className="text-[10px] text-slate-400">
+          <p className="text-[10px] text-muted-foreground">
             After customer pays, click the button above to confirm.
           </p>
         </div>

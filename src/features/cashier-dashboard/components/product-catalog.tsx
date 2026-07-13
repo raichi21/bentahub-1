@@ -83,18 +83,18 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
       <div className="flex flex-col gap-4 mb-6 sticky top-0 bg-background/95 backdrop-blur-md z-10 py-1">
         {/* Search Input */}
         <div className="relative group w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors w-5 h-5" />
           <input
             ref={searchInputRef}
             type="text"
             placeholder="Search products (Ctrl + K)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-12 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm shadow-sm"
+            className="w-full pl-12 pr-12 py-3 bg-card border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-sm shadow-sm"
           />
           <button
             onClick={() => setIsScannerOpen(true)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
             title="Scan barcode"
           >
             <QrCode className="w-5 h-5" />
@@ -122,11 +122,11 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
 
         {/* Category Filter Dropdown */}
         <div className="flex items-center gap-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</label>
+          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Category</label>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+            className="px-3 py-2 bg-card border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
@@ -152,7 +152,7 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
             <p className="text-xs text-muted-foreground">{error}</p>
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <span className="text-sm font-semibold">No products found</span>
             <span className="text-xs">Try adjusting your filters or search query</span>
           </div>

@@ -77,14 +77,14 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden flex flex-col relative animate-scale-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/10 backdrop-blur-xs p-4 animate-fade-in">
+      <div className="bg-card w-full max-w-sm rounded-2xl shadow-xl overflow-hidden flex flex-col relative animate-scale-up">
         {/* Header toolbar */}
-        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-          <span className="text-xs font-bold text-slate-500">Transaction Receipt</span>
+        <div className="px-4 py-3 bg-muted border-b border-border flex justify-between items-center">
+          <span className="text-xs font-bold text-muted-foreground">Transaction Receipt</span>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/50 transition-colors"
+            className="p-1 text-muted-foreground hover:text-card-foreground rounded-lg hover:bg-accent transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -102,22 +102,22 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
           {/* Business branding */}
           <div className="text-center">
-            <h3 className="text-lg font-black text-slate-800 tracking-tight">BentaHub Retail</h3>
-            <p className="text-[10px] text-slate-400 font-medium">{user?.branch || "Lourdes Main Branch, Metro Manila"}</p>
-            <p className="text-[10px] text-slate-400 font-mono mt-1">Receipt No: BH-{String(transaction.receiptNumber).padStart(6, "0")}</p>
+          <h3 className="text-lg font-black text-card-foreground tracking-tight">BentaHub Retail</h3>
+          <p className="text-[10px] text-muted-foreground font-medium">{user?.branch || "Lourdes Main Branch, Metro Manila"}</p>
+          <p className="text-[10px] text-muted-foreground font-mono mt-1">Receipt No: BH-{String(transaction.receiptNumber).padStart(6, "0")}</p>
           </div>
 
-          <div className="border-t border-dashed border-slate-200 my-4"></div>
+          <div className="border-t border-dashed border-border my-4"></div>
 
           {/* Details header */}
-          <div className="space-y-1 text-xs text-slate-500 font-medium">
+          <div className="space-y-1 text-xs text-muted-foreground font-medium">
             <div className="flex justify-between">
               <span>Date:</span>
-              <span className="font-mono text-slate-700">{formattedDate}</span>
+              <span className="font-mono text-card-foreground/80">{formattedDate}</span>
             </div>
             <div className="flex justify-between">
               <span>Cashier:</span>
-              <span className="text-slate-700">{transaction.cashier}</span>
+              <span className="text-card-foreground/80">{transaction.cashier}</span>
             </div>
             <div className="flex justify-between">
               <span>Status:</span>
@@ -132,32 +132,32 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
             </div>
           </div>
 
-          <div className="border-t border-dashed border-slate-200 my-4"></div>
+          <div className="border-t border-dashed border-border my-4"></div>
 
           {/* Items checklist */}
           <div className="space-y-3">
             {transaction.items.map((item) => (
               <div key={item.productId} className="flex justify-between text-xs">
                 <div className="max-w-[70%]">
-                  <p className="font-bold text-slate-800">{item.name}</p>
-                  <p className="text-[10px] text-slate-400 font-mono">
+                  <p className="font-bold text-card-foreground">{item.name}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">
                     {item.qty} x ₱{item.price.toFixed(2)}
                   </p>
                 </div>
-                <span className="font-mono font-bold text-slate-700">
+                <span className="font-mono font-bold text-card-foreground/80">
                   ₱{(item.qty * item.price).toFixed(2)}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-dashed border-slate-200 my-4"></div>
+          <div className="border-t border-dashed border-border my-4"></div>
 
           {/* Totals log */}
           <div className="space-y-1.5 text-xs">
-            <div className="flex justify-between text-slate-500 font-medium">
+            <div className="flex justify-between text-muted-foreground font-medium">
               <span>Subtotal</span>
-              <span className="font-mono text-slate-700">₱{transaction.subtotal.toFixed(2)}</span>
+              <span className="font-mono text-card-foreground/80">₱{transaction.subtotal.toFixed(2)}</span>
             </div>
             {transaction.discount > 0 && (
               <div className="flex justify-between text-red-500 font-medium">
@@ -165,34 +165,34 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
                 <span className="font-mono">-₱{transaction.discount.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between items-baseline pt-2 text-sm font-black text-slate-800">
+            <div className="flex justify-between items-baseline pt-2 text-sm font-black text-card-foreground">
               <span>Total Bill</span>
               <span className="font-mono text-primary text-base">₱{transaction.total.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="border-t border-dashed border-slate-200 my-4"></div>
+          <div className="border-t border-dashed border-border my-4"></div>
 
           {/* Payment receipt info */}
-          <div className="space-y-1 text-xs text-slate-500 font-medium">
+          <div className="space-y-1 text-xs text-muted-foreground font-medium">
             <div className="flex justify-between">
               <span>Payment Type:</span>
-              <span className="uppercase text-slate-700 font-bold">{transaction.paymentMethod}</span>
+              <span className="uppercase text-card-foreground/80 font-bold">{transaction.paymentMethod}</span>
             </div>
             <div className="flex justify-between">
               <span>Amount Paid:</span>
-              <span className="font-mono text-slate-700">₱{transaction.amountPaid.toFixed(2)}</span>
+              <span className="font-mono text-card-foreground/80">₱{transaction.amountPaid.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Change Due:</span>
-              <span className="font-mono text-slate-700">₱{transaction.change.toFixed(2)}</span>
+              <span className="font-mono text-card-foreground/80">₱{transaction.change.toFixed(2)}</span>
             </div>
           </div>
 
           {/* Thank you phrase */}
           <div className="text-center pt-4">
-            <p className="text-[10px] text-slate-400 italic">Thank you for shopping with BentaHub!</p>
-            <p className="text-[9px] text-slate-300 font-mono mt-1">Please keep this receipt for return/refund requests</p>
+            <p className="text-[10px] text-muted-foreground italic">Thank you for shopping with BentaHub!</p>
+            <p className="text-[9px] text-muted-foreground/60 font-mono mt-1">Please keep this receipt for return/refund requests</p>
           </div>
         </div>
 
@@ -216,7 +216,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
         )}
 
         {/* Action Panel */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-2">
+        <div className="p-4 bg-muted border-t border-border flex gap-2">
           <button
             onClick={handlePrint}
             disabled={printing}
@@ -231,7 +231,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-slate-200 hover:bg-slate-200/50 rounded-xl text-xs font-bold text-slate-600 transition-colors"
+            className="px-4 py-2 border border-border hover:bg-accent rounded-xl text-xs font-bold text-muted-foreground transition-colors"
           >
             Close
           </button>

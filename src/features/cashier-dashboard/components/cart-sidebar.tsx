@@ -171,7 +171,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
   }, [items, amountPaid, total, paymentMethod, completeSale, clearCart, submitting])
 
   return (
-    <aside className="w-full lg:w-[420px] bg-white border-l border-slate-200 flex flex-col z-20 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative">
+    <aside className="w-full lg:w-[420px] bg-card border-l border-border flex flex-col z-20 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative">
       {/* Receipt Modal */}
       {lastTransaction && (
         <ReceiptModal
@@ -220,15 +220,15 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
 
       {/* Success Toast */}
       {checkoutSuccess && !lastTransaction && (
-        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="absolute inset-0 bg-card/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 animate-bounce">
             <CheckCircle className="w-10 h-10" />
           </div>
-          <h3 className="font-bold text-lg text-slate-800 mb-1">Sale Complete</h3>
-          <p className="text-xs text-slate-500 max-w-xs">{successMsg}</p>
+          <h3 className="font-bold text-lg text-card-foreground mb-1">Sale Complete</h3>
+          <p className="text-xs text-muted-foreground max-w-xs">{successMsg}</p>
           <button
             onClick={() => setCheckoutSuccess(false)}
-            className="mt-6 px-5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors"
+            className="mt-6 px-5 py-2 bg-foreground text-background rounded-xl text-xs font-bold hover:opacity-80 transition-colors"
           >
             Dismiss
           </button>
@@ -236,17 +236,17 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
       )}
 
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-30">
+      <div className="p-4 border-b border-border flex justify-between items-center bg-card sticky top-0 z-30">
         <div className="flex items-center gap-2">
           <ShoppingCart className="w-5 h-5 text-primary font-bold" />
-          <h2 className="font-bold text-lg text-slate-800">Orders</h2>
+          <h2 className="font-bold text-lg text-card-foreground">Orders</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-500">
+          <span className="text-[10px] font-bold px-2 py-0.5 bg-muted rounded text-muted-foreground">
             {items.length} Items
           </span>
           {onClose && (
-            <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors lg:hidden">
+            <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-card-foreground hover:bg-muted transition-colors lg:hidden">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -254,10 +254,10 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
       </div>
 
       {/* Cart Items List */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-card">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <ShoppingCart className="w-12 h-12 stroke-[1.5] mb-2 text-slate-300" />
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <ShoppingCart className="w-12 h-12 stroke-[1.5] mb-2 text-muted-foreground/40" />
             <span className="text-xs font-medium">Cart is empty</span>
           </div>
         ) : (
@@ -273,14 +273,14 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
       </div>
 
       {/* Checkout Panel */}
-      <div className="bg-slate-50/80 p-6 border-t border-slate-200 flex flex-col gap-4">
+      <div className="bg-muted/80 p-6 border-t border-border flex flex-col gap-4">
         {/* Subtotal & Discount info */}
-        <div className="space-y-1 bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-2xs">
-          <div className="flex justify-between text-slate-500 text-xs font-medium">
+        <div className="space-y-1 bg-card p-3.5 rounded-xl border border-border/60 shadow-2xs">
+          <div className="flex justify-between text-muted-foreground text-xs font-medium">
             <span>Subtotal</span>
             <span className="font-mono">₱{subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between items-center text-slate-500 text-xs font-medium min-h-[28px]">
+          <div className="flex justify-between items-center text-muted-foreground text-xs font-medium min-h-[28px]">
             <span>Discount</span>
             {showPromoInput ? (
               <div className="flex items-center gap-1.5 animate-fade-in">
@@ -296,11 +296,11 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
                   onBlur={() => {
                     if (!discountPercent) setShowPromoInput(false)
                   }}
-                  className="w-12 px-1 py-0.5 text-center font-mono text-xs border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-12 px-1 py-0.5 text-center font-mono text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
                   placeholder="0"
                   autoFocus
                 />
-                <Percent className="w-3 h-3 text-slate-400" />
+                <Percent className="w-3 h-3 text-muted-foreground" />
               </div>
             ) : (
               <button
@@ -311,8 +311,8 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
               </button>
             )}
           </div>
-          <div className="flex justify-between items-baseline pt-2 border-t border-slate-100 mt-2">
-            <span className="text-xs font-bold text-slate-800">Total Amount</span>
+          <div className="flex justify-between items-baseline pt-2 border-t border-border mt-2">
+            <span className="text-xs font-bold text-card-foreground">Total Amount</span>
             <span className="text-3xl font-black text-primary font-mono">
               ₱{total.toFixed(2)}
             </span>
@@ -320,7 +320,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
         </div>
 
         {/* Payment Options */}
-        <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl border border-slate-200 gap-2">
+        <div className="grid grid-cols-2 p-1 bg-muted rounded-2xl border border-border gap-2">
           <button
             onClick={() => {
               setPaymentMethod("cash")
@@ -330,7 +330,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
               "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl font-bold transition-all duration-200",
               paymentMethod === "cash"
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                : "bg-white text-slate-500 hover:bg-slate-50"
+                : "bg-card text-muted-foreground hover:bg-muted"
             )}
           >
             <Coins className="w-6 h-6" />
@@ -345,7 +345,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
               "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl font-bold transition-all duration-200",
               paymentMethod === "gcash"
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                : "bg-white text-slate-500 hover:bg-slate-50"
+                : "bg-card text-muted-foreground hover:bg-muted"
             )}
           >
             <QrCode className="w-6 h-6" />
@@ -354,14 +354,14 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
         </div>
 
         {/* Payment Details Form */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-2">
+        <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-2">
           <div className="flex justify-between items-center">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
               Amount Paid
             </label>
           </div>
-          <div className="flex items-baseline gap-1 border-b border-slate-100 pb-1.5">
-            <span className="text-2xl font-bold text-slate-300 font-mono">₱</span>
+          <div className="flex items-baseline gap-1 border-b border-border pb-1.5">
+            <span className="text-2xl font-bold text-muted-foreground/40 font-mono">₱</span>
             <input
               type="text"
               placeholder="0.00"
@@ -374,12 +374,12 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
                   setAmountPaid(val)
                 }
               }}
-              className="w-full border-none p-0 text-3xl font-black font-mono text-slate-800 focus:ring-0 placeholder:text-slate-200 bg-transparent outline-none"
+              className="w-full border-none p-0 text-3xl font-black font-mono text-card-foreground focus:ring-0 placeholder:text-muted-foreground/20 bg-transparent outline-none"
             />
           </div>
           {paymentMethod === "cash" && (
             <div className="flex justify-between items-center pt-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
                 Change Due
               </span>
               <span className="text-xl font-black font-mono text-amber-600">
@@ -406,7 +406,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
           <button
             disabled={items.length === 0 || submitting}
             onClick={clearCart}
-            className="w-full bg-transparent text-slate-400 hover:text-red-500 hover:bg-red-50 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full bg-transparent text-muted-foreground hover:text-red-500 hover:bg-red-50 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Discard Transaction (ESC)
           </button>

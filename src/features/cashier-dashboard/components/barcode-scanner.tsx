@@ -119,12 +119,12 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <h3 className="text-sm font-bold text-slate-800">Scan Barcode</h3>
+      <div className="bg-card rounded-2xl overflow-hidden max-w-md w-full shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="text-sm font-bold text-card-foreground">Scan Barcode</h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+            className="text-muted-foreground hover:text-card-foreground/80 transition-colors p-1"
           >
             <X className="w-5 h-5" />
           </button>
@@ -132,32 +132,32 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
         <div className="p-4">
           {libError ? (
-            <div className="aspect-video bg-slate-50 rounded-xl flex items-center justify-center p-6">
+            <div className="aspect-video bg-muted rounded-xl flex items-center justify-center p-6">
               <p className="text-sm text-red-500 text-center">{libError}</p>
             </div>
           ) : mode === "loading" ? (
-            <div className="aspect-video bg-slate-50 rounded-xl flex items-center justify-center">
+            <div className="aspect-video bg-muted rounded-xl flex items-center justify-center">
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <p className="text-xs text-slate-500">Starting camera...</p>
+                <p className="text-xs text-muted-foreground">Starting camera...</p>
               </div>
             </div>
           ) : mode === "live" ? (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-50">
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
               <div id="barcode-scanner-view" className="w-full h-full" />
             </div>
           ) : (
             /* Photo Mode — fallback pag ayaw ng camera */
-            <div className="aspect-video bg-slate-50 rounded-xl flex flex-col items-center justify-center gap-4 p-6">
+            <div className="aspect-video bg-muted rounded-xl flex flex-col items-center justify-center gap-4 p-6">
               <div id="barcode-scanner-photo" className="hidden" />
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <ScanLine className="w-8 h-8 text-primary" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-semibold text-slate-700 mb-1">
+                <p className="text-sm font-semibold text-card-foreground/80 mb-1">
                   Take a photo
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   I-tutok ang camera sa barcode at picture-an
                 </p>
               </div>
@@ -192,13 +192,13 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           {/* Manual barcode entry — separate na para kita sa phone */}
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="h-px flex-1 bg-slate-100" />
-              <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest">or</span>
-              <span className="h-px flex-1 bg-slate-100" />
+              <span className="h-px flex-1 bg-muted" />
+              <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-widest">or</span>
+              <span className="h-px flex-1 bg-muted" />
             </div>
             <form onSubmit={handleManualSubmit} className="flex gap-2">
               <div className="relative flex-1">
-                <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   ref={manualInputRef}
                   type="text"
@@ -206,7 +206,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
                   value={manualBarcode}
                   onChange={(e) => setManualBarcode(e.target.value)}
                   placeholder="Type barcode number..."
-                  className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 font-medium bg-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-300"
+                  className="w-full pl-9 pr-3 py-2.5 border border-border rounded-xl text-sm text-card-foreground font-medium bg-card outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground/40"
                 />
               </div>
               <button
@@ -220,9 +220,9 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-4 border-t border-slate-100 bg-slate-50">
-          <Camera className="w-4 h-4 text-slate-400 shrink-0" />
-          <p className="text-xs text-slate-500">
+        <div className="flex items-center gap-2 p-4 border-t border-border bg-muted">
+          <Camera className="w-4 h-4 text-muted-foreground shrink-0" />
+          <p className="text-xs text-muted-foreground">
             {mode === "live" ? "Point camera at barcode" : "Take photo or type barcode number"}
           </p>
         </div>

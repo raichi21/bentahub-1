@@ -58,11 +58,11 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
       {/* Search & Filters Action Bar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/50">
+      <div className="p-4 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/50">
         <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <input
             type="text"
             placeholder="Search by product name or SKU..."
@@ -71,7 +71,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setSearchQuery(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition-all"
           />
         </div>
 
@@ -84,7 +84,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setCategoryFilter(e.target.value)
               setCurrentPage(1)
             }}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/20"
+            className="px-3 py-2 bg-card border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/20"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -100,7 +100,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setStatusFilter(e.target.value)
               setCurrentPage(1)
             }}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/20"
+            className="px-3 py-2 bg-card border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/20"
           >
             <option value="All">Status: All</option>
             <option value="In Stock">In Stock</option>
@@ -111,7 +111,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
           {/* Export Button */}
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white rounded-lg text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-600 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 border border-border bg-card rounded-lg text-xs font-bold text-muted-foreground hover:text-blue-600 hover:border-blue-600 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export</span>
@@ -123,39 +123,39 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Product</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Category</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Quantity</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reorder Level</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+            <tr className="bg-muted border-b border-border">
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Product</th>
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</th>
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</th>
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reorder Level</th>
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded bg-slate-200 animate-pulse" />
-                      <div className="space-y-2">
-                        <div className="h-4 w-40 bg-slate-200 rounded animate-pulse" />
-                        <div className="h-3 w-24 bg-slate-100 rounded animate-pulse" />
+                    <div className="w-12 h-12 rounded bg-muted animate-pulse" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-40 bg-muted rounded animate-pulse" />
+                      <div className="h-3 w-24 bg-muted/50 rounded animate-pulse" />
                       </div>
                     </div>
                   </td>
-                  <td className="p-4"><div className="h-4 w-20 bg-slate-200 rounded animate-pulse" /></td>
-                  <td className="p-4"><div className="h-4 w-16 bg-slate-200 rounded animate-pulse" /></td>
-                  <td className="p-4"><div className="h-5 w-20 bg-slate-200 rounded-full animate-pulse" /></td>
-                  <td className="p-4"><div className="h-4 w-12 bg-slate-200 rounded animate-pulse" /></td>
-                  <td className="p-4"><div className="h-4 w-16 bg-slate-200 rounded animate-pulse ml-auto" /></td>
+                  <td className="p-4"><div className="h-4 w-20 bg-muted rounded animate-pulse" /></td>
+                  <td className="p-4"><div className="h-4 w-16 bg-muted rounded animate-pulse" /></td>
+                  <td className="p-4"><div className="h-5 w-20 bg-muted rounded-full animate-pulse" /></td>
+                  <td className="p-4"><div className="h-4 w-12 bg-muted rounded animate-pulse" /></td>
+                  <td className="p-4"><div className="h-4 w-16 bg-muted rounded animate-pulse ml-auto" /></td>
                 </tr>
               ))
             ) : (
               paginatedProducts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-xs text-slate-400">
+                <td colSpan={6} className="p-8 text-center text-xs text-muted-foreground">
                   No stock records matched your query
                 </td>
               </tr>
@@ -169,7 +169,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                   <tr
                     key={p.id}
                     className={cn(
-                      "hover:bg-slate-50/50 transition-colors",
+                      "hover:bg-muted/50 transition-colors",
                       isOut && "bg-red-50/20",
                       isLow && "bg-amber-50/10"
                     )}
@@ -177,26 +177,26 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                     {/* Product visual pill */}
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-200/50 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded bg-muted flex-shrink-0 overflow-hidden border border-border/50 flex items-center justify-center">
                           {p.image ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
                           ) : (
-                            <Package className="w-6 h-6 text-slate-400 opacity-40" />
+                            <Package className="w-6 h-6 text-muted-foreground opacity-40" />
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-800">{p.name}</p>
-                          <p className="text-[10px] font-mono text-slate-400">SKU: {p.sku}</p>
+                          <p className="text-sm font-bold text-card-foreground">{p.name}</p>
+                          <p className="text-[10px] font-mono text-muted-foreground">SKU: {p.sku}</p>
                         </div>
                       </div>
                     </td>
 
                     {/* Category */}
-                    <td className="p-4 text-xs font-medium text-slate-600">{p.category}</td>
+                    <td className="p-4 text-xs font-medium text-muted-foreground">{p.category}</td>
 
                     {/* Quantity */}
-                    <td className="p-4 text-sm font-mono font-bold text-slate-700">
+                    <td className="p-4 text-sm font-mono font-bold text-card-foreground">
                       {p.stock} {p.unit}s
                     </td>
 
@@ -217,7 +217,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                     </td>
 
                     {/* Reorder Threshold */}
-                    <td className="p-4 text-xs font-mono text-slate-500">
+                    <td className="p-4 text-xs font-mono text-muted-foreground">
                       {p.reorderLevel} {p.unit}s
                     </td>
 
@@ -278,8 +278,8 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
       </div>
 
       {/* Pagination Controls */}
-      <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between mt-auto">
-        <p className="text-xs text-slate-400 font-medium font-mono">
+      <div className="p-4 bg-muted border-t border-border flex items-center justify-between mt-auto">
+        <p className="text-xs text-muted-foreground font-medium font-mono">
           Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)}-
           {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} items
         </p>
@@ -288,19 +288,19 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
           <button
             disabled={safePage === 1}
             onClick={() => setCurrentPage((c) => c - 1)}
-            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-30 disabled:hover:bg-white"
+            className="p-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:hover:bg-card"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           
-          <span className="text-xs font-bold text-slate-600 px-2 font-mono">
+          <span className="text-xs font-bold text-muted-foreground px-2 font-mono">
             Page {safePage} of {totalPages}
           </span>
 
           <button
             disabled={safePage === totalPages}
             onClick={() => setCurrentPage((c) => c + 1)}
-            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-30 disabled:hover:bg-white"
+            className="p-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:hover:bg-card"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

@@ -9,7 +9,7 @@ export default function StockCheckPage() {
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-slate-50">
+      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-background">
         <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
           {error}
         </div>
@@ -18,7 +18,7 @@ export default function StockCheckPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-slate-50">
+    <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-background">
       <StockSummaryCards products={products} />
       <StockTable products={products} isLoading={isLoading} />
     </div>

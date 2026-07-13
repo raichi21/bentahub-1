@@ -13,23 +13,23 @@ export function CartItem({ item, onUpdateQty, onRemove }: CartItemProps) {
   const { product, quantity } = item
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl hover:shadow-sm transition-all duration-200">
+    <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl hover:shadow-sm transition-all duration-200">
       {/* Thumbnail */}
-      <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200/50 flex items-center justify-center">
+      <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden flex-shrink-0 border border-border/50 flex items-center justify-center">
         {product.image ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         ) : (
-          <Package className="w-6 h-6 text-slate-400 opacity-40" />
+          <Package className="w-6 h-6 text-muted-foreground opacity-40" />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-xs text-slate-800 truncate leading-snug">
+        <h4 className="font-bold text-xs text-card-foreground truncate leading-snug">
           {product.name}
         </h4>
-        <span className="text-[10px] text-slate-400 font-mono">
+        <span className="text-[10px] text-muted-foreground font-mono">
           SKU: {product.sku}
         </span>
         <div className="flex justify-between items-center mt-1">
@@ -41,20 +41,20 @@ export function CartItem({ item, onUpdateQty, onRemove }: CartItemProps) {
 
       {/* Action Controls */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200/40">
+        <div className="flex items-center bg-muted rounded-lg p-0.5 border border-border/40">
           <button
             onClick={() => onUpdateQty(quantity - 1)}
-            className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-primary transition-colors"
+            className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
           >
             <Minus className="w-3.5 h-3.5" />
           </button>
-          <span className="w-8 text-center text-xs font-mono font-bold text-slate-800">
+          <span className="w-8 text-center text-xs font-mono font-bold text-card-foreground">
             {quantity}
           </span>
           <button
             disabled={quantity >= product.stock}
             onClick={() => onUpdateQty(quantity + 1)}
-            className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-primary transition-colors disabled:opacity-30 disabled:hover:text-slate-500"
+            className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:hover:text-muted-foreground"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
