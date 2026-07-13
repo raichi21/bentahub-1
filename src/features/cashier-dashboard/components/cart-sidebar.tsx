@@ -401,14 +401,14 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
             ) : (
               <CheckCircle className="w-5 h-5" />
             )}
-            {submitting ? "PROCESSING..." : "COMPLETE SALE (ENTER)"}
+            {submitting ? "PROCESSING..." : "COMPLETE SALE"}
           </button>
           <button
             disabled={items.length === 0 || submitting}
             onClick={clearCart}
             className="w-full bg-transparent text-muted-foreground hover:text-red-500 hover:bg-red-50 py-1.5 rounded-xl text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Discard Transaction (ESC)
+            CANCEL ORDER
           </button>
         </div>
       </div>
