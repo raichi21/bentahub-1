@@ -171,7 +171,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
   }, [items, amountPaid, total, paymentMethod, completeSale, clearCart, submitting])
 
   return (
-    <aside className="w-full lg:w-[420px] bg-card border-l border-border flex flex-col z-20 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative">
+    <aside className="w-full lg:w-[520px] bg-card border-l border-border flex flex-col z-20 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative">
       {/* Receipt Modal */}
       {lastTransaction && (
         <ReceiptModal
