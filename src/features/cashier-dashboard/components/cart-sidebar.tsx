@@ -273,9 +273,9 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
       </div>
 
       {/* Checkout Panel */}
-      <div className="bg-muted/80 p-6 border-t border-border flex flex-col gap-4">
+      <div className="bg-muted/80 p-4 border-t border-border flex flex-col gap-3">
         {/* Subtotal & Discount info */}
-        <div className="space-y-1 bg-card p-3.5 rounded-xl border border-border/60 shadow-2xs">
+        <div className="space-y-1 bg-card p-3 rounded-xl border border-border/60 shadow-2xs">
           <div className="flex justify-between text-muted-foreground text-xs font-medium">
             <span>Subtotal</span>
             <span className="font-mono">₱{subtotal.toFixed(2)}</span>
@@ -313,7 +313,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
           </div>
           <div className="flex justify-between items-baseline pt-2 border-t border-border mt-2">
             <span className="text-xs font-bold text-card-foreground">Total Amount</span>
-            <span className="text-3xl font-black text-primary font-mono">
+            <span className="text-2xl font-black text-primary font-mono">
               ₱{total.toFixed(2)}
             </span>
           </div>
@@ -327,7 +327,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
               setAmountPaid("")
             }}
             className={cn(
-              "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl font-bold transition-all duration-200",
+              "flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all duration-200",
               paymentMethod === "cash"
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                 : "bg-card text-muted-foreground hover:bg-muted"
@@ -342,7 +342,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
               setAmountPaid(total.toFixed(2)) // GCash is always exact amount
             }}
             className={cn(
-              "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl font-bold transition-all duration-200",
+              "flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all duration-200",
               paymentMethod === "gcash"
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                 : "bg-card text-muted-foreground hover:bg-muted"
@@ -354,7 +354,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
         </div>
 
         {/* Payment Details Form */}
-        <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-2">
+        <div className="bg-card rounded-2xl border border-border p-3 shadow-sm space-y-2">
           <div className="flex justify-between items-center">
             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
               Amount Paid
@@ -374,7 +374,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
                   setAmountPaid(val)
                 }
               }}
-              className="w-full border-none p-0 text-3xl font-black font-mono text-card-foreground focus:ring-0 placeholder:text-muted-foreground/20 bg-transparent outline-none"
+              className="w-full border-none p-0 text-2xl font-black font-mono text-card-foreground focus:ring-0 placeholder:text-muted-foreground/20 bg-transparent outline-none"
             />
           </div>
           {paymentMethod === "cash" && (
@@ -394,7 +394,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
           <button
             disabled={items.length === 0 || submitting}
             onClick={completeSale}
-            className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-black text-base shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            className="w-full bg-primary text-primary-foreground py-3 rounded-2xl font-black text-base shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {submitting ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -406,7 +406,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
           <button
             disabled={items.length === 0 || submitting}
             onClick={clearCart}
-            className="w-full bg-transparent text-muted-foreground hover:text-red-500 hover:bg-red-50 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full bg-transparent text-muted-foreground hover:text-red-500 hover:bg-red-50 py-1.5 rounded-xl text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Discard Transaction (ESC)
           </button>
