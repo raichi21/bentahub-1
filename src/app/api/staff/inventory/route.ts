@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, branches, products, branchInventory } from "@/servers/schemas"
+import { users, branches, products, branchInventory, notifications } from "@/servers/schemas"
 import { eq, and } from "drizzle-orm"
 
 const CATEGORY_SKU_PREFIX: Record<string, string> = {
@@ -155,6 +155,27 @@ export async function POST(request: NextRequest) {
       quantity: stockQty,
       lowStockThreshold: threshold,
     })
+
+    const adminUsers = await db.query.users.findMany({
+      where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+    })
+
+    if (adminUsers.length > 0) {
+      await db.insert(notifications).values(
+        adminUsers.map((a) => ({
+          id: generateId(),
+          userId: a.id,
+          type: "new-product" as const,
+          title: `New Product Added: ${name}`,
+          message: `${name} (SKU: ${sku}) was added to ${branchName} by ${user.fullName}. Price: ₱${price}.`,
+          relatedProductId: productId,
+          isRead: false,
+          readAt: null,
+          expiresAt: null,
+          relatedOrderId: null,
+        }))
+      )
+    }
 
     return NextResponse.json({ success: true, message: "Product added successfully", data: { id: productId, sku } })
   } catch (error) {

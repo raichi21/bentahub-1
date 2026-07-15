@@ -136,6 +136,25 @@ export async function PATCH(request: NextRequest) {
         expiresAt: null,
         relatedProductId: null,
       })
+
+      const adminUsers = await db.query.users.findMany({
+        where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+      })
+
+      await db.insert(notifications).values(
+        adminUsers.map((a) => ({
+          id: generateId(),
+          userId: a.id,
+          type: "order-status",
+          title: "Reservation Confirmed",
+          message: `Order ${orderId} at ${order.branch} was confirmed by ${staff.fullName}.`,
+          relatedOrderId: orderId,
+          isRead: false,
+          readAt: null,
+          expiresAt: null,
+          relatedProductId: null,
+        }))
+      )
     } else if (action === "deny") {
       if (order.status !== "pending") {
         return NextResponse.json({ success: false, message: "Only pending reservations can be denied" }, { status: 400 })
@@ -159,6 +178,27 @@ export async function PATCH(request: NextRequest) {
         expiresAt: null,
         relatedProductId: null,
       })
+
+      const adminUsersDeny = await db.query.users.findMany({
+        where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+      })
+
+      await db.insert(notifications).values(
+        adminUsersDeny.map((a) => ({
+          id: generateId(),
+          userId: a.id,
+          type: "order-status",
+          title: "Reservation Denied",
+          message: reason
+            ? `Order ${orderId} at ${order.branch} was denied by ${staff.fullName}. Reason: ${reason}`
+            : `Order ${orderId} at ${order.branch} was denied by ${staff.fullName}.`,
+          relatedOrderId: orderId,
+          isRead: false,
+          readAt: null,
+          expiresAt: null,
+          relatedProductId: null,
+        }))
+      )
     } else if (action === "ready") {
       if (order.status !== "processing") {
         return NextResponse.json({ success: false, message: "Only processing reservations can be marked as ready" }, { status: 400 })
@@ -180,6 +220,25 @@ export async function PATCH(request: NextRequest) {
         expiresAt: null,
         relatedProductId: null,
       })
+
+      const adminUsersReady = await db.query.users.findMany({
+        where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+      })
+
+      await db.insert(notifications).values(
+        adminUsersReady.map((a) => ({
+          id: generateId(),
+          userId: a.id,
+          type: "order-ready",
+          title: "Order Ready for Pickup",
+          message: `Order ${orderId} at ${order.branch} was marked as ready for pickup by ${staff.fullName}.`,
+          relatedOrderId: orderId,
+          isRead: false,
+          readAt: null,
+          expiresAt: null,
+          relatedProductId: null,
+        }))
+      )
     } else {
       return NextResponse.json({ success: false, message: "Invalid action. Use: confirm, deny, or ready" }, { status: 400 })
     }

@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
-import { transactions, transactionItems, branchInventory } from "@/servers/schemas"
-import { eq, sql, max } from "drizzle-orm"
+import { transactions, transactionItems, branchInventory, users, notifications, branches } from "@/servers/schemas"
+import { eq, sql, max, and } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 import type { CartItem } from "@/types/cashier"
 
@@ -55,6 +55,31 @@ export async function createTransaction(input: CreateTransactionInput) {
       .where(
         sql`${branchInventory.branchId} = ${branchId} AND ${branchInventory.productId} = ${item.product.id}`
       )
+  }
+
+  const adminUsers = await db.query.users.findMany({
+    where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+  })
+
+  const branchRecord = await db.query.branches.findFirst({
+    where: eq(branches.id, branchId),
+  })
+
+  if (adminUsers.length > 0) {
+    await db.insert(notifications).values(
+      adminUsers.map((a) => ({
+        id: generateId(),
+        userId: a.id,
+        type: "payment-received" as const,
+        title: `Payment Received: ${paymentMethod === "cash" ? "Cash" : "GCash"}`,
+        message: `A payment of ₱${totalAmount.toFixed(2)} was received via ${paymentMethod} at ${branchRecord?.name || "Unknown Branch"}. Receipt #${nextReceiptNumber}`,
+        relatedOrderId: null,
+        isRead: false,
+        readAt: null,
+        expiresAt: null,
+        relatedProductId: null,
+      }))
+    )
   }
 
   return { id: transactionId, receiptNumber: nextReceiptNumber }

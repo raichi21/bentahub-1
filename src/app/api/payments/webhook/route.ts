@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { transactions, branchInventory } from "@/servers/schemas"
-import { eq, sql } from "drizzle-orm"
+import { transactions, branchInventory, users, notifications, branches } from "@/servers/schemas"
+import { eq, sql, and } from "drizzle-orm"
+import { generateId } from "@/lib/auth-utils"
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,6 +60,31 @@ export async function POST(request: NextRequest) {
         .where(
           sql`${branchInventory.branchId} = ${transaction.branchId} AND ${branchInventory.productId} = ${item.productId}`,
         )
+    }
+
+    const adminUsers = await db.query.users.findMany({
+      where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+    })
+
+    const branchRecord = await db.query.branches.findFirst({
+      where: eq(branches.id, transaction.branchId),
+    })
+
+    if (adminUsers.length > 0) {
+      await db.insert(notifications).values(
+        adminUsers.map((a) => ({
+          id: generateId(),
+          userId: a.id,
+          type: "payment-received" as const,
+          title: "Payment Received: GCash",
+          message: `A payment of ₱${parseFloat(transaction.totalAmount).toFixed(2)} was received via GCash at ${branchRecord?.name || "Unknown Branch"}. Receipt #${transaction.receiptNumber}`,
+          relatedOrderId: null,
+          isRead: false,
+          readAt: null,
+          expiresAt: null,
+          relatedProductId: null,
+        }))
+      )
     }
 
     return NextResponse.json({ success: true, message: "Transaction completed" })

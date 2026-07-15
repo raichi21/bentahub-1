@@ -44,6 +44,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "No staff users found in your branch" }, { status: 404 })
     }
 
+    const adminUsers = await db.query.users.findMany({
+      where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+    })
+
     const existingNotification = await db.query.notifications.findFirst({
       where: and(
         eq(notifications.relatedProductId, productId),
@@ -56,12 +60,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: "Staff already notified about this product" })
     }
 
-    const notificationValues = staffUsers.map((staff) => ({
+    const allTargetUsers = [...staffUsers, ...adminUsers]
+    const notificationValues = allTargetUsers.map((u) => ({
       id: generateId(),
-      userId: staff.id,
+      userId: u.id,
       type: "low-stock" as const,
       title: `Low Stock Alert: ${productName}`,
-      message: `${productName} (SKU: ${sku}) is running low on stock. This alert was raised by cashier ${cashier.fullName}.`,
+      message: `${productName} (SKU: ${sku}) at ${branch} is running low on stock. Raised by cashier ${cashier.fullName}.`,
       relatedProductId: productId,
       isRead: false,
       readAt: null,
@@ -73,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${staffUsers.length} staff member${staffUsers.length > 1 ? "s" : ""} notified about ${productName}`,
+      message: `${allTargetUsers.length} user${allTargetUsers.length > 1 ? "s" : ""} notified about ${productName}`,
     })
   } catch (error) {
     console.error("Notify low stock error:", error)
