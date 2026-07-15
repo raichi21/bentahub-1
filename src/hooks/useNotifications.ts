@@ -134,6 +134,28 @@ export function useNotifications() {
     }
   }, [user, token, notificationsStore])
 
+  /**
+   * Clear all notifications
+   */
+  const clearAll = useCallback(async () => {
+    if (!user) return
+    if (!token) return
+
+    try {
+      const response = await fetch("/api/customer/notifications", {
+        method: "DELETE",
+        headers: authHeaders(token),
+      })
+
+      if (!response.ok) throw new Error("Failed to clear notifications")
+
+      notificationsStore.setNotifications([])
+    } catch (error) {
+      console.error("Failed to clear notifications:", error)
+      throw error
+    }
+  }, [user, token, notificationsStore])
+
   return {
     // State
     notifications: notificationsStore.notifications,
@@ -145,5 +167,6 @@ export function useNotifications() {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
+    clearAll,
   }
 }

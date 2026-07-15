@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/hooks/useAuth"
@@ -15,16 +15,42 @@ function getInitials(fullName: string): string {
     .slice(0, 2)
 }
 
+const ROUTE_TITLES: Record<string, string> = {
+  "/customer": "Dashboard",
+  "/customer/catalog": "Browse Products",
+  "/customer/cart": "Cart",
+  "/customer/checkout": "Checkout",
+  "/customer/reservations": "Reservations",
+  "/customer/orders": "Transaction History",
+  "/customer/notifications": "Notifications",
+  "/customer/settings": "Settings",
+}
+
+const ROUTE_DESCRIPTIONS: Record<string, string> = {
+  "/customer": "Browse, reserve, and track your orders",
+  "/customer/catalog": "Explore our products and services",
+  "/customer/cart": "Review your selected items",
+  "/customer/checkout": "Complete your reservation",
+  "/customer/reservations": "Track your active orders",
+  "/customer/orders": "View your completed and past orders",
+  "/customer/notifications": "Stay updated with your latest activities",
+  "/customer/settings": "Manage your account settings",
+}
+
 interface DashboardTopbarProps {
   onToggleSidebar?: () => void
 }
 
 export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const { user } = useAuth()
   const { unreadCount } = useNotifications()
   const displayName = user?.fullName || ""
   const initials = displayName ? getInitials(displayName) : "U"
+
+  const title = ROUTE_TITLES[pathname] || "Dashboard"
+  const description = ROUTE_DESCRIPTIONS[pathname] || ""
 
   return (
     <header className="bg-white dark:bg-[#090e1a] border-b border-slate-200 dark:border-slate-800 px-4 md:px-6 sticky top-0 z-30 flex justify-between items-center h-[80px] w-full">
@@ -38,8 +64,8 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
           <Menu className="w-5 h-5" />
         </button>
         <div className="flex flex-col min-w-0">
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">Customer Dashboard</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">Browse, reserve, and track your orders</p>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{title}</h1>
+          {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{description}</p>}
         </div>
       </div>
 

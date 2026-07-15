@@ -13,14 +13,22 @@ export default function ReservationsPage() {
   const tabs = ACTIVE_ORDER_TABS
   const [activeTab, setActiveTab] = useState("All")
   const { orders, fetchOrders, isLoading } = useOrders()
-  const hasFetched = useRef(false)
+  const fetchedOnce = useRef(false)
 
+  // Refetch on mount so the customer sees the latest status
   useEffect(() => {
-    if (!isLoading && orders.length === 0 && !hasFetched.current) {
-      hasFetched.current = true
+    if (!fetchedOnce.current) {
+      fetchedOnce.current = true
       fetchOrders()
     }
-  }, [fetchOrders, isLoading, orders.length])
+  }, [fetchOrders])
+
+  // Refetch when the tab becomes visible (e.g., customer switches back from staff)
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === "visible") fetchOrders() }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [fetchOrders])
 
   // Only show active orders (pending, processing, ready)
   const reservations = useMemo(() => {
@@ -36,20 +44,6 @@ export default function ReservationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
-            My Reservations
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Track your active orders waiting for pickup.
-          </p>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{filtered.length}</span> reservation{filtered.length !== 1 ? "s" : ""}
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className="flex border-b border-border gap-6 overflow-x-auto">
         {tabs.map((tab) => (

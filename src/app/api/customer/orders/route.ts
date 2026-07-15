@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
 import { cartItems, orders, orderItems } from "@/drizzle/schema"
-import { eq } from "drizzle-orm"
+import { eq, inArray } from "drizzle-orm"
 import { generateId, extractToken, verifyToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 
@@ -15,7 +15,7 @@ function getUserIdFromToken(request: NextRequest): string | null {
 
 /**
  * GET /api/customer/orders
- * Retrieve all orders for the authenticated user
+ * Retrieve all orders with their items for the authenticated user
  */
 export async function GET(request: NextRequest) {
   const userId = getUserIdFromToken(request)
@@ -26,6 +26,28 @@ export async function GET(request: NextRequest) {
       .select()
       .from(orders)
       .where(eq(orders.userId, userId))
+
+    // Attach items to each order
+    if (userOrders.length > 0) {
+      const orderIds = userOrders.map((o) => o.id)
+      const allItems = await db
+        .select()
+        .from(orderItems)
+        .where(inArray(orderItems.orderId, orderIds))
+
+      const itemsByOrderId: Record<string, typeof allItems> = {}
+      for (const item of allItems) {
+        if (!itemsByOrderId[item.orderId]) itemsByOrderId[item.orderId] = []
+        itemsByOrderId[item.orderId].push(item)
+      }
+
+      const enriched = userOrders.map((o) => ({
+        ...o,
+        items: itemsByOrderId[o.id] || [],
+      }))
+
+      return apiResponse({ success: true, data: enriched })
+    }
 
     return apiResponse({ success: true, data: userOrders })
   } catch (error) {

@@ -118,3 +118,35 @@ export async function PATCH(request: NextRequest) {
     )
   }
 }
+
+/**
+ * DELETE /api/customer/notifications
+ * Clear all notifications for the authenticated user
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const userId = await getUserIdFromToken(request)
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    await db
+      .delete(notifications)
+      .where(eq(notifications.userId, userId))
+
+    return NextResponse.json(
+      { success: true, message: "All notifications cleared" },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error clearing notifications:", error)
+    return NextResponse.json(
+      { success: false, message: "Failed to clear notifications" },
+      { status: 500 }
+    )
+  }
+}

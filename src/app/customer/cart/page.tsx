@@ -83,11 +83,6 @@ export default function CartPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <header className="mb-6">
-        <h2 className="text-3xl font-bold text-foreground">Carts</h2>
-        <p className="text-muted-foreground mt-1">Review your selected items before submitting your reservation request.</p>
-      </header>
-
       {error && (
         <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
           {error}

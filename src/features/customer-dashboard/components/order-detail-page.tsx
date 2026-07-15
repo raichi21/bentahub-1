@@ -46,9 +46,15 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
 
       // No orders loaded yet — fetch first
       if (orders.length === 0) {
-        await fetchOrders()
+        try {
+          await fetchOrders()
+        } catch {
+          // fetchOrders sets its own error state; show "not found"
+          if (!cancelled) setLoading(false)
+          return
+        }
         if (cancelled) return
-        // Effect will re-run when orders state updates (dependency below)
+        // On success, effect re-runs via orders dependency; don't set loading=false to avoid flash
         return
       }
 

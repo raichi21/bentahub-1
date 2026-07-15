@@ -3,17 +3,16 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   CheckCircle, Wallet, AlertTriangle, Bell,
-  Percent, Loader2, Inbox
+  Percent, Loader2, Inbox, Trash2
 } from "lucide-react"
 import { useNotifications } from "@/hooks/useNotifications"
 
-type FilterTab = "all" | "orders" | "payments" | "offers"
+type FilterTab = "all" | "orders" | "payments"
 
 const tabs: { key: FilterTab; label: string }[] = [
   { key: "all", label: "All" },
   { key: "orders", label: "Orders" },
   { key: "payments", label: "Payments" },
-  { key: "offers", label: "Offers" },
 ]
 
 function getDisplayType(
@@ -76,7 +75,7 @@ function formatTimestamp(date: Date): string {
 }
 
 export function CustomerNotificationsFeed() {
-  const { notifications, isLoading, fetchNotifications, markAllAsRead, markAsRead } = useNotifications()
+  const { notifications, isLoading, fetchNotifications, markAllAsRead, markAsRead, clearAll } = useNotifications()
   const [activeTab, setActiveTab] = useState<FilterTab>("all")
 
   useEffect(() => {
@@ -110,40 +109,45 @@ export function CustomerNotificationsFeed() {
     : displayNotifications.filter((n) => {
         if (activeTab === "orders") return n.type === "order"
         if (activeTab === "payments") return n.type === "payment"
-        if (activeTab === "offers") return n.type === "offer" || n.type === "alert"
         return true
       })
 
   return (
     <div className="space-y-6">
-      <section>
-        <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          Stay updated with your latest activities and exclusive offers.
-        </p>
-      </section>
-
       <section className="flex flex-wrap items-center gap-2">
-        {tabs.map((tab) => (
+        <div className="flex items-center gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={
+                activeTab === tab.key
+                  ? "px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm transition-colors"
+                  : "px-4 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-bold hover:bg-muted/70 transition-colors"
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-3 ml-auto">
+          {notifications.length > 0 && (
+            <button
+              onClick={clearAll}
+              className="flex items-center gap-1 cursor-pointer text-red-500 hover:text-red-600 hover:underline"
+            >
+              <Trash2 className="w-[18px] h-[18px]" />
+              <span className="text-xs font-bold">Clear all</span>
+            </button>
+          )}
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={
-              activeTab === tab.key
-                ? "px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm transition-colors"
-                : "px-4 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-bold hover:bg-muted/70 transition-colors"
-            }
+            onClick={markAllAsRead}
+            className="flex items-center gap-1 cursor-pointer text-primary hover:underline"
           >
-            {tab.label}
+            <Bell className="w-[18px] h-[18px]" />
+            <span className="text-xs font-bold">Mark all as read</span>
           </button>
-        ))}
-        <button
-          onClick={markAllAsRead}
-          className="ml-auto flex items-center gap-1 cursor-pointer text-primary hover:underline"
-        >
-          <Bell className="w-[18px] h-[18px]" />
-          <span className="text-xs font-bold">Mark all as read</span>
-        </button>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-6 gap-4">
@@ -157,9 +161,6 @@ export function CustomerNotificationsFeed() {
               <Inbox className="h-8 w-8 text-muted-foreground" />
             </div>
             <p className="text-muted-foreground font-medium">No notifications yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">
-              We&apos;ll notify you when something arrives.
-            </p>
           </div>
         ) : (
           filtered.map((n) => {
