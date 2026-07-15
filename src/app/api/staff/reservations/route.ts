@@ -145,7 +145,7 @@ export async function PATCH(request: NextRequest) {
         adminUsers.map((a) => ({
           id: generateId(),
           userId: a.id,
-          type: "order-status",
+          type: "order-status" as const,
           title: "Reservation Confirmed",
           message: `Order ${orderId} at ${order.branch} was confirmed by ${staff.fullName}.`,
           relatedOrderId: orderId,
@@ -187,7 +187,7 @@ export async function PATCH(request: NextRequest) {
         adminUsersDeny.map((a) => ({
           id: generateId(),
           userId: a.id,
-          type: "order-status",
+          type: "order-status" as const,
           title: "Reservation Denied",
           message: reason
             ? `Order ${orderId} at ${order.branch} was denied by ${staff.fullName}. Reason: ${reason}`
@@ -229,7 +229,7 @@ export async function PATCH(request: NextRequest) {
         adminUsersReady.map((a) => ({
           id: generateId(),
           userId: a.id,
-          type: "order-ready",
+          type: "order-ready" as const,
           title: "Order Ready for Pickup",
           message: `Order ${orderId} at ${order.branch} was marked as ready for pickup by ${staff.fullName}.`,
           relatedOrderId: orderId,

@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ReservationMetrics, ReservationFilters, ReservationTable } from "@/features/admin-dashboard"
+import { ReservationMetrics, ReservationFilters, ReservationTable, ReservationDetailsModal } from "@/features/admin-dashboard"
 import { useAuth } from "@/hooks/useAuth"
-import type { ReservationApiData } from "@/types/admin"
+import type { ReservationApiData, ReservationRowData } from "@/types/admin"
 
 export default function ReservationsPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<ReservationApiData | null>(null)
+  const [viewingReservation, setViewingReservation] = useState<ReservationRowData | null>(null)
   const [branch, setBranch] = useState("")
   const [status, setStatus] = useState("")
   const [dateFrom, setDateFrom] = useState("")
@@ -89,6 +90,11 @@ export default function ReservationsPage() {
         dateTo={dateTo}
         onExport={handleExport}
       />
+      <ReservationDetailsModal
+        isOpen={!!viewingReservation}
+        onClose={() => setViewingReservation(null)}
+        order={viewingReservation}
+      />
       <ReservationTable
         reservations={data?.reservations || []}
         totalCount={data?.totalCount || 0}
@@ -96,6 +102,7 @@ export default function ReservationsPage() {
         pageSize={15}
         onPageChange={setPage}
         onSearch={handleSearch}
+        onViewDetails={(r) => setViewingReservation(r)}
         loading={isLoading}
       />
     </div>

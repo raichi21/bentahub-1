@@ -1,7 +1,7 @@
 import { db } from "@/servers/db"
 import { orders, orderItems, users, branches } from "@/servers/schemas"
 import { eq, and, gte, lte, like, or, sql, desc, count } from "drizzle-orm"
-import type { ReservationMetricsData, ReservationRowData } from "@/types/admin"
+import type { ReservationMetricsData, ReservationRowData, ReservationItemData } from "@/types/admin"
 
 export interface ReservationFilterOptions {
   branch?: string
@@ -60,8 +60,8 @@ export async function getReservations(filters: ReservationFilterOptions = { page
   }) as Array<{
     id: string; userId: string; status: string; totalAmount: string; branch: string
     pickupDeadline: Date | null; createdAt: Date
-    user: { fullName: string }
-    items: Array<{ id: string }>
+    user: { fullName: string; email: string }
+    items: Array<{ id: string; productName: string; quantity: number; price: string; subtotal: string }>
   }>
 
   if (filters.search) {
@@ -88,9 +88,17 @@ export async function getReservations(filters: ReservationFilterOptions = { page
       displayId: `BH-${String(total - offset - idx).padStart(4, "0")}`,
       customerName: name,
       customerInitials: getInitials(name),
+      customerEmail: o.user.email || "",
+      customerPhone: null,
       branch: o.branch,
       itemsCount: o.items.length,
       totalAmount: o.totalAmount,
+      items: o.items.map((i) => ({
+        productName: i.productName,
+        quantity: i.quantity,
+        price: parseFloat(i.price),
+        subtotal: parseFloat(i.subtotal),
+      })) as ReservationItemData[],
       pickupDeadline: o.pickupDeadline?.toISOString() ?? null,
       status: o.status,
       createdAt: o.createdAt,

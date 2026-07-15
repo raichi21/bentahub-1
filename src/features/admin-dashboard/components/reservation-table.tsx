@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Eye, Pencil, FileX, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Eye, FileX, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReservationRowData } from "@/types/admin"
 
 interface ReservationTableProps {
@@ -11,6 +11,7 @@ interface ReservationTableProps {
   pageSize: number
   onPageChange: (page: number) => void
   onSearch: (query: string) => void
+  onViewDetails: (reservation: ReservationRowData) => void
   loading: boolean
 }
 
@@ -29,6 +30,7 @@ export function ReservationTable({
   pageSize,
   onPageChange,
   onSearch,
+  onViewDetails,
   loading,
 }: ReservationTableProps) {
   const [searchInput, setSearchInput] = useState("")
@@ -124,11 +126,8 @@ export function ReservationTable({
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button className="p-1 hover:bg-muted rounded text-primary transition-colors" title="View Details">
+                        <button onClick={() => onViewDetails(r)} className="p-1 hover:bg-muted rounded text-primary transition-colors" title="View Details">
                           <Eye className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                          <Pencil className="h-4 w-4" />
                         </button>
                       </div>
                     </td>

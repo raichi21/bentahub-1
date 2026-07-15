@@ -129,12 +129,22 @@ export interface ReservationRowData {
   displayId: string
   customerName: string
   customerInitials: string
+  customerEmail: string
+  customerPhone: string | null
   branch: string
   itemsCount: number
   totalAmount: string
+  items: ReservationItemData[]
   pickupDeadline: string | null
   status: string
   createdAt: Date
+}
+
+export interface ReservationItemData {
+  productName: string
+  quantity: number
+  price: number
+  subtotal: number
 }
 
 export interface ReservationApiData {

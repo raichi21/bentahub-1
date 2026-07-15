@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { Calendar, Clock, AlertCircle, CheckCircle, XCircle } from "lucide-react"
+import { ConfirmReservationModal } from "@/features/staff-dashboard/components/confirm-reservation-modal"
+import { DenyReservationModal } from "@/features/staff-dashboard/components/deny-reservation-modal"
+import { ReadyReservationModal } from "@/features/staff-dashboard/components/ready-reservation-modal"
 
 interface ReservationItem {
   id: string
@@ -33,8 +36,10 @@ export default function ReservationsPage() {
   const [fetched, setFetched] = useState(false)
   const [tab, setTab] = useState<"pending" | "processing">("pending")
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [denyId, setDenyId] = useState<string | null>(null)
-  const [denyReason, setDenyReason] = useState("")
+
+  const [confirmModal, setConfirmModal] = useState<ReservationItem | null>(null)
+  const [denyModal, setDenyModal] = useState<ReservationItem | null>(null)
+  const [readyModal, setReadyModal] = useState<ReservationItem | null>(null)
 
   const fetchReservations = useCallback(async () => {
     if (!token) return
@@ -62,22 +67,69 @@ export default function ReservationsPage() {
     return () => clearTimeout(timer)
   }, [token, authLoading, fetchReservations])
 
-  const handleAction = async (orderId: string, action: "confirm" | "deny" | "ready", reason?: string) => {
+  const isLoading = authLoading || (token !== null && !fetched && !error)
+
+  const handleConfirm = async (orderId: string) => {
     if (!token) return
     setActionLoading(orderId)
     try {
       const res = await fetch("/api/staff/reservations", {
         method: "PATCH",
         headers: authHeaders(token),
-        body: JSON.stringify({ orderId, action, reason }),
+        body: JSON.stringify({ orderId, action: "confirm" }),
       })
       const json = await res.json()
       if (!json.success) {
-        alert(json.message || "Failed to update reservation")
+        alert(json.message || "Failed to confirm reservation")
         return
       }
-      setDenyId(null)
-      setDenyReason("")
+      setConfirmModal(null)
+      fetchReservations()
+    } catch {
+      alert("An error occurred")
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleDeny = async (orderId: string, reason: string) => {
+    if (!token) return
+    setActionLoading(orderId)
+    try {
+      const res = await fetch("/api/staff/reservations", {
+        method: "PATCH",
+        headers: authHeaders(token),
+        body: JSON.stringify({ orderId, action: "deny", reason: reason || undefined }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        alert(json.message || "Failed to deny reservation")
+        return
+      }
+      setDenyModal(null)
+      fetchReservations()
+    } catch {
+      alert("An error occurred")
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleReady = async (orderId: string) => {
+    if (!token) return
+    setActionLoading(orderId)
+    try {
+      const res = await fetch("/api/staff/reservations", {
+        method: "PATCH",
+        headers: authHeaders(token),
+        body: JSON.stringify({ orderId, action: "ready" }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        alert(json.message || "Failed to mark as ready")
+        return
+      }
+      setReadyModal(null)
       fetchReservations()
     } catch {
       alert("An error occurred")
@@ -112,6 +164,30 @@ export default function ReservationsPage() {
 
   return (
     <div className="space-y-6">
+
+      <ConfirmReservationModal
+        isOpen={!!confirmModal}
+        onClose={() => setConfirmModal(null)}
+        onConfirm={() => confirmModal && handleConfirm(confirmModal.id)}
+        reservation={confirmModal ? { customerName: confirmModal.customerName, totalAmount: confirmModal.totalAmount, itemsCount: confirmModal.items.length } : null}
+        loading={actionLoading === confirmModal?.id}
+      />
+
+      <DenyReservationModal
+        isOpen={!!denyModal}
+        onClose={() => setDenyModal(null)}
+        onDeny={(reason) => denyModal && handleDeny(denyModal.id, reason)}
+        reservation={denyModal ? { customerName: denyModal.customerName, totalAmount: denyModal.totalAmount } : null}
+        loading={actionLoading === denyModal?.id}
+      />
+
+      <ReadyReservationModal
+        isOpen={!!readyModal}
+        onClose={() => setReadyModal(null)}
+        onReady={() => readyModal && handleReady(readyModal.id)}
+        reservation={readyModal ? { customerName: readyModal.customerName, totalAmount: readyModal.totalAmount, itemsCount: readyModal.items.length } : null}
+        loading={actionLoading === readyModal?.id}
+      />
 
       <div className="flex gap-1 bg-surface-container rounded-lg p-1 w-fit">
         <button
@@ -201,48 +277,24 @@ export default function ReservationsPage() {
                 {r.status === "pending" && (
                   <>
                     <button
-                      onClick={() => handleAction(r.id, "confirm")}
+                      onClick={() => setConfirmModal(r)}
                       disabled={actionLoading === r.id}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                     >
                       {actionLoading === r.id ? "..." : <><CheckCircle className="w-3.5 h-3.5" /> Confirm</>}
                     </button>
-                    {denyId === r.id ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <input
-                          value={denyReason}
-                          onChange={(e) => setDenyReason(e.target.value)}
-                          placeholder="Reason (optional)"
-                          className="flex-1 px-2 py-1.5 text-xs border border-border rounded-lg bg-background"
-                          autoFocus
-                        />
-                        <button
-                          onClick={() => handleAction(r.id, "deny", denyReason)}
-                          disabled={actionLoading === r.id}
-                          className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                        >
-                          {actionLoading === r.id ? "..." : "Deny"}
-                        </button>
-                        <button
-                          onClick={() => { setDenyId(null); setDenyReason("") }}
-                          className="px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setDenyId(r.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        <XCircle className="w-3.5 h-3.5" /> Deny
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setDenyModal(r)}
+                      disabled={actionLoading === r.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      <XCircle className="w-3.5 h-3.5" /> Deny
+                    </button>
                   </>
                 )}
                 {r.status === "processing" && (
                   <button
-                    onClick={() => handleAction(r.id, "ready")}
+                    onClick={() => setReadyModal(r)}
                     disabled={actionLoading === r.id}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
