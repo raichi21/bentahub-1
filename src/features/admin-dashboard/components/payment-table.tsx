@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { Eye } from "lucide-react"
 import { PaymentDetailsModal } from "./payment-details-modal"
 import type { PaymentRowData } from "@/types/admin"
 
@@ -30,43 +30,6 @@ export function PaymentTable({ payments, totalCount, page, pageSize, onPageChang
     completed: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     pending: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     cancelled: "bg-destructive/10 text-destructive",
-  }
-
-  const paginationButtons = () => {
-    const maxVisible = 5
-    const half = Math.floor(maxVisible / 2)
-    let s = Math.max(1, page - half)
-    const e = Math.min(totalPages, s + maxVisible - 1)
-    if (e - s + 1 < maxVisible) s = Math.max(1, e - maxVisible + 1)
-    const buttons: React.ReactNode[] = []
-
-    if (s > 1) {
-      buttons.push(
-        <button key={1} onClick={() => onPageChange(1)} className="w-8 h-8 flex items-center justify-center rounded border border-border hover:bg-muted text-xs font-bold">1</button>
-      )
-      if (s > 2) buttons.push(<span key="dots-s" className="px-1 text-xs text-muted-foreground">...</span>)
-    }
-
-    for (let i = s; i <= e; i++) {
-      buttons.push(
-        <button
-          key={i}
-          onClick={() => onPageChange(i)}
-          className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${
-            i === page ? "bg-primary text-primary-foreground shadow-sm" : "border border-border hover:bg-muted"
-          }`}
-        >{i}</button>
-      )
-    }
-
-    if (e < totalPages) {
-      if (e < totalPages - 1) buttons.push(<span key="dots-e" className="px-1 text-xs text-muted-foreground">...</span>)
-      buttons.push(
-        <button key={totalPages} onClick={() => onPageChange(totalPages)} className="w-8 h-8 flex items-center justify-center rounded border border-border hover:bg-muted text-xs font-bold">{totalPages}</button>
-      )
-    }
-
-    return buttons
   }
 
   return (
@@ -131,23 +94,25 @@ export function PaymentTable({ payments, totalCount, page, pageSize, onPageChang
         {totalCount > pageSize && (
           <div className="px-6 py-4 bg-muted/5 border-t border-border flex justify-between items-center">
             <p className="text-xs text-muted-foreground font-medium">
-              Showing {start} to {end} of {totalCount} records
+              Showing {start} to {end} of {totalCount} entries
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex gap-2">
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1}
-                className="w-8 h-8 flex items-center justify-center rounded border border-border text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronLeft className="h-4 w-4" />
+                Previous
               </button>
-              {paginationButtons()}
+              <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+                Page {page} of {totalPages}
+              </span>
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded border border-border text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronRight className="h-4 w-4" />
+                Next
               </button>
             </div>
           </div>

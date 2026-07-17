@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search } from "lucide-react"
 import type { InventoryStatusItem } from "@/types/admin"
 
 interface InventoryStatusTableProps {
@@ -97,36 +97,26 @@ export function InventoryStatusTable({ data }: InventoryStatusTableProps) {
       </div>
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20">
-          <p className="text-xs text-muted-foreground">
-            Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+          <p className="text-xs text-muted-foreground font-medium">
+            Showing {filtered.length > 0 ? (safePage - 1) * ITEMS_PER_PAGE + 1 : 0} to {Math.min(safePage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} entries
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <button
               onClick={() => setPage(safePage - 1)}
               disabled={safePage <= 1}
-              className="p-2 rounded-lg border border-border hover:bg-background disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronLeft className="h-4 w-4" />
+              Previous
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
-                  p === safePage
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border hover:bg-background"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
+            <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+              Page {safePage} of {totalPages}
+            </span>
             <button
               onClick={() => setPage(safePage + 1)}
               disabled={safePage >= totalPages}
-              className="p-2 rounded-lg border border-border hover:bg-background disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronRight className="h-4 w-4" />
+              Next
             </button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Eye, FileX, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Eye, FileX, Loader2 } from "lucide-react"
 import type { ReservationRowData } from "@/types/admin"
 
 interface ReservationTableProps {
@@ -143,23 +143,23 @@ export function ReservationTable({
         <p className="text-xs text-muted-foreground font-medium">
           Showing {reservations.length > 0 ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, totalCount)} of {totalCount} results
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="p-1.5 border border-border rounded hover:bg-muted transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ChevronLeft className="h-4 w-4" />
+            Previous
           </button>
-          <span className="px-3 py-1 text-xs font-bold text-foreground">
+          <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="p-1.5 border border-border rounded hover:bg-muted transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ChevronRight className="h-4 w-4" />
+            Next
           </button>
         </div>
       </div>

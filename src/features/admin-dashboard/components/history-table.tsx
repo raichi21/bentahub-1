@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Search, Download, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Download, Eye } from "lucide-react"
 import { TransactionHistoryModal } from "./transaction-history-modal"
 import type { HistoryTransactionRowData } from "@/types/admin"
 
@@ -51,43 +51,6 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
     completed: "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800",
     pending: "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800",
     cancelled: "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800",
-  }
-
-  const paginationButtons = () => {
-    const maxVisible = 5
-    const half = Math.floor(maxVisible / 2)
-    let s = Math.max(1, page - half)
-    const e = Math.min(totalPages, s + maxVisible - 1)
-    if (e - s + 1 < maxVisible) s = Math.max(1, e - maxVisible + 1)
-    const buttons: React.ReactNode[] = []
-
-    if (s > 1) {
-      buttons.push(
-        <button key={1} onClick={() => onPageChange(1)} className="w-8 h-8 flex items-center justify-center border border-border rounded hover:bg-muted text-xs font-bold">1</button>
-      )
-      if (s > 2) buttons.push(<span key="dots-s" className="px-1 text-xs text-muted-foreground">...</span>)
-    }
-
-    for (let i = s; i <= e; i++) {
-      buttons.push(
-        <button
-          key={i}
-          onClick={() => onPageChange(i)}
-          className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${
-            i === page ? "bg-primary text-primary-foreground shadow-sm" : "border border-border hover:bg-muted"
-          }`}
-        >{i}</button>
-      )
-    }
-
-    if (e < totalPages) {
-      if (e < totalPages - 1) buttons.push(<span key="dots-e" className="px-1 text-xs text-muted-foreground">...</span>)
-      buttons.push(
-        <button key={totalPages} onClick={() => onPageChange(totalPages)} className="w-8 h-8 flex items-center justify-center border border-border rounded hover:bg-muted text-xs font-bold">{totalPages}</button>
-      )
-    }
-
-    return buttons
   }
 
   return (
@@ -173,25 +136,26 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
 
         {totalCount > pageSize && (
           <div className="px-6 py-4 bg-muted/5 border-t border-border flex justify-between items-center">
-            <p className="text-xs text-muted-foreground">
-              Showing <span className="font-bold text-foreground">{start} – {end}</span> of{" "}
-              <span className="font-bold text-foreground">{totalCount.toLocaleString()}</span> entries
+            <p className="text-xs text-muted-foreground font-medium">
+              Showing {start} to {end} of {totalCount} entries
             </p>
-            <div className="flex items-center gap-1">
+            <div className="flex gap-2">
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1}
-                className="w-8 h-8 flex items-center justify-center border border-border rounded hover:bg-muted transition-colors text-muted-foreground disabled:opacity-30 disabled:pointer-events-none"
+                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronLeft className="h-4 w-4" />
+                Previous
               </button>
-              {paginationButtons()}
+              <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+                Page {page} of {totalPages}
+              </span>
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= totalPages}
-                className="w-8 h-8 flex items-center justify-center border border-border rounded hover:bg-muted transition-colors text-muted-foreground disabled:opacity-30 disabled:pointer-events-none"
+                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronRight className="h-4 w-4" />
+                Next
               </button>
             </div>
           </div>
