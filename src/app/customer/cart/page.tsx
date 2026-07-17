@@ -65,7 +65,7 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (items.length === 0) return
-    router.push(`/customer/checkout?branch=${encodeURIComponent(user?.branch || "Lourdes Main Branch")}`)
+    router.push(`/customer/checkout?branch=${encodeURIComponent(items[0]?.branch || user?.branch || "Lourdes Main Branch")}`)
   }
 
   const subtotal = Number(total) || 0
