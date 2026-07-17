@@ -3,7 +3,7 @@ export { AdminTopbar } from "./admin-topbar"
 export { KPICard } from "./kpi-card"
 export { SalesChart } from "./sales-chart"
 export { StockTable } from "./stock-table"
-export { MonitoringMetrics } from "./monitoring-metrics"
+
 export { InventoryStatusTable } from "./inventory-status-table"
 export { SalesFilters } from "./sales-filters"
 export { SalesMetrics } from "./sales-metrics"

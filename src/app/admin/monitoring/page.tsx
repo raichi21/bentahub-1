@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MonitoringMetrics, InventoryStatusTable } from "@/features/admin-dashboard"
-import { Download, FileSpreadsheet, FileText } from "lucide-react"
+import { InventoryStatusTable, KPICard } from "@/features/admin-dashboard"
+import { Package, AlertTriangle, Calendar, Download, FileSpreadsheet, FileText } from "lucide-react"
 import type { MonitoringData, InventoryStatusItem } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
 
@@ -165,7 +165,29 @@ export default function MonitoringPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
-      <MonitoringMetrics data={data?.metrics ?? { totalStockValue: { value: "₱0", trend: "0%" }, lowStockItems: { value: 0, severity: "Normal" }, pendingReservations: { value: 0, todayCount: 0 } }} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <KPICard
+          title="Total Stock Value"
+          value={data?.metrics.totalStockValue.value ?? "₱0"}
+          trend={data?.metrics.totalStockValue.trend ?? "0%"}
+          trendType="up"
+          icon={Package}
+        />
+        <KPICard
+          title="Low Stock Items"
+          value={`${data?.metrics.lowStockItems.value ?? 0} items`}
+          trend={data?.metrics.lowStockItems.severity ?? "Normal"}
+          trendType={data?.metrics.lowStockItems.severity === "Critical" ? "warning" : "up"}
+          icon={AlertTriangle}
+        />
+        <KPICard
+          title="Pending Reservations"
+          value={`${data?.metrics.pendingReservations.value ?? 0} pending`}
+          trend={`${data?.metrics.pendingReservations.todayCount ?? 0} Today`}
+          trendType="up"
+          icon={Calendar}
+        />
+      </div>
 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
         <div className="flex items-center gap-4 w-full md:w-auto">

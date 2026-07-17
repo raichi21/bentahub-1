@@ -5,6 +5,7 @@ import {
 } from "lucide-react"
 import { useAdminNotifications } from "@/hooks/useAdminNotifications"
 import type { AdminNotificationItem } from "@/features/admin-dashboard/actions/get-admin-notifications"
+import { KPICard } from "./kpi-card"
 
 const iconElements: Record<string, React.ReactNode> = {
   AlertTriangle: <AlertTriangle className="w-5 h-5" />,
@@ -55,10 +56,9 @@ export function AdminNotificationsFeed() {
       <div className="space-y-6">
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-5 animate-pulse">
-              <div className="h-10 w-10 bg-muted rounded-lg mb-3" />
-              <div className="h-8 w-16 bg-muted rounded mb-2" />
-              <div className="h-3 w-24 bg-muted rounded" />
+            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+              <div className="h-4 w-24 bg-muted rounded mb-4" />
+              <div className="h-8 w-32 bg-muted rounded" />
             </div>
           ))}
         </section>
@@ -93,42 +93,27 @@ export function AdminNotificationsFeed() {
   return (
     <div className="space-y-6">
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-3">
-            <span className="p-2 rounded-lg bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              <AlertTriangle className="w-5 h-5" />
-            </span>
-            <span className="text-xs font-bold text-red-500">{criticalCount} unread</span>
-          </div>
-          <div className="text-3xl font-black text-foreground">{criticalCount}</div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">
-            Critical Alerts
-          </div>
-        </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-3">
-            <span className="p-2 rounded-lg bg-primary/10 text-primary">
-              <Package className="w-5 h-5" />
-            </span>
-            <span className="text-xs font-bold text-primary">{inventoryCount} total</span>
-          </div>
-          <div className="text-3xl font-black text-foreground">{inventoryCount}</div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">
-            Inventory Updates
-          </div>
-        </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-3">
-            <span className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-              <Bell className="w-5 h-5" />
-            </span>
-            <span className="text-xs font-bold text-blue-500">{activeNotifications} unread</span>
-          </div>
-          <div className="text-3xl font-black text-foreground">{activeNotifications}</div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">
-            Active Notifications
-          </div>
-        </div>
+        <KPICard
+          title="Critical Alerts"
+          value={String(criticalCount)}
+          trend={`${criticalCount} unread`}
+          trendType={criticalCount > 0 ? "warning" : "up"}
+          icon={AlertTriangle}
+        />
+        <KPICard
+          title="Inventory Updates"
+          value={String(inventoryCount)}
+          trend={`${inventoryCount} total`}
+          trendType="up"
+          icon={Package}
+        />
+        <KPICard
+          title="Active Notifications"
+          value={String(activeNotifications)}
+          trend={`${activeNotifications} unread`}
+          trendType={activeNotifications > 0 ? "warning" : "up"}
+          icon={Bell}
+        />
       </section>
 
       <section className="space-y-4">
