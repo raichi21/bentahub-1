@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Search, Download, Eye } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Search, Download, Eye, FileSpreadsheet, FileText } from "lucide-react"
 import { TransactionHistoryModal } from "./transaction-history-modal"
 import type { HistoryTransactionRowData } from "@/types/admin"
 
@@ -12,12 +12,23 @@ interface HistoryTableProps {
   pageSize: number
   onPageChange: (page: number) => void
   onSearch: (q: string) => void
+  onExportPDF?: () => void
   loading: boolean
 }
 
-export function HistoryTable({ transactions, totalCount, page, pageSize, onPageChange, onSearch, loading }: HistoryTableProps) {
+export function HistoryTable({ transactions, totalCount, page, pageSize, onPageChange, onSearch, onExportPDF, loading }: HistoryTableProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<HistoryTransactionRowData | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
 
   const totalPages = Math.ceil(totalCount / pageSize)
   const start = (page - 1) * pageSize + 1
@@ -55,7 +66,7 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
 
   return (
     <>
-      <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <section className="bg-card rounded-xl border border-border shadow-sm">
         <div className="px-6 py-3 bg-muted/20 border-b border-border flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <h3 className="text-sm font-bold text-foreground">All Branch Transactions</h3>
@@ -71,14 +82,33 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
                 onChange={handleSearchChange}
               />
             </div>
-            <button
-              onClick={handleExport}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
-              aria-label="Export transactions"
-            >
-              <Download className="h-[18px] w-[18px]" />
-              Export
-            </button>
+            <div ref={exportRef} className="relative">
+              <button
+                onClick={() => setExportOpen(!exportOpen)}
+                className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all"
+              >
+                <Download className="h-[18px] w-[18px]" />
+                Export Data
+              </button>
+              {exportOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                  <button
+                    onClick={() => { handleExport(); setExportOpen(false) }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                    Export as CSV (Excel)
+                  </button>
+                  <button
+                    onClick={() => { onExportPDF?.(); setExportOpen(false) }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors border-t border-border"
+                  >
+                    <FileText className="h-4 w-4 text-red-600" />
+                    Export as PDF
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
