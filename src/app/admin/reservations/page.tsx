@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ReservationMetrics, ReservationFilters, ReservationTable, ReservationDetailsModal } from "@/features/admin-dashboard"
+import { ReservationFilters, ReservationTable, ReservationDetailsModal, KPICard } from "@/features/admin-dashboard"
+import { CalendarCheck, Clock, CheckCircle2, XCircle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { ReservationApiData, ReservationRowData } from "@/types/admin"
 
@@ -43,6 +44,11 @@ export default function ReservationsPage() {
     fetchData()
   }, [fetchData])
 
+  const metrics = data?.metrics
+  const total = metrics?.total ?? 0
+  const successRate = total > 0 ? `${Math.round((metrics!.completed / total) * 100)}%` : "0%"
+  const cancelRate = total > 0 ? `${Math.round((metrics!.cancelled / total) * 100)}%` : "0%"
+
   const isLoading = authLoading || (token != null && !firstLoadDone)
 
   const handleFilter = (fBranch: string, fStatus: string, fDateFrom: string, fDateTo: string) => {
@@ -80,7 +86,36 @@ export default function ReservationsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <ReservationMetrics metrics={data?.metrics || null} loading={isLoading} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard
+          title="Total Reservations"
+          value={total.toLocaleString()}
+          trend={metrics?.totalTrend ?? "0%"}
+          trendType="up"
+          icon={CalendarCheck}
+        />
+        <KPICard
+          title="Pending"
+          value={String(metrics?.pending ?? 0)}
+          trend="Active"
+          trendType="warning"
+          icon={Clock}
+        />
+        <KPICard
+          title="Completed"
+          value={String(metrics?.completed ?? 0)}
+          trend={`${successRate} Success`}
+          trendType="up"
+          icon={CheckCircle2}
+        />
+        <KPICard
+          title="Cancelled"
+          value={String(metrics?.cancelled ?? 0)}
+          trend={cancelRate}
+          trendType="down"
+          icon={XCircle}
+        />
+      </div>
       <ReservationFilters
         branches={data?.branches || []}
         onFilter={handleFilter}

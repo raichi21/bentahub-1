@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { PickupMetrics, PickupTable } from "@/features/admin-dashboard"
+import { PickupTable, KPICard } from "@/features/admin-dashboard"
+import { TrendingUp, CheckCircle2, Clock, AlertTriangle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { PickupApiData } from "@/types/admin"
 
@@ -34,6 +35,9 @@ export default function PickupsPage() {
     fetchData()
   }, [fetchData])
 
+  const metrics = data?.metrics
+  const urgentCount = metrics?.urgentCount ?? 0
+
   const isLoading = authLoading || (token != null && !firstLoadDone)
 
   const handleSearch = (q: string) => {
@@ -60,7 +64,36 @@ export default function PickupsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <PickupMetrics metrics={data?.metrics || null} loading={isLoading} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard
+          title="Total Orders"
+          value={String(metrics?.total ?? 0)}
+          trend={metrics?.totalTrend ?? "0%"}
+          trendType="up"
+          icon={TrendingUp}
+        />
+        <KPICard
+          title="Completed"
+          value={String(metrics?.completed ?? 0)}
+          trend={metrics?.completedRate ?? "0%"}
+          trendType="up"
+          icon={CheckCircle2}
+        />
+        <KPICard
+          title="Pending"
+          value={String(metrics?.pending ?? 0)}
+          trend={urgentCount > 0 ? `${urgentCount} urgent` : "Pending"}
+          trendType="warning"
+          icon={Clock}
+        />
+        <KPICard
+          title="Delayed"
+          value={String(metrics?.delayed ?? 0)}
+          trend="Immediate attention"
+          trendType="down"
+          icon={AlertTriangle}
+        />
+      </div>
       <PickupTable
         pickups={data?.pickups || []}
         totalCount={data?.totalCount || 0}

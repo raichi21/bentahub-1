@@ -6,18 +6,18 @@ export { StockTable } from "./stock-table"
 
 export { InventoryStatusTable } from "./inventory-status-table"
 export { SalesFilters } from "./sales-filters"
-export { SalesMetrics } from "./sales-metrics"
+
 export { TransactionDetailsTable } from "./transaction-details-table"
-export { ReservationMetrics } from "./reservation-metrics"
+
 export { ReservationFilters } from "./reservation-filters"
 export { ReservationTable } from "./reservation-table"
-export { UserMetrics } from "./user-metrics"
+
 export { UserTable } from "./user-table"
-export { PaymentMetrics } from "./payment-metrics"
+
 export { PaymentTable } from "./payment-table"
-export { HistoryMetrics } from "./history-metrics"
+
 export { HistoryTable } from "./history-table"
-export { PickupMetrics } from "./pickup-metrics"
+
 export { PickupTable } from "./pickup-table"
 export { AddUserModal } from "./add-user-modal"
 export { EditUserModal } from "./edit-user-modal"

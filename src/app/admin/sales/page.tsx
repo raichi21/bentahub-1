@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { SalesFilters, SalesMetrics, TransactionDetailsTable } from "@/features/admin-dashboard"
+import { SalesFilters, TransactionDetailsTable, KPICard } from "@/features/admin-dashboard"
+import { TrendingUp, Receipt, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { SalesApiData } from "@/types/admin"
 
@@ -70,17 +71,39 @@ export default function SalesPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <SalesFilters
-          branches={data?.branches || []}
-          onFilter={handleFilter}
-          branchId={branchId}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          onExport={handleExport}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <KPICard
+          title="Total Sales"
+          value={data?.overview.totalSalesDisplay ?? "₱0.00"}
+          trend={data?.overview.trend ?? "0%"}
+          trendType="up"
+          icon={TrendingUp}
         />
-        <SalesMetrics overview={data?.overview || null} loading={isLoading} />
+        <KPICard
+          title="Transactions"
+          value={data?.overview.transactionCount?.toLocaleString() ?? "0"}
+          trend="Completed"
+          trendType="up"
+          icon={Receipt}
+        />
+        <KPICard
+          title="Avg Per Transaction"
+          value={data?.overview.avgPerTransactionDisplay ?? "₱0.00"}
+          trend="Basket average"
+          trendType="up"
+          icon={BarChart3}
+        />
       </div>
+
+      <SalesFilters
+        branches={data?.branches || []}
+        onFilter={handleFilter}
+        branchId={branchId}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onExport={handleExport}
+      />
+
       <TransactionDetailsTable
         transactions={data?.transactions || []}
         totalCount={data?.totalCount || 0}

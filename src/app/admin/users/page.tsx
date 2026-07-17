@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { UserMetrics, UserTable } from "@/features/admin-dashboard"
+import { UserTable, KPICard } from "@/features/admin-dashboard"
+import { UserPlus, ShieldCheck, Shield } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { UsersApiData } from "@/types/admin"
 
@@ -34,6 +35,10 @@ export default function UsersPage() {
     fetchData()
   }, [fetchData])
 
+  const metrics = data?.metrics
+  const activeRate = metrics && metrics.total > 0 ? ((metrics.active / metrics.total) * 100).toFixed(1) : "0"
+  const roleSummary = `${(metrics?.adminCount ?? 0) + (metrics?.staffCount ?? 0) + (metrics?.cashierCount ?? 0)} total, ${metrics?.customerCount ?? 0} customers`
+
   const isLoading = authLoading || (token != null && !firstLoadDone)
 
   const handleSearch = (q: string) => {
@@ -43,7 +48,29 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <UserMetrics metrics={data?.metrics || null} loading={isLoading} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <KPICard
+          title="New This Week"
+          value={String(metrics?.newThisWeek ?? 0)}
+          trend="New users"
+          trendType="up"
+          icon={UserPlus}
+        />
+        <KPICard
+          title="Active Rate"
+          value={`${activeRate}%`}
+          trend="Active accounts"
+          trendType="up"
+          icon={ShieldCheck}
+        />
+        <KPICard
+          title="Role Breakdown"
+          value={roleSummary}
+          trend="Staff & customers"
+          trendType="up"
+          icon={Shield}
+        />
+      </div>
       <UserTable
         users={data?.users || []}
         totalCount={data?.totalCount || 0}

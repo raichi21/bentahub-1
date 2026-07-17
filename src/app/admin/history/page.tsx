@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { HistoryMetrics, HistoryTable } from "@/features/admin-dashboard"
+import { HistoryTable, KPICard } from "@/features/admin-dashboard"
+import { Receipt, TrendingUp } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { HistoryApiData } from "@/types/admin"
 
@@ -43,7 +44,22 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <HistoryMetrics metrics={data?.metrics || null} loading={isLoading} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <KPICard
+          title="Total Transactions"
+          value={data?.metrics?.totalTransactionsDisplay ?? "0"}
+          trend={data?.metrics?.trend ?? "0%"}
+          trendType="up"
+          icon={Receipt}
+        />
+        <KPICard
+          title="Total Sales (PHP)"
+          value={data?.metrics?.totalSalesDisplay ?? "₱0.00"}
+          trend="Completed"
+          trendType="up"
+          icon={TrendingUp}
+        />
+      </div>
       <HistoryTable
         transactions={data?.transactions || []}
         totalCount={data?.totalCount || 0}

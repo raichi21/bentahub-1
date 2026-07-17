@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { PaymentMetrics, PaymentTable } from "@/features/admin-dashboard"
+import { PaymentTable, KPICard } from "@/features/admin-dashboard"
+import { Wallet, Banknote, Smartphone } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { PaymentApiData } from "@/types/admin"
 
@@ -30,11 +31,39 @@ export default function PaymentsPage() {
     fetchData()
   }, [fetchData])
 
+  const metrics = data?.metrics
+  const completedCount = metrics?.completedCount ?? 0
+  const pendingCount = metrics?.pendingCount ?? 0
+  const cashPct = metrics?.cashPercentage ?? 0
+  const gcashPct = metrics?.gcashPercentage ?? 0
+
   const isLoading = authLoading || (token != null && !firstLoadDone)
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <PaymentMetrics metrics={data?.metrics || null} loading={isLoading} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <KPICard
+          title="Total Payments"
+          value={metrics?.totalAmountDisplay ?? "₱0.00"}
+          trend={`${completedCount} verified, ${pendingCount} pending`}
+          trendType="up"
+          icon={Wallet}
+        />
+        <KPICard
+          title="Cash"
+          value={metrics?.cashTotalDisplay ?? "₱0.00"}
+          trend={`${cashPct}% of total`}
+          trendType="up"
+          icon={Banknote}
+        />
+        <KPICard
+          title="GCash"
+          value={metrics?.gcashTotalDisplay ?? "₱0.00"}
+          trend={`${gcashPct}% of total`}
+          trendType="up"
+          icon={Smartphone}
+        />
+      </div>
       <PaymentTable
         payments={data?.payments || []}
         totalCount={data?.totalCount || 0}
