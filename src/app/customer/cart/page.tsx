@@ -8,8 +8,7 @@ import {
   Plus, 
   Trash2, 
   HelpCircle, 
-  Bookmark, 
-  ShieldCheck 
+  ShoppingCart
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
@@ -189,7 +188,7 @@ export default function CartPage() {
                   <span className="text-lg font-bold text-foreground">Total Due</span>
                   <span className="text-2xl font-bold text-primary">₱{totalDue.toFixed(2)}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 text-right">Includes VAT where applicable</p>
+
               </div>
               <div className="space-y-3">
                 <Button
@@ -203,19 +202,11 @@ export default function CartPage() {
                   onClick={() => router.push("/customer/catalog")}
                   className="w-full bg-transparent border border-border text-muted-foreground py-4 rounded-lg font-semibold hover:bg-muted transition-colors flex items-center justify-center gap-2"
                 >
-                  <Bookmark className="h-4 w-4" />
+                  <ShoppingCart className="h-4 w-4" />
                   Continue Shopping
                 </button>
               </div>
-              <div className="mt-8 p-4 rounded-lg border border-border bg-muted/50">
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <ShieldCheck className="h-4 w-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Secure Reservation</span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Reservation bonds are fully refundable if the items are unavailable or if the reservation is canceled within the grace period.
-                </p>
-              </div>
+
             </div>
           </aside>
         </div>
