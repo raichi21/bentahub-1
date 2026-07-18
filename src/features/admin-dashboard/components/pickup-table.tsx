@@ -1,26 +1,69 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Search, SlidersHorizontal, CheckCircle2, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Search, CheckCircle2, Eye, Download, FileSpreadsheet, FileText } from "lucide-react"
 import { ConfirmPickupModal } from "./confirm-pickup-modal"
 import { PickupDetailsModal } from "./pickup-details-modal"
 import type { PickupRowData } from "@/types/admin"
+
+interface BranchOption {
+  id: string
+  name: string
+}
 
 interface PickupTableProps {
   pickups: PickupRowData[]
   totalCount: number
   page: number
   pageSize: number
+  branches: BranchOption[]
+  status: string
+  branch: string
+  dateFrom: string
+  dateTo: string
   onPageChange: (page: number) => void
   onSearch: (q: string) => void
+  onFilter: (branch: string, status: string, dateFrom: string, dateTo: string) => void
+  onExportCSV?: () => void
+  onExportPDF?: () => void
   onConfirm: (orderId: string) => Promise<boolean>
   loading: boolean
 }
 
-export function PickupTable({ pickups, totalCount, page, pageSize, onPageChange, onSearch, onConfirm, loading }: PickupTableProps) {
+const STATUS_OPTIONS = [
+  { value: "", label: "All Status" },
+  { value: "ready", label: "Ready" },
+  { value: "pending", label: "Pending" },
+  { value: "processing", label: "Processing" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+]
+
+export function PickupTable({ pickups, totalCount, page, pageSize, branches, status, branch, dateFrom, dateTo, onPageChange, onSearch, onFilter, onExportCSV, onExportPDF, onConfirm, loading }: PickupTableProps) {
   const [confirmingPickup, setConfirmingPickup] = useState<PickupRowData | null>(null)
   const [viewingPickup, setViewingPickup] = useState<PickupRowData | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
+  const [localBranch, setLocalBranch] = useState(branch)
+  const [localStatus, setLocalStatus] = useState(status)
+  const [localFrom, setLocalFrom] = useState(dateFrom)
+  const [localTo, setLocalTo] = useState(dateTo)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    setLocalBranch(branch)
+    setLocalStatus(status)
+    setLocalFrom(dateFrom)
+    setLocalTo(dateTo)
+  }, [branch, status, dateFrom, dateTo])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
 
   const totalPages = Math.ceil(totalCount / pageSize)
   const start = (page - 1) * pageSize + 1
@@ -47,62 +90,105 @@ export function PickupTable({ pickups, totalCount, page, pageSize, onPageChange,
     cancelled: "bg-destructive",
   }
 
-  const paginationButtons = () => {
-    const maxVisible = 5
-    const half = Math.floor(maxVisible / 2)
-    let s = Math.max(1, page - half)
-    const e = Math.min(totalPages, s + maxVisible - 1)
-    if (e - s + 1 < maxVisible) s = Math.max(1, e - maxVisible + 1)
-    const buttons: React.ReactNode[] = []
-
-    if (s > 1) {
-      buttons.push(
-        <button key={1} onClick={() => onPageChange(1)} className="w-9 h-9 flex items-center justify-center rounded border border-border text-muted-foreground hover:bg-muted transition-colors font-bold text-xs">1</button>
-      )
-      if (s > 2) buttons.push(<span key="dots-s" className="px-1 text-muted-foreground text-xs">...</span>)
-    }
-
-    for (let i = s; i <= e; i++) {
-      buttons.push(
-        <button
-          key={i}
-          onClick={() => onPageChange(i)}
-          className={`w-9 h-9 flex items-center justify-center rounded text-xs font-bold ${
-            i === page ? "bg-primary text-primary-foreground shadow-sm" : "border border-border text-muted-foreground hover:bg-muted transition-colors"
-          }`}
-        >{i}</button>
-      )
-    }
-
-    if (e < totalPages) {
-      if (e < totalPages - 1) buttons.push(<span key="dots-e" className="px-1 text-muted-foreground text-xs">...</span>)
-      buttons.push(
-        <button key={totalPages} onClick={() => onPageChange(totalPages)} className="w-9 h-9 flex items-center justify-center rounded border border-border text-muted-foreground hover:bg-muted transition-colors font-bold text-xs">{totalPages}</button>
-      )
-    }
-
-    return buttons
+  const handleApply = () => {
+    onFilter(localBranch, localStatus, localFrom, localTo)
   }
 
   return (
     <>
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="px-8 py-6 border-b border-border flex flex-col md:flex-row justify-between md:items-center gap-4">
-          <h4 className="text-base font-bold text-foreground">Pickup Orders</h4>
-          <div className="flex items-center gap-3">
-            <div className="relative">
+      <div className="bg-card rounded-xl border border-border shadow-sm">
+        <div className="px-8 py-6 border-b border-border">
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4">
+            <h4 className="text-base font-bold text-foreground">Pickup Orders</h4>
+            <div className="relative w-full md:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search order ID or customer..."
-                className="pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all w-64 md:w-72 shadow-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
                 onChange={handleSearchChange}
               />
             </div>
-            <button disabled className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-xs font-bold shadow-sm hover:bg-primary/90 active:scale-[0.98] transition-all opacity-50 cursor-not-allowed">
-              <SlidersHorizontal className="h-[18px] w-[18px]" />
-              Filter
+          </div>
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-xs font-bold mb-2 text-muted-foreground">Status</label>
+              <select
+                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                value={localStatus}
+                onChange={(e) => setLocalStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-xs font-bold mb-2 text-muted-foreground">Branch</label>
+              <select
+                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                value={localBranch}
+                onChange={(e) => setLocalBranch(e.target.value)}
+              >
+                <option value="">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-xs font-bold mb-2 text-muted-foreground">Date From</label>
+              <input
+                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                type="date"
+                value={localFrom}
+                onChange={(e) => setLocalFrom(e.target.value)}
+              />
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-xs font-bold mb-2 text-muted-foreground">Date To</label>
+              <input
+                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                type="date"
+                value={localTo}
+                onChange={(e) => setLocalTo(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={handleApply}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
+              aria-label="Apply filters"
+            >
+              <Search className="h-4 w-4" />
+              Apply
             </button>
+            <div ref={exportRef} className="relative ml-auto">
+              <button
+                onClick={() => setExportOpen(!exportOpen)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-muted/50 hover:bg-muted rounded-lg border border-border text-sm font-bold transition-all w-full md:w-auto justify-center"
+              >
+                <Download className="h-[18px] w-[18px]" />
+                Export Data
+              </button>
+              {exportOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                  <button
+                    onClick={() => { onExportCSV?.(); setExportOpen(false) }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                    Export as CSV (Excel)
+                  </button>
+                  <button
+                    onClick={() => { onExportPDF?.(); setExportOpen(false) }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors border-t border-border"
+                  >
+                    <FileText className="h-4 w-4 text-red-600" />
+                    Export as PDF
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -172,22 +258,26 @@ export function PickupTable({ pickups, totalCount, page, pageSize, onPageChange,
 
         {totalCount > pageSize && (
           <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/5">
-            <p className="text-xs text-muted-foreground">Showing {start}–{end} of {totalCount} orders</p>
-            <div className="flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground font-medium">
+              Showing {start} to {end} of {totalCount} entries
+            </p>
+            <div className="flex gap-2">
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1}
-                className="w-9 h-9 flex items-center justify-center border border-border rounded text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronLeft className="h-[18px] w-[18px]" />
+                Previous
               </button>
-              {paginationButtons()}
+              <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+                Page {page} of {totalPages}
+              </span>
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= totalPages}
-                className="w-9 h-9 flex items-center justify-center border border-border rounded text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronRight className="h-[18px] w-[18px]" />
+                Next
               </button>
             </div>
           </div>
