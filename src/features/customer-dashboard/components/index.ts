@@ -7,7 +7,6 @@
 export * from "./dashboard-sidebar"
 export * from "./dashboard-topbar"
 export * from "./dashboard-mobile-nav"
-export * from "./summary-cards"
 export * from "./recent-orders-table"
 export * from "./nearby-branches"
 export * from "./catalog-toolbar"

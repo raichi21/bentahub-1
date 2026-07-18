@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, Eye, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { FileText, Eye, Trash2, Loader2 } from "lucide-react"
 import { cn, formatOrderId } from "@/lib/utils"
 import { useOrders } from "@/hooks/useOrders"
 import { TransactionActionModal } from "./transaction-action-modal"
@@ -181,22 +181,25 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
 
       <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
         <span className="text-sm text-muted-foreground">
-          Showing {Math.min(itemsPerPage, paginatedTransactions.length)} of {transactions.length}
+          Showing {startIdx + 1} to {Math.min(startIdx + itemsPerPage, transactions.length)} of {transactions.length} entries
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg border border-border disabled:opacity-50"
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ChevronLeft className="h-4 w-4" />
+            Previous
           </button>
+          <span className="text-xs font-bold text-muted-foreground px-2 font-mono">
+            Page {page} of {totalPages}
+          </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg border border-border disabled:opacity-50"
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ChevronRight className="h-4 w-4" />
+            Next
           </button>
         </div>
       </div>
