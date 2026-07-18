@@ -12,7 +12,7 @@ import type { Order } from "@/stores/ordersStore"
 interface TransactionFilters {
   activeTab: string
   searchQuery: string
-  dateFilter: string
+  dateFrom: string
 }
 
 export function TransactionTable({ filters }: { filters: TransactionFilters }) {
@@ -39,7 +39,7 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   useEffect(() => {
     const timer = setTimeout(() => setPage(1), 0)
     return () => clearTimeout(timer)
-  }, [filters.activeTab, filters.searchQuery, filters.dateFilter])
+  }, [filters.activeTab, filters.searchQuery, filters.dateFrom])
 
   // Convert orders to transaction format
   interface TransactionRow {
@@ -63,8 +63,8 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   // Apply filters
   const transactions = useMemo(() => {
     const query = filters.searchQuery.toLowerCase().trim()
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : null
+    if (fromDate) fromDate.setHours(0, 0, 0, 0)
 
     return allTransactions.filter((t) => {
       if (filters.activeTab === "Completed" && t.status !== "Completed") return false
@@ -72,9 +72,9 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
 
       if (query && !t.id.toLowerCase().includes(query) && !t.amount.toLowerCase().includes(query)) return false
 
-      if (filters.dateFilter === "Last 30 Days" && t.rawOrder) {
+      if (fromDate && t.rawOrder) {
         const orderDate = new Date(t.rawOrder.createdAt)
-        if (orderDate < thirtyDaysAgo) return false
+        if (orderDate < fromDate) return false
       }
 
       return true

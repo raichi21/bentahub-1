@@ -1,7 +1,6 @@
 "use client"
 
-import { Calendar, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface TransactionFiltersProps {
@@ -10,8 +9,8 @@ interface TransactionFiltersProps {
   onTabChange: (tab: string) => void
   searchQuery: string
   onSearchChange: (query: string) => void
-  dateFilter: string
-  onDateFilterToggle: () => void
+  dateFrom: string
+  onDateFromChange: (date: string) => void
   searchPlaceholder?: string
 }
 
@@ -21,8 +20,8 @@ export function TransactionFilters({
   onTabChange,
   searchQuery,
   onSearchChange,
-  dateFilter,
-  onDateFilterToggle,
+  dateFrom,
+  onDateFromChange,
   searchPlaceholder = "Search transactions...",
 }: TransactionFiltersProps) {
   return (
@@ -58,15 +57,12 @@ export function TransactionFilters({
           />
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 shrink-0"
-          onClick={onDateFilterToggle}
-        >
-          <Calendar className="h-4 w-4" />
-          <span>{dateFilter}</span>
-        </Button>
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => onDateFromChange(e.target.value)}
+          className="h-9 px-3 text-sm bg-background border border-border rounded-lg outline-none focus:border-primary transition-colors"
+        />
       </div>
     </div>
   )

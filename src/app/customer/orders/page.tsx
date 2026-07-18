@@ -11,7 +11,7 @@ const HISTORY_TABS = ["All", "Completed", "Cancelled"]
 export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
-  const [dateFilter, setDateFilter] = useState("Last 30 Days")
+  const [dateFrom, setDateFrom] = useState("")
 
   return (
     <div className="space-y-6">
@@ -21,11 +21,11 @@ export default function TransactionsPage() {
         onTabChange={setActiveTab}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        dateFilter={dateFilter}
-        onDateFilterToggle={() => setDateFilter(d => d === "Last 30 Days" ? "All Time" : "Last 30 Days")}
+        dateFrom={dateFrom}
+        onDateFromChange={setDateFrom}
       />
 
-      <TransactionTable filters={{ activeTab, searchQuery, dateFilter }} />
+      <TransactionTable filters={{ activeTab, searchQuery, dateFrom }} />
     </div>
   )
 }
