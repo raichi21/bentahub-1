@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, Download, ChevronLeft, ChevronRight, Package, Bell } from "lucide-react"
+import { Search, Package, Bell } from "lucide-react"
 import { getStockStatus } from "@/lib/staff-utils"
 import { useAuth } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils"
@@ -52,10 +52,6 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
     const startIndex = (safePage - 1) * ITEMS_PER_PAGE
     return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE)
   }, [filteredProducts, safePage])
-
-  const handleExport = () => {
-    alert("Exporting inventory log as CSV...")
-  }
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
@@ -108,14 +104,6 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
             <option value="Out of Stock">Out of Stock</option>
           </select>
 
-          {/* Export Button */}
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-2 border border-border bg-card rounded-lg text-xs font-bold text-muted-foreground hover:text-blue-600 hover:border-blue-600 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export</span>
-          </button>
         </div>
       </div>
 
@@ -280,19 +268,18 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
       {/* Pagination Controls */}
       <div className="p-4 bg-muted border-t border-border flex items-center justify-between mt-auto">
         <p className="text-xs text-muted-foreground font-medium font-mono">
-          Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)}-
-          {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} items
+          Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)} to {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} entries
         </p>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button
             disabled={safePage === 1}
             onClick={() => setCurrentPage((c) => c - 1)}
-            className="p-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:hover:bg-card"
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ChevronLeft className="w-4 h-4" />
+            Previous
           </button>
-          
+
           <span className="text-xs font-bold text-muted-foreground px-2 font-mono">
             Page {safePage} of {totalPages}
           </span>
@@ -300,9 +287,9 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
           <button
             disabled={safePage === totalPages}
             onClick={() => setCurrentPage((c) => c + 1)}
-            className="p-1.5 rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:hover:bg-card"
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ChevronRight className="w-4 h-4" />
+            Next
           </button>
         </div>
       </div>
