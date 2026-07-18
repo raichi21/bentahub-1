@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { InventoryStatusTable, KPICard } from "@/features/admin-dashboard"
-import { Package, AlertTriangle, Calendar, Download, FileSpreadsheet, FileText } from "lucide-react"
+import { Package, AlertTriangle, Download, FileSpreadsheet, FileText } from "lucide-react"
 import type { MonitoringData, InventoryStatusItem } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
 
@@ -165,7 +165,7 @@ export default function MonitoringPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <KPICard
           title="Total Stock Value"
           value={data?.metrics.totalStockValue.value ?? "₱0"}
@@ -179,13 +179,6 @@ export default function MonitoringPage() {
           trend={data?.metrics.lowStockItems.severity ?? "Normal"}
           trendType={data?.metrics.lowStockItems.severity === "Critical" ? "warning" : "up"}
           icon={AlertTriangle}
-        />
-        <KPICard
-          title="Pending Reservations"
-          value={`${data?.metrics.pendingReservations.value ?? 0} pending`}
-          trend={`${data?.metrics.pendingReservations.todayCount ?? 0} Today`}
-          trendType="up"
-          icon={Calendar}
         />
       </div>
 
