@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { LiveTransactionFeed } from "@/features/staff-dashboard/components/live-transaction-feed"
+import { KPICard } from "@/features/admin-dashboard"
+import { Receipt, TrendingUp, XCircle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { StaffApiResponse, StaffTransactionItem } from "@/types/staff"
 
@@ -54,10 +56,9 @@ export default function MonitoringPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-5 animate-pulse">
-              <div className="h-3 w-24 bg-muted rounded mb-3" />
-              <div className="h-7 w-16 bg-muted rounded mb-2" />
-              <div className="h-3 w-20 bg-muted rounded" />
+            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+              <div className="h-4 w-24 bg-muted rounded mb-4" />
+              <div className="h-8 w-32 bg-muted rounded" />
             </div>
           ))}
         </div>
@@ -82,21 +83,27 @@ export default function MonitoringPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-          <span className="text-sm font-medium text-muted-foreground">Today&apos;s Transactions</span>
-          <h3 className="text-2xl font-extrabold text-foreground mt-1">{kpis.totalTransactions}</h3>
-          <span className="text-xs text-green-500 font-medium">{kpis.completedCount} completed</span>
-        </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-          <span className="text-sm font-medium text-muted-foreground">Total Revenue</span>
-          <h3 className="text-2xl font-extrabold text-foreground mt-1">₱{kpis.totalRevenue.toFixed(2)}</h3>
-          <span className="text-xs text-green-500 font-medium">Today&apos;s total</span>
-        </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-          <span className="text-sm font-medium text-muted-foreground">Cancelled Transactions</span>
-          <h3 className="text-2xl font-extrabold text-foreground mt-1">{kpis.totalCancelled}</h3>
-          <span className="text-xs text-red-500 font-medium">Requires attention</span>
-        </div>
+        <KPICard
+          title="Today's Transactions"
+          value={String(kpis.totalTransactions)}
+          trend={`${kpis.completedCount} completed`}
+          trendType="up"
+          icon={Receipt}
+        />
+        <KPICard
+          title="Total Revenue"
+          value={`₱${kpis.totalRevenue.toFixed(2)}`}
+          trend="Today's total"
+          trendType="up"
+          icon={TrendingUp}
+        />
+        <KPICard
+          title="Cancelled Transactions"
+          value={String(kpis.totalCancelled)}
+          trend="Requires attention"
+          trendType="down"
+          icon={XCircle}
+        />
       </div>
 
       <LiveTransactionFeed transactions={transactions} />

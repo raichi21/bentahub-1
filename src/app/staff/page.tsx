@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react"
 import Image from "next/image"
-import { StaffKpiCards } from "@/features/staff-dashboard/components/staff-kpi-cards"
+import { KPICard } from "@/features/admin-dashboard"
 import { getStockStatus } from "@/lib/staff-utils"
-import { AlertTriangle, Package } from "lucide-react"
+import { Package, AlertTriangle, ShoppingBag, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
 import type { Product } from "@/types/cashier"
@@ -80,6 +80,11 @@ export default function StaffPage() {
 
   const isLoading = authLoading || (token !== null && !fetched && !error)
 
+  const inStock = useMemo(
+    () => products.filter((p) => getStockStatus(p) === "in-stock").length,
+    [products],
+  )
+
   const lowStockCount = useMemo(
     () => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").length,
     [products],
@@ -97,10 +102,9 @@ export default function StaffPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-6 animate-pulse">
-              <div className="h-4 bg-muted rounded w-24 mb-4" />
-              <div className="h-8 bg-muted rounded w-16 mb-2" />
-              <div className="h-3 bg-muted rounded w-20" />
+            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+              <div className="h-4 w-24 bg-muted rounded mb-4" />
+              <div className="h-8 w-32 bg-muted rounded" />
             </div>
           ))}
         </div>
@@ -110,12 +114,36 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6">
-      <StaffKpiCards
-        products={products}
-        lowStockCount={dashboard?.kpis.lowStockCount ?? lowStockCount}
-        pendingPickups={dashboard?.kpis.pendingPickups ?? 0}
-        todayRevenue={dashboard?.kpis.todayRevenue ?? 0}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          title="Total Products Managed"
+          value={String(products.length)}
+          trend={`${inStock} in stock`}
+          trendType="up"
+          icon={Package}
+        />
+        <KPICard
+          title="Low Stock Warnings"
+          value={String(dashboard?.kpis.lowStockCount ?? lowStockCount)}
+          trend={(dashboard?.kpis.lowStockCount ?? lowStockCount) > 0 ? "Needs attention" : "All good"}
+          trendType={(dashboard?.kpis.lowStockCount ?? lowStockCount) > 0 ? "warning" : "up"}
+          icon={AlertTriangle}
+        />
+        <KPICard
+          title="Pending Pickups"
+          value={String(dashboard?.kpis.pendingPickups ?? 0)}
+          trend={`${dashboard?.kpis.pendingPickups ?? 0} orders waiting`}
+          trendType="warning"
+          icon={ShoppingBag}
+        />
+        <KPICard
+          title="Today's Verified Transactions"
+          value={`₱${(dashboard?.kpis.todayRevenue ?? 0).toFixed(2)}`}
+          trend="Today's revenue"
+          trendType="up"
+          icon={TrendingUp}
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-xl border border-border shadow-sm p-6">

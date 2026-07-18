@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { InventoryUpdateTable } from "@/features/staff-dashboard/components/inventory-update-table"
+import { KPICard } from "@/features/admin-dashboard"
+import { Package, CheckCircle2, AlertTriangle, XCircle } from "lucide-react"
 import { getStockStatus } from "@/lib/staff-utils"
 import { useAuth } from "@/hooks/useAuth"
 import type { Product } from "@/types/cashier"
@@ -137,33 +139,40 @@ export default function InventoryPage() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-5 animate-pulse">
-                <div className="h-4 bg-muted rounded w-20 mb-4" />
-                <div className="h-7 bg-muted rounded w-12 mb-2" />
-                <div className="h-3 bg-muted rounded w-24" />
+              <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+                <div className="h-4 w-24 bg-muted rounded mb-4" />
+                <div className="h-8 w-32 bg-muted rounded" />
               </div>
             ))
           : <>
-              <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-                <span className="text-sm font-medium text-muted-foreground">Total Products</span>
-                <h3 className="text-2xl font-extrabold text-foreground mt-1">{stockSummary.total}</h3>
-                <span className="text-xs text-muted-foreground font-medium">All SKUs</span>
-              </div>
-              <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-                <span className="text-sm font-medium text-muted-foreground">In Stock</span>
-                <h3 className="text-2xl font-extrabold text-emerald-600 mt-1">{stockSummary.inStock}</h3>
-                <span className="text-xs text-green-500 font-medium">Healthy stock levels</span>
-              </div>
-              <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-                <span className="text-sm font-medium text-muted-foreground">Low Stock</span>
-                <h3 className="text-2xl font-extrabold text-amber-600 mt-1">{stockSummary.lowStock}</h3>
-                <span className="text-xs text-amber-500 font-medium">Needs restocking</span>
-              </div>
-              <div className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
-                <span className="text-sm font-medium text-muted-foreground">Out of Stock</span>
-                <h3 className="text-2xl font-extrabold text-red-600 mt-1">{stockSummary.outOfStock}</h3>
-                <span className="text-xs text-red-500 font-medium">Critical</span>
-              </div>
+              <KPICard
+                title="Total Products"
+                value={String(stockSummary.total)}
+                trend="All SKUs"
+                trendType="up"
+                icon={Package}
+              />
+              <KPICard
+                title="In Stock"
+                value={String(stockSummary.inStock)}
+                trend="Healthy stock levels"
+                trendType="up"
+                icon={CheckCircle2}
+              />
+              <KPICard
+                title="Low Stock"
+                value={String(stockSummary.lowStock)}
+                trend="Needs restocking"
+                trendType="warning"
+                icon={AlertTriangle}
+              />
+              <KPICard
+                title="Out of Stock"
+                value={String(stockSummary.outOfStock)}
+                trend="Critical"
+                trendType="down"
+                icon={XCircle}
+              />
             </>
         }
       </div>
