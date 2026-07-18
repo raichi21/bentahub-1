@@ -107,7 +107,7 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search payments by ID, reference, or customer..."
+                placeholder="Search payments by reference or customer..."
                 value={paymentSearch}
                 onChange={(e) => setPaymentSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
@@ -119,7 +119,7 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-muted/10 border-b border-border">
-                  <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment ID</th>
+                  <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Order</th>
                   <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Customer</th>
                   <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reference</th>
                   <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Method</th>
@@ -132,9 +132,9 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
                 {filteredPayments.length === 0 ? (
                   <tr><td colSpan={7} className="p-8 text-center text-xs text-muted-foreground">No payments found</td></tr>
                 ) : (
-                  filteredPayments.map((p) => (
+                  filteredPayments.map((p, index) => (
                     <tr key={p.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="p-4 text-xs font-mono font-bold text-foreground">{p.id}</td>
+                      <td className="p-4 text-xs font-mono font-bold text-foreground">ORD-{String(index + 1).padStart(3, '0')}</td>
                       <td className="p-4 text-xs text-muted-foreground">{p.customerName || "—"}</td>
                       <td className="p-4 text-xs font-mono text-muted-foreground">{p.referenceNumber}</td>
                       <td className="p-4 text-xs">
@@ -170,7 +170,7 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search pickups by ID, customer, or code..."
+                placeholder="Search pickups by customer or code..."
                 value={pickupSearch}
                 onChange={(e) => setPickupSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
@@ -182,7 +182,7 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-muted/10 border-b border-border">
-                  <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Pickup ID</th>
+                  <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Order</th>
                   <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Customer</th>
                   <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Code</th>
                   <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</th>
@@ -194,9 +194,9 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
                 {filteredPickups.length === 0 ? (
                   <tr><td colSpan={6} className="p-8 text-center text-xs text-muted-foreground">No pickups found</td></tr>
                 ) : (
-                  filteredPickups.map((p) => (
+                  filteredPickups.map((p, index) => (
                     <tr key={p.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="p-4 text-xs font-mono font-bold text-foreground">{p.id}</td>
+                      <td className="p-4 text-xs font-mono font-bold text-foreground">ORD-{String(index + 1).padStart(3, '0')}</td>
                       <td className="p-4 text-xs text-muted-foreground font-medium">{p.customerName}</td>
                       <td className="p-4 text-xs font-mono font-bold text-foreground">{p.code}</td>
                       <td className="p-4 text-xs text-muted-foreground font-mono">{new Date(p.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
