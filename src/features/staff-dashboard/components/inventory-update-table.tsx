@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import Image from "next/image"
-import { Search, ChevronLeft, ChevronRight, Edit3, Plus, Package } from "lucide-react"
+import { Search, Edit3, Plus, Package } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import { getStockStatus } from "@/lib/staff-utils"
 import { QuickStockModal } from "./quick-stock-modal"
@@ -155,15 +155,23 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
 
       <div className="p-4 bg-muted/20 border-t border-border flex items-center justify-between mt-auto">
         <p className="text-xs text-muted-foreground font-medium font-mono">
-          Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} items
+          Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)} to {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} entries
         </p>
-        <div className="flex items-center gap-1.5">
-          <button disabled={safePage === 1} onClick={() => setCurrentPage((c) => c - 1)} className="p-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30">
-            <ChevronLeft className="w-4 h-4" />
+        <div className="flex items-center gap-2">
+          <button
+            disabled={safePage === 1}
+            onClick={() => setCurrentPage((c) => c - 1)}
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
           </button>
           <span className="text-xs font-bold text-muted-foreground px-2 font-mono">Page {safePage} of {totalPages}</span>
-          <button disabled={safePage === totalPages} onClick={() => setCurrentPage((c) => c + 1)} className="p-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30">
-            <ChevronRight className="w-4 h-4" />
+          <button
+            disabled={safePage === totalPages}
+            onClick={() => setCurrentPage((c) => c + 1)}
+            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
           </button>
         </div>
       </div>
