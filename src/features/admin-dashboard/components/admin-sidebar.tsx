@@ -41,7 +41,7 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
     {
       title: "Dashboard",
       items: [
-        { label: "Overview", icon: LayoutDashboard, path: "/admin" },
+        { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
       ]
     },
     {

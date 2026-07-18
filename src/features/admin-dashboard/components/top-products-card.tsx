@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { TrendingUp, Package } from "lucide-react"
 import type { TopProductData } from "@/types/admin"
 
@@ -19,15 +20,23 @@ export function TopProductsCard({ data }: TopProductsCardProps) {
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 flex flex-col gap-5 min-h-[400px]">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Top Selling Products</h2>
-          <p className="text-sm text-muted-foreground">Best performing items by quantity sold</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Top Selling Products</h2>
+            <p className="text-sm text-muted-foreground">Best performing items by quantity sold</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/sales"
+              className="text-[11px] font-semibold text-primary hover:underline tracking-wide"
+            >
+              View Details
+            </Link>
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+          </div>
         </div>
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
-          <TrendingUp className="h-5 w-5" />
-        </div>
-      </div>
 
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center gap-2 flex-1">

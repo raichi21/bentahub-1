@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { PieChart } from "lucide-react"
 import type { PaymentBreakdownData } from "@/types/admin"
 
@@ -22,15 +23,23 @@ export function PaymentBreakdownCard({ data }: PaymentBreakdownCardProps) {
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 flex flex-col gap-5 min-h-[400px]">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Payment Method</h2>
-          <p className="text-sm text-muted-foreground">Cash vs GCash breakdown</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Payment Method</h2>
+            <p className="text-sm text-muted-foreground">Cash vs GCash breakdown</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/payments"
+              className="text-[11px] font-semibold text-primary hover:underline tracking-wide"
+            >
+              View Details
+            </Link>
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
+              <PieChart className="h-5 w-5" />
+            </div>
+          </div>
         </div>
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
-          <PieChart className="h-5 w-5" />
-        </div>
-      </div>
 
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center gap-2 flex-1">
