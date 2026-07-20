@@ -7,9 +7,10 @@ interface KPICardProps {
   trend: string
   trendType: "up" | "down" | "warning"
   icon: LucideIcon
+  showTrendPrefix?: boolean
 }
 
-export function KPICard({ title, value, trend, trendType, icon: Icon }: KPICardProps) {
+export function KPICard({ title, value, trend, trendType, icon: Icon, showTrendPrefix = false }: KPICardProps) {
   const trendColor = {
     up: "text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400",
     down: "text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400",
@@ -30,7 +31,9 @@ export function KPICard({ title, value, trend, trendType, icon: Icon }: KPICardP
           <span className={cn("px-1.5 py-0.5 rounded-full font-medium", trendColor)}>
             {trend}
           </span>
-          <span className="text-muted-foreground">from last month</span>
+          {showTrendPrefix && (
+            <span className="text-muted-foreground">from last month</span>
+          )}
         </div>
       </div>
     </div>

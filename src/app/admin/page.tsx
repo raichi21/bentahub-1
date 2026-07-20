@@ -90,6 +90,7 @@ export default function AdminPage() {
           trend={data?.kpis.totalRevenue.trend ?? "0%"}
           trendType={data?.kpis.totalRevenue.trendType ?? "up"}
           icon={CreditCard}
+          showTrendPrefix
         />
         <KPICard
           title="Total Inventory"
