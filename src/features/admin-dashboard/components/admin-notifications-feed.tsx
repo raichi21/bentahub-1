@@ -45,6 +45,7 @@ export function AdminNotificationsFeed() {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
+    clearAll,
   } = useAdminNotifications()
 
   const criticalCount = notifications.filter((n) => n.severity === "critical" && !n.isRead).length
@@ -121,14 +122,24 @@ export function AdminNotificationsFeed() {
           <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">
             Recent Activity
           </h3>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="text-xs font-bold text-primary hover:underline transition-all"
-            >
-              Mark all as read
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {notifications.length > 0 && (
+              <button
+                onClick={clearAll}
+                className="text-xs font-bold text-red-500 hover:underline transition-all"
+              >
+                Clear all
+              </button>
+            )}
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs font-bold text-primary hover:underline transition-all"
+              >
+                Mark all as read
+              </button>
+            )}
+          </div>
         </div>
 
         {notifications.length === 0 ? (

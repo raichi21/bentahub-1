@@ -122,6 +122,24 @@ export function useAdminNotifications({ pollInterval = 30000 }: { pollInterval?:
     }
   }, [token])
 
+  const clearAll = useCallback(async () => {
+    if (!token) return
+
+    try {
+      const response = await fetch(`/api/admin/notifications`, {
+        method: "DELETE",
+        headers: authHeaders(token),
+      })
+
+      if (!response.ok) throw new Error("Failed to clear notifications")
+
+      setNotifications([])
+      setUnreadCount(0)
+    } catch (err) {
+      console.error("Failed to clear notifications:", err)
+    }
+  }, [token])
+
   return {
     notifications,
     unreadCount,
@@ -130,5 +148,6 @@ export function useAdminNotifications({ pollInterval = 30000 }: { pollInterval?:
     fetchNotifications,
     markAsRead,
     markAllAsRead,
+    clearAll,
   }
 }

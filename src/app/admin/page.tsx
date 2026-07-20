@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { KPICard, SalesChart, StockTable, TopProductsCard, LowStockByCategoryCard, PaymentBreakdownCard } from "@/features/admin-dashboard"
+import { KPICard, SalesChart, TopProductsCard, LowStockByCategoryCard, PaymentBreakdownCard } from "@/features/admin-dashboard"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
 import type { AdminOverviewData, TopProductData, LowStockByCategoryData, PaymentBreakdownData } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
@@ -125,9 +125,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <StockTable data={data?.branchStock} />
-      </div>
     </div>
   )
 }

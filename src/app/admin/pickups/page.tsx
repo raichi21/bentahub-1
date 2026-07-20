@@ -161,8 +161,8 @@ export default function PickupsPage() {
         <KPICard
           title="Delayed"
           value={String(metrics?.delayed ?? 0)}
-          trend="Immediate attention"
-          trendType="down"
+          trend={(metrics?.delayed ?? 0) > 0 ? "Needs review" : "All clear"}
+          trendType={(metrics?.delayed ?? 0) > 0 ? "down" : "up"}
           icon={AlertTriangle}
         />
       </div>

@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { eq } from "drizzle-orm"
+import { db } from "@/servers/db"
+import { notifications } from "@/servers/schemas"
 import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { getAdminNotifications } from "@/features/admin-dashboard/actions/get-admin-notifications"
 import { markNotificationsRead, markAllNotificationsRead } from "@/features/admin-dashboard/actions/mark-notification-read"
@@ -69,6 +72,33 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<AdminApi
     return NextResponse.json({ success: false, message: "No notification IDs provided" }, { status: 400 })
   } catch (error) {
     console.error("Admin notifications error:", error)
+    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = extractToken(request)
+    if (!token) {
+      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
+    }
+
+    const payload = verifyToken(token)
+    if (!payload) {
+      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    }
+
+    if (payload.role !== "admin") {
+      return NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 })
+    }
+
+    await db
+      .delete(notifications)
+      .where(eq(notifications.userId, payload.userId))
+
+    return NextResponse.json({ success: true, message: "All notifications cleared" })
+  } catch (error) {
+    console.error("Admin notifications delete error:", error)
     return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
   }
 }
