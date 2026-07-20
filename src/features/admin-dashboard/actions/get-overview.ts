@@ -1,5 +1,5 @@
 import { db } from "@/servers/db"
-import type { AdminOverviewData, BranchStockData, SalesTrendData } from "@/types/admin"
+import type { AdminOverviewData, BranchStockData, SalesTrendData, SalesTrendWeeklyData } from "@/types/admin"
 
 interface RawTransaction {
   id: string
@@ -105,6 +105,34 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     })
   }
 
+  // --- Weekly Trend (current month only) ---
+  const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+
+  // Determine week-of-month (1-based) for a given date
+  function getWeekOfMonth(date: Date): number {
+    return Math.min(Math.ceil(date.getDate() / 7), 5)
+  }
+
+  // Get total weeks in current month (28-day month = 4 weeks, 31-day month = 5 weeks)
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const totalWeeks = Math.max(Math.min(Math.ceil(daysInMonth / 7), 5), 1)
+
+  // Initialize correct number of weeks with ₱0
+  const weeklyTrend: SalesTrendWeeklyData[] = []
+  for (let i = 1; i <= totalWeeks; i++) {
+    weeklyTrend.push({ weekLabel: `Week${i}`, revenue: 0 })
+  }
+
+  // Add actual revenue to correct week
+  const thisMonthTransactions = allTransactions.filter((t: RawTransaction) => {
+    const d = new Date(t.createdAt)
+    return t.status === "completed" && d >= currentMonthStart && d <= currentMonthEnd
+  })
+  for (const t of thisMonthTransactions) {
+    const weekIndex = getWeekOfMonth(new Date(t.createdAt)) - 1
+    weeklyTrend[weekIndex].revenue += parseFloat(t.totalAmount)
+  }
+
   // --- Branch Stock ---
   const branchStock: BranchStockData[] = allBranches
     .filter((b: RawBranch) => b.isActive)
@@ -161,6 +189,7 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       },
     },
     salesTrend,
+    weeklyTrend,
     branchStock,
     paymentBreakdown: {
       cashTotal,

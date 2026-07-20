@@ -19,6 +19,11 @@ export interface SalesTrendData {
   revenue: number
 }
 
+export interface SalesTrendWeeklyData {
+  weekLabel: string
+  revenue: number
+}
+
 export interface PaymentBreakdownData {
   cashTotal: number
   cashTotalDisplay: string
@@ -36,6 +41,7 @@ export interface AdminOverviewData {
     lowStockAlerts: { value: number }
   }
   salesTrend: SalesTrendData[]
+  weeklyTrend: SalesTrendWeeklyData[]
   branchStock: BranchStockData[]
   paymentBreakdown: PaymentBreakdownData
 }

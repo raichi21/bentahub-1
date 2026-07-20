@@ -1,30 +1,23 @@
 "use client"
 
 import { useState } from "react"
-import type { SalesTrendPointData } from "@/types/admin"
+import type { SalesTrendPointData, SalesTrendWeeklyData } from "@/types/admin"
 
 interface SalesChartProps {
   data?: SalesTrendPointData[] | null
+  weeklyData?: SalesTrendWeeklyData[] | null
 }
 
-export function SalesChart({ data }: SalesChartProps) {
+export function SalesChart({ data, weeklyData }: SalesChartProps) {
   const [view, setView] = useState<"monthly" | "weekly">("monthly")
 
   const months = data
     ? data.map((d) => d.month)
     : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-  const weeks = data
-    ? data.flatMap((d) => {
-        const weeksInMonth = Math.floor(d.revenue / 5000) + 1
-        return Array.from({ length: Math.min(weeksInMonth, 4) }, (_, i) => ({
-          label: `${d.month} W${i + 1}`,
-          revenue: Math.round(d.revenue / weeksInMonth),
-        }))
-      })
-    : []
+  const weeks = weeklyData ?? []
 
-  const labels = view === "monthly" ? months : weeks.map((w) => w.label)
+  const labels = view === "monthly" ? months : weeks.map((w) => w.weekLabel)
   const values = view === "monthly" ? (data ?? []).map((d) => d.revenue) : weeks.map((w) => w.revenue)
 
   const maxRevenue = values.length > 0 ? Math.max(...values, 1) : 150000
