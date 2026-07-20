@@ -20,6 +20,7 @@ export interface StaffProductItem {
   stock: number
   reorderLevel: number
   stockStatus: "in-stock" | "low-stock" | "out-of-stock"
+  nearestExpiry: string | null
 }
 
 export interface StaffProductsData {

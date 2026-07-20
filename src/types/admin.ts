@@ -68,11 +68,23 @@ export interface SystemAlertItem {
   description: string
 }
 
+export interface ExpiringItemData {
+  productId: string
+  productName: string
+  category: string
+  batchNumber: string | null
+  quantity: number
+  expiryDate: string
+  daysUntilExpiry: number
+  branchName: string
+}
+
 export interface MonitoringData {
   metrics: MonitoringMetricsData
   inventoryStatus: InventoryStatusItem[]
   alerts: SystemAlertItem[]
   branches: { id: string; name: string }[]
+  expiringItems: ExpiringItemData[]
 }
 
 export interface SalesOverviewData {

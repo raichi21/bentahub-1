@@ -1,6 +1,7 @@
 import { db } from "@/servers/db"
-import { branches, branchInventory, products, transactions } from "@/servers/schemas"
-import type { MonitoringData, InventoryStatusItem, SystemAlertItem } from "@/types/admin"
+import { eq, and, isNotNull, gte, lte } from "drizzle-orm"
+import { branches, branchInventory, products, transactions, inventoryBatches } from "@/servers/schemas"
+import type { MonitoringData, InventoryStatusItem, SystemAlertItem, ExpiringItemData } from "@/types/admin"
 
 interface RawBranch {
   id: string
@@ -90,6 +91,57 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
     (t: RawTransaction) => new Date(t.createdAt) >= todayStart
   ).length
 
+  // --- Expiring Items (batches expiring within 30 days) ---
+  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const allBatches = await db.query.inventoryBatches.findMany({
+    where: and(
+      gte(inventoryBatches.quantity, 1),
+      isNotNull(inventoryBatches.expiryDate),
+      gte(inventoryBatches.expiryDate, now),
+      lte(inventoryBatches.expiryDate, thirtyDaysFromNow),
+    ),
+    with: {
+      branchInventory: {
+        with: {
+          branch: true,
+          product: true,
+        },
+      },
+    },
+  }) as unknown as Array<{
+    id: string
+    batchNumber: string | null
+    quantity: number
+    expiryDate: Date | null
+    supplier: string | null
+    branchInventory: {
+      id: string
+      branchId: string
+      productId: string
+      quantity: number
+      branch: { id: string; name: string; location: string | null }
+      product: { id: string; name: string; category: string | null }
+    }
+  }>
+
+  const expiringItems: ExpiringItemData[] = allBatches
+    .filter((b) => b.expiryDate)
+    .map((b) => {
+      const diffMs = b.expiryDate!.getTime() - now.getTime()
+      const daysUntilExpiry = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+      return {
+        productId: b.branchInventory.product.id,
+        productName: b.branchInventory.product.name,
+        category: b.branchInventory.product.category || "Uncategorized",
+        batchNumber: b.batchNumber,
+        quantity: b.quantity,
+        expiryDate: b.expiryDate!.toISOString(),
+        daysUntilExpiry,
+        branchName: b.branchInventory.branch.name,
+      }
+    })
+    .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry)
+
   // --- Inventory Status (per product in filtered inventory) ---
   const inventoryStatus: InventoryStatusItem[] = []
   for (const [productId, agg] of productAggregator) {
@@ -170,5 +222,6 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
     inventoryStatus,
     alerts,
     branches: activeBranches,
+    expiringItems,
   }
 }

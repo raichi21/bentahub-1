@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, branches, products, branchInventory, notifications } from "@/servers/schemas"
+import { users, branches, products, branchInventory, inventoryBatches, notifications } from "@/servers/schemas"
 import { eq, and } from "drizzle-orm"
 
 const CATEGORY_SKU_PREFIX: Record<string, string> = {
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, sku: providedSku, category, stock, reorderLevel, unit, price, image } = body
+    const { name, sku: providedSku, category, stock, reorderLevel, unit, price, image, batchNumber, expiryDate, supplier } = body
 
     if (!name || !category || price === undefined) {
       return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })
@@ -148,13 +148,26 @@ export async function POST(request: NextRequest) {
       isActive: true,
     })
 
+    const branchInventoryId = generateId()
     await db.insert(branchInventory).values({
-      id: generateId(),
+      id: branchInventoryId,
       branchId: branchRecord.id,
       productId,
       quantity: stockQty,
       lowStockThreshold: threshold,
     })
+
+    if (stockQty > 0) {
+      await db.insert(inventoryBatches).values({
+        id: generateId(),
+        branchInventoryId,
+        batchNumber: batchNumber || null,
+        quantity: stockQty,
+        originalQuantity: stockQty,
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+        supplier: supplier || null,
+      })
+    }
 
     const adminUsers = await db.query.users.findMany({
       where: and(eq(users.role, "admin"), eq(users.isActive, true)),

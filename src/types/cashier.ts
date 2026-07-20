@@ -23,6 +23,7 @@ export interface Product {
   reorderLevel: number
   image: string
   unit: string
+  nearestExpiry: string | null
 }
 
 // ── Cart ─────────────────────────────────────────────────────────────

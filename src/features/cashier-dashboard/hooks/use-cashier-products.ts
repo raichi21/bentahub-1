@@ -49,6 +49,7 @@ export function useCashierProducts(): UseCashierProductsResult {
             reorderLevel: p.reorderLevel,
             image: p.image || "",
             unit: "pcs",
+            nearestExpiry: p.nearestExpiry,
           }),
         )
         setProducts(mapped)

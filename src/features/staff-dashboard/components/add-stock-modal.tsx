@@ -13,6 +13,9 @@ interface ProductForm {
   unit: string
   price: number
   image: string
+  batchNumber: string
+  expiryDate: string
+  supplier: string
 }
 
 interface AddStockModalProps {
@@ -43,7 +46,8 @@ function generateSkuSuffix(): string {
 
 export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
   const [form, setForm] = useState<ProductForm>({
-    name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: ""
+    name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "",
+    batchNumber: "", expiryDate: "", supplier: ""
   })
   const [skuSuffix, setSkuSuffix] = useState(generateSkuSuffix())
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -60,7 +64,7 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
     onSave({ ...form, sku: generatedSku })
     const newSuffix = generateSkuSuffix()
     setSkuSuffix(newSuffix)
-    setForm({ name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "" })
+    setForm({ name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "", batchNumber: "", expiryDate: "", supplier: "" })
     onClose()
   }
 
@@ -208,6 +212,33 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
               />
             </div>
             <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Batch Number</label>
+              <input
+                type="text"
+                value={form.batchNumber}
+                onChange={(e) => setForm((f) => ({ ...f, batchNumber: e.target.value }))}
+                placeholder="e.g. LOT-001"
+                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Expiry Date</label>
+              <input
+                type="date"
+                value={form.expiryDate}
+                onChange={(e) => setForm((f) => ({ ...f, expiryDate: e.target.value }))}
+                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Supplier</label>
+              <input
+                type="text"
+                value={form.supplier}
+                onChange={(e) => setForm((f) => ({ ...f, supplier: e.target.value }))}
+                placeholder="e.g. Puregold"
+                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
             </div>
           </div>
         </div>

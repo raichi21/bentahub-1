@@ -70,7 +70,7 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
         <div className="px-6 py-3 bg-muted/20 border-b border-border flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <h3 className="text-sm font-bold text-foreground">All Branch Transactions</h3>
-            <p className="text-[11px] text-muted-foreground">Real-time update from all active branch registers.</p>
+
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, Package, Bell } from "lucide-react"
+import { Search, Package, Bell, Clock } from "lucide-react"
 import { getStockStatus } from "@/lib/staff-utils"
 import { useAuth } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils"
@@ -16,6 +16,22 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
   const [statusFilter, setStatusFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
   const [notifyingMap, setNotifyingMap] = useState<Record<string, "idle" | "sending" | "sent" | "error">>({})
+
+  function getExpiryDays(nearestExpiry: string | null): number | null {
+    if (!nearestExpiry) return null
+    const diffMs = new Date(nearestExpiry).getTime() - Date.now()
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  }
+
+  function formatExpiryDate(nearestExpiry: string | null): string | null {
+    if (!nearestExpiry) return null
+    return new Date(nearestExpiry).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+  }
+
+  function isExpiringSoon(nearestExpiry: string | null): boolean {
+    const days = getExpiryDays(nearestExpiry)
+    return days !== null && days >= 0 && days <= 30
+  }
 
   // Unique categories for the dropdown filter
   const categories = useMemo(() => {
@@ -33,11 +49,13 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
       const matchesCat = categoryFilter === "All" || p.category === categoryFilter
 
       const status = getStockStatus(p)
-      const matchesStatus =
-        statusFilter === "All" ||
-        (statusFilter === "In Stock" && status === "in-stock") ||
-        (statusFilter === "Low Stock" && status === "low-stock") ||
-        (statusFilter === "Out of Stock" && status === "out-of-stock")
+      const expiringSoon = isExpiringSoon(p.nearestExpiry)
+      let matchesStatus = false
+      if (statusFilter === "All") matchesStatus = true
+      else if (statusFilter === "In Stock" && status === "in-stock") matchesStatus = true
+      else if (statusFilter === "Low Stock" && status === "low-stock") matchesStatus = true
+      else if (statusFilter === "Out of Stock" && status === "out-of-stock") matchesStatus = true
+      else if (statusFilter === "Expiring Soon" && expiringSoon) matchesStatus = true
 
       return matchesSearch && matchesCat && matchesStatus
     })
@@ -102,6 +120,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
             <option value="In Stock">In Stock</option>
             <option value="Low Stock">Low Stock</option>
             <option value="Out of Stock">Out of Stock</option>
+            <option value="Expiring Soon">Expiring Soon (30d)</option>
           </select>
 
         </div>
@@ -115,6 +134,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Product</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</th>
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Expiry</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reorder Level</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Actions</th>
@@ -143,7 +163,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
             ) : (
               paginatedProducts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-xs text-muted-foreground">
+                <td colSpan={7} className="p-8 text-center text-xs text-muted-foreground">
                   No stock records matched your query
                 </td>
               </tr>
@@ -186,6 +206,26 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                     {/* Quantity */}
                     <td className="p-4 text-sm font-mono font-bold text-card-foreground">
                       {p.stock} {p.unit}s
+                    </td>
+
+                    {/* Expiry Date */}
+                    <td className="p-4">
+                      {(() => {
+                        const days = getExpiryDays(p.nearestExpiry)
+                        const formatted = formatExpiryDate(p.nearestExpiry)
+                        if (!days || !formatted) return <span className="text-xs text-muted-foreground">—</span>
+                        const isUrgent = days <= 7
+                        const isWarning = days <= 30
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <Clock className={cn("w-3.5 h-3.5", isUrgent ? "text-red-500" : isWarning ? "text-amber-500" : "text-muted-foreground")} />
+                            <span className={cn("text-xs font-mono", isUrgent ? "text-red-600 font-bold" : isWarning ? "text-amber-600 font-bold" : "text-muted-foreground")}>
+                              {formatted}
+                              {isUrgent ? ` (${days}d)` : isWarning ? ` (${days}d)` : ""}
+                            </span>
+                          </div>
+                        )
+                      })()}
                     </td>
 
                     {/* Status Badge */}

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import Image from "next/image"
-import { Search, Edit3, Plus, Package } from "lucide-react"
+import { Search, Edit3, Plus, Package, Clock } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import { getStockStatus } from "@/lib/staff-utils"
 import { QuickStockModal } from "./quick-stock-modal"
@@ -11,10 +11,24 @@ import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 6
 
+interface AddProductData {
+  name: string
+  sku?: string
+  category: string
+  stock: number
+  reorderLevel: number
+  unit: string
+  price: number
+  image?: string
+  batchNumber?: string
+  expiryDate?: string
+  supplier?: string
+}
+
 interface InventoryUpdateTableProps {
   products: Product[]
   onStockUpdate: (productId: string, newStock: number, newReorderLevel: number) => void
-  onAddProduct?: (product: { name: string; sku?: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string }) => void
+  onAddProduct?: (product: AddProductData) => void
   savingId?: string | null
 }
 
@@ -31,12 +45,36 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
     return ["All", ...Array.from(set)]
   }, [initialProducts])
 
+  function isExpiringSoon(nearestExpiry: string | null): boolean {
+    if (!nearestExpiry) return false
+    const diffMs = new Date(nearestExpiry).getTime() - Date.now()
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+    return diffDays >= 0 && diffDays <= 30
+  }
+
+  function getExpiryDays(nearestExpiry: string | null): number | null {
+    if (!nearestExpiry) return null
+    const diffMs = new Date(nearestExpiry).getTime() - Date.now()
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  }
+
+  function formatExpiryDate(nearestExpiry: string | null): string | null {
+    if (!nearestExpiry) return null
+    return new Date(nearestExpiry).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+  }
+
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesCat = categoryFilter === "All" || p.category === categoryFilter
       const status = getStockStatus(p)
-      const matchesStatus = statusFilter === "All" || (statusFilter === "In Stock" && status === "in-stock") || (statusFilter === "Low Stock" && status === "low-stock") || (statusFilter === "Out of Stock" && status === "out-of-stock")
+      const expiringSoon = isExpiringSoon(p.nearestExpiry)
+      let matchesStatus = false
+      if (statusFilter === "All") matchesStatus = true
+      else if (statusFilter === "In Stock" && status === "in-stock") matchesStatus = true
+      else if (statusFilter === "Low Stock" && status === "low-stock") matchesStatus = true
+      else if (statusFilter === "Out of Stock" && status === "out-of-stock") matchesStatus = true
+      else if (statusFilter === "Expiring Soon" && expiringSoon) matchesStatus = true
       return matchesSearch && matchesCat && matchesStatus
     })
   }, [searchQuery, categoryFilter, statusFilter, initialProducts])
@@ -74,6 +112,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
             <option value="In Stock">In Stock</option>
             <option value="Low Stock">Low Stock</option>
             <option value="Out of Stock">Out of Stock</option>
+            <option value="Expiring Soon">Expiring Soon (30d)</option>
           </select>
           <button
             onClick={() => setShowAddModal(true)}
@@ -92,6 +131,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Product</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</th>
+              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Expiry</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reorder Level</th>
               <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Actions</th>
@@ -100,7 +140,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
           <tbody className="divide-y divide-border/30">
             {paginatedProducts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-xs text-muted-foreground">No stock records matched your query</td>
+                <td colSpan={7} className="p-8 text-center text-xs text-muted-foreground">No stock records matched your query</td>
               </tr>
             ) : (
               paginatedProducts.map((p) => {
@@ -126,6 +166,24 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                     </td>
                     <td className="p-4 text-xs font-medium text-muted-foreground">{p.category}</td>
                     <td className="p-4 text-sm font-mono font-bold text-foreground">{p.stock} {p.unit}s</td>
+                    <td className="p-4">
+                      {(() => {
+                        const days = getExpiryDays(p.nearestExpiry)
+                        const formatted = formatExpiryDate(p.nearestExpiry)
+                        if (!days || !formatted) return <span className="text-xs text-muted-foreground">—</span>
+                        const isUrgent = days <= 7
+                        const isWarning = days <= 30
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <Clock className={cn("w-3.5 h-3.5", isUrgent ? "text-red-500" : isWarning ? "text-amber-500" : "text-muted-foreground")} />
+                            <span className={cn("text-xs font-mono", isUrgent ? "text-red-600 font-bold" : isWarning ? "text-amber-600 font-bold" : "text-muted-foreground")}>
+                              {formatted}
+                              {isUrgent ? ` (${days}d)` : isWarning ? ` (${days}d)` : ""}
+                            </span>
+                          </div>
+                        )
+                      })()}
+                    </td>
                     <td className="p-4">
                       <span className={cn(
                         "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border",

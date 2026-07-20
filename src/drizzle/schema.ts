@@ -380,3 +380,31 @@ export const insertNotificationPreferencesSchema = createInsertSchema(notificati
 export const selectNotificationPreferencesSchema = createSelectSchema(notificationPreferences)
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect
 export type InsertNotificationPreferences = typeof notificationPreferences.$inferInsert
+
+// ── Inventory Batches ──
+export const inventoryBatches = pgTable("inventory_batches", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  branchInventoryId: varchar("branch_inventory_id", { length: 36 })
+    .notNull()
+    .references(() => branchInventory.id, { onDelete: "cascade" }),
+  batchNumber: varchar("batch_number", { length: 100 }),
+  quantity: integer("quantity").default(0).notNull(),
+  originalQuantity: integer("original_quantity").default(0).notNull(),
+  expiryDate: timestamp("expiry_date", { withTimezone: true }),
+  receivedDate: timestamp("received_date", { withTimezone: true }).defaultNow().notNull(),
+  supplier: varchar("supplier", { length: 255 }),
+  createdAt,
+  updatedAt,
+})
+
+export const inventoryBatchesRelations = relations(inventoryBatches, ({ one }) => ({
+  branchInventory: one(branchInventory, {
+    fields: [inventoryBatches.branchInventoryId],
+    references: [branchInventory.id],
+  }),
+}))
+
+export const insertInventoryBatchSchema = createInsertSchema(inventoryBatches).omit({ id: true, createdAt: true, updatedAt: true })
+export const selectInventoryBatchSchema = createSelectSchema(inventoryBatches)
+export type InventoryBatch = typeof inventoryBatches.$inferSelect
+export type InsertInventoryBatch = typeof inventoryBatches.$inferInsert

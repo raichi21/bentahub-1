@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import { InventoryStatusTable, KPICard } from "@/features/admin-dashboard"
-import { Package, AlertTriangle, Download, FileSpreadsheet, FileText } from "lucide-react"
-import type { MonitoringData, InventoryStatusItem } from "@/types/admin"
+import { Package, AlertTriangle, Download, FileSpreadsheet, FileText, Clock, ExternalLink } from "lucide-react"
+import type { MonitoringData, InventoryStatusItem, ExpiringItemData } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
+import { cn } from "@/lib/utils"
 
 export default function MonitoringPage() {
   // ── All hooks must be before any early return ──
@@ -227,6 +229,75 @@ export default function MonitoringPage() {
           )}
         </div>
       </div>
+
+      {/* Expiring Items Section */}
+      {data?.expiringItems && data.expiringItems.length > 0 && (
+        <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-border flex items-center justify-between bg-muted/20">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-amber-500" />
+              <h4 className="font-bold text-lg text-foreground">Expiring Soon</h4>
+              <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                {data.expiringItems.length} {data.expiringItems.length === 1 ? "item" : "items"}
+              </span>
+            </div>
+            <Link
+              href="/admin/sales"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors"
+            >
+              View Details
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <th className="px-6 py-4">Product</th>
+                  <th className="px-6 py-4">Category</th>
+                  <th className="px-6 py-4">Branch</th>
+                  <th className="px-6 py-4">Batch</th>
+                  <th className="px-6 py-4">Quantity</th>
+                  <th className="px-6 py-4">Expiry Date</th>
+                  <th className="px-6 py-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {data.expiringItems.map((item: ExpiringItemData, i: number) => {
+                  const isUrgent = item.daysUntilExpiry <= 7
+                  return (
+                    <tr key={`${item.productId}-${i}`} className="hover:bg-primary/5 transition-colors">
+                      <td className="px-6 py-4 font-bold text-sm text-foreground">{item.productName}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{item.category}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{item.branchName}</td>
+                      <td className="px-6 py-4 text-xs font-mono text-muted-foreground">{item.batchNumber || "—"}</td>
+                      <td className="px-6 py-4 font-mono text-sm text-foreground">{item.quantity}</td>
+                      <td className="px-6 py-4">
+                        <span className={cn(
+                          "text-xs font-mono",
+                          isUrgent ? "text-red-600 font-bold" : "text-amber-600 font-bold"
+                        )}>
+                          {new Date(item.expiryDate).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                          isUrgent
+                            ? "bg-red-50 text-red-700 border-red-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        )}>
+                          {isUrgent ? `${item.daysUntilExpiry} days left` : `${item.daysUntilExpiry} days left`}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <InventoryStatusTable data={data?.inventoryStatus ?? []} />
     </div>
