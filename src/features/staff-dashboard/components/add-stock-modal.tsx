@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useRef, useMemo } from "react"
+import { useState, useRef } from "react"
 import Image from "next/image"
-import { X, Plus, Image as ImageIcon, ImagePlus, Tag } from "lucide-react"
+import { X, Plus, Image as ImageIcon, ImagePlus } from "lucide-react"
 
 interface ProductForm {
   name: string
-  sku: string
   category: string
   stock: number
   reorderLevel: number
@@ -15,7 +14,6 @@ interface ProductForm {
   image: string
   batchNumber: string
   expiryDate: string
-  supplier: string
 }
 
 interface AddStockModalProps {
@@ -26,51 +24,24 @@ interface AddStockModalProps {
 
 const CATEGORIES = ["Groceries", "Beverages", "Household", "Pharmacy", "Snacks", "Bakery"]
 
-const CATEGORY_SKU_PREFIX: Record<string, string> = {
-  Groceries: "GRC",
-  Beverages: "BVG",
-  Household: "HOU",
-  Pharmacy: "PHA",
-  Snacks: "SNK",
-  Bakery: "BAK",
-}
-
-function generateSkuSuffix(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-  let suffix = ""
-  for (let i = 0; i < 4; i++) {
-    suffix += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return suffix
-}
-
 export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
   const [form, setForm] = useState<ProductForm>({
-    name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "",
-    batchNumber: "", expiryDate: "", supplier: ""
+    name: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "",
+    batchNumber: "", expiryDate: ""
   })
-  const [skuSuffix, setSkuSuffix] = useState(generateSkuSuffix())
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const generatedSku = useMemo(() => {
-    const prefix = CATEGORY_SKU_PREFIX[form.category] || "GEN"
-    return `${prefix}-${skuSuffix}`
-  }, [form.category, skuSuffix])
 
   if (!isOpen) return null
 
   const handleSave = () => {
     if (!form.name.trim()) return
-    onSave({ ...form, sku: generatedSku })
-    const newSuffix = generateSkuSuffix()
-    setSkuSuffix(newSuffix)
-    setForm({ name: "", sku: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "", batchNumber: "", expiryDate: "", supplier: "" })
+    onSave({ ...form })
+    setForm({ name: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "", batchNumber: "", expiryDate: "" })
     onClose()
   }
 
   const handleCategoryChange = (cat: string) => {
     setForm((f) => ({ ...f, category: cat }))
-    setSkuSuffix(generateSkuSuffix())
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,14 +135,6 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">SKU (auto-generated)</label>
-              <div className="flex items-center gap-2 h-11 px-4 bg-muted/30 border border-border rounded-lg text-sm font-mono text-foreground">
-                <Tag className="w-4 h-4 flex-shrink-0 text-primary" />
-                <span className="font-bold">{generatedSku}</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground">Auto-generated SKU based on category.</p>
-            </div>
-            <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</label>
               <select
                 value={form.category}
@@ -230,16 +193,7 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Supplier</label>
-              <input
-                type="text"
-                value={form.supplier}
-                onChange={(e) => setForm((f) => ({ ...f, supplier: e.target.value }))}
-                placeholder="e.g. Puregold"
-                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              />
-            </div>
+
           </div>
         </div>
 

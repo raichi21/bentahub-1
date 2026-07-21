@@ -120,14 +120,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, sku: providedSku, category, stock, reorderLevel, unit, price, image, batchNumber, expiryDate, supplier } = body
+    const { name, category, stock, reorderLevel, unit, price, image, batchNumber, expiryDate } = body
 
     if (!name || !category || price === undefined) {
       return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })
     }
 
     const productId = generateId()
-    const sku = providedSku || generateSku(category)
+    const sku = generateSku(category)
     const stockQty = Math.max(0, stock || 0)
     const threshold = reorderLevel !== undefined ? Math.max(0, reorderLevel) : 10
     const stockStatus = stockQty === 0 ? "out-of-stock" : stockQty <= threshold ? "low-stock" : "in-stock"
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
         quantity: stockQty,
         originalQuantity: stockQty,
         expiryDate: expiryDate ? new Date(expiryDate) : null,
-        supplier: supplier || null,
+        supplier: null,
       })
     }
 
