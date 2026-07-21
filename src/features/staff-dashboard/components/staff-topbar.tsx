@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation"
 import { Bell, Menu } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -27,6 +28,7 @@ interface StaffTopbarProps {
 }
 
 export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
+  const { user } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const title = ROUTE_TITLES[pathname] || "Staff Dashboard"
@@ -66,7 +68,7 @@ export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
           <div className="flex-col hidden sm:flex">
             <span className="text-sm font-bold text-foreground leading-tight">Dolly Cruz</span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-              Branch Staff
+              {user?.branch || "Branch Staff"}
             </span>
           </div>
         </div>

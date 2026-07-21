@@ -44,7 +44,7 @@ export function CashierTopbar({ onToggleSidebar }: CashierTopbarProps) {
           <div className="flex-col hidden sm:flex">
             <span className="text-sm font-bold text-card-foreground leading-tight">{user?.fullName || "Cashier"}</span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-              Cashier
+              {user?.branch || "Cashier"}
             </span>
           </div>
         </div>
