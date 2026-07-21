@@ -20,6 +20,7 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [role, setRole] = useState("cashier")
   const [branch, setBranch] = useState("")
   const [branches, setBranches] = useState<BranchOption[]>([])
@@ -31,8 +32,9 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
     fetch("/api/branches", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((d) => {
-        if (Array.isArray(d)) setBranches(d)
-        else if (d.data && Array.isArray(d.data)) setBranches(d.data)
+        const list = Array.isArray(d) ? d : d.data && Array.isArray(d.data) ? d.data : []
+        setBranches(list)
+        if (list.length > 0) setBranch(list[0].name)
       })
       .catch(() => {})
   }, [isOpen, token])
@@ -41,18 +43,23 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !password) return
+    if (!name || !email || !password || !branch) return
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
     setSubmitting(true)
     setError("")
     try {
       const res = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fullName: name, email, password, role, branch: branch || undefined }),
+        body: JSON.stringify({ fullName: name, email, password, role, branch }),
       })
       const data = await res.json()
       if (data.success) {
-        setName(""); setEmail(""); setPassword(""); setRole("cashier"); setBranch("")
+        setName(""); setEmail(""); setPassword(""); setConfirmPassword(""); setRole("cashier")
+        setBranch(branches[0]?.name || "")
         onSuccess()
       } else {
         setError(data.message || "Failed to create user")
@@ -104,6 +111,10 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
                   </button>
                 </div>
               </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Confirm Password</label>
+                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="••••••••" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -116,8 +127,7 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch Assignment</label>
-                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={branch} onChange={(e) => setBranch(e.target.value)}>
-                    <option value="">All Branches</option>
+                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={branch} onChange={(e) => setBranch(e.target.value)} required>
                     {branches.map((b) => (
                       <option key={b.id} value={b.name}>{b.name}</option>
                     ))}
