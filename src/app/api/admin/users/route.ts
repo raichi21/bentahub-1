@@ -3,7 +3,7 @@ import { z } from "zod"
 import { extractToken, checkAdminAuth, hashPassword, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import { getUsers } from "@/features/admin-dashboard/actions/get-users"
 import type { UsersApiData } from "@/types/admin"
 
@@ -57,24 +57,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const { email, password, fullName, role, branch } = parsed.data
 
-    const existing = await db.query.users.findFirst({ where: eq(users.email, email) })
+    console.log("[POST] Checking email:", email, "new name:", fullName)
+
+    // Use raw SQL to avoid any ORM proxy issues
+    const result = await db.execute(
+      sql`SELECT id, full_name, is_active FROM users WHERE email = ${email} LIMIT 1`
+    )
+    const existing = result[0] ?? null
+
     if (existing) {
+      console.log("[POST] Found user:", { id: existing.id, name: existing.full_name, active: existing.is_active })
+    } else {
+      console.log("[POST] No existing user found")
+    }
+
+    if (existing && existing.is_active) {
       return NextResponse.json({ success: false, message: "Email already registered" }, { status: 409 })
     }
 
     const hashedPassword = await hashPassword(password)
+
+    if (existing && !existing.is_active) {
+      console.log("[POST] Reactivating user:", existing.id, "with name:", fullName)
+
+      await db.execute(
+        sql`UPDATE users SET full_name = ${fullName}, password = ${hashedPassword}, role = ${role}, branch = ${branch || null}, is_active = true, is_email_verified = true, updated_at = NOW() WHERE id = ${existing.id}`
+      )
+
+      console.log("[POST] Reactivation done for:", existing.id)
+
+      return NextResponse.json({
+        success: true,
+        message: `${role.charAt(0).toUpperCase() + role.slice(1)} account reactivated successfully`,
+        data: { userId: existing.id, email, fullName, role, branch: branch || null },
+      })
+    }
+
     const userId = generateId()
 
-    await db.insert(users).values({
-      id: userId,
-      email,
-      password: hashedPassword,
-      fullName,
-      role,
-      branch: branch || null,
-      isEmailVerified: true,
-      isActive: true,
-    })
+    await db.execute(
+      sql`INSERT INTO users (id, email, password, full_name, role, branch, is_active, is_email_verified, created_at, updated_at) VALUES (${userId}, ${email}, ${hashedPassword}, ${fullName}, ${role}, ${branch || null}, true, true, NOW(), NOW())`
+    )
 
     return NextResponse.json({
       success: true,
