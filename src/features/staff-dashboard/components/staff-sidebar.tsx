@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutGrid, Activity, Bell, PackageSearch, CheckCircle2, Calendar, LogOut, X } from "lucide-react"
+import { LayoutDashboard, Store, Activity, Bell, PackageSearch, CheckCircle2, Calendar, LogOut, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { NotificationBadge } from "./notification-badge"
 
@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   {
     category: "Dashboard",
     links: [
-      { href: "/staff", label: "Dashboard", icon: LayoutGrid },
+      { href: "/staff", label: "Dashboard", icon: LayoutDashboard },
     ],
   },
   {
@@ -58,7 +58,7 @@ export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
       )}>
         <div className="px-6 py-8 flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/30 flex-shrink-0">
-            <LayoutGrid className="w-6 h-6 text-white" />
+            <Store className="w-6 h-6 text-white" />
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="font-bold text-lg tracking-tight truncate">BentaHub</span>

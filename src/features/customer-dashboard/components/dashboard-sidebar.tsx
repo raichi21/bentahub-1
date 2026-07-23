@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation"
 import {
   LayoutDashboard,
   Store,
-  Receipt,
+  History,
   Bell,
   Store as StoreIcon,
   ShoppingCart,
-  CalendarDays,
+  Calendar,
   Settings,
   LogOut
 } from "lucide-react"
@@ -41,8 +41,8 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
     {
       title: "Records",
       items: [
-        { label: "My Reservations", icon: CalendarDays, path: "/customer/reservations" },
-        { label: "Transaction History", icon: Receipt, path: "/customer/orders" },
+        { label: "My Reservations", icon: Calendar, path: "/customer/reservations" },
+        { label: "Transaction History", icon: History, path: "/customer/orders" },
       ]
     },
   ]
