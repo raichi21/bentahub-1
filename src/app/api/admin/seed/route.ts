@@ -757,9 +757,9 @@ export async function POST(request: NextRequest) {
 
     // ── Find or create the 3 branches ──
     const branchNames = [
-      { name: "Lourdes Main Branch", location: "Lourdes Main Branch, Metro Manila", capacity: 500 },
-      { name: "Lourdes Second Branch", location: "Lourdes Second Branch, Metro Manila", capacity: 400 },
-      { name: "Lourdes Third Branch", location: "Lourdes Third Branch, Metro Manila", capacity: 400 },
+      { name: "Lourdes Main Branch", location: "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan", capacity: 500 },
+      { name: "Lourdes Second Branch", location: "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan", capacity: 400 },
+      { name: "Lourdes Third Branch", location: "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan", capacity: 400 },
     ]
 
     const branchIds: string[] = []
@@ -770,6 +770,9 @@ export async function POST(request: NextRequest) {
       })
 
       if (existing) {
+        await db.update(branches)
+          .set({ location: b.location, capacity: b.capacity })
+          .where(eq(branches.id, existing.id))
         branchIds.push(existing.id)
       } else {
         const id = generateId()
