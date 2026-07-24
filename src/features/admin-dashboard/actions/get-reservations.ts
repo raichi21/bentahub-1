@@ -50,7 +50,7 @@ export async function getReservations(filters: ReservationFilterOptions = { page
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined
 
-  const allMatched = await db.query.orders.findMany({
+  let allMatched = await db.query.orders.findMany({
     where,
     orderBy: [desc(orders.createdAt)],
     with: {
@@ -66,12 +66,10 @@ export async function getReservations(filters: ReservationFilterOptions = { page
 
   if (filters.search) {
     const q = filters.search.toLowerCase()
-    const filtered = allMatched.filter((o) =>
+    allMatched = allMatched.filter((o) =>
       o.id.toLowerCase().includes(q) ||
       o.user.fullName.toLowerCase().includes(q)
     )
-    allMatched.length = 0
-    allMatched.push(...filtered)
   }
 
   const total = allMatched.length
@@ -132,6 +130,6 @@ export async function getReservations(filters: ReservationFilterOptions = { page
     },
     reservations: reservationsList,
     totalCount: total,
-    branches: allBranches.map((b) => ({ id: b.name, name: b.name })),
+    branches: allBranches.map((b) => ({ id: b.id, name: b.name })),
   }
 }

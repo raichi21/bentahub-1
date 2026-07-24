@@ -23,6 +23,22 @@ export default function StockCheckPage() {
     )
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-background">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+              <div className="h-4 w-20 bg-muted rounded mb-4" />
+              <div className="h-8 w-28 bg-muted rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-background">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

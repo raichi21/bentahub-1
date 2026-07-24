@@ -15,6 +15,7 @@ export default function PickupsPage() {
   const [branch, setBranch] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {
@@ -30,10 +31,19 @@ export default function PickupsPage() {
       const res = await fetch(`/api/admin/pickups?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
+      if (!res.ok) {
+        const text = await res.text().catch(() => "")
+        throw new Error(`API ${res.status}: ${text.slice(0, 200)}`)
+      }
       const json = await res.json()
       if (json.success && json.data) {
         setData(json.data)
+        setError(null)
+      } else {
+        throw new Error(json.message || "API returned success=false")
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setFirstLoadDone(true)
     }

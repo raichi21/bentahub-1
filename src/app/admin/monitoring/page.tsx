@@ -57,7 +57,10 @@ export default function MonitoringPage() {
   // Fetch branches for filter dropdown
   useEffect(() => {
     if (branchesFetched) return
-    fetch("/api/branches")
+    if (!token) return
+    fetch("/api/branches", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {
@@ -287,7 +290,7 @@ export default function MonitoringPage() {
                             ? "bg-red-50 text-red-700 border-red-200"
                             : "bg-amber-50 text-amber-700 border-amber-200"
                         )}>
-                          {isUrgent ? `${item.daysUntilExpiry} days left` : `${item.daysUntilExpiry} days left`}
+                          {isUrgent ? `⚠ URGENT: ${item.daysUntilExpiry} days left` : `${item.daysUntilExpiry} days left`}
                         </span>
                       </td>
                     </tr>

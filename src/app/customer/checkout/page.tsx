@@ -14,9 +14,11 @@ import {
   ShieldCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useCart } from "@/hooks/useCart"
-import { useOrders } from "@/hooks/useOrders"
 import { useAuth } from "@/hooks/useAuth"
+import { useOrders } from "@/hooks/useOrders"
+import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import Link from "next/link"
 import { cn, formatOrderId } from "@/lib/utils"
 
@@ -49,12 +51,10 @@ export default function CheckoutPage() {
       setCreatedOrderId(order.id)
       setOrderSuccess(true)
 
-      // Clear cart after successful order
+      // Clear cart immediately, then redirect after a brief delay
+      clearCart()
       setTimeout(() => {
-        clearCart()
-        setTimeout(() => {
-          router.push("/customer/orders")
-        }, 1500)
+        router.push("/customer/orders")
       }, 2000)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create order"
@@ -64,8 +64,8 @@ export default function CheckoutPage() {
   }
 
   const subtotal = total
-  const serviceFee = +(subtotal * 0.01).toFixed(2)
-  const bond = 50.00
+  const serviceFee = +(subtotal * SERVICE_FEE_RATE).toFixed(2)
+  const bond = RESERVATION_BOND
   const totalDue = subtotal + serviceFee + bond
 
   // Compute pickup deadline: today at 5PM, or tomorrow at 5PM if past 5PM

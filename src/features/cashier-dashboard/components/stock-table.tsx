@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { Search, Package, Bell, Clock } from "lucide-react"
-import { getStockStatus } from "@/lib/staff-utils"
+import { getStockStatus, getExpiryDays, formatExpiryDate, isExpiringSoon } from "@/lib/staff-utils"
 import { useAuth } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils"
 import type { Product } from "@/types/cashier"
@@ -16,22 +16,6 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
   const [statusFilter, setStatusFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
   const [notifyingMap, setNotifyingMap] = useState<Record<string, "idle" | "sending" | "sent" | "error">>({})
-
-  function getExpiryDays(nearestExpiry: string | null): number | null {
-    if (!nearestExpiry) return null
-    const diffMs = new Date(nearestExpiry).getTime() - Date.now()
-    return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  }
-
-  function formatExpiryDate(nearestExpiry: string | null): string | null {
-    if (!nearestExpiry) return null
-    return new Date(nearestExpiry).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
-  }
-
-  function isExpiringSoon(nearestExpiry: string | null): boolean {
-    const days = getExpiryDays(nearestExpiry)
-    return days !== null && days >= 0 && days <= 30
-  }
 
   // Unique categories for the dropdown filter
   const categories = useMemo(() => {

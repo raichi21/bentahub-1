@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
+import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 
 export default function CartPage() {
   const router = useRouter()
@@ -68,8 +69,8 @@ export default function CartPage() {
   }
 
   const subtotal = Number(total) || 0
-  const serviceFee = +(subtotal * 0.01).toFixed(2)
-  const bond = 50.00
+  const serviceFee = +(subtotal * SERVICE_FEE_RATE).toFixed(2)
+  const bond = RESERVATION_BOND
   const totalDue = subtotal + serviceFee + bond
 
   if (isLoading) {

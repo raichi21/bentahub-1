@@ -4,6 +4,7 @@ import { cartItems, orders, orderItems } from "@/drizzle/schema"
 import { eq, inArray } from "drizzle-orm"
 import { generateId, extractToken, verifyToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
+import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 
 function getUserIdFromToken(request: NextRequest): string | null {
   const token = extractToken(request)
@@ -92,8 +93,8 @@ export async function POST(request: NextRequest) {
       (sum, item) => sum + Number(item.subtotal),
       0
     )
-    const serviceFee = Number((subtotal * 0.01).toFixed(2))
-    const bond = 50.00
+    const serviceFee = Number((subtotal * SERVICE_FEE_RATE).toFixed(2))
+    const bond = RESERVATION_BOND
     const totalAmount = Number((subtotal + serviceFee + bond).toFixed(2))
 
     // Create order

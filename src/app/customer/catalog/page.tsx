@@ -88,12 +88,11 @@ export default function CatalogPage() {
       ? source
       : source.filter((p) => p.category === currentCategory)
 
-    const byBranch = byCategory.filter((p) => p.branch === currentBranch)
-
+    // Products already filtered by branch from API
     const query = searchQuery.toLowerCase().trim()
     const bySearch = query
-      ? byBranch.filter((p) => p.name.toLowerCase().includes(query))
-      : byBranch
+      ? byCategory.filter((p) => p.name.toLowerCase().includes(query))
+      : byCategory
 
     return bySearch.map((p) => ({
       id: p.id,

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import Image from "next/image"
 import { Search, Edit3, Plus, Package, Clock } from "lucide-react"
 import type { Product } from "@/types/cashier"
-import { getStockStatus } from "@/lib/staff-utils"
+import { getStockStatus, getExpiryDays, formatExpiryDate, isExpiringSoon } from "@/lib/staff-utils"
 import { QuickStockModal } from "./quick-stock-modal"
 import { AddStockModal } from "./add-stock-modal"
 import { cn } from "@/lib/utils"
@@ -44,24 +44,6 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
     const set = new Set(initialProducts.map((p) => p.category))
     return ["All", ...Array.from(set)]
   }, [initialProducts])
-
-  function isExpiringSoon(nearestExpiry: string | null): boolean {
-    if (!nearestExpiry) return false
-    const diffMs = new Date(nearestExpiry).getTime() - Date.now()
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-    return diffDays >= 0 && diffDays <= 30
-  }
-
-  function getExpiryDays(nearestExpiry: string | null): number | null {
-    if (!nearestExpiry) return null
-    const diffMs = new Date(nearestExpiry).getTime() - Date.now()
-    return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  }
-
-  function formatExpiryDate(nearestExpiry: string | null): string | null {
-    if (!nearestExpiry) return null
-    return new Date(nearestExpiry).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
-  }
 
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((p) => {
