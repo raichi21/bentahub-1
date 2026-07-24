@@ -23,6 +23,15 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/staff/reservations": "Manage customer reservations for your branch",
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 interface StaffTopbarProps {
   onToggleSidebar?: () => void
 }
@@ -32,6 +41,8 @@ export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const title = ROUTE_TITLES[pathname] || "Staff Dashboard"
+  const displayName = user?.fullName || "Branch Staff"
+  const initials = getInitials(displayName)
 
   return (
     <header className="bg-card border-b border-border px-4 md:px-6 sticky top-0 z-30 flex justify-between items-center h-[80px] w-full">
@@ -63,10 +74,10 @@ export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
 
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 select-none flex-shrink-0">
-            DC
+            {initials}
           </div>
           <div className="flex-col hidden sm:flex">
-            <span className="text-sm font-bold text-foreground leading-tight">Dolly Cruz</span>
+            <span className="text-sm font-bold text-foreground leading-tight">{displayName}</span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
               {user?.branch || "Branch Staff"}
             </span>
