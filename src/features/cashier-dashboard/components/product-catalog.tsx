@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import { Search, Package, QrCode, CheckCircle, AlertCircle } from "lucide-react"
 import { ProductCard } from "./product-card"
 import { BarcodeScanner } from "./barcode-scanner"
+import { findProductByBarcode } from "@/lib/barcode"
 import type { Product } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
@@ -27,17 +28,8 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
   const searchInputRef = useRef<HTMLInputElement>(null)
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-  const productBySku = useMemo(() => {
-    const map = new Map<string, Product>()
-    for (const p of products) {
-      map.set(p.sku.toLowerCase(), p)
-    }
-    return map
-  }, [products])
-
   const handleBarcodeScan = useCallback((barcode: string) => {
-    const trimmed = barcode.trim().toLowerCase()
-    const product = productBySku.get(trimmed)
+    const product = findProductByBarcode(products, barcode)
 
     if (product) {
       onAddProduct(product)
@@ -48,7 +40,7 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
 
     if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
     feedbackTimeoutRef.current = setTimeout(() => setScanFeedback(null), 3000)
-  }, [productBySku, onAddProduct])
+  }, [products, onAddProduct])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

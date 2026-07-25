@@ -1,230 +1,156 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { X, Camera, Loader2, ScanLine, Type } from "lucide-react"
-
-// CDN-loaded Html5Qrcode — no type definitions available
-interface Html5QrcodeInstance {
-  start(config: unknown, options: unknown, onScan: (text: string) => void, onError: () => void): Promise<void>
-  stop(): Promise<void>
-  scanFile(file: File, _: boolean): Promise<string>
-  clear(): void
-}
-
-type Html5QrcodeConstructor = new (id: string) => Html5QrcodeInstance
-
-const getHtml5Qrcode = (): Html5QrcodeConstructor => (window as unknown as { Html5Qrcode: Html5QrcodeConstructor }).Html5Qrcode
+import { useEffect, useRef, useState, useCallback } from "react"
+import { X, Camera, Loader2 } from "lucide-react"
 
 interface BarcodeScannerProps {
-  onScan: (barcode: string) => void
+  onScan: (code: string) => void
   onClose: () => void
 }
 
-type Mode = "loading" | "live" | "photo"
-
 export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
-  const [libLoaded, setLibLoaded] = useState(false)
-  const [libError, setLibError] = useState<string | null>(null)
-  const [mode, setMode] = useState<Mode>("loading")
-  const [decoding, setDecoding] = useState(false)
-  const [manualBarcode, setManualBarcode] = useState("")
-  const scannerRef = useRef<Html5QrcodeInstance | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const manualInputRef = useRef<HTMLInputElement>(null)
+  const html5QrCodeRef = useRef<unknown>(null)
+  const [scannerReady, setScannerReady] = useState(false)
+  const [scannerError, setScannerError] = useState<string | null>(null)
+  const [manualCode, setManualCode] = useState("")
 
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmed = manualBarcode.trim()
-    if (trimmed) {
-      onScan(trimmed)
-      onClose()
-    }
-  }
-
-  // Load html5-qrcode from CDN
+  // Dynamically import html5-qrcode (avoids SSR issues)
   useEffect(() => {
-    if (typeof getHtml5Qrcode() !== "undefined") {
-      const timer = setTimeout(() => setLibLoaded(true), 0)
-      return () => clearTimeout(timer)
-    }
-
-    const script = document.createElement("script")
-    script.src = "https://unpkg.com/html5-qrcode"
-    script.async = true
-    script.onload = () => setLibLoaded(true)
-    script.onerror = () => {
-      setLibError("Failed to load barcode scanner library")
-    }
-    document.body.appendChild(script)
-
-    return () => {
-      script.remove()
-    }
-  }, [])
-
-  // Try live camera when library loads
-  useEffect(() => {
-    if (!libLoaded || mode !== "loading") return
+    let cancelled = false
 
     const startScanner = async () => {
       try {
-        const Html5Qrcode = getHtml5Qrcode()
-        const scanner = new Html5Qrcode("barcode-scanner-view")
-        scannerRef.current = scanner
+        const { Html5Qrcode } = await import("html5-qrcode")
+
+        if (cancelled) return
+
+        const elementId = "cashier-barcode-scanner-element"
+        const scanner = new Html5Qrcode(elementId)
+        html5QrCodeRef.current = scanner
 
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 150 } },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 150 },
+          },
           (decodedText: string) => {
-            onScan(decodedText)
             scanner.stop().catch(() => {})
+            onScan(decodedText)
             onClose()
           },
-          () => {},
+          () => { /* ignore intermediate frames */ },
         )
-        setMode("live")
-      } catch {
-        // Camera failed — switch to photo mode
-        setMode("photo")
+
+        if (!cancelled) setScannerReady(true)
+      } catch (err) {
+        if (!cancelled) {
+          setScannerError(err instanceof Error ? err.message : "Camera access denied")
+        }
       }
     }
 
     startScanner()
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {})
+      cancelled = true
+      const s = html5QrCodeRef.current as { stop: () => Promise<void> } | null
+      if (s) {
+        s.stop().catch(() => {})
       }
     }
-  }, [libLoaded, mode, onScan, onClose])
+  }, [onScan, onClose])
 
-  const handleFileScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setDecoding(true)
-    try {
-      const Html5Qrcode = getHtml5Qrcode()
-      const scanner = new Html5Qrcode("barcode-scanner-photo")
-      const result = await scanner.scanFile(file, true)
-      onScan(result)
-      scanner.clear()
+  const handleManualSubmit = useCallback(() => {
+    const code = manualCode.trim()
+    if (code) {
+      onScan(code)
       onClose()
-    } catch {
-      setDecoding(false)
     }
-
-    if (fileInputRef.current) fileInputRef.current.value = ""
-  }
+  }, [manualCode, onScan, onClose])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl overflow-hidden max-w-md w-full shadow-2xl">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="text-sm font-bold text-card-foreground">Scan Barcode</h3>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-card w-full max-w-md rounded-xl shadow-2xl border border-border overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/20">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Camera className="w-5 h-5 text-primary" />
+            Scan Barcode
+          </h2>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-card-foreground/80 transition-colors p-1"
+            className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-4">
-          {libError ? (
-            <div className="aspect-video bg-muted rounded-xl flex items-center justify-center p-6">
-              <p className="text-sm text-red-500 text-center">{libError}</p>
-            </div>
-          ) : mode === "loading" ? (
-            <div className="aspect-video bg-muted rounded-xl flex items-center justify-center">
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <p className="text-xs text-muted-foreground">Starting camera...</p>
+        {/* Scanner View */}
+        <div className="p-6 space-y-4">
+          {scannerError ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                <p className="font-bold mb-1">Camera unavailable</p>
+                <p>{scannerError}</p>
               </div>
-            </div>
-          ) : mode === "live" ? (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
-              <div id="barcode-scanner-view" className="w-full h-full" />
+              <p className="text-xs text-muted-foreground text-center">
+                You can manually type the barcode number below instead.
+              </p>
             </div>
           ) : (
-            /* Photo Mode — fallback pag ayaw ng camera */
-            <div className="aspect-video bg-muted rounded-xl flex flex-col items-center justify-center gap-4 p-6">
-              <div id="barcode-scanner-photo" className="hidden" />
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <ScanLine className="w-8 h-8 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-semibold text-card-foreground/80 mb-1">
-                  Take a photo
+            <div className="relative">
+              <div id="cashier-barcode-scanner-element" className="w-full aspect-video bg-black rounded-lg overflow-hidden" />
+              {!scannerReady && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-lg text-white">
+                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                  <p className="text-sm">Starting camera...</p>
+                </div>
+              )}
+              {scannerReady && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Point the camera at a barcode
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  I-tutok ang camera sa barcode at picture-an
-                </p>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileScan}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={decoding}
-                className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-lg shadow-primary/30 hover:brightness-110 transition-all disabled:opacity-50"
-              >
-                {decoding ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Decoding...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-4 h-4" />
-                    Open Camera
-                  </>
-                )}
-              </button>
+              )}
             </div>
           )}
 
-          {/* Manual barcode entry — separate na para kita sa phone */}
-          <div className="mt-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="h-px flex-1 bg-muted" />
-              <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-widest">or</span>
-              <span className="h-px flex-1 bg-muted" />
-            </div>
-            <form onSubmit={handleManualSubmit} className="flex gap-2">
-              <div className="relative flex-1">
-                <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  ref={manualInputRef}
-                  type="text"
-                  inputMode="numeric"
-                  value={manualBarcode}
-                  onChange={(e) => setManualBarcode(e.target.value)}
-                  placeholder="Type barcode number..."
-                  className="w-full pl-9 pr-3 py-2.5 border border-border rounded-xl text-sm text-card-foreground font-medium bg-card outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground/40"
-                />
-              </div>
+          {/* Manual Fallback */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              Or type barcode number
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleManualSubmit()
+                }}
+                placeholder="Type or scan barcode..."
+                className="flex-1 h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                autoFocus
+              />
               <button
-                type="submit"
-                disabled={!manualBarcode.trim()}
-                className="px-4 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm disabled:opacity-50 hover:brightness-110 transition-all"
+                onClick={handleManualSubmit}
+                disabled={!manualCode.trim()}
+                className="h-11 px-5 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/95 disabled:opacity-40 transition-colors"
               >
-                Search
+                Go
               </button>
-            </form>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-4 border-t border-border bg-muted">
-          <Camera className="w-4 h-4 text-muted-foreground shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            {mode === "live" ? "Point camera at barcode" : "Take photo or type barcode number"}
-          </p>
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
+          <button
+            onClick={onClose}
+            className="h-10 px-5 border border-border text-muted-foreground hover:bg-muted rounded-lg text-sm font-bold transition-colors"
+          >
+            Cancel
+          </button>
         </div>
       </div>
     </div>
