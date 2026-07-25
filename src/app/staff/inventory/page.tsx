@@ -29,7 +29,7 @@ export default function InventoryPage() {
   const [showScanner, setShowScanner] = useState(false)
   const [scanEditProduct, setScanEditProduct] = useState<Product | null>(null)
 
-  const handleScanToEdit = (code: string) => {
+  const handleScanToEdit = useCallback((code: string) => {
     setShowScanner(false)
     const found = findProductByBarcode(products, code)
     if (found) {
@@ -38,7 +38,7 @@ export default function InventoryPage() {
       setSaveError(`No product found with barcode: ${code}`)
       setTimeout(() => setSaveError(null), 4000)
     }
-  }
+  }, [products])
 
   const fetchProducts = useCallback(async (tok: string) => {
     try {

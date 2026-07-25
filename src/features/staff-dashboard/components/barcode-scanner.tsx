@@ -32,8 +32,8 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         await scanner.start(
           { facingMode: "environment" },
           {
-            fps: 10,
-            qrbox: { width: 250, height: 150 },
+            fps: 5,
+            qrbox: { width: 300, height: 200 },
           },
           (decodedText: string) => {
             scanner.stop().catch(() => {})

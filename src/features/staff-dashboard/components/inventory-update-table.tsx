@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import { Search, Edit3, Plus, Package, Clock, Camera } from "lucide-react"
 import type { Product } from "@/types/cashier"
@@ -45,7 +45,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
   const [highlightedSku, setHighlightedSku] = useState<string | null>(null)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
 
-  const handleScan = (code: string) => {
+  const handleScan = useCallback((code: string) => {
     setShowScanner(false)
     const found = findProductByBarcode(initialProducts, code)
     if (found) {
@@ -67,7 +67,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
         setCurrentPage(1)
       }
     }
-  }
+  }, [initialProducts, editingProduct])
 
   const categories = useMemo(() => {
     const set = new Set(initialProducts.map((p) => p.category))
