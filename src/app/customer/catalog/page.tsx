@@ -57,14 +57,20 @@ export default function CatalogPage() {
 
   // Fetch products for the current branch
   const lastBranchRef = useRef("")
+  const activeFetchRef = useRef(0)
   useEffect(() => {
-    if (isLoading) return
     if (lastBranchRef.current === currentBranch && fetchedProducts.length > 0) return
     lastBranchRef.current = currentBranch
-    fetchProducts({ branch: currentBranch }).catch((error: unknown) => {
+    const fetchId = ++activeFetchRef.current
+    fetchProducts({ branch: currentBranch }).then((result) => {
+      // Ignore stale result if a newer fetch was started
+      if (fetchId !== activeFetchRef.current) return
+      return result
+    }).catch((error: unknown) => {
+      if (fetchId !== activeFetchRef.current) return
       console.error("Failed to fetch products:", error)
     })
-  }, [fetchProducts, isLoading, currentBranch])
+  }, [fetchProducts, currentBranch])
 
   const categoryChanged = useCallback(
     (category: string) => {

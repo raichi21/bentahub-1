@@ -10,7 +10,6 @@ export function useProducts() {
    */
   const fetchProducts = useCallback(
     async (filters?: { category?: string; branch?: string }) => {
-      if (productsStore.isLoading) return
       try {
         productsStore.setLoading(true)
         productsStore.setError(null)
