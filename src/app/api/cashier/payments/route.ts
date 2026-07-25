@@ -3,7 +3,7 @@ import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches, transactions, transactionItems } from "@/servers/schemas"
 import { eq, max } from "drizzle-orm"
-import { createPaymentIntent } from "@/lib/paymongo"
+import { createCheckoutSession } from "@/lib/paymongo"
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,17 +71,22 @@ export async function POST(request: NextRequest) {
       await db.insert(transactionItems).values(transactionItemsData)
     }
 
-    // Create PayMongo PaymentIntent
+    // Create PayMongo Checkout Session (returns real checkout_url for QR)
     const amountInCentavos = Math.round(totalAmount * 100)
-    const paymentIntent = await createPaymentIntent({
+    const checkout = await createCheckoutSession({
       amount: amountInCentavos,
       description: `Receipt #${nextReceiptNumber} (txn:${transactionId}) - ${branchName}`,
+      lineItems: items.map((item: { product: { name: string; price: number }; quantity: number }) => ({
+        name: item.product.name,
+        amount: Math.round(item.product.price * item.quantity * 100),
+        quantity: 1,
+      })),
     })
 
-    // Store PaymentIntent ID on the transaction
+    // Store PaymentIntent ID on the transaction (for status checking)
     await db
       .update(transactions)
-      .set({ gcashRef: paymentIntent.id })
+      .set({ gcashRef: checkout.paymentIntentId })
       .where(eq(transactions.id, transactionId))
 
     return NextResponse.json({
@@ -90,8 +95,8 @@ export async function POST(request: NextRequest) {
       data: {
         transactionId,
         receiptNumber: nextReceiptNumber,
-        checkoutUrl: paymentIntent.checkoutUrl,
-        paymentIntentId: paymentIntent.id,
+        checkoutUrl: checkout.checkoutUrl,
+        paymentIntentId: checkout.paymentIntentId,
         amount: totalAmount,
       },
     })
