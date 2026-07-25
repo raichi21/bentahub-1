@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { InventoryUpdateTable } from "@/features/staff-dashboard/components/inventory-update-table"
+import { BarcodeScanner } from "@/features/staff-dashboard/components/barcode-scanner"
+import { QuickStockModal } from "@/features/staff-dashboard/components/quick-stock-modal"
 import { KPICard } from "@/features/admin-dashboard"
-import { Package, CheckCircle2, AlertTriangle, XCircle } from "lucide-react"
+import { Package, CheckCircle2, AlertTriangle, XCircle, Camera } from "lucide-react"
 import { getStockStatus } from "@/lib/staff-utils"
+import { findProductByBarcode } from "@/lib/barcode"
 import { useAuth } from "@/hooks/useAuth"
 import type { Product } from "@/types/cashier"
 import type { StaffProductItem } from "@/types/staff"
@@ -23,6 +26,19 @@ export default function InventoryPage() {
   const [fetched, setFetched] = useState(false)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [showScanner, setShowScanner] = useState(false)
+  const [scanEditProduct, setScanEditProduct] = useState<Product | null>(null)
+
+  const handleScanToEdit = (code: string) => {
+    setShowScanner(false)
+    const found = findProductByBarcode(products, code)
+    if (found) {
+      setScanEditProduct(found)
+    } else {
+      setSaveError(`No product found with barcode: ${code}`)
+      setTimeout(() => setSaveError(null), 4000)
+    }
+  }
 
   const fetchProducts = useCallback(async (tok: string) => {
     try {
@@ -179,13 +195,34 @@ export default function InventoryPage() {
       </div>
 
       {!isLoading && (
-        <InventoryUpdateTable
-          products={products}
-          onStockUpdate={handleStockUpdate}
-          onAddProduct={handleAddProduct}
-          savingId={savingId}
-        />
+        <>
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowScanner(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:bg-primary/95 transition-colors"
+            >
+              <Camera className="w-4 h-4" />
+              Scan &amp; Update
+            </button>
+          </div>
+          <InventoryUpdateTable
+            products={products}
+            onStockUpdate={handleStockUpdate}
+            onAddProduct={handleAddProduct}
+            savingId={savingId}
+          />
+        </>
       )}
+
+      {showScanner && (
+        <BarcodeScanner onScan={handleScanToEdit} onClose={() => setShowScanner(false)} />
+      )}
+      <QuickStockModal
+        isOpen={!!scanEditProduct}
+        onClose={() => setScanEditProduct(null)}
+        product={scanEditProduct}
+        onSave={handleStockUpdate}
+      />
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { X, Plus, Minus, Package } from "lucide-react"
+import { X, Plus, Minus, Package, Camera } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
@@ -11,11 +11,12 @@ interface QuickStockModalProps {
   onClose: () => void
   product: Product | null
   onSave: (productId: string, newStock: number, newReorderLevel: number) => void
+  onScanRequest?: () => void
 }
 
 const DEFAULT_THRESHOLD = 10
 
-export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStockModalProps) {
+export function QuickStockModal({ isOpen, onClose, product, onSave, onScanRequest }: QuickStockModalProps) {
   const [stock, setStock] = useState(product?.stock ?? 0)
 
   if (!isOpen || !product) return null
@@ -32,9 +33,20 @@ export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStock
       <div className="bg-card w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
           <h2 className="text-lg font-bold text-foreground">Edit Stock - {product.sku}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {onScanRequest && (
+              <button
+                onClick={onScanRequest}
+                className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                title="Scan another product"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+            )}
+            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">

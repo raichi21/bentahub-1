@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import Image from "next/image"
-import { Search, Edit3, Plus, Package, Clock } from "lucide-react"
+import { Search, Edit3, Plus, Package, Clock, Camera } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import { getStockStatus, getExpiryDays, formatExpiryDate, isExpiringSoon } from "@/lib/staff-utils"
+import { findProductByBarcode } from "@/lib/barcode"
+import { BarcodeScanner } from "./barcode-scanner"
 import { QuickStockModal } from "./quick-stock-modal"
 import { AddStockModal } from "./add-stock-modal"
 import { cn } from "@/lib/utils"
@@ -39,6 +41,33 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
   const [currentPage, setCurrentPage] = useState(1)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
+  const [highlightedSku, setHighlightedSku] = useState<string | null>(null)
+  const highlightRef = useRef<HTMLTableRowElement | null>(null)
+
+  const handleScan = (code: string) => {
+    setShowScanner(false)
+    const found = findProductByBarcode(initialProducts, code)
+    if (found) {
+      if (editingProduct) {
+        // Scanner was triggered from QuickStockModal — open modal for scanned product
+        setEditingProduct(found)
+      } else {
+        setSearchQuery(found.sku)
+        setCategoryFilter("All")
+        setStatusFilter("All")
+        setCurrentPage(1)
+        setHighlightedSku(found.sku)
+      }
+    } else {
+      if (!editingProduct) {
+        setSearchQuery(code)
+        setCategoryFilter("All")
+        setStatusFilter("All")
+        setCurrentPage(1)
+      }
+    }
+  }
 
   const categories = useMemo(() => {
     const set = new Set(initialProducts.map((p) => p.category))
@@ -69,10 +98,19 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
     return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE)
   }, [filteredProducts, safePage])
 
+  useEffect(() => {
+    if (highlightedSku && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+      const timer = setTimeout(() => setHighlightedSku(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightedSku, paginatedProducts])
+
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
-      <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} />
+      <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} onScanRequest={() => { setShowScanner(true) }} />
       <AddStockModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={(p) => onAddProduct?.(p)} />
+      {showScanner && <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}
 
       <div className="p-4 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/20">
         <div className="relative w-full md:w-96">
@@ -82,8 +120,15 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
             placeholder="Search by product name or SKU..."
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+            className="w-full pl-10 pr-12 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
           />
+          <button
+            onClick={() => setShowScanner(true)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Scan barcode"
+          >
+            <Camera className="w-4 h-4" />
+          </button>
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1) }} className="px-3 py-2 bg-background border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20">
@@ -130,7 +175,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                 const isOut = status === "out-of-stock"
                 const isLow = status === "low-stock"
                 return (
-                  <tr key={p.id} className={cn("hover:bg-muted/20 transition-colors", isOut && "bg-red-50/20", isLow && "bg-amber-50/10")}>
+                  <tr key={p.id} ref={highlightedSku === p.sku ? highlightRef : undefined} className={cn("hover:bg-muted/20 transition-colors", isOut && "bg-red-50/20", isLow && "bg-amber-50/10", highlightedSku === p.sku && "ring-2 ring-primary ring-inset bg-primary/5")}>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded bg-muted flex-shrink-0 overflow-hidden border border-border/50 flex items-center justify-center">
