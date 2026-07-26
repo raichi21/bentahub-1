@@ -36,6 +36,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
             qrbox: { width: 300, height: 200 },
           },
           (decodedText: string) => {
+            console.log("✅ Barcode decoded:", decodedText)
             scanner.stop().catch(() => {})
             onScan(decodedText)
           },
@@ -44,6 +45,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
         if (!cancelled) setScannerReady(true)
       } catch (err) {
+        console.log("❌ Scanner start error:", err)
         if (!cancelled) {
           setScannerError(err instanceof Error ? err.message : "Camera access denied")
         }

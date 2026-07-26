@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { X, Plus, Minus, Package, Camera } from "lucide-react"
+import { X, Plus, Minus, Search, Package, Camera } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
@@ -12,11 +12,12 @@ interface QuickStockModalProps {
   product: Product | null
   onSave: (productId: string, newStock: number, newReorderLevel: number) => void
   onScanRequest?: () => void
+  onBarcodeSearch?: (code: string) => boolean
 }
 
 const DEFAULT_THRESHOLD = 10
 
-export function QuickStockModal({ isOpen, onClose, product, onSave, onScanRequest }: QuickStockModalProps) {
+export function QuickStockModal({ isOpen, onClose, product, onSave, onScanRequest, onBarcodeSearch }: QuickStockModalProps) {
   const [stock, setStock] = useState(product?.stock ?? 0)
 
   if (!isOpen || !product) return null
@@ -27,6 +28,22 @@ export function QuickStockModal({ isOpen, onClose, product, onSave, onScanReques
   }
 
   const status = stock === 0 ? "out-of-stock" : stock <= DEFAULT_THRESHOLD ? "low-stock" : "in-stock"
+  const [barcodeCode, setBarcodeCode] = useState("")
+  const [barcodeError, setBarcodeError] = useState<string | null>(null)
+
+  const handleBarcodeSearch = () => {
+    const code = barcodeCode.trim()
+    if (!code) return
+
+    setBarcodeCode("")
+    if (onBarcodeSearch) {
+      const found = onBarcodeSearch(code)
+      if (!found) {
+        setBarcodeError(`No product found with barcode "${code}"`)
+        setTimeout(() => setBarcodeError(null), 3000)
+      }
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -63,6 +80,32 @@ export function QuickStockModal({ isOpen, onClose, product, onSave, onScanReques
               <p className="text-[10px] font-mono text-muted-foreground">SKU: {product.sku}</p>
               <p className="text-xs text-muted-foreground">{product.category}</p>
             </div>
+          </div>
+
+          {/* Barcode Search — manual input kung ayaw ng camera */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Find by Barcode</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={barcodeCode}
+                onChange={(e) => setBarcodeCode(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleBarcodeSearch() }}
+                placeholder="Type barcode number..."
+                className="flex-1 h-10 px-3 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+              <button
+                onClick={handleBarcodeSearch}
+                disabled={!barcodeCode.trim() || !onBarcodeSearch}
+                className="h-10 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/95 disabled:opacity-40 transition-colors flex items-center gap-1.5"
+              >
+                <Search className="w-3.5 h-3.5" />
+                Find
+              </button>
+            </div>
+            {barcodeError && (
+              <p className="text-[10px] text-red-500 font-medium">{barcodeError}</p>
+            )}
           </div>
 
           <div className="space-y-3">

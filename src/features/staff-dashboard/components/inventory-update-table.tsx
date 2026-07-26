@@ -108,7 +108,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
-      <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} onScanRequest={() => { setShowScanner(true) }} />
+      <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} onScanRequest={() => { setShowScanner(true) }} onBarcodeSearch={(code) => { const f = findProductByBarcode(initialProducts, code); if (f) { setEditingProduct(f); return true; } return false; }} />
       <AddStockModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={(p) => onAddProduct?.(p)} />
       {showScanner && <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}
 
