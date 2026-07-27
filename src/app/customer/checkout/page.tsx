@@ -38,10 +38,10 @@ export default function CheckoutPage() {
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!cartLoading && items.length === 0) {
+    if (!cartLoading && items.length === 0 && !orderSuccess) {
       router.push("/customer/cart")
     }
-  }, [items, cartLoading, router])
+  }, [items, cartLoading, router, orderSuccess])
 
   const handleSubmitOrder = async () => {
     try {
@@ -51,11 +51,7 @@ export default function CheckoutPage() {
       setCreatedOrderId(order.id)
       setOrderSuccess(true)
 
-      // Clear cart immediately, then redirect after a brief delay
       clearCart()
-      setTimeout(() => {
-        router.push("/customer/orders")
-      }, 2000)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create order"
       setOrderError(message)
@@ -83,44 +79,6 @@ export default function CheckoutPage() {
     month: "short",
     day: "numeric",
   })
-
-  if (orderSuccess) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="text-center space-y-8 max-w-md mx-auto px-4">
-          {/* Animated success icon */}
-          <div className="flex justify-center">
-            <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-200/50 dark:shadow-emerald-900/30 animate-bounce [animation-duration:1.5s]">
-              <CheckCircle className="w-14 h-14 text-white" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-foreground">Order Submitted! 🎉</h2>
-            <p className="text-muted-foreground">Your order has been placed successfully.</p>
-            {createdOrderId && (
-              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border border-border">
-                <span className="text-sm text-muted-foreground">Order ID:</span>
-                <span className="text-sm font-mono font-bold text-foreground">{formatOrderId(createdOrderId)}</span>
-              </div>
-            )}
-            {/* Pickup Deadline */}
-            <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-lg">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                ⏰ Pickup deadline: <strong>{formattedDeadline}</strong> ({formattedDeadlineDate})
-              </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                Reserve must be claimed before 5:00 PM or it will be cancelled.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Redirecting to your orders...
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -348,6 +306,49 @@ export default function CheckoutPage() {
           </div>
         </aside>
       </div>
+
+      {/* Success Modal */}
+      {orderSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 text-center space-y-6 shadow-2xl border border-border">
+            {/* Static checkmark */}
+            <div className="flex justify-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-200/50 dark:shadow-emerald-900/30">
+                <CheckCircle className="w-12 h-12 text-white" />
+              </div>
+            </div>
+
+            {/* Order info */}
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-foreground">Order Submitted!</h2>
+              <p className="text-muted-foreground">Your order has been placed successfully.</p>
+              {createdOrderId && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border border-border">
+                  <span className="text-sm text-muted-foreground">Order ID:</span>
+                  <span className="text-sm font-mono font-bold text-foreground">{formatOrderId(createdOrderId)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Pickup Deadline */}
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-lg text-sm text-center">
+              <p className="font-medium text-amber-800 dark:text-amber-200">
+                ⏰ Pickup deadline: <strong>{formattedDeadline}</strong> ({formattedDeadlineDate})
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                Reserve must be claimed before 5:00 PM or it will be cancelled.
+              </p>
+            </div>
+
+            {/* Button */}
+            <Link href="/customer/orders">
+              <Button className="w-full h-12 text-base font-bold" size="lg">
+                View My Orders
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
