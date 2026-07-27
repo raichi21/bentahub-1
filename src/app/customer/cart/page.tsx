@@ -20,6 +20,7 @@ export default function CartPage() {
   const { user } = useAuth()
   const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()
   const [isProcessing] = useState(false)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   // Fetch cart on mount
   useEffect(() => {
@@ -27,28 +28,37 @@ export default function CartPage() {
   }, [fetchCart])
 
   const handleIncrement = async (itemId: string, currentQuantity: number) => {
+    setUpdatingId(itemId)
     try {
       await updateCartItem(itemId, Math.min(currentQuantity + 1, 99))
     } catch (err) {
       console.error("Failed to increment:", err)
+    } finally {
+      setUpdatingId(null)
     }
   }
 
   const handleDecrement = async (itemId: string, currentQuantity: number) => {
-    try {
-      if (currentQuantity > 1) {
+    if (currentQuantity > 1) {
+      setUpdatingId(itemId)
+      try {
         await updateCartItem(itemId, currentQuantity - 1)
+      } catch (err) {
+        console.error("Failed to decrement:", err)
+      } finally {
+        setUpdatingId(null)
       }
-    } catch (err) {
-      console.error("Failed to decrement:", err)
     }
   }
 
   const handleRemove = async (itemId: string) => {
+    setUpdatingId(itemId)
     try {
       await removeFromCart(itemId)
     } catch (err) {
       console.error("Failed to remove:", err)
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -73,7 +83,7 @@ export default function CartPage() {
   const bond = RESERVATION_BOND
   const totalDue = subtotal + serviceFee + bond
 
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <p className="text-muted-foreground">Loading cart...</p>
@@ -129,7 +139,7 @@ export default function CartPage() {
                       <div className="flex items-center border border-border rounded-lg overflow-hidden h-10">
                         <button
                           onClick={() => handleDecrement(item.id, item.quantity)}
-                          disabled={isLoading}
+                          disabled={updatingId === item.id}
                           className="px-3 hover:bg-muted transition-colors h-full flex items-center disabled:opacity-50"
                         >
                           <Minus className="h-4 w-4" />
@@ -139,11 +149,11 @@ export default function CartPage() {
                           type="text"
                           value={item.quantity}
                           onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                          disabled={isLoading}
+                          disabled={updatingId === item.id}
                         />
                         <button
                           onClick={() => handleIncrement(item.id, item.quantity)}
-                          disabled={isLoading}
+                          disabled={updatingId === item.id}
                           className="px-3 hover:bg-muted transition-colors h-full flex items-center disabled:opacity-50"
                         >
                           <Plus className="h-4 w-4" />
@@ -151,7 +161,7 @@ export default function CartPage() {
                       </div>
                       <button
                         onClick={() => handleRemove(item.id)}
-                        disabled={isLoading}
+                        disabled={updatingId === item.id}
                         className="text-destructive text-xs hover:underline flex items-center gap-1 disabled:opacity-50"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Remove

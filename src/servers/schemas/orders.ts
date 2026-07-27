@@ -19,6 +19,7 @@ export const orders = pgTable("orders", {
   isPaid: boolean("is_paid").default(false).notNull(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   pickupDeadline: timestamp("pickup_deadline", { withTimezone: true }),
+  gcashRef: varchar("gcash_ref", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()

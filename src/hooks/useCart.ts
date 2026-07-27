@@ -98,7 +98,6 @@ export function useCart() {
       if (!user || !token) return
 
       try {
-        cartStore.setLoading(true)
         cartStore.setError(null)
 
         const response = await fetch(`/api/customer/cart/${itemId}`, {
@@ -119,8 +118,6 @@ export function useCart() {
         cartStore.setError(message)
         console.error("Failed to update cart item:", error)
         throw error
-      } finally {
-        cartStore.setLoading(false)
       }
     },
     [user, token]
@@ -134,7 +131,6 @@ export function useCart() {
       if (!user || !token) return
 
       try {
-        cartStore.setLoading(true)
         cartStore.setError(null)
 
         const response = await fetch(`/api/customer/cart/${itemId}`, {
@@ -150,8 +146,6 @@ export function useCart() {
         cartStore.setError(message)
         console.error("Failed to remove from cart:", error)
         throw error
-      } finally {
-        cartStore.setLoading(false)
       }
     },
     [user, token]

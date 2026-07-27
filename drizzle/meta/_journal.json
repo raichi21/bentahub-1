@@ -29,6 +29,13 @@
       "when": 1781020000000,
       "tag": "0003_inventory_batches",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1742500000000,
+      "tag": "0004_gcash_ref",
+      "breakpoints": true
     }
   ]
 }

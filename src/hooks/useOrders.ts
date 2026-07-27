@@ -167,6 +167,13 @@ export function useOrders() {
 
         if (!response.ok) {
           const data = await response.json()
+
+          // 404 = order is already deleted on the server, treat as success
+          if (response.status === 404) {
+            ordersStore.removeOrder(orderId)
+            return
+          }
+
           throw new Error(data.message || "Failed to delete order")
         }
 

@@ -1,0 +1,14 @@
+{
+  "id": "0004_gcash_ref",
+  "prevId": "0003_inventory_batches",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {},
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

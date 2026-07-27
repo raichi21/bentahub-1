@@ -7,11 +7,11 @@ import {
   CreditCard, 
   Banknote, 
   CheckCircle,
+  X,
   Loader2,
   Store,
   FileText,
   ShoppingBag,
-  ShieldCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,7 +25,7 @@ import { cn, formatOrderId } from "@/lib/utils"
 export default function CheckoutPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const branch = searchParams.get("branch") || user?.branch || "Lourdes Main Branch"
 
   const { items, total, clearCart, isLoading: cartLoading } = useCart()
@@ -36,6 +36,7 @@ export default function CheckoutPage() {
   const [orderError, setOrderError] = useState<string | null>(null)
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
     if (!cartLoading && items.length === 0 && !orderSuccess) {
@@ -47,15 +48,49 @@ export default function CheckoutPage() {
     try {
       setOrderError(null)
 
-      const order = await createOrder(paymentMethod, branch, notes)
-      setCreatedOrderId(order.id)
-      setOrderSuccess(true)
+      // Reuse existing order ID if payment was retried after a failure
+      let orderId = createdOrderId
+      if (!orderId) {
+        const order = await createOrder(paymentMethod, branch, notes)
+        setCreatedOrderId(order.id)
+        orderId = order.id
+      }
 
-      clearCart()
+      if (paymentMethod === "cash") {
+        clearCart()
+        setOrderSuccess(true)
+        return
+      }
+
+      setIsRedirecting(true)
+
+      const res = await fetch("/api/customer/payments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId }),
+      })
+
+      const json = await res.json()
+
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to initiate GCash payment")
+      }
+
+      const checkoutUrl = json.data?.checkoutUrl
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl
+      } else {
+        throw new Error("No checkout URL returned")
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create order"
+      const message = err instanceof Error ? err.message : "Failed to process order"
       setOrderError(message)
-      console.error("Order creation failed:", err)
+      setOrderSuccess(false)
+      setIsRedirecting(false)
+      console.error("Order processing failed:", err)
     }
   }
 
@@ -92,10 +127,6 @@ export default function CheckoutPage() {
           </div>
           <span className="text-sm font-medium">Back to Cart</span>
         </button>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Checkout</h1>
-          <p className="text-muted-foreground mt-1.5">Review your order and complete payment</p>
-        </div>
       </header>
 
       {orderError && (
@@ -123,12 +154,6 @@ export default function CheckoutPage() {
                   Pickup available until <strong>{formattedDeadline}</strong> ({formattedDeadlineDate})
                 </p>
               </div>
-              <Link
-                href={`/customer/cart?branch=${encodeURIComponent(branch)}`}
-                className="text-xs font-medium text-primary hover:text-primary/80 hover:underline shrink-0"
-              >
-                Change
-              </Link>
             </div>
           </section>
 
@@ -279,11 +304,16 @@ export default function CheckoutPage() {
             {/* Proceed Button */}
             <Button
               onClick={handleSubmitOrder}
-              disabled={isLoading}
+              disabled={isLoading || isRedirecting}
               size="lg"
               className="w-full bg-primary text-white py-6 rounded-xl font-bold text-base active:scale-[0.98] transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:shadow-none"
             >
-              {isLoading ? (
+              {isRedirecting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Redirecting to PayMongo...
+                </span>
+              ) : isLoading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   Processing...
@@ -296,13 +326,6 @@ export default function CheckoutPage() {
               )}
             </Button>
 
-            {/* Trust badges */}
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Secure checkout</span>
-              </div>
-            </div>
           </div>
         </aside>
       </div>
@@ -310,7 +333,14 @@ export default function CheckoutPage() {
       {/* Success Modal */}
       {orderSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 text-center space-y-6 shadow-2xl border border-border">
+          <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 text-center space-y-6 shadow-2xl border border-border relative">
+            {/* Close button */}
+            <button
+              onClick={() => setOrderSuccess(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
             {/* Static checkmark */}
             <div className="flex justify-center">
               <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-200/50 dark:shadow-emerald-900/30">
