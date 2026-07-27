@@ -12,7 +12,6 @@ interface ProductForm {
   unit: string
   price: number
   image: string
-  batchNumber: string
   expiryDate: string
 }
 
@@ -27,7 +26,7 @@ const CATEGORIES = ["Groceries", "Beverages", "Household", "Pharmacy", "Snacks",
 export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
   const [form, setForm] = useState<ProductForm>({
     name: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "",
-    batchNumber: "", expiryDate: ""
+    expiryDate: ""
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -36,7 +35,7 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
   const handleSave = () => {
     if (!form.name.trim()) return
     onSave({ ...form })
-    setForm({ name: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "", batchNumber: "", expiryDate: "" })
+    setForm({ name: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "", expiryDate: "" })
     onClose()
   }
 
@@ -171,16 +170,6 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
                 inputMode="decimal"
                 value={form.price}
                 onChange={(e) => setForm((f) => ({ ...f, price: Math.max(0, parseFloat(e.target.value) || 0) }))}
-                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Batch Number</label>
-              <input
-                type="text"
-                value={form.batchNumber}
-                onChange={(e) => setForm((f) => ({ ...f, batchNumber: e.target.value }))}
-                placeholder="e.g. LOT-001"
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               />
             </div>
