@@ -8,12 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Bell, CheckCircle, XCircle } from "lucide-react"
 
-interface Branch {
-  id: string
-  name: string
-  location: string | null
-}
-
 interface NotifPrefs {
   orderUpdates: boolean
 }
@@ -23,17 +17,12 @@ export function CustomerSettings() {
 
   const [fullName, setFullName] = useState("")
   const [phone, setPhone] = useState("")
-  const [selectedBranch, setSelectedBranch] = useState("")
-
-  const [branches, setBranches] = useState<Branch[]>([])
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>({ orderUpdates: true })
 
   const [profileSaving, setProfileSaving] = useState(false)
-  const [branchSaving, setBranchSaving] = useState(false)
   const [notifSaving, setNotifSaving] = useState(false)
 
   const [profileMessage, setProfileMessage] = useState<string | null>(null)
-  const [branchMessage, setBranchMessage] = useState<string | null>(null)
   const [notifMessage, setNotifMessage] = useState<string | null>(null)
 
   useEffect(() => {
@@ -41,7 +30,6 @@ export function CustomerSettings() {
     const timer = setTimeout(() => {
       setFullName(user.fullName)
       setPhone(user.phone ?? "")
-      setSelectedBranch(user.branch ?? "")
     }, 0)
     return () => clearTimeout(timer)
   }, [user])
@@ -53,13 +41,6 @@ export function CustomerSettings() {
 
   useEffect(() => {
     if (!token) return
-
-    fetch("/api/branches", { headers: authHeaders() })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setBranches(data.data)
-      })
-      .catch(() => {})
 
     fetch("/api/customer/notification-preferences", { headers: authHeaders() })
       .then((res) => res.json())
@@ -85,25 +66,6 @@ export function CustomerSettings() {
       setProfileMessage("Failed to save")
     } finally {
       setProfileSaving(false)
-    }
-  }
-
-  async function handleSaveBranch() {
-    if (!token) return
-    setBranchSaving(true)
-    setBranchMessage(null)
-    try {
-      const res = await fetch("/api/customer/profile", {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({ fullName, phone: phone || null, branch: selectedBranch || null }),
-      })
-      const data = await res.json()
-      setBranchMessage(data.success ? "Saved!" : data.message)
-    } catch {
-      setBranchMessage("Failed to save")
-    } finally {
-      setBranchSaving(false)
     }
   }
 
@@ -158,38 +120,6 @@ export function CustomerSettings() {
               <span className={`text-sm ${profileMessage === "Saved!" ? "text-green-600" : "text-red-600"}`}>
                 {profileMessage === "Saved!" ? <CheckCircle className="w-4 h-4 inline mr-1" /> : <XCircle className="w-4 h-4 inline mr-1" />}
                 {profileMessage}
-              </span>
-            )}
-          </div>
-        </div>
-      </ContentCard>
-
-      {/* Preferred Branch */}
-      <ContentCard title="Preferred Branch" subtitle="Choose your preferred store branch">
-        <div className="space-y-4 max-w-md">
-          <div className="space-y-2">
-            <Label htmlFor="settings-branch">Branch</Label>
-            <select
-              id="settings-branch"
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Select a branch</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.name}>{b.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={handleSaveBranch} disabled={branchSaving}>
-              {branchSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Save
-            </Button>
-            {branchMessage && (
-              <span className={`text-sm ${branchMessage === "Saved!" ? "text-green-600" : "text-red-600"}`}>
-                {branchMessage === "Saved!" ? <CheckCircle className="w-4 h-4 inline mr-1" /> : <XCircle className="w-4 h-4 inline mr-1" />}
-                {branchMessage}
               </span>
             )}
           </div>

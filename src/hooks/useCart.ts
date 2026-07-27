@@ -45,7 +45,8 @@ export function useCart() {
     } finally {
       cartStore.setLoading(false)
     }
-  }, [user, token, cartStore])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, token])
 
   /**
    * Add item to cart
@@ -87,7 +88,9 @@ export function useCart() {
         cartStore.setLoading(false)
       }
     },
-    [user, token, cartStore]
+    // cartStore actions (setLoading, setError, addItem) are stable Zustand references — not needed in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, token]
   )
 
   /**
@@ -120,7 +123,8 @@ export function useCart() {
         throw error
       }
     },
-    [user, token, cartStore]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, token]
   )
 
   /**
@@ -148,7 +152,8 @@ export function useCart() {
         throw error
       }
     },
-    [user, token, cartStore]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, token]
   )
 
   return {

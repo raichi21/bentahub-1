@@ -73,7 +73,7 @@ export function TransactionActionModal({
         <span
           className={cn(
             "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-            statusColorMap[order?.status ?? transaction.status] ?? "bg-muted text-muted-foreground"
+            statusColorMap[(order?.status ?? transaction.status).toLowerCase()] ?? "bg-muted text-muted-foreground"
           )}
         >
           {transaction.status}

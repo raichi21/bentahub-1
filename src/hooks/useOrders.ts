@@ -54,7 +54,8 @@ export function useOrders() {
     } finally {
       ordersStore.setLoading(false)
     }
-  }, [user, token, ordersStore])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, token])
 
   /**
    * Create a new order from cart
@@ -112,7 +113,9 @@ export function useOrders() {
         ordersStore.setLoading(false)
       }
     },
-    [user, token, ordersStore]
+    // ordersStore actions are stable Zustand references — not needed in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, token]
   )
 
   /**
@@ -145,7 +148,8 @@ export function useOrders() {
         ordersStore.setLoading(false)
       }
     },
-    [user, token, ordersStore]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, token]
   )
 
   /**
@@ -187,7 +191,8 @@ export function useOrders() {
         ordersStore.setLoading(false)
       }
     },
-    [user, token, ordersStore]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, token]
   )
 
   return {

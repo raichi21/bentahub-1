@@ -6,10 +6,7 @@ import { CustomerSettings } from "@/features/customer-dashboard"
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Settings"
-        description="Manage your account preferences and profile details."
-      />
+      <PageHeader title="Settings" />
       <CustomerSettings />
     </div>
   )

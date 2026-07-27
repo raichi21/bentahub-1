@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
 import { orders, orderItems } from "@/drizzle/schema"
-import { eq, and } from "drizzle-orm"
+import { eq, and, isNull } from "drizzle-orm"
 import { extractToken, verifyToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 
@@ -30,7 +30,7 @@ export async function GET(
     const existingOrders = await db
       .select()
       .from(orders)
-      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+      .where(and(eq(orders.id, orderId), eq(orders.userId, userId), isNull(orders.deletedAt)))
 
     if (existingOrders.length === 0) {
       return apiError("Order not found", 404)
@@ -126,9 +126,12 @@ export async function DELETE(
       return apiError("Only completed or cancelled orders can be deleted")
     }
 
-    // Delete order items first, then the order
-    await db.delete(orderItems).where(eq(orderItems.orderId, orderId))
-    await db.delete(orders).where(eq(orders.id, orderId))
+    // Soft-delete: set deletedAt timestamp instead of removing the row.
+    // The row stays in the database so admin Reservations still sees it.
+    await db
+      .update(orders)
+      .set({ deletedAt: new Date() })
+      .where(eq(orders.id, orderId))
 
     return apiResponse({ success: true, message: "Order deleted successfully" })
   } catch (error) {

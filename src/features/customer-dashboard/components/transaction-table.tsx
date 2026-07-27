@@ -86,7 +86,7 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   const paginatedTransactions = transactions.slice(startIdx, startIdx + itemsPerPage)
   const totalPages = Math.ceil(transactions.length / itemsPerPage)
 
-  if (isLoading && orders.length === 0) {
+  if ((isLoading || !hasFetched.current) && orders.length === 0) {
     return (
       <div className="bg-card border border-border rounded-xl shadow-sm p-12 flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

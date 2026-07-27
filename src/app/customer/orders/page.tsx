@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { CheckCircle, XCircle, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useOrders } from "@/hooks/useOrders"
 import {
   TransactionFilters,
   TransactionTable
@@ -13,6 +14,7 @@ const HISTORY_TABS = ["All", "Completed", "Cancelled"]
 
 export default function TransactionsPage() {
   const searchParams = useSearchParams()
+  const { fetchOrders } = useOrders()
   const [activeTab, setActiveTab] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFrom, setDateFrom] = useState("")
@@ -36,6 +38,7 @@ export default function TransactionsPage() {
         .then((json) => {
           if (json.success && json.data?.isPaid) {
             setBanner({ type: "success", message: "Payment successful! Your order is confirmed." })
+            fetchOrders()
           } else {
             setBanner({ type: "error", message: "Payment pending. Please complete your GCash payment." })
           }
@@ -47,7 +50,7 @@ export default function TransactionsPage() {
       verified.current = true
       setBanner({ type: "error", message: "GCash payment was cancelled. Your order is still pending — you can pay at pickup." })
     }
-  }, [searchParams])
+  }, [searchParams, fetchOrders])
 
   return (
     <div className="space-y-6">

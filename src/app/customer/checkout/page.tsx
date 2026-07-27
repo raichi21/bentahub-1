@@ -374,7 +374,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Button */}
-            <Link href="/customer/orders">
+            <Link href="/customer/reservations">
               <Button className="w-full h-12 text-base font-bold" size="lg">
                 View My Orders
               </Button>

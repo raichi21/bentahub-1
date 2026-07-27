@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
 import { cartItems, orders, orderItems } from "@/drizzle/schema"
-import { eq, inArray } from "drizzle-orm"
+import { eq, and, inArray, isNull, desc } from "drizzle-orm"
 import { generateId, extractToken, verifyToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
     const userOrders = await db
       .select()
       .from(orders)
-      .where(eq(orders.userId, userId))
+      .where(and(eq(orders.userId, userId), isNull(orders.deletedAt)))
+      .orderBy(desc(orders.createdAt))
 
     // Attach items to each order
     if (userOrders.length > 0) {
