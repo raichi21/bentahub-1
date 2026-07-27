@@ -11,7 +11,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatOrderId(id: string): string {
   const shortId = id.replace(/-/g, "").substring(0, 6).toUpperCase()
-  return `#BH-${shortId}`
+  return `#TRN-${shortId}`
 }
 
 /**

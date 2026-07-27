@@ -103,7 +103,7 @@ export async function getHistory(filters: HistoryFilterOptions = { page: 1, page
     const total = Number(t.totalAmount)
     return {
       id: t.id,
-      displayId: `BH-${String(totalCount - offset - idx).padStart(5, "0")}`,
+      displayId: `HST-${String(totalCount - offset - idx).padStart(5, "0")}`,
       date: t.createdAt,
       dateDisplay: formatDate(t.createdAt),
       branchName: branchMap.get(t.branchId) || "Unknown",

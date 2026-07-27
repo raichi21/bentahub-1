@@ -83,7 +83,7 @@ export async function getReservations(filters: ReservationFilterOptions = { page
     const name = o.user.fullName
     return {
       id: o.id,
-      displayId: `BH-${String(total - offset - idx).padStart(4, "0")}`,
+      displayId: `RVN-${String(total - offset - idx).padStart(4, "0")}`,
       customerName: name,
       customerInitials: getInitials(name),
       customerEmail: o.user.email || "",

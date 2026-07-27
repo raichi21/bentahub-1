@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ShoppingCart, Bell } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ShoppingCart, Bell, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useCart } from "@/hooks/useCart"
@@ -29,6 +30,7 @@ export function ProductCard({
   weight,
   branch = "Lourdes Main Branch",
 }: ProductCardProps) {
+  const router = useRouter()
   const { addToCart, isLoading } = useCart()
   const [error, setError] = useState<string | null>(null)
 
@@ -64,6 +66,16 @@ export function ProductCard({
             )}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           />
+
+          {/* View Details Overlay */}
+          <button
+            type="button"
+            onClick={() => router.push(`/customer/catalog/${id}`)}
+            className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm text-xs font-medium text-foreground hover:bg-background"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            View
+          </button>
 
           {/* Stock Badge */}
           <div className="absolute top-2 left-2">

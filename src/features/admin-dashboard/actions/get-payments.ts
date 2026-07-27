@@ -122,7 +122,7 @@ export async function getPayments(filters: PaymentFilterOptions = { page: 1, pag
       id: t.id,
       displayId: `#P-${String(totalCount - offset - idx).padStart(4, "0")}`,
       transactionId: t.id,
-      transactionDisplayId: `BH-${String(totalCount - offset - idx).padStart(5, "0")}`,
+      transactionDisplayId: `TRN-${String(totalCount - offset - idx).padStart(5, "0")}`,
       amount,
       amountDisplay: formatCurrency(amount),
       method: t.paymentMethod,

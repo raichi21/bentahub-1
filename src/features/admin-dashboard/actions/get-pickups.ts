@@ -106,7 +106,7 @@ export async function getPickups(filters: PickupFilterOptions = { page: 1, pageS
     const totalAmount = Number(o.totalAmount)
     return {
       id: o.id,
-      displayId: `BH-${String(total - offset - idx).padStart(5, "0")}`,
+      displayId: `PCK-${String(total - offset - idx).padStart(5, "0")}`,
       customerName: o.user.fullName,
       customerInitials: getInitials(o.user.fullName),
       customerEmail: o.user.email,

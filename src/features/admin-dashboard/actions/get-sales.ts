@@ -105,7 +105,7 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
   const pageRows = allMatched.slice(offset, offset + filters.pageSize)
   const transactionsList: SalesTransactionRow[] = pageRows.map((t, idx) => ({
     id: t.id,
-    displayId: `BH-${String(allMatched.length - offset - idx).padStart(4, "0")}`,
+    displayId: `SAL-${String(allMatched.length - offset - idx).padStart(4, "0")}`,
     branchName: branchMap.get(t.branchId) || "Unknown",
     createdAt: t.createdAt,
     totalAmount: t.totalAmount,

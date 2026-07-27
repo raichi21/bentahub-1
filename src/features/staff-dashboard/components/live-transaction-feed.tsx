@@ -45,7 +45,7 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                 <div>
                   <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Transaction ID</p>
                   <p className="text-sm font-mono font-bold text-foreground mt-0.5">
-                    BH-{String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}
+                    TRN-{String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}
                   </p>
                 </div>
                 <span className={cn(
@@ -168,7 +168,7 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                 </tr>
               ) : (
                 filteredTransactions.map((t, idx) => {
-                  const displayId = `BH-${String(idx + 1).padStart(5, "0")}`
+                  const displayId = `TRN-${String(idx + 1).padStart(5, "0")}`
                   const dateObj = new Date(t.date)
                   const formattedDate = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                   const formattedTime = dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
