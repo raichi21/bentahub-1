@@ -45,7 +45,7 @@ export function useCart() {
     } finally {
       cartStore.setLoading(false)
     }
-  }, [user, token])
+  }, [user, token, cartStore])
 
   /**
    * Add item to cart
@@ -87,7 +87,7 @@ export function useCart() {
         cartStore.setLoading(false)
       }
     },
-    [user, token]
+    [user, token, cartStore]
   )
 
   /**
@@ -120,7 +120,7 @@ export function useCart() {
         throw error
       }
     },
-    [user, token]
+    [user, token, cartStore]
   )
 
   /**
@@ -148,7 +148,7 @@ export function useCart() {
         throw error
       }
     },
-    [user, token]
+    [user, token, cartStore]
   )
 
   return {

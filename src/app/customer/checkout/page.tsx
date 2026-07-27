@@ -14,7 +14,6 @@ import {
   ShoppingBag,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
 import { useOrders } from "@/hooks/useOrders"
@@ -83,6 +82,8 @@ export default function CheckoutPage() {
 
       const checkoutUrl = json.data?.checkoutUrl
       if (checkoutUrl) {
+        // #14: Clear local cart BEFORE redirect so stale items don't persist
+        clearCart()
         window.location.href = checkoutUrl
       } else {
         throw new Error("No checkout URL returned")

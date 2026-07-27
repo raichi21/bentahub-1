@@ -19,6 +19,8 @@ const DEFAULT_THRESHOLD = 10
 
 export function QuickStockModal({ isOpen, onClose, product, onSave, onScanRequest, onBarcodeSearch }: QuickStockModalProps) {
   const [stock, setStock] = useState(product?.stock ?? 0)
+  const [barcodeCode, setBarcodeCode] = useState("")
+  const [barcodeError, setBarcodeError] = useState<string | null>(null)
 
   if (!isOpen || !product) return null
 
@@ -28,8 +30,6 @@ export function QuickStockModal({ isOpen, onClose, product, onSave, onScanReques
   }
 
   const status = stock === 0 ? "out-of-stock" : stock <= DEFAULT_THRESHOLD ? "low-stock" : "in-stock"
-  const [barcodeCode, setBarcodeCode] = useState("")
-  const [barcodeError, setBarcodeError] = useState<string | null>(null)
 
   const handleBarcodeSearch = () => {
     const code = barcodeCode.trim()

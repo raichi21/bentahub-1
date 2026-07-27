@@ -1,27 +1,28 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches, transactions, transactionItems } from "@/servers/schemas"
 import { eq, max } from "drizzle-orm"
 import { createCheckoutSession } from "@/lib/paymongo"
+import { apiResponse, apiError } from "@/lib/api-response"
 
 export async function POST(request: NextRequest) {
   try {
     const token = extractToken(request)
     if (!token) {
-      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
+      return apiError("Authentication required", 401)
     }
 
     const payload = verifyToken(token)
     if (!payload) {
-      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+      return apiError("Invalid or expired token", 401)
     }
 
     const user = await db.query.users.findFirst({
       where: eq(users.id, payload.userId),
     })
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return apiError("User not found", 404)
     }
 
     const branchName = user.branch || "Lourdes Main Branch"
@@ -29,14 +30,14 @@ export async function POST(request: NextRequest) {
       where: eq(branches.name, branchName),
     })
     if (!branchRecord) {
-      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+      return apiError("Branch not found", 404)
     }
 
     const body = await request.json()
-    const { items, totalAmount, discountPercent } = body
+    const { items, totalAmount } = body
 
     if (!items || items.length === 0) {
-      return NextResponse.json({ success: false, message: "No items provided" }, { status: 400 })
+      return apiError("No items provided", 400)
     }
 
     // Create transaction with pending status
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
       .set({ gcashRef: checkout.paymentIntentId })
       .where(eq(transactions.id, transactionId))
 
-    return NextResponse.json({
+    return apiResponse({
       success: true,
       message: "GCash payment initiated",
       data: {
@@ -105,6 +106,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("GCash payment error:", error)
-    return NextResponse.json({ success: false, message: "Failed to process GCash payment" }, { status: 500 })
+    return apiError("Failed to process GCash payment", 500)
   }
 }

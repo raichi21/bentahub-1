@@ -54,7 +54,7 @@ export function useOrders() {
     } finally {
       ordersStore.setLoading(false)
     }
-  }, [user, token])
+  }, [user, token, ordersStore])
 
   /**
    * Create a new order from cart

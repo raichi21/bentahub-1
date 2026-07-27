@@ -1,25 +1,26 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { retrievePaymentIntent } from "@/lib/paymongo"
 import { db } from "@/servers/db"
 import { transactions } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import { extractToken, verifyToken } from "@/lib/auth-utils"
+import { apiResponse, apiError } from "@/lib/api-response"
 
 export async function GET(request: NextRequest) {
   try {
     // Auth check
     const token = extractToken(request)
     if (!token) {
-      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
+      return apiError("Authentication required", 401)
     }
     const payload = verifyToken(token)
     if (!payload) {
-      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+      return apiError("Invalid or expired token", 401)
     }
 
     const paymentIntentId = request.nextUrl.searchParams.get("paymentIntentId")
     if (!paymentIntentId) {
-      return NextResponse.json({ success: false, message: "Missing paymentIntentId" }, { status: 400 })
+      return apiError("Missing paymentIntentId", 400)
     }
 
     const paymentIntent = await retrievePaymentIntent(paymentIntentId)
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
         .where(eq(transactions.gcashRef, paymentIntentId))
     }
 
-    return NextResponse.json({
+    return apiResponse({
       success: true,
       data: {
         status: paymentIntent.status,
@@ -43,6 +44,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Payment check error:", error)
-    return NextResponse.json({ success: false, message: "Failed to check payment status" }, { status: 500 })
+    return apiError("Failed to check payment status", 500)
   }
 }
