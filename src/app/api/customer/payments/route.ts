@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
-import { orders, orderItems } from "@/drizzle/schema"
+import { users, orders, orderItems } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
 import { extractToken, verifyToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
@@ -41,6 +41,16 @@ export async function POST(request: NextRequest) {
       return apiError("Unauthorized", 401)
     }
 
+    // #8: Reject cash-only orders from GCash payment
+    if (order.paymentMethod !== "gcash") {
+      return apiError("This order is not set for GCash payment", 400)
+    }
+
+    // #9: Reject already-paid orders
+    if (order.isPaid) {
+      return apiError("This order has already been paid", 400)
+    }
+
     if (order.gcashRef) {
       return apiResponse({
         success: true,
@@ -61,6 +71,13 @@ export async function POST(request: NextRequest) {
       return apiError("Order has no items")
     }
 
+    // Fetch user details for PayMongo billing info
+    const userRecords = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+    const user = userRecords[0]
+
     const totalAmountInCentavos = Math.round(Number(order.totalAmount) * 100)
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
@@ -73,6 +90,14 @@ export async function POST(request: NextRequest) {
         amount: Math.round(Number(item.subtotal) * 100),
         quantity: item.quantity,
       })),
+      successUrl: `${baseUrl}/customer/orders?gcash_success=${orderId}`,
+      cancelUrl: `${baseUrl}/customer/orders?gcash_cancelled=${orderId}`,
+      billing: user
+        ? {
+            name: user.fullName,
+            email: user.email,
+          }
+        : undefined,
     })
 
     await db

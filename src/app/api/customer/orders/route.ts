@@ -119,11 +119,6 @@ export async function POST(request: NextRequest) {
       pickupDeadline,
     }
 
-    const createdOrder = await db
-      .insert(orders)
-      .values(newOrder)
-      .returning()
-
     // Create order items from cart items
     const orderItemsData = userCartItems.map((item) => ({
       id: generateId(),
@@ -135,16 +130,26 @@ export async function POST(request: NextRequest) {
       subtotal: item.subtotal,
     }))
 
-    await db.insert(orderItems).values(orderItemsData)
+    // #10: Wrap inserts in a DB transaction — if server crashes mid-way,
+    // no orphaned orders or uncleared carts
+    const result = await db.transaction(async (tx) => {
+      const [createdOrder] = await tx
+        .insert(orders)
+        .values(newOrder)
+        .returning()
 
-    // Clear user's cart
-    await db.delete(cartItems).where(eq(cartItems.userId, userId))
+      await tx.insert(orderItems).values(orderItemsData)
+
+      await tx.delete(cartItems).where(eq(cartItems.userId, userId))
+
+      return createdOrder
+    })
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Order created successfully",
-        data: { order: createdOrder[0], items: orderItemsData },
+        data: { order: result, items: orderItemsData },
       }),
       { status: 201, headers: { "content-type": "application/json" } }
     )

@@ -19,8 +19,28 @@ export async function GET(request: NextRequest) {
   if (!userId) return apiError("Unauthorized", 401)
 
   try {
-    const paymentIntentId = request.nextUrl.searchParams.get("paymentIntentId")
+    let paymentIntentId = request.nextUrl.searchParams.get("paymentIntentId")
     const orderId = request.nextUrl.searchParams.get("orderId")
+
+    // If only orderId is provided, look up gcashRef from the order
+    if (!paymentIntentId && orderId) {
+      const existingOrders = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId))
+
+      if (existingOrders.length === 0) {
+        return apiError("Order not found", 404)
+      }
+      if (existingOrders[0].userId !== userId) {
+        return apiError("Unauthorized", 401)
+      }
+
+      paymentIntentId = existingOrders[0].gcashRef
+      if (!paymentIntentId) {
+        return apiError("No payment session found for this order", 400)
+      }
+    }
 
     if (!paymentIntentId) {
       return apiError("Missing paymentIntentId", 400)
@@ -36,6 +56,12 @@ export async function GET(request: NextRequest) {
 
       if (existingOrders.length > 0 && existingOrders[0].userId === userId) {
         const order = existingOrders[0]
+
+        // SECURITY: Verify the paymentIntentId belongs to this order
+        if (order.gcashRef !== paymentIntentId) {
+          return apiError("Payment intent does not match this order", 400)
+        }
+
         if (!order.isPaid) {
           await db
             .update(orders)

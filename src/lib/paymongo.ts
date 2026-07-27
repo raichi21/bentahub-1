@@ -1,4 +1,5 @@
 const PAYMONGO_API = "https://api.paymongo.com/v1"
+const FETCH_TIMEOUT_MS = 15_000
 
 function getSecretKey(): string {
   const key = process.env.PAYMONGO_SECRET_KEY
@@ -8,6 +9,18 @@ function getSecretKey(): string {
 
 function authHeader(): string {
   return `Basic ${Buffer.from(getSecretKey() + ":").toString("base64")}`
+}
+
+/** #11: Fetch with AbortController timeout so requests don't hang indefinitely */
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal })
+    return res
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 export interface PayMongoPaymentIntent {
@@ -38,6 +51,12 @@ export async function createCheckoutSession(params: {
   amount: number // in centavos
   description?: string
   lineItems?: Array<{ name: string; amount: number; quantity: number }>
+  successUrl?: string
+  cancelUrl?: string
+  billing?: {
+    name: string
+    email: string
+  }
 }): Promise<CheckoutSessionResult> {
   const lineItems = params.lineItems && params.lineItems.length > 0
     ? params.lineItems.map((item) => ({
@@ -55,18 +74,22 @@ export async function createCheckoutSession(params: {
         },
       ]
 
-  const body = {
-    data: {
-      attributes: {
-        line_items: lineItems,
-        payment_method_types: ["gcash"],
-        description: params.description || "Store purchase",
-        send_email_receipt: false,
-      },
-    },
+  const attributes: Record<string, unknown> = {
+    line_items: lineItems,
+    payment_method_types: ["gcash"],
+    description: params.description || "Store purchase",
+    send_email_receipt: false,
   }
 
-  const res = await fetch(`${PAYMONGO_API}/checkout_sessions`, {
+  if (params.successUrl) attributes.success_url = params.successUrl
+  if (params.cancelUrl) attributes.cancel_url = params.cancelUrl
+  if (params.billing) attributes.billing = params.billing
+
+  const body = {
+    data: { attributes },
+  }
+
+  const res = await fetchWithTimeout(`${PAYMONGO_API}/checkout_sessions`, {
     method: "POST",
     headers: {
       Authorization: authHeader(),
@@ -117,7 +140,7 @@ export async function createPaymentIntent(params: {
     }
   }
 
-  const res = await fetch(`${PAYMONGO_API}/payment_intents`, {
+  const res = await fetchWithTimeout(`${PAYMONGO_API}/payment_intents`, {
     method: "POST",
     headers: {
       Authorization: authHeader(),
@@ -145,7 +168,7 @@ export async function createPaymentIntent(params: {
 }
 
 export async function retrievePaymentIntent(id: string): Promise<PayMongoPaymentIntent> {
-  const res = await fetch(`${PAYMONGO_API}/payment_intents/${id}`, {
+  const res = await fetchWithTimeout(`${PAYMONGO_API}/payment_intents/${id}`, {
     headers: { Authorization: authHeader() },
   })
 

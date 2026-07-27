@@ -25,9 +25,13 @@ export default function TransactionsPage() {
     const gcashCancelled = searchParams.get("gcash_cancelled")
     const paymentIntentId = searchParams.get("payment_intent_id")
 
-    if (gcashSuccess && paymentIntentId) {
+    if (gcashSuccess) {
       verified.current = true
-      fetch(`/api/customer/payments/check?paymentIntentId=${paymentIntentId}&orderId=${gcashSuccess}`)
+      // Use paymentIntentId from URL if available, otherwise server looks it up from order
+      const query = paymentIntentId
+        ? `paymentIntentId=${paymentIntentId}&orderId=${gcashSuccess}`
+        : `orderId=${gcashSuccess}`
+      fetch(`/api/customer/payments/check?${query}`)
         .then((res) => res.json())
         .then((json) => {
           if (json.success && json.data?.isPaid) {

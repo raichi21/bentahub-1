@@ -57,8 +57,10 @@ export default function CheckoutPage() {
       }
 
       if (paymentMethod === "cash") {
-        clearCart()
+        // Set orderSuccess FIRST so the empty-cart redirect guard (useEffect)
+        // sees orderSuccess=true and doesn't redirect to /customer/cart
         setOrderSuccess(true)
+        clearCart()
         return
       }
 

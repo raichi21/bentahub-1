@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { 
@@ -19,8 +19,9 @@ export default function CartPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()
-  const [isProcessing] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const quantityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Fetch cart on mount
   useEffect(() => {
@@ -62,19 +63,31 @@ export default function CartPage() {
     }
   }
 
-  const handleQuantityChange = async (itemId: string, value: string) => {
+  const handleQuantityChange = (itemId: string, value: string) => {
     const num = parseInt(value, 10)
     if (!isNaN(num) && num >= 1 && num <= 99) {
-      try {
-        await updateCartItem(itemId, num)
-      } catch (err) {
-        console.error("Failed to update quantity:", err)
+      // Clear previous timeout to debounce rapid keystrokes
+      if (quantityTimeoutRef.current) {
+        clearTimeout(quantityTimeoutRef.current)
       }
+
+      quantityTimeoutRef.current = setTimeout(async () => {
+        setUpdatingId(itemId)
+        try {
+          await updateCartItem(itemId, num)
+        } catch (err) {
+          console.error("Failed to update quantity:", err)
+        } finally {
+          setUpdatingId(null)
+          quantityTimeoutRef.current = null
+        }
+      }, 500)
     }
   }
 
   const handleCheckout = () => {
     if (items.length === 0) return
+    setIsProcessing(true)
     router.push(`/customer/checkout?branch=${encodeURIComponent(items[0]?.branch || user?.branch || "Lourdes Main Branch")}`)
   }
 

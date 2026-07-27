@@ -73,14 +73,17 @@ export async function POST(request: NextRequest) {
 
     // Create PayMongo Checkout Session (returns real checkout_url for QR)
     const amountInCentavos = Math.round(totalAmount * 100)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
     const checkout = await createCheckoutSession({
       amount: amountInCentavos,
       description: `Receipt #${nextReceiptNumber} (txn:${transactionId}) - ${branchName}`,
       lineItems: items.map((item: { product: { name: string; price: number }; quantity: number }) => ({
         name: item.product.name,
-        amount: Math.round(item.product.price * item.quantity * 100),
-        quantity: 1,
+        amount: Math.round(item.product.price * 100), // unit price in centavos
+        quantity: item.quantity,
       })),
+      successUrl: `${baseUrl}/cashier?gcash_success=receipt_${nextReceiptNumber}`,
+      cancelUrl: `${baseUrl}/cashier?gcash_cancelled=receipt_${nextReceiptNumber}`,
     })
 
     // Store PaymentIntent ID on the transaction (for status checking)
