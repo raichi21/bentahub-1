@@ -39,6 +39,41 @@ export default function PaymentsPage() {
 
   const isLoading = authLoading || (token != null && !firstLoadDone)
 
+  function exportPDF() {
+    if (!data) return
+    const tableRows = data.payments.map((p) =>
+      `<tr><td>${p.displayId}</td><td>${p.transactionDisplayId}</td><td>${p.amountDisplay}</td><td>${p.methodDisplay}</td><td>${p.dateTimeDisplay}</td><td>${p.branchName}</td><td>${p.statusDisplay}</td></tr>`
+    ).join("")
+    const win = window.open("", "_blank")
+    if (!win) return
+    win.document.write(`
+      <html><head><title>Payment Report</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; }
+        h1 { font-size: 24px; margin-bottom: 8px; }
+        p { color: #666; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #f5f5f5; text-align: left; padding: 10px 12px; border-bottom: 2px solid #ddd; }
+        td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+        .metrics { display: flex; gap: 24px; margin-bottom: 24px; }
+        .metric { background: #f9f9f9; padding: 16px; border-radius: 8px; flex: 1; }
+        .metric-label { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 4px; }
+        .metric-value { font-size: 20px; font-weight: bold; }
+      </style></head><body>
+      <h1>Payment Report</h1>
+      <p>Generated on ${new Date().toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Total Payments</div><div class="metric-value">${data.metrics.totalAmountDisplay}</div></div>
+        <div class="metric"><div class="metric-label">Cash</div><div class="metric-value">${data.metrics.cashTotalDisplay}</div></div>
+        <div class="metric"><div class="metric-label">GCash</div><div class="metric-value">${data.metrics.gcashTotalDisplay}</div></div>
+      </div>
+      <table><thead><tr><th>Payment ID</th><th>Transaction</th><th>Amount</th><th>Method</th><th>Date & Time</th><th>Branch</th><th>Status</th></tr></thead><tbody>${tableRows}</tbody></table>
+      </body></html>
+    `)
+    win.document.close()
+    setTimeout(() => { win.print() }, 500)
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -70,6 +105,7 @@ export default function PaymentsPage() {
         page={page}
         pageSize={15}
         onPageChange={setPage}
+        onExportPDF={exportPDF}
         loading={isLoading}
       />
     </div>

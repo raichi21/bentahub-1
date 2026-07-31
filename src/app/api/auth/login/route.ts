@@ -38,6 +38,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
       )
     }
 
+    // --- Account active gate -------------------------------------------------
+
+    if (!user.isActive) {
+      return NextResponse.json(
+        { success: false, message: "Your account has been deactivated. Please contact the administrator." },
+        { status: 403 }
+      )
+    }
+
     // --- Email verification gate (enforced in production) -------------------
 
     if (!user.isEmailVerified && process.env.NODE_ENV === "production") {

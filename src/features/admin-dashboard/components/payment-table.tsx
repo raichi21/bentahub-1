@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Eye } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Eye, Download, FileSpreadsheet, FileText } from "lucide-react"
 import { PaymentDetailsModal } from "./payment-details-modal"
 import type { PaymentRowData } from "@/types/admin"
 
@@ -11,11 +11,36 @@ interface PaymentTableProps {
   page: number
   pageSize: number
   onPageChange: (page: number) => void
+  onExportPDF?: () => void
   loading: boolean
 }
 
-export function PaymentTable({ payments, totalCount, page, pageSize, onPageChange, loading }: PaymentTableProps) {
+export function PaymentTable({ payments, totalCount, page, pageSize, onPageChange, onExportPDF, loading }: PaymentTableProps) {
   const [selectedPayment, setSelectedPayment] = useState<PaymentRowData | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
+  const handleExport = () => {
+    const headers = ["Payment ID", "Transaction", "Amount", "Method", "Date & Time", "Branch", "Status"]
+    const rows = payments.map((p) => [
+      p.displayId, p.transactionDisplayId, p.amountDisplay,
+      p.methodDisplay, p.dateTimeDisplay, p.branchName, p.statusDisplay,
+    ])
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n")
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = `payments-export-${new Date().toISOString().split("T")[0]}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
 
   const totalPages = Math.ceil(totalCount / pageSize)
   const start = (page - 1) * pageSize + 1
@@ -37,6 +62,33 @@ export function PaymentTable({ payments, totalCount, page, pageSize, onPageChang
       <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="px-6 py-3 bg-muted/20 border-b border-border flex justify-between items-center">
           <h3 className="text-sm font-bold text-foreground">Payment Records</h3>
+          <div ref={exportRef} className="relative">
+            <button
+              onClick={() => setExportOpen(!exportOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all"
+            >
+              <Download className="h-[18px] w-[18px]" />
+              Export
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                <button
+                  onClick={() => { handleExport(); setExportOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                  Export as CSV (Excel)
+                </button>
+                <button
+                  onClick={() => { onExportPDF?.(); setExportOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors border-t border-border"
+                >
+                  <FileText className="h-4 w-4 text-red-600" />
+                  Export as PDF
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
