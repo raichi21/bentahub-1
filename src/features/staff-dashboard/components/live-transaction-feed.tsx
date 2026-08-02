@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, Eye, CreditCard, Banknote, Package, X } from "lucide-react"
+import { Search, Eye, CreditCard, Banknote, X } from "lucide-react"
 import type { StaffTransactionItem } from "@/types/staff"
 import { cn } from "@/lib/utils"
 
@@ -80,16 +80,33 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                 </div>
               </div>
 
-              {/* Items placeholder */}
+              {/* Items */}
               <div>
                 <h3 className="text-sm font-bold text-foreground mb-3">Items</h3>
-                <div className="border border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center gap-2">
-                  <Package className="w-10 h-10 text-muted-foreground/30" />
-                  <p className="text-xs font-bold text-muted-foreground">Item details coming soon</p>
-                  <p className="text-[10px] text-muted-foreground/60 max-w-xs">
-                    Individual items will appear here once the system records them per transaction.
-                  </p>
-                </div>
+                {selectedTxn.items.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No item details available.</p>
+                ) : (
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <table className="w-full text-left border-collapse text-sm">
+                      <thead className="bg-muted/10 border-b border-border">
+                        <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                          <th className="px-4 py-3 w-[50%]">Item</th>
+                          <th className="px-4 py-3 text-center w-[15%]">Qty</th>
+                          <th className="px-4 py-3 text-right w-[30%]">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30 text-foreground">
+                        {selectedTxn.items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="px-4 py-3">{item.productName}</td>
+                            <td className="px-4 py-3 text-center font-medium">{item.quantity}</td>
+                            <td className="px-4 py-3 text-right font-medium">₱{item.price.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
 
