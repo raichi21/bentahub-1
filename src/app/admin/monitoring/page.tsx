@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { InventoryStatusTable, KPICard } from "@/features/admin-dashboard"
-import { Package, AlertTriangle, Download, FileSpreadsheet, FileText, Clock, ExternalLink } from "lucide-react"
+import { Package, AlertTriangle, Clock, ExternalLink } from "lucide-react"
 import type { MonitoringData, InventoryStatusItem, ExpiringItemData } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils"
@@ -14,12 +14,9 @@ export default function MonitoringPage() {
   const [data, setData] = useState<MonitoringData | null>(null)
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([])
   const [selectedBranch, setSelectedBranch] = useState("all")
-  const [exportOpen, setExportOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
-  const [firstLoadDone, setFirstLoadDone] = useState(false)
   const [branchesFetched, setBranchesFetched] = useState(false)
-  const exportRef = useRef<HTMLDivElement>(null)
 
   // Fetch monitoring data
   useEffect(() => {
@@ -50,7 +47,6 @@ export default function MonitoringPage() {
       })
       .finally(() => {
         setFetched(true)
-        setFirstLoadDone(true)
       })
   }, [token, selectedBranch])
 
@@ -71,15 +67,6 @@ export default function MonitoringPage() {
       .finally(() => setBranchesFetched(true))
   }, [branchesFetched])
 
-  // Close export dropdown on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [])
-
   // ── Derived state ──
   const isLoading = authLoading || (!authLoading && token && !fetched && !error)
 
@@ -95,7 +82,6 @@ export default function MonitoringPage() {
     const a = document.createElement("a")
     a.href = url; a.download = `monitoring-${new Date().toISOString().slice(0, 10)}.csv`
     a.click(); URL.revokeObjectURL(url)
-    setExportOpen(false)
   }
 
   function exportPDF() {
@@ -131,7 +117,6 @@ export default function MonitoringPage() {
     `)
     win.document.close()
     setTimeout(() => { win.print() }, 500)
-    setExportOpen(false)
   }
 
   // ── Render ──
@@ -185,52 +170,6 @@ export default function MonitoringPage() {
           trendType={data?.metrics.lowStockItems.severity === "Critical" ? "warning" : "up"}
           icon={AlertTriangle}
         />
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <label className="text-sm font-bold text-muted-foreground whitespace-nowrap" htmlFor="branch-select">
-            Select Branch:
-          </label>
-          <select
-            id="branch-select"
-            value={selectedBranch}
-            onChange={(e) => setSelectedBranch(e.target.value)}
-            className="w-full md:w-64 rounded-lg border-border bg-background focus:ring-primary focus:border-primary text-sm p-2.5"
-          >
-            <option value="all">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-        </div>
-        <div ref={exportRef} className="relative">
-          <button
-            onClick={() => setExportOpen(!exportOpen)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-muted/50 hover:bg-muted rounded-lg border border-border text-sm font-bold transition-all w-full md:w-auto justify-center"
-          >
-            <Download className="h-[18px] w-[18px]" />
-            Export Data
-          </button>
-          {exportOpen && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
-              <button
-                onClick={exportCSV}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                Export as CSV (Excel)
-              </button>
-              <button
-                onClick={exportPDF}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors border-t border-border"
-              >
-                <FileText className="h-4 w-4 text-red-600" />
-                Export as PDF
-              </button>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Expiring Items Section */}
@@ -302,7 +241,14 @@ export default function MonitoringPage() {
         </section>
       )}
 
-      <InventoryStatusTable data={data?.inventoryStatus ?? []} />
+      <InventoryStatusTable
+        data={data?.inventoryStatus ?? []}
+        branches={branches}
+        selectedBranch={selectedBranch}
+        onBranchChange={setSelectedBranch}
+        onExportCSV={exportCSV}
+        onExportPDF={exportPDF}
+      />
     </div>
   )
 }
