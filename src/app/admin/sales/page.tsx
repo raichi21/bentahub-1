@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { SalesFilters, TransactionDetailsTable, KPICard } from "@/features/admin-dashboard"
+import { TransactionDetailsTable, KPICard } from "@/features/admin-dashboard"
 import { TrendingUp, Receipt, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { SalesApiData } from "@/types/admin"
@@ -134,20 +134,17 @@ export default function SalesPage() {
         />
       </div>
 
-      <SalesFilters
-        branches={data?.branches || []}
-        onBranchChange={handleBranchChange}
-        branchId={branchId}
-        onExportCSV={exportCSV}
-        onExportPDF={exportPDF}
-      />
-
       <TransactionDetailsTable
         transactions={data?.transactions || []}
         totalCount={data?.totalCount || 0}
         page={page}
         pageSize={15}
         onPageChange={setPage}
+        branches={data?.branches || []}
+        branchId={branchId}
+        onBranchChange={handleBranchChange}
+        onExportCSV={exportCSV}
+        onExportPDF={exportPDF}
         loading={isLoading}
       />
     </div>

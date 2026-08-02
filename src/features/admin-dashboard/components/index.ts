@@ -5,7 +5,6 @@ export { SalesChart } from "./sales-chart"
 export { StockTable } from "./stock-table"
 
 export { InventoryStatusTable } from "./inventory-status-table"
-export { SalesFilters } from "./sales-filters"
 
 export { TransactionDetailsTable } from "./transaction-details-table"
 
