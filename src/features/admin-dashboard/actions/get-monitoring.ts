@@ -68,17 +68,68 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
   const productCategoryMap = new Map(allProducts.map((p: RawProduct) => [p.id, p.category || "Uncategorized"]))
 
   let totalValue = 0
-  const productAggregator = new Map<string, { totalQty: number; lastUpdated: Date; thresholds: number[] }>()
-
   for (const inv of filteredInventory) {
     const price = productPriceMap.get(inv.productId) || 0
     totalValue += price * inv.quantity
+  }
 
-    const existing = productAggregator.get(inv.productId) || { totalQty: 0, lastUpdated: new Date(0), thresholds: [] }
-    existing.totalQty += inv.quantity
-    if (inv.updatedAt.getTime() > existing.lastUpdated.getTime()) existing.lastUpdated = inv.updatedAt
-    existing.thresholds.push(inv.lowStockThreshold)
-    productAggregator.set(inv.productId, existing)
+  const branchNameMap = new Map(allBranches.map((b: RawBranch) => [b.id, b.name]))
+
+  function buildInventoryStatus(source: RawInventory[]): InventoryStatusItem[] {
+    const aggregator = new Map<
+      string,
+      { productId: string; branchId: string; branchName: string; totalQty: number; lastUpdated: Date; thresholds: number[] }
+    >()
+
+    for (const inv of source) {
+      const key = `${inv.productId}|${inv.branchId}`
+      const existing = aggregator.get(key) || {
+        productId: inv.productId,
+        branchId: inv.branchId,
+        branchName: branchNameMap.get(inv.branchId) || "Unknown",
+        totalQty: 0,
+        lastUpdated: new Date(0),
+        thresholds: [],
+      }
+      existing.totalQty += inv.quantity
+      if (inv.updatedAt.getTime() > existing.lastUpdated.getTime()) existing.lastUpdated = inv.updatedAt
+      existing.thresholds.push(inv.lowStockThreshold)
+      aggregator.set(key, existing)
+    }
+
+    const items: InventoryStatusItem[] = []
+    for (const agg of aggregator.values()) {
+      const productId = agg.productId
+      const name = productNameMap.get(productId) || "Unknown"
+      const category = productCategoryMap.get(productId) || "Uncategorized"
+      const minThreshold = Math.min(...agg.thresholds)
+      const avgThreshold = Math.round(agg.thresholds.reduce((a, b) => a + b, 0) / agg.thresholds.length)
+
+      let status: "In Stock" | "Low Stock" | "Critical" = "In Stock"
+      if (agg.totalQty === 0) status = "Critical"
+      else if (agg.totalQty < minThreshold) status = "Critical"
+      else if (agg.totalQty < avgThreshold * agg.thresholds.length) status = "Low Stock"
+
+      items.push({
+        productId,
+        productName: name,
+        category,
+        branchId: agg.branchId,
+        branchName: agg.branchName,
+        totalQuantity: agg.totalQty,
+        reorderLevel: avgThreshold,
+        status,
+        lastUpdated: agg.lastUpdated,
+      })
+    }
+
+    items.sort((a, b) => {
+      const order = { Critical: 0, "Low Stock": 1, "In Stock": 2 }
+      if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status]
+      return a.productName.localeCompare(b.productName)
+    })
+
+    return items
   }
 
   // --- Low Stock Items ---
@@ -142,34 +193,8 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
     })
     .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry)
 
-  // --- Inventory Status (per product in filtered inventory) ---
-  const inventoryStatus: InventoryStatusItem[] = []
-  for (const [productId, agg] of productAggregator) {
-    const name = productNameMap.get(productId) || "Unknown"
-    const category = productCategoryMap.get(productId) || "Uncategorized"
-    const minThreshold = Math.min(...agg.thresholds)
-    const avgThreshold = Math.round(agg.thresholds.reduce((a, b) => a + b, 0) / agg.thresholds.length)
-
-    let status: "Active" | "Low Stock" | "Critical" = "Active"
-    if (agg.totalQty === 0) status = "Critical"
-    else if (agg.totalQty < minThreshold) status = "Critical"
-    else if (agg.totalQty < avgThreshold * agg.thresholds.length) status = "Low Stock"
-
-    inventoryStatus.push({
-      productId,
-      productName: name,
-      category,
-      totalQuantity: agg.totalQty,
-      reorderLevel: avgThreshold,
-      status,
-      lastUpdated: agg.lastUpdated,
-    })
-  }
-
-  inventoryStatus.sort((a, b) => {
-    const order = { Critical: 0, "Low Stock": 1, Active: 2 }
-    return order[a.status] - order[b.status]
-  })
+  // --- Inventory Status (All Branches = full breakdown; selected branch = that branch's rows only) ---
+  const inventoryStatus = buildInventoryStatus(filteredInventory)
 
   // --- System Alerts from real low stock data ---
   const alerts: SystemAlertItem[] = []

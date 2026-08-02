@@ -47,7 +47,8 @@ export function InventoryStatusTable({
     return data.filter(
       (item) =>
         item.productName.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
+        item.category.toLowerCase().includes(q) ||
+        item.branchName.toLowerCase().includes(q)
     )
   }, [data, search])
 
@@ -78,7 +79,10 @@ export function InventoryStatusTable({
           </div>
           <select
             value={selectedBranch}
-            onChange={(e) => onBranchChange?.(e.target.value)}
+            onChange={(e) => {
+              setPage(1)
+              onBranchChange?.(e.target.value)
+            }}
             className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
           >
             <option value="all">All Branches</option>
@@ -121,6 +125,7 @@ export function InventoryStatusTable({
             <tr className="bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
               <th className="px-6 py-4">Product</th>
               <th className="px-6 py-4">Category</th>
+              <th className="px-6 py-4">Branch</th>
               <th className="px-6 py-4">Total Quantity</th>
               <th className="px-6 py-4">Reorder Level</th>
               <th className="px-6 py-4">Status</th>
@@ -130,15 +135,16 @@ export function InventoryStatusTable({
           <tbody className="divide-y divide-border">
             {paginated.map((item) => {
               const statusColor = {
-                Active: "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400",
+                "In Stock": "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400",
                 "Low Stock": "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
                 Critical: "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400",
               }[item.status]
 
               return (
-                <tr key={item.productId} className="hover:bg-primary/5 transition-colors cursor-pointer group">
+                <tr key={`${item.productId}-${item.branchId}`} className="hover:bg-primary/5 transition-colors cursor-pointer group">
                   <td className="px-6 py-4 font-bold text-sm text-foreground">{item.productName}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{item.category}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{item.branchName}</td>
                   <td className="px-6 py-4 font-mono text-sm text-foreground">{item.totalQuantity}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{item.reorderLevel}</td>
                   <td className="px-6 py-4">

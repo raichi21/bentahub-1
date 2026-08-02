@@ -56,9 +56,11 @@ export interface InventoryStatusItem {
   productId: string
   productName: string
   category: string
+  branchId: string
+  branchName: string
   totalQuantity: number
   reorderLevel: number
-  status: "Active" | "Low Stock" | "Critical"
+  status: "In Stock" | "Low Stock" | "Critical"
   lastUpdated: string | Date
 }
 

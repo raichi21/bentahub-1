@@ -42,9 +42,9 @@ export function ReservationTable({
   }
 
   return (
-    <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mt-6">
-      <div className="px-6 py-4 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/5">
-        <h4 className="text-base font-bold text-foreground">All Reservations</h4>
+    <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
+        <h4 className="font-bold text-lg text-foreground">All Reservations</h4>
         <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
@@ -52,23 +52,23 @@ export function ReservationTable({
             placeholder="Search ID or Customer..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 bg-background border border-border rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none"
           />
         </form>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-muted/10 border-b border-border">
-            <tr>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reservation ID</th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Customer</th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch</th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Items</th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Total</th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Pickup Date</th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
+          <thead className="bg-muted/40 border-b border-border">
+            <tr className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+              <th className="px-6 py-4">Reservation ID</th>
+              <th className="px-6 py-4">Customer</th>
+              <th className="px-6 py-4">Branch</th>
+              <th className="px-6 py-4">Items</th>
+              <th className="px-6 py-4">Total</th>
+              <th className="px-6 py-4">Pickup Date</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -103,7 +103,7 @@ export function ReservationTable({
                   : "—"
 
                 return (
-                  <tr key={r.id} className="hover:bg-muted/10 transition-colors">
+                  <tr key={r.id} className="hover:bg-primary/5 transition-colors">
                     <td className="px-6 py-4 font-mono text-sm text-primary font-bold">{r.displayId}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export function ReservationTable({
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{pickupDisplay}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyle}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${statusStyle}`}>
                         {r.status}
                       </span>
                     </td>
@@ -139,8 +139,8 @@ export function ReservationTable({
         </table>
       </div>
 
-      <div className="px-6 py-4 bg-muted/5 border-t border-border flex justify-between items-center">
-        <p className="text-xs text-muted-foreground font-medium">
+      <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-muted/20">
+        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
           Showing {reservations.length > 0 ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, totalCount)} of {totalCount} results
         </p>
         <div className="flex gap-2">

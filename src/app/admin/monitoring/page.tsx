@@ -50,13 +50,10 @@ export default function MonitoringPage() {
       })
   }, [token, selectedBranch])
 
-  // Fetch branches for filter dropdown
+  // Fetch branches for filter dropdown (public endpoint — no auth needed)
   useEffect(() => {
     if (branchesFetched) return
-    if (!token) return
-    fetch("/api/branches", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch("/api/branches")
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {
@@ -74,9 +71,9 @@ export default function MonitoringPage() {
   function exportCSV() {
     if (!data) return
     const rows = data.inventoryStatus.map((i: InventoryStatusItem) =>
-      [i.productName, i.category, i.totalQuantity, i.reorderLevel, i.status, i.lastUpdated].join(",")
+      [i.productName, i.category, i.branchName, i.totalQuantity, i.reorderLevel, i.status, i.lastUpdated].join(",")
     )
-    const csv = ["Product,Category,Quantity,Reorder Level,Status,Last Updated", ...rows].join("\n")
+    const csv = ["Product,Category,Branch,Quantity,Reorder Level,Status,Last Updated", ...rows].join("\n")
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -87,7 +84,7 @@ export default function MonitoringPage() {
   function exportPDF() {
     if (!data) return
     const tableRows = data.inventoryStatus.map((i: InventoryStatusItem) =>
-      `<tr><td>${i.productName}</td><td>${i.category}</td><td>${i.totalQuantity}</td><td>${i.reorderLevel}</td><td>${i.status}</td><td>${new Date(i.lastUpdated).toLocaleDateString()}</td></tr>`
+      `<tr><td>${i.productName}</td><td>${i.category}</td><td>${i.branchName}</td><td>${i.totalQuantity}</td><td>${i.reorderLevel}</td><td>${i.status}</td><td>${new Date(i.lastUpdated).toLocaleDateString()}</td></tr>`
     ).join("")
     const win = window.open("", "_blank")
     if (!win) return
@@ -112,7 +109,7 @@ export default function MonitoringPage() {
         <div class="metric"><div class="metric-label">Low Stock Items</div><div class="metric-value">${data.metrics.lowStockItems.value}</div></div>
         <div class="metric"><div class="metric-label">Pending Reservations</div><div class="metric-value">${data.metrics.pendingReservations.value}</div></div>
       </div>
-      <table><thead><tr><th>Product</th><th>Category</th><th>Quantity</th><th>Reorder Level</th><th>Status</th><th>Last Updated</th></tr></thead><tbody>${tableRows}</tbody></table>
+      <table><thead><tr><th>Product</th><th>Category</th><th>Branch</th><th>Quantity</th><th>Reorder Level</th><th>Status</th><th>Last Updated</th></tr></thead><tbody>${tableRows}</tbody></table>
       </body></html>
     `)
     win.document.close()
