@@ -1,7 +1,6 @@
 "use client"
 
-import React from "react"
-import { X, Printer } from "lucide-react"
+import { X } from "lucide-react"
 import type { PickupRowData } from "@/types/admin"
 
 interface PickupDetailsModalProps {
@@ -14,7 +13,6 @@ export function PickupDetailsModal({ isOpen, onClose, order }: PickupDetailsModa
   if (!isOpen || !order) return null
 
   const total = order.items.reduce((sum, item) => sum + item.subtotal, 0)
-  const isReady = order.status === "ready"
   const isCompleted = order.status === "completed"
 
   const statusStyles: Record<string, string> = {
@@ -32,19 +30,18 @@ export function PickupDetailsModal({ isOpen, onClose, order }: PickupDetailsModa
       <div className="bg-card w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
           <h2 className="text-lg font-bold text-foreground">Pickup Details - {order.displayId}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-          <div className="flex">
+          <div className="flex items-center gap-3">
             <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-bold text-xs border ${statusStyles[order.status] || ""}`}>
               <span className={`w-2 h-2 rounded-full ${statusDot}`} />
               {order.statusDisplay}
             </span>
+            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+              <X className="h-5 w-5" />
+            </button>
           </div>
+        </div>
 
+        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg border border-border">
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Order Info</h4>
@@ -123,12 +120,8 @@ export function PickupDetailsModal({ isOpen, onClose, order }: PickupDetailsModa
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
           <button onClick={onClose} className="h-11 px-6 border border-border text-foreground hover:bg-muted rounded-lg text-sm font-bold transition-all">Close</button>
-          <button onClick={() => window.print()} className="h-11 px-6 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all flex items-center gap-2">
-            <Printer className="h-4 w-4" />
-            Print Summary
-          </button>
         </div>
       </div>
     </div>

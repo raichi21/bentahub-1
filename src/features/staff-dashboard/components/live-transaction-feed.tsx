@@ -29,81 +29,75 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
       {/* Details Modal */}
       {selectedTxn && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setSelectedTxn(null)}>
-          <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="px-6 py-4 border-b border-border flex justify-between items-center">
-              <h3 className="text-sm font-bold text-foreground">Transaction Details</h3>
-              <button onClick={() => setSelectedTxn(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-6">
-              {/* ID & Status */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Transaction ID</p>
-                  <p className="text-sm font-mono font-bold text-foreground mt-0.5">
-                    TRN-{String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}
-                  </p>
-                </div>
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
+              <h3 className="text-lg font-bold text-foreground">Transaction Details - {`TRN-${String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}`}</h3>
+              <div className="flex items-center gap-3">
                 <span className={cn(
-                  "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border",
+                  "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border",
                   selectedTxn.status === "cancelled"
-                    ? "bg-red-50 text-red-700 border-red-200"
+                    ? "bg-destructive/10 text-destructive border-destructive/20"
                     : selectedTxn.status === "pending"
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
-                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                    : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                 )}>
                   {selectedTxn.status}
                 </span>
+                <button onClick={() => setSelectedTxn(null)} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
+            </div>
 
-              {/* Date/Time */}
-              <div>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Date & Time</p>
-                <p className="text-sm font-medium text-foreground mt-0.5">
-                  {new Date(selectedTxn.date).toLocaleDateString("en-US", {
-                    month: "short", day: "numeric", year: "numeric",
-                    hour: "2-digit", minute: "2-digit",
-                  })}
-                </p>
-              </div>
-
-              {/* Payment Method & Total */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Payment Method</p>
-                  <p className="text-sm font-bold text-foreground mt-0.5 flex items-center gap-1.5">
-                    {selectedTxn.paymentMethod === "gcash" ? (
-                      <><CreditCard className="w-4 h-4 text-emerald-500" /> GCash</>
-                    ) : (
-                      <><Banknote className="w-4 h-4 text-amber-500" /> Cash</>
-                    )}
-                  </p>
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+              {/* Info Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg border border-border">
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Transaction Info</h4>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-muted-foreground">Transaction ID: <span className="font-semibold text-foreground">TRN-{String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}</span></p>
+                    <p className="text-muted-foreground">Date &amp; Time: <span className="font-semibold text-foreground">{new Date(selectedTxn.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span></p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-muted-foreground">Payment Method:</p>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                        {selectedTxn.paymentMethod === "gcash" ? (
+                          <><CreditCard className="w-3 h-3 text-emerald-500" /> GCash</>
+                        ) : (
+                          <><Banknote className="w-3 h-3 text-amber-500" /> Cash</>
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Total Amount</p>
-                  <p className="text-lg font-black text-primary font-mono mt-0.5">₱{selectedTxn.total.toFixed(2)}</p>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment Info</h4>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-muted-foreground">Status: <span className="font-semibold text-foreground">{selectedTxn.status}</span></p>
+                    <p className="text-muted-foreground">Total Amount: <span className="text-base font-bold text-primary">₱{selectedTxn.total.toFixed(2)}</span></p>
+                  </div>
                 </div>
               </div>
 
               {/* Items placeholder */}
-              <div className="border border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center gap-2">
-                <Package className="w-10 h-10 text-muted-foreground/30" />
-                <p className="text-xs font-bold text-muted-foreground">Item details coming soon</p>
-                <p className="text-[10px] text-muted-foreground/60 max-w-xs">
-                  Individual items will appear here once the system records them per transaction.
-                </p>
+              <div>
+                <h3 className="text-sm font-bold text-foreground mb-3">Items</h3>
+                <div className="border border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center gap-2">
+                  <Package className="w-10 h-10 text-muted-foreground/30" />
+                  <p className="text-xs font-bold text-muted-foreground">Item details coming soon</p>
+                  <p className="text-[10px] text-muted-foreground/60 max-w-xs">
+                    Individual items will appear here once the system records them per transaction.
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-border bg-muted/10">
+            <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
               <button
                 onClick={() => setSelectedTxn(null)}
-                className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:brightness-110 transition-colors"
+                className="h-11 px-6 border border-border text-foreground hover:bg-muted rounded-lg text-sm font-bold transition-all"
               >
                 Close
               </button>
@@ -156,7 +150,7 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                 <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Method</th>
                 <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Total</th>
                 <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Details</th>
+                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
@@ -193,14 +187,16 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                           {t.status}
                         </span>
                       </td>
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => setSelectedTxn(t)}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View
-                        </button>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedTxn(t)}
+                            className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
