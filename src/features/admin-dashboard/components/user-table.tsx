@@ -82,9 +82,8 @@ export function UserTable({
         <button
           key={i}
           onClick={() => onPageChange(i)}
-          className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${
-            i === page ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted"
-          }`}
+          className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${i === page ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted"
+            }`}
         >{i}</button>
       )
     }
@@ -132,13 +131,13 @@ export function UserTable({
             <table className="w-full text-left border-collapse">
               <thead className="bg-muted/10 border-b border-border">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Name</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Email</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Role</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Branch</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Join Date</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Actions</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest">Name</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest">Email</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-center">Role</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest">Branch</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-center">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-center">Join Date</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -158,15 +157,14 @@ export function UserTable({
                         {u.role}
                       </span>
                     </td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">
-                    {u.branch || "—"}
-                  </td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">
+                      {u.branch || "—"}
+                    </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${
-                        u.isActive
-                          ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
-                          : "bg-destructive/10 text-destructive border border-destructive/20"
-                      }`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${u.isActive
+                        ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
+                        : "bg-destructive/10 text-destructive border border-destructive/20"
+                        }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-green-500" : "bg-destructive"}`} />
                         {u.isActive ? "Active" : "Inactive"}
                       </span>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Eye, FileX, Loader2 } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Search, Eye, FileX, Loader2, Download, FileSpreadsheet, FileText } from "lucide-react"
 import type { ReservationRowData } from "@/types/admin"
 
 interface ReservationTableProps {
@@ -12,6 +12,8 @@ interface ReservationTableProps {
   onPageChange: (page: number) => void
   onSearch: (query: string) => void
   onViewDetails: (reservation: ReservationRowData) => void
+  onExportCSV?: () => void
+  onExportPDF?: () => void
   loading: boolean
 }
 
@@ -31,10 +33,22 @@ export function ReservationTable({
   onPageChange,
   onSearch,
   onViewDetails,
+  onExportCSV,
+  onExportPDF,
   loading,
 }: ReservationTableProps) {
   const [searchInput, setSearchInput] = useState("")
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,22 +59,51 @@ export function ReservationTable({
     <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
         <h4 className="font-bold text-lg text-foreground">All Reservations</h4>
-        <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search ID or Customer..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none"
-          />
-        </form>
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          <form onSubmit={handleSearchSubmit} className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search ID or Customer..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none"
+            />
+          </form>
+          <div ref={exportRef} className="relative">
+            <button
+              onClick={() => setExportOpen(!exportOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all w-full md:w-auto justify-center"
+            >
+              <Download className="h-[18px] w-[18px]" />
+              Export
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                <button
+                  onClick={() => { onExportCSV?.(); setExportOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                  Export as CSV (Excel)
+                </button>
+                <button
+                  onClick={() => { onExportPDF?.(); setExportOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors border-t border-border"
+                >
+                  <FileText className="h-4 w-4 text-red-600" />
+                  Export as PDF
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead className="bg-muted/40 border-b border-border">
-            <tr className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+            <tr className="text-[11px] font-bold uppercase tracking-widest">
               <th className="px-6 py-4">Reservation ID</th>
               <th className="px-6 py-4">Customer</th>
               <th className="px-6 py-4">Branch</th>
@@ -87,7 +130,7 @@ export function ReservationTable({
                     </div>
                     <div>
                       <p className="font-bold text-foreground">No reservations found.</p>
-                      <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or search.</p>
+                      <p className="text-sm text-muted-foreground mt-1">Try adjusting your search.</p>
                     </div>
                   </div>
                 </td>
@@ -97,9 +140,9 @@ export function ReservationTable({
                 const statusStyle = STATUS_STYLES[r.status] || "bg-muted text-muted-foreground"
                 const pickupDisplay = r.pickupDeadline
                   ? new Date(r.pickupDeadline).toLocaleDateString("en-PH", {
-                      month: "short", day: "numeric", year: "numeric",
-                      hour: "2-digit", minute: "2-digit",
-                    })
+                    month: "short", day: "numeric", year: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })
                   : "—"
 
                 return (

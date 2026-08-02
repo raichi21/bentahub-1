@@ -8,7 +8,6 @@ export { InventoryStatusTable } from "./inventory-status-table"
 
 export { TransactionDetailsTable } from "./transaction-details-table"
 
-export { ReservationFilters } from "./reservation-filters"
 export { ReservationTable } from "./reservation-table"
 
 export { UserTable } from "./user-table"

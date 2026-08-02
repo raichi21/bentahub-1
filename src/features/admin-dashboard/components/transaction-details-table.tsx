@@ -64,7 +64,7 @@ export function TransactionDetailsTable({
               className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all w-full md:w-auto justify-center"
             >
               <Download className="h-[18px] w-[18px]" />
-              Export Data
+              Export
             </button>
             {exportOpen && (
               <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
@@ -137,8 +137,8 @@ export function TransactionDetailsTable({
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${t.paymentMethod === "gcash"
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                        : "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                      : "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
                       }`}>
                       {t.paymentMethod}
                     </span>

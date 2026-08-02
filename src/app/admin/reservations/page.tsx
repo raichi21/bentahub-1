@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ReservationFilters, ReservationTable, ReservationDetailsModal, KPICard } from "@/features/admin-dashboard"
+import { ReservationTable, ReservationDetailsModal, KPICard } from "@/features/admin-dashboard"
 import { CalendarCheck, Clock, CheckCircle2, XCircle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import type { ReservationApiData, ReservationRowData } from "@/types/admin"
@@ -10,10 +10,6 @@ export default function ReservationsPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<ReservationApiData | null>(null)
   const [viewingReservation, setViewingReservation] = useState<ReservationRowData | null>(null)
-  const [branch, setBranch] = useState("")
-  const [status, setStatus] = useState("")
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
@@ -22,10 +18,6 @@ export default function ReservationsPage() {
     if (!token) return
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
-      if (branch) params.set("branch", branch)
-      if (status) params.set("status", status)
-      if (dateFrom) params.set("dateFrom", dateFrom)
-      if (dateTo) params.set("dateTo", dateTo)
       if (search) params.set("search", search)
 
       const res = await fetch(`/api/admin/reservations?${params}`, {
@@ -38,7 +30,7 @@ export default function ReservationsPage() {
     } finally {
       setFirstLoadDone(true)
     }
-  }, [token, branch, status, dateFrom, dateTo, search, page])
+  }, [token, search, page])
 
   useEffect(() => {
     fetchData()
@@ -50,14 +42,6 @@ export default function ReservationsPage() {
   const cancelRate = total > 0 ? `${Math.round((metrics!.cancelled / total) * 100)}%` : "0%"
 
   const isLoading = authLoading || (token != null && !firstLoadDone)
-
-  const handleFilter = (fBranch: string, fStatus: string, fDateFrom: string, fDateTo: string) => {
-    setBranch(fBranch)
-    setStatus(fStatus)
-    setDateFrom(fDateFrom)
-    setDateTo(fDateTo)
-    setPage(1)
-  }
 
   const handleSearch = (q: string) => {
     setSearch(q)
@@ -152,16 +136,6 @@ export default function ReservationsPage() {
           icon={XCircle}
         />
       </div>
-      <ReservationFilters
-        branches={data?.branches || []}
-        onFilter={handleFilter}
-        branch={branch}
-        status={status}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        onExportCSV={exportCSV}
-        onExportPDF={exportPDF}
-      />
       <ReservationDetailsModal
         isOpen={!!viewingReservation}
         onClose={() => setViewingReservation(null)}
@@ -175,6 +149,8 @@ export default function ReservationsPage() {
         onPageChange={setPage}
         onSearch={handleSearch}
         onViewDetails={(r) => setViewingReservation(r)}
+        onExportCSV={exportCSV}
+        onExportPDF={exportPDF}
         loading={isLoading}
       />
     </div>
