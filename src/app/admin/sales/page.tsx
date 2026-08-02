@@ -10,8 +10,6 @@ export default function SalesPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<SalesApiData | null>(null)
   const [branchId, setBranchId] = useState("")
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
@@ -21,8 +19,6 @@ export default function SalesPage() {
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (branchId) params.set("branchId", branchId)
-      if (dateFrom) params.set("dateFrom", dateFrom)
-      if (dateTo) params.set("dateTo", dateTo)
 
       const res = await fetch(`/api/admin/sales?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -43,7 +39,7 @@ export default function SalesPage() {
     } finally {
       setFirstLoadDone(true)
     }
-  }, [token, branchId, dateFrom, dateTo, page])
+  }, [token, branchId, page])
 
   useEffect(() => {
     fetchData()
@@ -51,10 +47,8 @@ export default function SalesPage() {
 
   const isLoading = authLoading || (token != null && !firstLoadDone)
 
-  const handleFilter = (fBranchId: string, fDateFrom: string, fDateTo: string) => {
+  const handleBranchChange = (fBranchId: string) => {
     setBranchId(fBranchId)
-    setDateFrom(fDateFrom)
-    setDateTo(fDateTo)
     setPage(1)
   }
 
@@ -142,10 +136,8 @@ export default function SalesPage() {
 
       <SalesFilters
         branches={data?.branches || []}
-        onFilter={handleFilter}
+        onBranchChange={handleBranchChange}
         branchId={branchId}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
         onExportCSV={exportCSV}
         onExportPDF={exportPDF}
       />
