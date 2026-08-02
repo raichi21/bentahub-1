@@ -162,15 +162,15 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-muted/10 border-b border-border">
-                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date/Time</th>
-                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Transaction ID</th>
-                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Method</th>
-                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Total</th>
-                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date/Time</th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Transaction ID</th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Method</th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Total</th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/30">
+            <tbody className="divide-y divide-border">
               {filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-xs text-muted-foreground">
@@ -185,26 +185,33 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                   const formattedTime = dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
                   const isCancelled = t.status === "cancelled"
 
+                  const paymentStyles: Record<string, string> = {
+                    cash: "bg-muted text-muted-foreground",
+                    gcash: "bg-accent text-primary",
+                  }
+
+                  const statusStyles: Record<string, string> = {
+                    completed: "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800",
+                    pending: "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800",
+                    cancelled: "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800",
+                  }
+
                   return (
-                    <tr key={t.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="p-4 text-xs text-muted-foreground font-medium font-mono">
-                        <div>{formattedDate}</div>
-                        <div className="text-[10px] text-muted-foreground">{formattedTime}</div>
-                      </td>
-                      <td className="p-4 text-xs font-mono font-bold text-foreground">{displayId}</td>
-                      <td className="p-4 text-xs">
-                        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border", t.paymentMethod === "gcash" ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200")}>
-                          {t.paymentMethod === "gcash" ? <CreditCard className="w-3 h-3" /> : <Banknote className="w-3 h-3" />}
+                    <tr key={t.id} className="hover:bg-muted/10 transition-colors">
+                      <td className="px-6 py-4 text-sm text-foreground whitespace-nowrap">{formattedDate} · {formattedTime}</td>
+                      <td className="px-6 py-4 font-mono text-sm text-primary">{displayId}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${paymentStyles[t.paymentMethod] || ""}`}>
                           {t.paymentMethod}
                         </span>
                       </td>
-                      <td className="p-4 text-sm font-mono font-bold text-foreground">₱{t.total.toFixed(2)}</td>
-                      <td className="p-4">
-                        <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border", isCancelled ? "bg-red-50 text-red-700 border-red-200" : t.status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200")}>
+                      <td className="px-6 py-4 text-sm font-bold text-foreground whitespace-nowrap">₱{t.total.toFixed(2)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusStyles[isCancelled ? "cancelled" : t.status] || ""}`}>
                           {t.status}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setSelectedTxn(t)}
