@@ -128,7 +128,7 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Total</th>
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment</th>
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Action</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -149,13 +149,16 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
                         {txn.statusDisplay}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => setSelectedTransaction(txn)}
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                          title="View Details"
+                          onClick={() => setSelectedTransaction(txn)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

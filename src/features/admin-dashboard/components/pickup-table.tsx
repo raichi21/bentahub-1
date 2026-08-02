@@ -207,7 +207,7 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, sta
                   <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold text-center">Items</th>
                   <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Scheduled Date</th>
                   <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Status</th>
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
@@ -230,7 +230,7 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, sta
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center gap-2">
                         {order.status === "ready" && (
                           <button
                             onClick={() => setConfirmingPickup(order)}
@@ -242,10 +242,10 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, sta
                         )}
                         <button
                           onClick={() => setViewingPickup(order)}
-                          className="p-2 border border-border hover:bg-muted text-muted-foreground rounded-lg transition-all"
+                          className="p-1 hover:bg-muted rounded text-primary transition-colors"
                           title="View Details"
                         >
-                          <Eye className="h-[18px] w-[18px]" />
+                          <Eye className="h-4 w-4" />
                         </button>
                       </div>
                     </td>

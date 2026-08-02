@@ -107,7 +107,7 @@ export function PaymentTable({ payments, totalCount, page, pageSize, onPageChang
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date &amp; Time</th>
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch</th>
                   <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Actions</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -128,13 +128,16 @@ export function PaymentTable({ payments, totalCount, page, pageSize, onPageChang
                         {p.statusDisplay}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => setSelectedPayment(p)}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedPayment(p)}
+                          className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
