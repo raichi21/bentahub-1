@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Plus, Pencil, Trash2, Users } from "lucide-react"
 import { AddUserModal } from "./add-user-modal"
 import { EditUserModal } from "./edit-user-modal"
 import { DeleteUserModal } from "./delete-user-modal"
@@ -35,7 +35,7 @@ export function UserTable({
   const [deletingUser, setDeletingUser] = useState<UserRowData | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-  const totalPages = Math.ceil(totalCount / pageSize)
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const start = (page - 1) * pageSize + 1
   const end = Math.min(page * pageSize, totalCount)
 
@@ -62,58 +62,23 @@ export function UserTable({
   const formatDate = (d: Date) =>
     new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 
-  const paginationButtons = () => {
-    const maxVisible = 5
-    const half = Math.floor(maxVisible / 2)
-    let s = Math.max(1, page - half)
-    const e = Math.min(totalPages, s + maxVisible - 1)
-    if (e - s + 1 < maxVisible) s = Math.max(1, e - maxVisible + 1)
-    const buttons: React.ReactNode[] = []
-
-    if (s > 1) {
-      buttons.push(
-        <button key={1} onClick={() => onPageChange(1)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted text-xs font-bold">1</button>
-      )
-      if (s > 2) buttons.push(<span key="dots-s" className="px-1 text-xs text-muted-foreground">...</span>)
-    }
-
-    for (let i = s; i <= e; i++) {
-      buttons.push(
-        <button
-          key={i}
-          onClick={() => onPageChange(i)}
-          className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${i === page ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted"
-            }`}
-        >{i}</button>
-      )
-    }
-
-    if (e < totalPages) {
-      if (e < totalPages - 1) buttons.push(<span key="dots-e" className="px-1 text-xs text-muted-foreground">...</span>)
-      buttons.push(
-        <button key={totalPages} onClick={() => onPageChange(totalPages)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted text-xs font-bold">{totalPages}</button>
-      )
-    }
-
-    return buttons
-  }
-
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative w-full max-w-[536px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <input
-            className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary shadow-sm transition-all text-sm h-12"
-            placeholder="Search by name or email..."
-            type="text"
-            onChange={handleSearchChange}
-          />
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+    <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
+        <h4 className="font-bold text-lg text-foreground">User Management</h4>
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              onChange={handleSearchChange}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            />
+          </div>
           <button
             onClick={() => setIsAddOpen(true)}
-            className="flex flex-1 sm:flex-initial items-center justify-center gap-2 h-12 px-8 bg-primary text-primary-foreground rounded-lg font-bold text-xs shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all w-full md:w-auto"
           >
             <Plus className="h-[18px] w-[18px]" />
             Add User
@@ -121,108 +86,128 @@ export function UserTable({
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden mb-8">
-        <div className="overflow-x-auto">
-          {loading && users.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground animate-pulse">Loading users...</div>
-          ) : users.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">No users found.</div>
-          ) : (
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-muted/10 border-b border-border">
-                <tr>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest">Name</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest">Email</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-center">Role</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest">Branch</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-center">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-center">Join Date</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-muted/5 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                          {getInitials(u.fullName)}
-                        </div>
-                        <span className="text-sm font-medium text-foreground">{u.fullName}</span>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-muted/40 border-b border-border">
+            <tr className="text-[11px] font-bold uppercase tracking-widest">
+              <th className="px-6 py-4">Name</th>
+              <th className="px-6 py-4">Email</th>
+              <th className="px-6 py-4 text-center">Role</th>
+              <th className="px-6 py-4">Branch</th>
+              <th className="px-6 py-4 text-center">Status</th>
+              <th className="px-6 py-4 text-center">Join Date</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {loading ? (
+              <tr>
+                <td className="px-6 py-20 text-center" colSpan={7}>
+                  <div className="flex flex-col items-center gap-4 animate-pulse">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                      <Users className="h-8 w-8" />
+                    </div>
+                    <p className="font-bold text-foreground">Loading users...</p>
+                  </div>
+                </td>
+              </tr>
+            ) : users.length === 0 ? (
+              <tr>
+                <td className="px-6 py-20 text-center" colSpan={7}>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                      <Users className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground">No users found.</p>
+                      <p className="text-sm text-muted-foreground mt-1">Try adjusting your search.</p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              users.map((u) => (
+                <tr key={u.id} className="hover:bg-primary/5 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                        {getInitials(u.fullName)}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-sm text-foreground">{u.email}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-tight ${roleStyles[u.role] || "bg-muted text-muted-foreground"}`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-sm text-foreground">
-                      {u.branch || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${u.isActive
+                      <span className="text-sm font-medium text-foreground">{u.fullName}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">{u.email}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${roleStyles[u.role] || "bg-muted text-muted-foreground"}`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">
+                    {u.branch || "—"}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${u.isActive
                         ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
                         : "bg-destructive/10 text-destructive border border-destructive/20"
-                        }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-green-500" : "bg-destructive"}`} />
-                        {u.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center font-mono font-medium text-sm text-foreground">{formatDate(u.createdAt)}</td>
-                    <td className="px-6 py-4 text-right">
-                      {u.role === "customer" ? (
-                        <span className="text-[10px] text-muted-foreground italic">—</span>
-                      ) : (
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setEditingUser(u)}
-                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setDeletingUser(u)}
-                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {totalCount > pageSize && (
-          <div className="px-6 py-4 flex items-center justify-between bg-muted/5 border-t border-border">
-            <p className="text-xs text-muted-foreground">
-              Showing <span className="font-bold text-foreground">{start}–{end}</span> of{" "}
-              <span className="font-bold text-foreground">{totalCount}</span> users
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page <= 1}
-                className="p-1 rounded border border-border hover:bg-muted disabled:opacity-30 disabled:pointer-events-none h-8 w-8 flex items-center justify-center"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              {paginationButtons()}
-              <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page >= totalPages}
-                className="p-1 rounded border border-border hover:bg-muted disabled:opacity-30 disabled:pointer-events-none h-8 w-8 flex items-center justify-center"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
+                      }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-green-500" : "bg-destructive"}`} />
+                      {u.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center font-mono font-medium text-sm text-foreground">{formatDate(u.createdAt)}</td>
+                  <td className="px-6 py-4 text-right">
+                    {u.role === "customer" ? (
+                      <span className="text-[10px] text-muted-foreground italic">—</span>
+                    ) : (
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setEditingUser(u)}
+                          className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingUser(u)}
+                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {totalCount > pageSize && (
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-muted/20">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+            Showing {users.length > 0 ? start : 0} to {end} of {totalCount} results
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       <AddUserModal
         isOpen={isAddOpen}
@@ -246,6 +231,6 @@ export function UserTable({
         token={token}
         onSuccess={() => { setDeletingUser(null); onRefresh() }}
       />
-    </div>
+    </section>
   )
 }

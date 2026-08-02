@@ -9,13 +9,18 @@ import type { PaymentApiData } from "@/types/admin"
 export default function PaymentsPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<PaymentApiData | null>(null)
+  const [branchId, setBranchId] = useState("")
+  const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch(`/api/admin/payments?page=${page}&pageSize=15`, {
+      const params = new URLSearchParams({ page: String(page), pageSize: "15" })
+      if (branchId) params.set("branchId", branchId)
+      if (search) params.set("search", search)
+      const res = await fetch(`/api/admin/payments?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const json = await res.json()
@@ -25,7 +30,7 @@ export default function PaymentsPage() {
     } finally {
       setFirstLoadDone(true)
     }
-  }, [token, page])
+  }, [token, branchId, search, page])
 
   useEffect(() => {
     fetchData()
@@ -38,6 +43,16 @@ export default function PaymentsPage() {
   const gcashPct = metrics?.gcashPercentage ?? 0
 
   const isLoading = authLoading || (token != null && !firstLoadDone)
+
+  const handleBranchChange = (fBranchId: string) => {
+    setBranchId(fBranchId)
+    setPage(1)
+  }
+
+  const handleSearch = (q: string) => {
+    setSearch(q)
+    setPage(1)
+  }
 
   function exportPDF() {
     if (!data) return
@@ -105,6 +120,10 @@ export default function PaymentsPage() {
         page={page}
         pageSize={15}
         onPageChange={setPage}
+        branches={data?.branches || []}
+        branchId={branchId}
+        onBranchChange={handleBranchChange}
+        onSearch={handleSearch}
         onExportPDF={exportPDF}
         loading={isLoading}
       />

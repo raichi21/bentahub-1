@@ -44,6 +44,7 @@ export interface PaymentPageData {
     status: string
     statusDisplay: string
   }>
+  branches: { id: string; name: string }[]
   totalCount: number
 }
 
@@ -93,7 +94,11 @@ export async function getPayments(filters: PaymentFilterOptions = { page: 1, pag
   let filtered = allRows
   if (filters.search) {
     const q = filters.search.toLowerCase()
-    filtered = allRows.filter((t) => t.id.toLowerCase().includes(q))
+    filtered = allRows.filter(
+      (t) =>
+        t.id.toLowerCase().includes(q) ||
+        (branchMap.get(t.branchId) || "").toLowerCase().includes(q)
+    )
   }
 
   const totalCount = filtered.length
@@ -152,6 +157,7 @@ export async function getPayments(filters: PaymentFilterOptions = { page: 1, pag
       totalCount,
     },
     payments,
+    branches: allBranches.map((b) => ({ id: b.id, name: b.name })),
     totalCount,
   }
 }

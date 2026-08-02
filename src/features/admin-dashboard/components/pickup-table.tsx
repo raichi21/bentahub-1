@@ -201,13 +201,13 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, sta
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-muted/10 border-b border-border">
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Order ID</th>
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Customer</th>
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Branch</th>
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold text-center">Items</th>
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Scheduled Date</th>
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Status</th>
-                  <th className="px-6 py-4 text-[11px] text-muted-foreground uppercase tracking-wider font-bold">Actions</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Order ID</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Customer</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Branch</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-center">Items</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Scheduled Date</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Status</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">

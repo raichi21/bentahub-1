@@ -235,6 +235,7 @@ export interface PaymentRowData {
 export interface PaymentApiData {
   metrics: PaymentMetricsData
   payments: PaymentRowData[]
+  branches: { id: string; name: string }[]
   totalCount: number
 }
 
