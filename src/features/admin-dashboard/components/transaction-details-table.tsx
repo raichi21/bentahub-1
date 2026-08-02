@@ -124,15 +124,15 @@ export function TransactionDetailsTable({
             ) : (
               transactions.map((t) => (
                 <tr key={t.id} className="hover:bg-primary/5 transition-colors group">
-                  <td className="px-6 py-4 font-mono text-sm text-foreground">{t.displayId}</td>
-                  <td className="px-6 py-4 text-sm text-foreground">{t.branchName}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                  <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{t.displayId}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">{t.branchName}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">
                     {new Date(t.createdAt).toLocaleDateString("en-PH", {
                       month: "short", day: "numeric", year: "numeric",
                       hour: "2-digit", minute: "2-digit",
                     })}
                   </td>
-                  <td className="px-6 py-4 font-mono text-sm font-bold text-foreground">
+                  <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">
                     ₱{parseFloat(t.totalAmount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4">
