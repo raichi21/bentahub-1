@@ -152,15 +152,15 @@ export function UserTable({
                         <span className="text-sm font-medium text-foreground">{u.fullName}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{u.email}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{u.email}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-tight ${roleStyles[u.role] || "bg-muted text-muted-foreground"}`}>
                         {u.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {u.branch || "—"}
-                    </td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">
+                    {u.branch || "—"}
+                  </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${
                         u.isActive
@@ -171,7 +171,7 @@ export function UserTable({
                         {u.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center font-mono text-sm text-muted-foreground">{formatDate(u.createdAt)}</td>
+                    <td className="px-6 py-4 text-center font-mono font-medium text-sm text-foreground">{formatDate(u.createdAt)}</td>
                     <td className="px-6 py-4 text-right">
                       {u.role === "customer" ? (
                         <span className="text-[10px] text-muted-foreground italic">—</span>

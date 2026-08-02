@@ -113,16 +113,16 @@ export function PaymentTable({ payments, totalCount, page, pageSize, onPageChang
               <tbody className="divide-y divide-border">
                 {payments.map((p) => (
                   <tr key={p.id} className="hover:bg-muted/10 transition-colors">
-                    <td className="px-6 py-4 font-mono text-sm text-foreground">{p.displayId}</td>
-                    <td className="px-6 py-4 font-mono text-sm text-foreground">{p.transactionDisplayId}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-foreground">{p.amountDisplay}</td>
+                    <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{p.displayId}</td>
+                    <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{p.transactionDisplayId}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{p.amountDisplay}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${methodStyles[p.method] || ""}`}>
                         {p.methodDisplay}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{p.dateTimeDisplay}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">{p.branchName}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{p.dateTimeDisplay}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{p.branchName}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusStyles[p.status] || ""}`}>
                         {p.statusDisplay}

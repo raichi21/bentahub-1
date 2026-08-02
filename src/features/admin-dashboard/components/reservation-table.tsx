@@ -104,7 +104,7 @@ export function ReservationTable({
 
                 return (
                   <tr key={r.id} className="hover:bg-primary/5 transition-colors">
-                    <td className="px-6 py-4 font-mono text-sm text-primary font-bold">{r.displayId}</td>
+                    <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{r.displayId}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
@@ -113,12 +113,12 @@ export function ReservationTable({
                         <span className="text-sm font-medium text-foreground">{r.customerName}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{r.branch}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{r.itemsCount} {r.itemsCount === 1 ? "Item" : "Items"}</td>
-                    <td className="px-6 py-4 font-mono text-sm font-bold text-foreground">
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{r.branch}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{r.itemsCount} {r.itemsCount === 1 ? "Item" : "Items"}</td>
+                    <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">
                       ₱{parseFloat(r.totalAmount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{pickupDisplay}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{pickupDisplay}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${statusStyle}`}>
                         {r.status}

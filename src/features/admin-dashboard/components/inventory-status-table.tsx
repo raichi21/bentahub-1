@@ -142,17 +142,17 @@ export function InventoryStatusTable({
 
               return (
                 <tr key={`${item.productId}-${item.branchId}`} className="hover:bg-primary/5 transition-colors cursor-pointer group">
-                  <td className="px-6 py-4 font-bold text-sm text-foreground">{item.productName}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{item.category}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{item.branchName}</td>
-                  <td className="px-6 py-4 font-mono text-sm text-foreground">{item.totalQuantity}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{item.reorderLevel}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.productName}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.category}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.branchName}</td>
+                  <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{item.totalQuantity}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.reorderLevel}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${statusColor}`}>
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-xs text-muted-foreground">{formatDate(item.lastUpdated)}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground">{formatDate(item.lastUpdated)}</td>
                 </tr>
               )
             })}

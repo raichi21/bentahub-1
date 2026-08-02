@@ -134,11 +134,11 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
               <tbody className="divide-y divide-border">
                 {transactions.map((txn) => (
                   <tr key={txn.id} className="hover:bg-muted/10 transition-colors">
-                    <td className="px-6 py-4 text-sm text-foreground whitespace-nowrap">{txn.dateDisplay}</td>
-                    <td className="px-6 py-4 font-mono text-sm text-primary">{txn.displayId}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">{txn.branchName}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">{txn.itemsCount} items</td>
-                    <td className="px-6 py-4 text-sm font-bold text-foreground whitespace-nowrap">{txn.totalAmountDisplay}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{txn.dateDisplay}</td>
+                    <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{txn.displayId}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{txn.branchName}</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground">{txn.itemsCount} items</td>
+                    <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{txn.totalAmountDisplay}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${paymentStyles[txn.paymentMethod] || ""}`}>
                         {txn.paymentMethodDisplay}
