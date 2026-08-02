@@ -17,45 +17,22 @@ interface PickupTableProps {
   page: number
   pageSize: number
   branches: BranchOption[]
-  status: string
   branch: string
-  dateFrom: string
-  dateTo: string
   onPageChange: (page: number) => void
   onSearch: (q: string) => void
-  onFilter: (branch: string, status: string, dateFrom: string, dateTo: string) => void
+  onBranchChange: (branchId: string) => void
   onExportCSV?: () => void
   onExportPDF?: () => void
   onConfirm: (orderId: string) => Promise<boolean>
   loading: boolean
 }
 
-const STATUS_OPTIONS = [
-  { value: "", label: "All Status" },
-  { value: "ready", label: "Ready" },
-  { value: "pending", label: "Pending" },
-  { value: "processing", label: "Processing" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-]
-
-export function PickupTable({ pickups, totalCount, page, pageSize, branches, status, branch, dateFrom, dateTo, onPageChange, onSearch, onFilter, onExportCSV, onExportPDF, onConfirm, loading }: PickupTableProps) {
+export function PickupTable({ pickups, totalCount, page, pageSize, branches, branch, onPageChange, onSearch, onBranchChange, onExportCSV, onExportPDF, onConfirm, loading }: PickupTableProps) {
   const [confirmingPickup, setConfirmingPickup] = useState<PickupRowData | null>(null)
   const [viewingPickup, setViewingPickup] = useState<PickupRowData | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
-  const [localBranch, setLocalBranch] = useState(branch)
-  const [localStatus, setLocalStatus] = useState(status)
-  const [localFrom, setLocalFrom] = useState(dateFrom)
-  const [localTo, setLocalTo] = useState(dateTo)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-
-  useEffect(() => {
-    setLocalBranch(branch)
-    setLocalStatus(status)
-    setLocalFrom(dateFrom)
-    setLocalTo(dateTo)
-  }, [branch, status, dateFrom, dateTo])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -90,82 +67,35 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, sta
     cancelled: "bg-destructive",
   }
 
-  const handleApply = () => {
-    onFilter(localBranch, localStatus, localFrom, localTo)
-  }
-
   return (
     <>
-      <div className="bg-card rounded-xl border border-border shadow-sm">
-        <div className="px-8 py-6 border-b border-border">
-          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4">
-            <h4 className="text-base font-bold text-foreground">Pickup Orders</h4>
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+      <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
+          <h4 className="font-bold text-lg text-foreground">Pickup Orders</h4>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search order ID or customer..."
-                className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
                 onChange={handleSearchChange}
               />
             </div>
-          </div>
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[160px]">
-              <label className="block text-xs font-bold mb-2 text-muted-foreground">Status</label>
-              <select
-                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                value={localStatus}
-                onChange={(e) => setLocalStatus(e.target.value)}
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[160px]">
-              <label className="block text-xs font-bold mb-2 text-muted-foreground">Branch</label>
-              <select
-                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                value={localBranch}
-                onChange={(e) => setLocalBranch(e.target.value)}
-              >
-                <option value="">All Branches</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[160px]">
-              <label className="block text-xs font-bold mb-2 text-muted-foreground">Date From</label>
-              <input
-                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                type="date"
-                value={localFrom}
-                onChange={(e) => setLocalFrom(e.target.value)}
-              />
-            </div>
-            <div className="flex-1 min-w-[160px]">
-              <label className="block text-xs font-bold mb-2 text-muted-foreground">Date To</label>
-              <input
-                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                type="date"
-                value={localTo}
-                onChange={(e) => setLocalTo(e.target.value)}
-              />
-            </div>
-            <button
-              onClick={handleApply}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
-              aria-label="Apply filters"
+            <select
+              value={branch}
+              onChange={(e) => onBranchChange(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
             >
-              <Search className="h-4 w-4" />
-              Apply
-            </button>
-            <div ref={exportRef} className="relative ml-auto">
+              <option value="">All Branches</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+            <div ref={exportRef} className="relative">
               <button
                 onClick={() => setExportOpen(!exportOpen)}
-                className="flex items-center gap-2 px-6 py-2.5 bg-muted/50 hover:bg-muted rounded-lg border border-border text-sm font-bold transition-all w-full md:w-auto justify-center"
+                className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all w-full md:w-auto justify-center"
               >
                 <Download className="h-[18px] w-[18px]" />
                 Export
@@ -282,7 +212,7 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, sta
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       <ConfirmPickupModal
         key={confirmingPickup ? `confirm-${confirmingPickup.id}` : "confirm-closed"}

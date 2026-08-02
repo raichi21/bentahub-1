@@ -29,6 +29,7 @@ function formatDate(d: Date): string {
 
 export async function getPickups(filters: PickupFilterOptions = { page: 1, pageSize: 15 }) {
   const allBranches = await db.query.branches.findMany()
+  const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
   const now = new Date()
 
   const baseConditions: any[] = []
@@ -36,7 +37,7 @@ export async function getPickups(filters: PickupFilterOptions = { page: 1, pageS
     baseConditions.push(eq(orders.status, filters.status as any))
   }
   if (filters.branch) {
-    baseConditions.push(eq(orders.branch, filters.branch))
+    baseConditions.push(eq(orders.branch, branchMap.get(filters.branch) ?? filters.branch))
   }
   if (filters.dateFrom) {
     baseConditions.push(gte(orders.createdAt, new Date(filters.dateFrom)))

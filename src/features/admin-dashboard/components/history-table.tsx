@@ -12,11 +12,14 @@ interface HistoryTableProps {
   pageSize: number
   onPageChange: (page: number) => void
   onSearch: (q: string) => void
+  branches?: { id: string; name: string }[]
+  branchId: string
+  onBranchChange: (branchId: string) => void
   onExportPDF?: () => void
   loading: boolean
 }
 
-export function HistoryTable({ transactions, totalCount, page, pageSize, onPageChange, onSearch, onExportPDF, loading }: HistoryTableProps) {
+export function HistoryTable({ transactions, totalCount, page, pageSize, onPageChange, onSearch, branches = [], branchId, onBranchChange, onExportPDF, loading }: HistoryTableProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<HistoryTransactionRowData | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
@@ -82,6 +85,16 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
                 onChange={handleSearchChange}
               />
             </div>
+            <select
+              value={branchId}
+              onChange={(e) => onBranchChange(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            >
+              <option value="">All Branches</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
             <div ref={exportRef} className="relative">
               <button
                 onClick={() => setExportOpen(!exportOpen)}
@@ -121,14 +134,14 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
             <table className="w-full text-left border-collapse">
               <thead className="bg-muted/10 border-b border-border">
                 <tr>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Transaction ID</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Items</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Action</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Transaction ID</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Branch</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Items</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Payment</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

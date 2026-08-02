@@ -11,6 +11,7 @@ export default function HistoryPage() {
   const [data, setData] = useState<HistoryApiData | null>(null)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
+  const [branchId, setBranchId] = useState("")
   const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {
@@ -18,6 +19,7 @@ export default function HistoryPage() {
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (search) params.set("search", search)
+      if (branchId) params.set("branchId", branchId)
 
       const res = await fetch(`/api/admin/history?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -29,7 +31,7 @@ export default function HistoryPage() {
     } finally {
       setFirstLoadDone(true)
     }
-  }, [token, page, search])
+  }, [token, page, search, branchId])
 
   useEffect(() => {
     fetchData()
@@ -39,6 +41,11 @@ export default function HistoryPage() {
 
   const handleSearch = (q: string) => {
     setSearch(q)
+    setPage(1)
+  }
+
+  const handleBranchChange = (fBranchId: string) => {
+    setBranchId(fBranchId)
     setPage(1)
   }
 
@@ -101,6 +108,9 @@ export default function HistoryPage() {
         pageSize={15}
         onPageChange={setPage}
         onSearch={handleSearch}
+        branches={data?.branches || []}
+        branchId={branchId}
+        onBranchChange={handleBranchChange}
         onExportPDF={exportPDF}
         loading={isLoading}
       />

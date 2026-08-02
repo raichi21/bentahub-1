@@ -11,10 +11,7 @@ export default function PickupsPage() {
   const [data, setData] = useState<PickupApiData | null>(null)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
-  const [status, setStatus] = useState("")
   const [branch, setBranch] = useState("")
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
 
@@ -23,10 +20,7 @@ export default function PickupsPage() {
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (search) params.set("search", search)
-      if (status) params.set("status", status)
       if (branch) params.set("branch", branch)
-      if (dateFrom) params.set("dateFrom", dateFrom)
-      if (dateTo) params.set("dateTo", dateTo)
 
       const res = await fetch(`/api/admin/pickups?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -47,7 +41,7 @@ export default function PickupsPage() {
     } finally {
       setFirstLoadDone(true)
     }
-  }, [token, page, search, status, branch, dateFrom, dateTo])
+  }, [token, page, search, branch])
 
   useEffect(() => {
     fetchData()
@@ -63,11 +57,8 @@ export default function PickupsPage() {
     setPage(1)
   }
 
-  const handleFilter = (fBranch: string, fStatus: string, fDateFrom: string, fDateTo: string) => {
-    setBranch(fBranch)
-    setStatus(fStatus)
-    setDateFrom(fDateFrom)
-    setDateTo(fDateTo)
+  const handleBranchChange = (fBranchId: string) => {
+    setBranch(fBranchId)
     setPage(1)
   }
 
@@ -182,13 +173,10 @@ export default function PickupsPage() {
         page={page}
         pageSize={15}
         branches={data?.branches || []}
-        status={status}
         branch={branch}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
         onPageChange={setPage}
         onSearch={handleSearch}
-        onFilter={handleFilter}
+        onBranchChange={handleBranchChange}
         onExportCSV={exportCSV}
         onExportPDF={exportPDF}
         onConfirm={handleConfirm}
