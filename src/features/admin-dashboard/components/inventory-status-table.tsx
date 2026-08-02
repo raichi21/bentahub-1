@@ -122,7 +122,7 @@ export function InventoryStatusTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+            <tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-widest">
               <th className="px-6 py-4">Product</th>
               <th className="px-6 py-4">Category</th>
               <th className="px-6 py-4">Branch</th>
