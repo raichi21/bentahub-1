@@ -120,16 +120,25 @@ export function InventoryStatusTable({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed", minWidth: 900 }}>
+          <colgroup>
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+          </colgroup>
           <thead>
             <tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-widest">
-              <th className="px-6 py-4">Product</th>
-              <th className="px-6 py-4">Category</th>
-              <th className="px-6 py-4">Branch</th>
-              <th className="px-6 py-4">Total Quantity</th>
-              <th className="px-6 py-4">Reorder Level</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Last Updated</th>
+              <th className="px-6 py-4 whitespace-nowrap">Product</th>
+              <th className="px-6 py-4 whitespace-nowrap">Category</th>
+              <th className="px-6 py-4 whitespace-nowrap">Branch</th>
+              <th className="px-6 py-4 whitespace-nowrap">Total Quantity</th>
+              <th className="px-6 py-4 whitespace-nowrap">Reorder Level</th>
+              <th className="px-6 py-4 whitespace-nowrap">Status</th>
+              <th className="px-6 py-4 whitespace-nowrap">Last Updated</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -142,17 +151,17 @@ export function InventoryStatusTable({
 
               return (
                 <tr key={`${item.productId}-${item.branchId}`} className="hover:bg-primary/5 transition-colors cursor-pointer group">
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.productName}</td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.category}</td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.branchName}</td>
-                  <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{item.totalQuantity}</td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">{item.reorderLevel}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate" title={item.productName}>{item.productName}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate" title={item.category}>{item.category}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate" title={item.branchName}>{item.branchName}</td>
+                  <td className="px-6 py-4 font-mono font-medium text-sm text-foreground whitespace-nowrap">{item.totalQuantity}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{item.reorderLevel}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${statusColor}`}>
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">{formatDate(item.lastUpdated)}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{formatDate(item.lastUpdated)}</td>
                 </tr>
               )
             })}
