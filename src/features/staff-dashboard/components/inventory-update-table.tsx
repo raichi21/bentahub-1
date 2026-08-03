@@ -83,22 +83,23 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
       <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} />
       <AddStockModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={(p) => onAddProduct?.(p)} />
 
-      <div className="p-4 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/20">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search by product name or SKU..."
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-          />
-        </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1) }} className="px-3 py-2 bg-background border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20">
+      <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
+        <h4 className="font-bold text-lg text-foreground">Inventory Stock</h4>
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search by product name or SKU..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            />
+          </div>
+          <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1) }} className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none">
             {categories.map((cat) => (<option key={cat} value={cat}>Category: {cat}</option>))}
           </select>
-          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1) }} className="px-3 py-2 bg-background border border-border rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20">
+          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1) }} className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none">
             <option value="All">Status: All</option>
             <option value="In Stock">In Stock</option>
             <option value="Low Stock">Low Stock</option>
@@ -107,7 +108,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
           </select>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:bg-primary/95 transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:bg-primary/95 transition-colors shadow-xs justify-center"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Stock
@@ -119,13 +120,13 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-muted/10 border-b border-border">
-              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Product</th>
-              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</th>
-              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</th>
-              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Expiry</th>
-              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reorder Level</th>
-              <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Actions</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Product</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Category</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Quantity</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Expiry</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Status</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Reorder Level</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/30">
@@ -139,8 +140,8 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                 const isOut = status === "out-of-stock"
                 const isLow = status === "low-stock"
                 return (
-                  <tr key={p.id} ref={highlightedSku === p.sku ? highlightRef : undefined} className={cn("hover:bg-muted/20 transition-colors", isOut && "bg-red-50/20", isLow && "bg-amber-50/10", highlightedSku === p.sku && "ring-2 ring-primary ring-inset bg-primary/5")}>
-                    <td className="p-4">
+                  <tr key={p.id} ref={highlightedSku === p.sku ? highlightRef : undefined} className={cn("hover:bg-muted/10 transition-colors", isOut && "bg-red-50/20", isLow && "bg-amber-50/10", highlightedSku === p.sku && "ring-2 ring-primary ring-inset bg-primary/5")}>
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded bg-muted flex-shrink-0 overflow-hidden border border-border/50 flex items-center justify-center">
                           {p.image ? (
@@ -155,9 +156,9 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-xs font-medium text-muted-foreground">{p.category}</td>
-                    <td className="p-4 text-sm font-mono font-bold text-foreground">{p.stock} {p.unit}s</td>
-                    <td className="p-4">
+                    <td className="px-6 py-4 text-sm text-foreground">{p.category}</td>
+                    <td className="px-6 py-4 text-sm font-mono font-bold text-foreground">{p.stock} {p.unit}s</td>
+                    <td className="px-6 py-4">
                       {(() => {
                         const days = getExpiryDays(p.nearestExpiry)
                         const formatted = formatExpiryDate(p.nearestExpiry)
@@ -175,16 +176,17 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                         )
                       })()}
                     </td>
-                    <td className="p-4">
+                    <td className="px-6 py-4">
                       <span className={cn(
-                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                        "inline-flex items-center gap-2 px-3 py-1 rounded-full font-bold text-[10px] uppercase border",
                         isOut ? "bg-red-50 text-red-700 border-red-200" : isLow ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
                       )}>
+                        <span className={cn("w-1.5 h-1.5 rounded-full", isOut ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-emerald-500")} />
                         {isOut ? "Out of Stock" : isLow ? "Low Stock" : "In Stock"}
                       </span>
                     </td>
-                    <td className="p-4 text-xs font-mono text-muted-foreground">{p.reorderLevel} {p.unit}s</td>
-                    <td className="p-4 text-right">
+                    <td className="px-6 py-4 text-sm font-mono text-muted-foreground">{p.reorderLevel} {p.unit}s</td>
+                    <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => setEditingProduct(p)}
                         disabled={savingId === p.id}
@@ -202,8 +204,8 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
         </table>
       </div>
 
-      <div className="p-4 bg-muted/20 border-t border-border flex items-center justify-between mt-auto">
-        <p className="text-xs text-muted-foreground font-medium font-mono">
+      <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-muted/5 mt-auto">
+        <p className="text-xs text-muted-foreground font-medium">
           Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)} to {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} entries
         </p>
         <div className="flex items-center gap-2">
@@ -214,7 +216,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
           >
             Previous
           </button>
-          <span className="text-xs font-bold text-muted-foreground px-2 font-mono">Page {safePage} of {totalPages}</span>
+          <span className="px-3 py-1 text-sm text-muted-foreground font-medium">Page {safePage} of {totalPages}</span>
           <button
             disabled={safePage === totalPages}
             onClick={() => setCurrentPage((c) => c + 1)}

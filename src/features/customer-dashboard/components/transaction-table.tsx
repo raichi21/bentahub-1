@@ -100,12 +100,12 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Transaction ID</th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Date</th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Amount</th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Payment Method</th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">Status</th>
-              <th className="p-3 text-xs font-bold tracking-widest text-muted-foreground uppercase text-right">Actions</th>
+              <th className="p-3 text-xs font-bold tracking-widest uppercase">Transaction ID</th>
+              <th className="p-3 text-xs font-bold tracking-widest uppercase">Date</th>
+              <th className="p-3 text-xs font-bold tracking-widest uppercase">Amount</th>
+              <th className="p-3 text-xs font-bold tracking-widest uppercase">Payment Method</th>
+              <th className="p-3 text-xs font-bold tracking-widest uppercase">Status</th>
+              <th className="p-3 text-xs font-bold tracking-widest uppercase text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
