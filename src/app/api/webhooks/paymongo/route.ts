@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    if (eventType === "payment.paid" || paymentStatus === "paid") {
+    if (eventType === "payment.paid" || ["paid", "processing"].includes(paymentStatus)) {
       // Try to update orders table (customer flow)
       try {
         const orderResult = await db

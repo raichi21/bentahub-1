@@ -25,7 +25,9 @@ export async function GET(request: NextRequest) {
 
     const paymentIntent = await retrievePaymentIntent(paymentIntentId)
 
-    const isPaid = paymentIntent.status === "succeeded"
+    const isPaid = ["succeeded", "processing"].includes(paymentIntent.status)
+
+    console.log("[check] paymentIntentId:", paymentIntentId, "status:", paymentIntent.status, "isPaid:", isPaid)
 
     // If payment succeeded, update the transaction status in the database
     if (isPaid) {

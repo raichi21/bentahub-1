@@ -188,6 +188,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
           receiptNumber={gcashPayment.receiptNumber}
           paymentIntentId={gcashPayment.paymentIntentId}
           transactionId={gcashPayment.transactionId}
+          token={token}
           onSuccess={() => {
             const transaction: Transaction = {
               id: gcashPayment.transactionId,
@@ -392,7 +393,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
         {/* Action button trigger blocks */}
         <div className="flex flex-col gap-1.5 pt-0.5">
           <button
-            disabled={items.length === 0 || submitting}
+            disabled={items.length === 0 || submitting || !!gcashPayment}
             onClick={completeSale}
             className="w-full bg-primary text-primary-foreground py-3 rounded-2xl font-black text-base shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >

@@ -48,7 +48,7 @@ export interface CheckoutSessionResult {
  * This returns a `checkout_url` that can be encoded in a QR code.
  */
 export async function createCheckoutSession(params: {
-  amount: number // in centavos
+  amount: number
   description?: string
   lineItems?: Array<{ name: string; amount: number; quantity: number }>
   successUrl?: string
@@ -60,19 +60,19 @@ export async function createCheckoutSession(params: {
 }): Promise<CheckoutSessionResult> {
   const lineItems = params.lineItems && params.lineItems.length > 0
     ? params.lineItems.map((item) => ({
-        name: item.name,
-        amount: item.amount,
-        currency: "PHP",
-        quantity: item.quantity,
-      }))
+      name: item.name,
+      amount: item.amount,
+      currency: "PHP",
+      quantity: item.quantity,
+    }))
     : [
-        {
-          name: params.description || "Store purchase",
-          amount: params.amount,
-          currency: "PHP",
-          quantity: 1,
-        },
-      ]
+      {
+        name: params.description || "Store purchase",
+        amount: params.amount,
+        currency: "PHP",
+        quantity: 1,
+      },
+    ]
 
   const attributes: Record<string, unknown> = {
     line_items: lineItems,
@@ -191,7 +191,7 @@ export async function retrievePaymentIntent(id: string): Promise<PayMongoPayment
 }
 
 export function isPaymentSuccessful(status: string): boolean {
-  return status === "succeeded"
+  return ["succeeded", "processing"].includes(status)
 }
 
 export function isPaymentPending(status: string): boolean {

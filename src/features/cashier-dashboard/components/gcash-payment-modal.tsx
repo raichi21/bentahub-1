@@ -9,6 +9,7 @@ interface GcashPaymentModalProps {
   receiptNumber: number
   paymentIntentId: string
   transactionId: string
+  token: string | null
   onSuccess: () => void
   onClose: () => void
 }
@@ -18,6 +19,7 @@ export function GcashPaymentModal({
   amount,
   receiptNumber,
   paymentIntentId,
+  token,
   onSuccess,
   onClose,
 }: GcashPaymentModalProps) {
@@ -29,7 +31,9 @@ export function GcashPaymentModal({
     setError("")
 
     try {
-      const res = await fetch(`/api/cashier/payments/check?paymentIntentId=${paymentIntentId}`)
+      const res = await fetch(`/api/cashier/payments/check?paymentIntentId=${paymentIntentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       const json = await res.json()
 
       if (json.success && json.data.isPaid) {

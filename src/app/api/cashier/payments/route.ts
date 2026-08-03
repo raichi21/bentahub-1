@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Create PayMongo Checkout Session (returns real checkout_url for QR)
     const amountInCentavos = Math.round(totalAmount * 100)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get("origin") || "http://localhost:3000"
     const checkout = await createCheckoutSession({
       amount: amountInCentavos,
       description: `Receipt #${nextReceiptNumber} (txn:${transactionId}) - ${branchName}`,
