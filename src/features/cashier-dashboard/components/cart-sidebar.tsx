@@ -13,9 +13,10 @@ import type { Transaction } from "@/types/cashier"
 interface CartSidebarProps {
   cart: UseCartReturn
   onClose?: () => void
+  onSaleComplete?: () => void
 }
 
-export function CartSidebar({ cart, onClose }: CartSidebarProps) {
+export function CartSidebar({ cart, onClose, onSaleComplete }: CartSidebarProps) {
   const { token, user } = useAuth()
   const {
     items,
@@ -144,12 +145,13 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
       )
       setCheckoutSuccess(true)
       clearCart()
+      onSaleComplete?.()
     } catch (err) {
       alert(err instanceof Error ? err.message : "Transaction failed")
     } finally {
       setSubmitting(false)
     }
-  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart])
+  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart, onSaleComplete])
 
   // Keyboard action shortcuts
   useEffect(() => {
@@ -214,6 +216,7 @@ export function CartSidebar({ cart, onClose }: CartSidebarProps) {
             setSuccessMsg(`Payment received! Total: ₱${total.toFixed(2)}`)
             setCheckoutSuccess(true)
             clearCart()
+            onSaleComplete?.()
           }}
           onClose={() => setGcashPayment(null)}
         />

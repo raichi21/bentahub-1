@@ -1,7 +1,8 @@
 import { db } from "@/servers/db"
-import { transactions, transactionItems, branchInventory, users, notifications, branches } from "@/servers/schemas"
-import { eq, sql, max, and } from "drizzle-orm"
+import { transactions, transactionItems, users, notifications, branches } from "@/servers/schemas"
+import { eq, max, and } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
+import { deductStock } from "./finalize-transaction"
 import type { CartItem } from "@/types/cashier"
 
 export interface CreateTransactionInput {
@@ -46,16 +47,10 @@ export async function createTransaction(input: CreateTransactionInput) {
     await db.insert(transactionItems).values(transactionItemsData)
   }
 
-  for (const item of items) {
-    await db
-      .update(branchInventory)
-      .set({
-        quantity: sql`${branchInventory.quantity} - ${item.quantity}`,
-      })
-      .where(
-        sql`${branchInventory.branchId} = ${branchId} AND ${branchInventory.productId} = ${item.product.id}`
-      )
-  }
+  await deductStock(
+    branchId,
+    items.map((item) => ({ productId: item.product.id, quantity: item.quantity }))
+  )
 
   const adminUsers = await db.query.users.findMany({
     where: and(eq(users.role, "admin"), eq(users.isActive, true)),

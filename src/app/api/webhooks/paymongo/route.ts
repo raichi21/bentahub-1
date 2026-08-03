@@ -4,6 +4,7 @@ import { db } from "@/drizzle/db"
 import { orders } from "@/drizzle/schema"
 import { transactions } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
+import { completeGcashTransaction } from "@/features/cashier-dashboard/actions/finalize-transaction"
 
 /**
  * PayMongo webhook handler for async payment notifications.
@@ -61,10 +62,16 @@ export async function POST(request: NextRequest) {
 
       // Try to update transactions table (cashier flow)
       try {
-        await db
-          .update(transactions)
-          .set({ status: "completed" })
-          .where(eq(transactions.gcashRef, paymentIntentId))
+        const txn = await db.query.transactions.findFirst({
+          where: eq(transactions.gcashRef, paymentIntentId),
+        })
+
+        if (txn) {
+          const result = await completeGcashTransaction(txn.id)
+          if (result.deducted) {
+            console.log(`[webhook] Transaction completed and stock deducted for txn=${txn.id}`)
+          }
+        }
       } catch (e) {
         console.warn("[webhook] transactions update failed:", e)
       }

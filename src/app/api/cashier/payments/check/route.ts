@@ -5,6 +5,7 @@ import { transactions } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import { extractToken, verifyToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
+import { completeGcashTransaction } from "@/features/cashier-dashboard/actions/finalize-transaction"
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,12 +30,18 @@ export async function GET(request: NextRequest) {
 
     console.log("[check] paymentIntentId:", paymentIntentId, "status:", paymentIntent.status, "isPaid:", isPaid)
 
-    // If payment succeeded, update the transaction status in the database
+    // If payment succeeded, complete the transaction and deduct stock
     if (isPaid) {
-      await db
-        .update(transactions)
-        .set({ status: "completed" })
-        .where(eq(transactions.gcashRef, paymentIntentId))
+      const txn = await db.query.transactions.findFirst({
+        where: eq(transactions.gcashRef, paymentIntentId),
+      })
+
+      if (txn) {
+        const result = await completeGcashTransaction(txn.id)
+        if (result.deducted) {
+          console.log("[check] Transaction completed and stock deducted for txn:", txn.id)
+        }
+      }
     }
 
     return apiResponse({

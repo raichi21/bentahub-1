@@ -8,7 +8,7 @@ import { useCashierProducts } from "@/features/cashier-dashboard/hooks/use-cashi
 import { ShoppingCart } from "lucide-react"
 
 export default function CashierPage() {
-  const { products, isLoading, error } = useCashierProducts()
+  const { products, isLoading, error, refetch } = useCashierProducts()
   const cart = useCart()
   const [isCartOpen, setIsCartOpen] = useState(false)
 
@@ -38,7 +38,7 @@ export default function CashierPage() {
           <div onClick={() => setIsCartOpen(false)} className="absolute inset-0 bg-black/50 lg:hidden" />
         )}
         <div className={`${isCartOpen ? 'relative z-10 h-full' : 'h-full'} w-full lg:w-auto`}>
-          <CartSidebar cart={cart} onClose={() => setIsCartOpen(false)} />
+          <CartSidebar cart={cart} onClose={() => setIsCartOpen(false)} onSaleComplete={refetch} />
         </div>
       </div>
     </div>
