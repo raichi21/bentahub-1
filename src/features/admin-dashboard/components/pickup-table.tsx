@@ -143,7 +143,7 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, bra
               <tbody className="divide-y divide-border/30">
                 {pickups.map((order) => (
                   <tr key={order.id} className="hover:bg-muted/10 transition-colors">
-                    <td className="px-6 py-4 font-mono text-sm text-primary font-semibold">{order.displayId}</td>
+                    <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{order.displayId}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-foreground text-sm">{order.customerName}</span>

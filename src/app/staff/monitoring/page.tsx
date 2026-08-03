@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { LiveTransactionFeed } from "@/features/staff-dashboard/components/live-transaction-feed"
+import { LiveTransactionFeed } from "@/features/staff-dashboard/components/transaction-monitoring"
 import { KPICard } from "@/features/admin-dashboard"
 import { Receipt, TrendingUp, XCircle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
