@@ -1,5 +1,5 @@
 import { db } from "@/servers/db"
-import type { AdminOverviewData, BranchStockData, SalesTrendData, SalesTrendWeeklyData } from "@/types/admin"
+import type { AdminOverviewData, BranchStockData, SalesTrendData, SalesTrendWeeklyData, SalesTrendDailyData } from "@/types/admin"
 
 interface RawTransaction {
   id: string
@@ -133,6 +133,24 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     weeklyTrend[weekIndex].revenue += parseFloat(t.totalAmount)
   }
 
+  // --- Daily Trend (current month only) ---
+  const dailyTrend: SalesTrendDailyData[] = []
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), day, 0, 0, 0)
+    const dayEnd = new Date(now.getFullYear(), now.getMonth(), day, 23, 59, 59)
+    const revenue = allTransactions
+      .filter((t: RawTransaction) => {
+        const d = new Date(t.createdAt)
+        return t.status === "completed" && d >= dayStart && d <= dayEnd
+      })
+      .reduce((sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount), 0)
+
+    dailyTrend.push({
+      day: String(day),
+      revenue,
+    })
+  }
+
   // --- Branch Stock ---
   const branchStock: BranchStockData[] = allBranches
     .filter((b: RawBranch) => b.isActive)
@@ -190,6 +208,7 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     },
     salesTrend,
     weeklyTrend,
+    dailyTrend,
     branchStock,
     paymentBreakdown: {
       cashTotal,

@@ -110,7 +110,7 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-12">
-          <SalesChart data={data?.salesTrend} weeklyData={data?.weeklyTrend} />
+          <SalesChart data={data?.salesTrend} weeklyData={data?.weeklyTrend} dailyData={data?.dailyTrend} />
         </div>
       </div>
 
