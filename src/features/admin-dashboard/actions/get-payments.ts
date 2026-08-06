@@ -1,6 +1,7 @@
 import { db } from "@/servers/db"
-import { transactions, branches } from "@/servers/schemas"
+import { transactions } from "@/servers/schemas"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
+import type { SQL } from "drizzle-orm"
 
 export interface PaymentFilterOptions {
   method?: string
@@ -63,12 +64,12 @@ export async function getPayments(filters: PaymentFilterOptions = { page: 1, pag
   const allBranches = await db.query.branches.findMany()
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
 
-  const baseConditions: any[] = []
+  const baseConditions: SQL[] = []
   if (filters.method) {
-    baseConditions.push(eq(transactions.paymentMethod, filters.method as any))
+    baseConditions.push(eq(transactions.paymentMethod, filters.method as "cash" | "gcash"))
   }
   if (filters.status) {
-    baseConditions.push(eq(transactions.status, filters.status as any))
+    baseConditions.push(eq(transactions.status, filters.status as "pending" | "completed" | "cancelled"))
   }
   if (filters.branchId) {
     baseConditions.push(eq(transactions.branchId, filters.branchId))
@@ -110,8 +111,8 @@ export async function getPayments(filters: PaymentFilterOptions = { page: 1, pag
     .filter((t) => t.paymentMethod === "gcash")
     .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
   const totalAmount = cashTotal + gcashTotal
-  const cashPercentage = totalAmount > 0 ? (cashTotal / totalAmount) * 100 : 0
-  const gcashPercentage = totalAmount > 0 ? (gcashTotal / totalAmount) * 100 : 0
+  const cashPercentage = totalAmount > 0 ? Math.round((cashTotal / totalAmount) * 100) : 0
+  const gcashPercentage = totalAmount > 0 ? Math.round((gcashTotal / totalAmount) * 100) : 0
 
   const completedCount = filtered.filter((t) => t.status === "completed").length
   const pendingCount = filtered.filter((t) => t.status === "pending").length
