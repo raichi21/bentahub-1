@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { TransactionDetailsTable, KPICard } from "@/features/admin-dashboard"
 import { TrendingUp, Receipt, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { exportTableAsPdf } from "@/lib/export-pdf"
 import type { SalesApiData } from "@/types/admin"
 
 export default function SalesPage() {
@@ -42,7 +43,8 @@ export default function SalesPage() {
   }, [token, branchId, page])
 
   useEffect(() => {
-    fetchData()
+    const timer = setTimeout(() => fetchData(), 0)
+    return () => clearTimeout(timer)
   }, [fetchData])
 
   const isLoading = authLoading || (token != null && !firstLoadDone)
@@ -75,37 +77,22 @@ export default function SalesPage() {
 
   function exportPDF() {
     if (!data) return
-    const tableRows = data.transactions.map((t) =>
-      `<tr><td>${t.id}</td><td>${t.branchName}</td><td>${new Date(t.createdAt).toLocaleString()}</td><td>${t.totalAmount}</td><td>${t.paymentMethod}</td><td>${t.status}</td></tr>`
-    ).join("")
-    const win = window.open("", "_blank")
-    if (!win) return
-    win.document.write(`
-      <html><head><title>Sales Report</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
-        h1 { font-size: 24px; margin-bottom: 8px; }
-        p { color: #666; margin-bottom: 24px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f5f5f5; text-align: left; padding: 10px 12px; border-bottom: 2px solid #ddd; }
-        td { padding: 10px 12px; border-bottom: 1px solid #eee; }
-        .metrics { display: flex; gap: 24px; margin-bottom: 24px; }
-        .metric { background: #f9f9f9; padding: 16px; border-radius: 8px; flex: 1; }
-        .metric-label { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 4px; }
-        .metric-value { font-size: 20px; font-weight: bold; }
-      </style></head><body>
-      <h1>Sales Report</h1>
-      <p>Generated on ${new Date().toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-      <div class="metrics">
-        <div class="metric"><div class="metric-label">Total Sales</div><div class="metric-value">${data.overview.totalSalesDisplay}</div></div>
-        <div class="metric"><div class="metric-label">Transactions</div><div class="metric-value">${data.overview.transactionCount}</div></div>
-        <div class="metric"><div class="metric-label">Avg Per Transaction</div><div class="metric-value">${data.overview.avgPerTransactionDisplay}</div></div>
-      </div>
-      <table><thead><tr><th>ID</th><th>Branch</th><th>Date & Time</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead><tbody>${tableRows}</tbody></table>
-      </body></html>
-    `)
-    win.document.close()
-    setTimeout(() => { win.print() }, 500)
+    const tableRows = data.transactions.map((t) => [
+      t.id, t.branchName,
+      new Date(t.createdAt).toLocaleString(),
+      t.totalAmount, t.paymentMethod, t.status,
+    ])
+    exportTableAsPdf({
+      title: "Sales Report",
+      metrics: [
+        { label: "Total Sales", value: data.overview.totalSalesDisplay },
+        { label: "Transactions", value: String(data.overview.transactionCount) },
+        { label: "Avg Per Transaction", value: data.overview.avgPerTransactionDisplay },
+      ],
+      headers: ["ID", "Branch", "Date & Time", "Total", "Payment", "Status"],
+      rows: tableRows,
+      filename: `sales-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+    })
   }
 
   return (

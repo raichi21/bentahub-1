@@ -96,7 +96,7 @@ export function InventoryStatusTable({
               className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all w-full md:w-auto justify-center"
             >
               <Download className="h-[18px] w-[18px]" />
-              Export Data
+              Export
             </button>
             {exportOpen && (
               <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">

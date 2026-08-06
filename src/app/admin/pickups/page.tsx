@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { PickupTable, KPICard } from "@/features/admin-dashboard"
-import { TrendingUp, CheckCircle2, Clock, AlertTriangle, Download, FileSpreadsheet, FileText } from "lucide-react"
+import { TrendingUp, CheckCircle2, Clock, AlertTriangle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { exportTableAsPdf } from "@/lib/export-pdf"
 import type { PickupApiData } from "@/types/admin"
 
 export default function PickupsPage() {
@@ -44,7 +45,8 @@ export default function PickupsPage() {
   }, [token, page, search, branch])
 
   useEffect(() => {
-    fetchData()
+    const timer = setTimeout(() => fetchData(), 0)
+    return () => clearTimeout(timer)
   }, [fetchData])
 
   const metrics = data?.metrics
@@ -84,38 +86,22 @@ export default function PickupsPage() {
 
   function exportPDF() {
     if (!data) return
-    const tableRows = data.pickups.map((p) =>
-      `<tr><td>${p.displayId}</td><td>${p.customerName}</td><td>${p.branch}</td><td>${p.itemsCount}</td><td>${p.pickupDeadline ?? ""}</td><td>${p.status}</td></tr>`
-    ).join("")
-    const win = window.open("", "_blank")
-    if (!win) return
-    win.document.write(`
-      <html><head><title>Pickup Orders Report</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
-        h1 { font-size: 24px; margin-bottom: 8px; }
-        p { color: #666; margin-bottom: 24px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f5f5f5; text-align: left; padding: 10px 12px; border-bottom: 2px solid #ddd; }
-        td { padding: 10px 12px; border-bottom: 1px solid #eee; }
-        .metrics { display: flex; gap: 24px; margin-bottom: 24px; }
-        .metric { background: #f9f9f9; padding: 16px; border-radius: 8px; flex: 1; }
-        .metric-label { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 4px; }
-        .metric-value { font-size: 20px; font-weight: bold; }
-      </style></head><body>
-      <h1>Pickup Orders Report</h1>
-      <p>Generated on ${new Date().toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-      <div class="metrics">
-        <div class="metric"><div class="metric-label">Total Orders</div><div class="metric-value">${data.metrics.total}</div></div>
-        <div class="metric"><div class="metric-label">Completed</div><div class="metric-value">${data.metrics.completed}</div></div>
-        <div class="metric"><div class="metric-label">Pending</div><div class="metric-value">${data.metrics.pending}</div></div>
-        <div class="metric"><div class="metric-label">Delayed</div><div class="metric-value">${data.metrics.delayed}</div></div>
-      </div>
-      <table><thead><tr><th>ID</th><th>Customer</th><th>Branch</th><th>Items</th><th>Scheduled Date</th><th>Status</th></tr></thead><tbody>${tableRows}</tbody></table>
-      </body></html>
-    `)
-    win.document.close()
-    setTimeout(() => { win.print() }, 500)
+    const tableRows = data.pickups.map((p) => [
+      p.displayId, p.customerName, p.branch, String(p.itemsCount),
+      p.pickupDeadline ?? "", p.status,
+    ])
+    exportTableAsPdf({
+      title: "Pickup Orders Report",
+      metrics: [
+        { label: "Total Orders", value: String(data.metrics.total) },
+        { label: "Completed", value: String(data.metrics.completed) },
+        { label: "Pending", value: String(data.metrics.pending) },
+        { label: "Delayed", value: String(data.metrics.delayed) },
+      ],
+      headers: ["Order ID", "Customer", "Branch", "Items", "Scheduled Date", "Status"],
+      rows: tableRows,
+      filename: `pickups-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+    })
   }
 
   const handleConfirm = async (orderId: string): Promise<boolean> => {
