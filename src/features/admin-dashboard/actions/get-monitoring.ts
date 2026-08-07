@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
-import { eq, and, isNotNull, gte, lte } from "drizzle-orm"
-import { branches, branchInventory, products, transactions, inventoryBatches } from "@/servers/schemas"
+import { and, isNotNull, gte, lte } from "drizzle-orm"
+import { inventoryBatches } from "@/servers/schemas"
 import type { MonitoringData, InventoryStatusItem, SystemAlertItem, ExpiringItemData } from "@/types/admin"
 
 interface RawBranch {

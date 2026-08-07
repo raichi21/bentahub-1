@@ -10,6 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
+import type { LoginResponseData } from "@/types/auth"
+
+type LoginResponse = {
+  success: boolean
+  message?: string
+  data?: LoginResponseData
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -35,7 +42,7 @@ export default function LoginPage() {
 
       const contentType = response.headers.get("content-type") || ""
       const text = await response.text()
-      let data: any = null
+      let data: LoginResponse | null = null
 
       if (contentType.includes("application/json")) {
         try {

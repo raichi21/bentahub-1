@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
-import { orders, users, orderItems, branches } from "@/servers/schemas"
-import { eq, and, gte, lte, desc, inArray } from "drizzle-orm"
+import { orders } from "@/servers/schemas"
+import { eq, and, gte, lte, desc, type SQL } from "drizzle-orm"
 
 export interface PickupFilterOptions {
   status?: string
@@ -32,9 +32,9 @@ export async function getPickups(filters: PickupFilterOptions = { page: 1, pageS
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
   const now = new Date()
 
-  const baseConditions: any[] = []
+  const baseConditions: SQL[] = []
   if (filters.status) {
-    baseConditions.push(eq(orders.status, filters.status as any))
+    baseConditions.push(eq(orders.status, filters.status as "pending" | "processing" | "ready" | "completed" | "cancelled"))
   }
   if (filters.branch) {
     baseConditions.push(eq(orders.branch, branchMap.get(filters.branch) ?? filters.branch))

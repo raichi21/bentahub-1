@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { extractToken, checkAdminAuth, hashPassword, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users } from "@/servers/schemas"
-import { eq, sql } from "drizzle-orm"
+import { sql } from "drizzle-orm"
 import { getUsers } from "@/features/admin-dashboard/actions/get-users"
-import type { UsersApiData } from "@/types/admin"
 
 const ADMIN_DOMAIN = "@bentahub.com"
 

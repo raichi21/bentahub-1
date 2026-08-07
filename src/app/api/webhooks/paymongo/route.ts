@@ -21,10 +21,22 @@ export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text()
 
-    // Optional webhook signature verification
+    // Required webhook signature verification.
+    // PayMongo signs every webhook with Paymongo-Signature: t=<ts>,v1=<hmac>.
+    // Enable webhook signing in the PayMongo dashboard and set PAYMONGO_WEBHOOK_SECRET.
     const signatureHeader = request.headers.get("paymongo-signature")
-    if (signatureHeader) {
-      verifySignature(rawBody, signatureHeader)
+    const secret = process.env.PAYMONGO_WEBHOOK_SECRET
+
+    if (process.env.NODE_ENV === "production") {
+      // In production the signature and secret are mandatory.
+      if (!signatureHeader || !secret) {
+        console.warn("[webhook] Missing signature or WEBHOOK_SECRET in production")
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
+      verifySignature(rawBody, signatureHeader, secret)
+    } else if (signatureHeader && secret) {
+      // In development, verify when both are provided; otherwise fall through for local testing.
+      verifySignature(rawBody, signatureHeader, secret)
     }
 
     const payload = JSON.parse(rawBody)
@@ -95,13 +107,7 @@ export async function POST(request: NextRequest) {
  * Header format: Paymongo-Signature: t=<timestamp>,v1=<signature>
  * The signature is HMAC-SHA256(secret, timestamp + "." + rawBody)
  */
-function verifySignature(rawBody: string, signatureHeader: string): void {
-  const secret = process.env.PAYMONGO_WEBHOOK_SECRET
-  if (!secret) {
-    console.warn("[webhook] PAYMONGO_WEBHOOK_SECRET not set, skipping verification")
-    return
-  }
-
+function verifySignature(rawBody: string, signatureHeader: string, secret: string): void {
   const parts = signatureHeader.split(",")
   let timestamp = ""
   let signature = ""
@@ -113,6 +119,16 @@ function verifySignature(rawBody: string, signatureHeader: string): void {
 
   if (!timestamp || !signature) {
     throw new Error("Invalid PayMongo signature header format")
+  }
+
+  // Replay protection: reject timestamps older than 5 minutes.
+  const ts = Number(timestamp)
+  if (!Number.isFinite(ts)) {
+    throw new Error("Invalid PayMongo signature timestamp")
+  }
+  const ageMs = Date.now() - ts
+  if (ageMs < 0 || ageMs > 5 * 60 * 1000) {
+    throw new Error("PayMongo webhook signature timestamp too old")
   }
 
   const expectedSignature = createHmac("sha256", secret)

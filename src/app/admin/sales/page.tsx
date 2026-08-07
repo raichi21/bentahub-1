@@ -12,7 +12,7 @@ export default function SalesPage() {
   const [data, setData] = useState<SalesApiData | null>(null)
   const [branchId, setBranchId] = useState("")
   const [page, setPage] = useState(1)
-  const [error, setError] = useState<string | null>(null)
+  const [, setError] = useState<string | null>(null)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {

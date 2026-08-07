@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, orders, notifications, orderItems } from "@/servers/schemas"
+import { users, orders, notifications } from "@/servers/schemas"
 import { eq, and, or, desc } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {

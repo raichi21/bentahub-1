@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "everything-claude-code/**",
+    // Vendored third-party bundle (not application code).
+    "ECC/**",
   ]),
 ]);
 

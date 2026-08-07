@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutGrid, Store, ClipboardList, LogOut, Monitor, X } from "lucide-react"
+import { Store, ClipboardList, LogOut, Monitor, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [

@@ -3,7 +3,7 @@ import { z } from "zod"
 import { db } from "@/servers/db"
 import { users, notificationPreferences } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
+import { verifyToken, extractToken } from "@/lib/auth-utils"
 
 const updateProfileSchema = z.object({
   fullName: z.string().min(1, "Name is required").max(255),
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest) {
 
     const { fullName, phone, branch } = parsed.data
 
-    const updateData: Record<string, any> = {
+    const updateData: Partial<typeof users.$inferInsert> = {
       fullName,
       phone: phone ?? null,
     }
@@ -91,7 +91,7 @@ export async function PUT(request: NextRequest) {
       .set(updateData)
       .where(eq(users.id, userId))
 
-    const responseData: Record<string, any> = { userId, fullName, phone: phone ?? null }
+    const responseData: Record<string, string | null> = { userId, fullName, phone: phone ?? null }
     if (branch !== undefined) {
       responseData.branch = branch
     }

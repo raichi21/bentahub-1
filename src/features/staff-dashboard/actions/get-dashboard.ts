@@ -1,5 +1,5 @@
 import { db } from "@/servers/db"
-import { products, branchInventory, transactions, orders, branches } from "@/servers/schemas"
+import { branchInventory, transactions, orders, branches } from "@/servers/schemas"
 import { eq, and, gte, sql } from "drizzle-orm"
 import type { StaffDashboardData } from "@/types/staff"
 
@@ -47,20 +47,16 @@ export async function getStaffDashboard(branchName: string): Promise<StaffDashbo
 
   const branchId = branchRecord.id
 
-  const allBranchProducts = await db.query.products.findMany({
-    where: and(eq(products.branch, branchName), eq(products.isActive, true)),
-  })
-
-  const totalProducts = allBranchProducts.length
-
-  const inStockCount = allBranchProducts.filter(
-    (p) => p.stockStatus === "in-stock"
-  ).length
-
+  // Stock is authoritative in branch_inventory — products.stockStatus / products.branch
+  // are legacy denormalized columns that go stale. Compute all KPIs from inventory.
   const allInventory = await db.query.branchInventory.findMany({
     where: eq(branchInventory.branchId, branchId),
   }) as RawBranchInventory[]
 
+  const totalProducts = allInventory.length
+  const inStockCount = allInventory.filter(
+    (i) => i.quantity >= i.lowStockThreshold
+  ).length
   const lowStockCount = allInventory.filter(
     (i) => i.quantity < i.lowStockThreshold
   ).length

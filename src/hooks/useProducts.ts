@@ -42,6 +42,8 @@ export function useProducts() {
         productsStore.setLoading(false)
       }
     },
+    // productsStore actions are stable Zustand references — not needed in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -77,6 +79,8 @@ export function useProducts() {
         productsStore.setLoading(false)
       }
     },
+    // productsStore actions are stable Zustand references — not needed in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -87,6 +91,8 @@ export function useProducts() {
     (id: string) => {
       return productsStore.getProductById(id)
     },
+    // productsStore actions are stable Zustand references — not needed in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 

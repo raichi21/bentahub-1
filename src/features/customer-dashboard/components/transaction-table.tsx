@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { FileText, Eye, Trash2, Loader2 } from "lucide-react"
 import { cn, formatOrderId } from "@/lib/utils"
@@ -26,14 +26,21 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [transactionToDelete, setTransactionToDelete] = useState<{ rawId: string; displayId: string } | null>(null)
-  const [hasFetched, setHasFetched] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
 
   useEffect(() => {
-    if (!isLoading && orders.length === 0 && !hasFetched) {
-      setHasFetched(true)
-      fetchOrders()
-    }
-  }, [fetchOrders, isLoading, orders.length, hasFetched])
+    if (isLoading || orders.length > 0) return
+    const timer = setTimeout(async () => {
+      try {
+        await fetchOrders()
+      } catch {
+        // fetchOrders throws; loading state is cleared in the store.
+      } finally {
+        setHasLoaded(true)
+      }
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [fetchOrders, isLoading, orders.length])
 
   // Reset page when filters change
   useEffect(() => {
@@ -86,7 +93,7 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   const paginatedTransactions = transactions.slice(startIdx, startIdx + itemsPerPage)
   const totalPages = Math.ceil(transactions.length / itemsPerPage)
 
-  if ((isLoading || !hasFetched) && orders.length === 0) {
+  if ((isLoading || !hasLoaded) && orders.length === 0) {
     return (
       <div className="bg-card border border-border rounded-xl shadow-sm p-12 flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

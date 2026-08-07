@@ -2,15 +2,28 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
 import { products, branchInventory, branches, transactions, transactionItems } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { generateId } from "@/lib/auth-utils"
+import { generateId, extractToken, checkAdminAuth } from "@/lib/auth-utils"
 
 /**
  * POST /api/admin/seed
- * Seeds the database with initial product data
- * WARNING: Only use this once, in development!
+ * Seeds the database with initial product data.
+ * WARNING: Destructive — deletes existing products, inventory, and transactions.
+ * Authenticated (admin) + blocked in production.
  */
 export async function POST(request: NextRequest) {
   try {
+    // ── Authorize: admin only ──
+    const token = extractToken(request)
+    const auth = checkAdminAuth(token)
+    if (auth.error) return auth.error
+
+    // ── Production guard: seeding is dev-only ──
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { success: false, message: "Seeding is disabled in production" },
+        { status: 403 }
+      )
+    }
     const productData = [
       // Coffee Category
       {

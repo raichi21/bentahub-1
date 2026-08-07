@@ -48,7 +48,10 @@ export default function TransactionsPage() {
         })
     } else if (gcashCancelled) {
       verified.current = true
-      setBanner({ type: "error", message: "GCash payment was cancelled. Your order is still pending — you can pay at pickup." })
+      // Defer the banner update to avoid a synchronous setState inside the effect body.
+      queueMicrotask(() => {
+        setBanner({ type: "error", message: "GCash payment was cancelled. Your order is still pending — you can pay at pickup." })
+      })
     }
   }, [searchParams, fetchOrders])
 

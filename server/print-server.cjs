@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * BentaHub Receipt Print Server
  *
  * Prints receipts to any Windows printer (inkjet, laser, thermal).
  * For thermal POS printers: uses ESC/POS raw data.
  * For regular printers: prints as plain text via Notepad/Out-Printer.
+ *
+ * This is a CommonJS server file. `require` is intentional here.
  *
  * Usage:   node server/print-server.cjs
  * API:

@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
-import { orders, orderItems, users, branches } from "@/servers/schemas"
-import { eq, and, gte, lte, like, or, sql, desc, count } from "drizzle-orm"
+import { orders } from "@/servers/schemas"
+import { eq, and, gte, lte, desc, type SQL } from "drizzle-orm"
 import type { ReservationMetricsData, ReservationRowData, ReservationItemData } from "@/types/admin"
 
 export interface ReservationFilterOptions {
@@ -32,12 +32,12 @@ function getInitials(name: string): string {
 export async function getReservations(filters: ReservationFilterOptions = { page: 1, pageSize: 15 }): Promise<ReservationPageData> {
   const allBranches = await db.query.branches.findMany()
 
-  const baseConditions = []
+  const baseConditions: SQL[] = []
   if (filters.branch) {
     baseConditions.push(eq(orders.branch, filters.branch))
   }
   if (filters.status) {
-    baseConditions.push(eq(orders.status, filters.status as any))
+    baseConditions.push(eq(orders.status, filters.status as "pending" | "processing" | "ready" | "completed" | "cancelled"))
   }
   if (filters.dateFrom) {
     baseConditions.push(gte(orders.createdAt, new Date(filters.dateFrom)))

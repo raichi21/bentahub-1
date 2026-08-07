@@ -49,7 +49,7 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
       console.log(`✉️ Connected to environment-configured SMTP server.`)
       cachedTransporter = transport
       return cachedTransporter
-    } catch (err) {
+    } catch {
       console.warn("⚠️ Configured SMTP credentials failed to authenticate. Falling back...")
     }
   }
@@ -66,7 +66,7 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
     console.log("✉️ Connected to local SMTP mail catcher at localhost:1025")
     cachedTransporter = localTransporter
     return cachedTransporter
-  } catch (err) {
+  } catch {
     // Local mail catcher not running, continue fallback
   }
 
@@ -85,7 +85,7 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
     console.log("✉️ Connected to hardcoded Ethereal test account.")
     cachedTransporter = etherealTransporter
     return cachedTransporter
-  } catch (err) {
+  } catch {
     // Hardcoded credentials expired or rejected, continue fallback
   }
 
@@ -106,7 +106,7 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
     console.log(`✅ Fresh Ethereal account created successfully: ${testAccount.user}`)
     cachedTransporter = dynamicTransporter
     return cachedTransporter
-  } catch (err) {
+  } catch {
     console.warn("⚠️ Failed to generate dynamic Ethereal account. Falling back to JSON transport.")
   }
 

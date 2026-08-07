@@ -147,6 +147,9 @@ export const products = pgTable("products", {
   bulkPrice: numeric("bulk_price", { precision: 10, scale: 2 }),
   weight: varchar("weight", { length: 50 }),
   image: text("image"),
+  // Legacy denormalized columns — authoritative stock lives in branch_inventory.
+  // These go stale for multi-branch products; prefer branchInventory.quantity.
+  // @deprecated kept for backward compatibility; remove in a future migration.
   stockStatus: productStockStatusEnum("stock_status").default("in-stock").notNull(),
   quantity: integer("quantity").default(0).notNull(),
   branch: varchar("branch", { length: 100 }).notNull(),

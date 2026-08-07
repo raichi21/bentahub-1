@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { items, totalAmount, paymentMethod, amountPaid, changeDue, discountPercent } = body
+    const { items, totalAmount, paymentMethod } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json(

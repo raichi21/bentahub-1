@@ -67,8 +67,6 @@ export default function ReservationsPage() {
     return () => clearTimeout(timer)
   }, [token, authLoading, fetchReservations])
 
-  const isLoading = authLoading || (token !== null && !fetched && !error)
-
   const handleConfirm = async (orderId: string) => {
     if (!token) return
     setActionLoading(orderId)

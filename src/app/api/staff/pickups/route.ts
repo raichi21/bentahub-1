@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches, orders } from "@/servers/schemas"
-import { eq, and, or, desc, inArray, sql } from "drizzle-orm"
+import { eq, and, or, desc } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
   try {

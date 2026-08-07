@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
-import { transactions, branches } from "@/servers/schemas"
-import { eq, and, gte, lte, sql, desc } from "drizzle-orm"
+import { transactions } from "@/servers/schemas"
+import { eq, and, gte, lte, desc } from "drizzle-orm"
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",

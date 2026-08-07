@@ -12,7 +12,6 @@ export default function UsersPage() {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
-  const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (!token) return
@@ -36,20 +35,19 @@ export default function UsersPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setFirstLoadDone(true)
     }
   }, [token, search, page])
 
   useEffect(() => {
-    fetchData()
+    const timer = setTimeout(() => fetchData(), 0)
+    return () => clearTimeout(timer)
   }, [fetchData])
 
   const metrics = data?.metrics
   const activeRate = metrics && metrics.total > 0 ? ((metrics.active / metrics.total) * 100).toFixed(1) : "0"
   const roleSummary = `${(metrics?.adminCount ?? 0) + (metrics?.staffCount ?? 0) + (metrics?.cashierCount ?? 0)} total, ${metrics?.customerCount ?? 0} customers`
 
-  const isLoading = authLoading || (token != null && !firstLoadDone)
+  const isLoading = authLoading || (token != null && data == null && error == null)
 
   const handleSearch = (q: string) => {
     setSearch(q)

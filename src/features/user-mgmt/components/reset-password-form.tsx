@@ -18,7 +18,7 @@ export function ResetPasswordForm() {
   const [token, setToken] = React.useState(initialToken)
   const paramEmail = searchParams.get("email")
   const sessionEmail = typeof window !== "undefined" ? sessionStorage.getItem("pendingResetEmail") : ""
-  const [email, setEmail] = React.useState(paramEmail || sessionEmail || "")
+  const [email] = React.useState(paramEmail || sessionEmail || "")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState("")
   const [success, setSuccess] = React.useState(false)

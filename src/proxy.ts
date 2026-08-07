@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
 /**
  * Next.js proxy (pass-through only).
@@ -8,6 +8,6 @@ import { NextRequest, NextResponse } from "next/server"
  * on page navigations. All auth protection is handled client-side
  * via AuthProvider / useAuth and server-side via API route checks.
  */
-export function proxy(_request: NextRequest) {
+export function proxy() {
   return NextResponse.next()
 }

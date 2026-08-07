@@ -13,7 +13,7 @@ export default function PickupsPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState("")
   const [branch, setBranch] = useState("")
-  const [error, setError] = useState<string | null>(null)
+  const [, setError] = useState<string | null>(null)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
 
   const fetchData = useCallback(async () => {

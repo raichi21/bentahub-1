@@ -5,11 +5,16 @@ import { NextResponse } from "next/server"
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET
-  if (!secret) {
-    // Return a default during dev if not set to prevent crash during builds/pushes
-    return "default-secret-key-for-development-purposes-only"
+  if (secret) {
+    return secret
   }
-  return secret
+  // In production a real secret is mandatory — a hardcoded fallback would let
+  // anyone forge admin tokens. In development we fall back to a fixed dev value
+  // so builds/pushes don't crash on machines without a .env.local.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET must be set in production")
+  }
+  return "default-secret-key-for-development-purposes-only"
 }
 
 const JWT_SECRET: string = getJwtSecret()

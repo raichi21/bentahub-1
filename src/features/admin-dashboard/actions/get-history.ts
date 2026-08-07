@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
-import { transactions, branches, transactionItems } from "@/servers/schemas"
-import { eq, and, gte, lte, desc } from "drizzle-orm"
+import { transactions } from "@/servers/schemas"
+import { eq, and, gte, lte, desc, type SQL } from "drizzle-orm"
 
 export interface HistoryFilterOptions {
   dateFrom?: string
@@ -28,7 +28,7 @@ export async function getHistory(filters: HistoryFilterOptions = { page: 1, page
   const allBranches = await db.query.branches.findMany()
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
 
-  const baseConditions: any[] = []
+  const baseConditions: SQL[] = []
   if (filters.dateFrom) {
     baseConditions.push(gte(transactions.createdAt, new Date(filters.dateFrom)))
   }
@@ -41,10 +41,10 @@ export async function getHistory(filters: HistoryFilterOptions = { page: 1, page
     baseConditions.push(eq(transactions.branchId, filters.branchId))
   }
   if (filters.method) {
-    baseConditions.push(eq(transactions.paymentMethod, filters.method as any))
+    baseConditions.push(eq(transactions.paymentMethod, filters.method as "cash" | "gcash"))
   }
   if (filters.status) {
-    baseConditions.push(eq(transactions.status, filters.status as any))
+    baseConditions.push(eq(transactions.status, filters.status as "completed" | "pending" | "cancelled"))
   }
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined

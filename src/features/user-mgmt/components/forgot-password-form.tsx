@@ -15,7 +15,6 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState("")
-  const [submitted, setSubmitted] = React.useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,46 +45,6 @@ export function ForgotPasswordForm() {
       setError("An unexpected error occurred. Please try again.")
       setIsLoading(false)
     }
-  }
-
-  if (submitted) {
-    return (
-      <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <AuthHeader subtitle="Lourdes Sari-Sari Store" />
-
-        <Card className="border-border shadow-sm">
-          <CardContent className="pt-8">
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10">
-                <Mail className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">Check your email</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  We&apos;ve sent a password reset link to <strong>{email}</strong>
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                The link will expire in 1 hour. Check your spam folder if you don&apos;t see it.
-              </p>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              <Button
-                asChild
-                variant="outline"
-                className="w-full"
-              >
-                <Link href="/login" className="flex items-center justify-center gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Sign In
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   return (

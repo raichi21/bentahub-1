@@ -70,7 +70,7 @@ export default function CatalogPage() {
       if (fetchId !== activeFetchRef.current) return
       console.error("Failed to fetch products:", error)
     })
-  }, [fetchProducts, currentBranch])
+  }, [fetchProducts, currentBranch, fetchedProducts.length])
 
   const categoryChanged = useCallback(
     (category: string) => {
@@ -110,7 +110,7 @@ export default function CatalogPage() {
       weight: p.weight,
       branch: p.branch,
     }))
-  }, [fetchedProducts, currentCategory, currentBranch, searchQuery])
+  }, [fetchedProducts, currentCategory, searchQuery])
 
   const totalProducts = displayProducts.length
   const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE))

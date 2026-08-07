@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, category, stock, reorderLevel, unit, price, image, batchNumber, expiryDate } = body
+    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate } = body
 
     if (!name || !category || price === undefined) {
       return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })

@@ -151,7 +151,7 @@ export function CartSidebar({ cart, onClose, onSaleComplete }: CartSidebarProps)
     } finally {
       setSubmitting(false)
     }
-  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart, onSaleComplete])
+  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart, onSaleComplete, user])
 
   // Keyboard action shortcuts
   useEffect(() => {
