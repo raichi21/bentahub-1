@@ -21,11 +21,11 @@ if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/bentahub"
 }
 
-import { db } from "@/servers/db"
-import { users, branches, branchInventory, products, transactions, transactionItems } from "@/servers/schemas"
-import { hashPassword, generateId } from "@/lib/auth-utils"
-
 async function run() {
+  const { db } = await import("@/servers/db")
+  const { users, branches, branchInventory, products, transactions, transactionItems } = await import("@/servers/schemas")
+  const { hashPassword, generateId } = await import("@/lib/auth-utils")
+
   console.log("🌱 Starting BentaHub database seed...")
 
   // 1. Clear existing tables
@@ -41,8 +41,8 @@ async function run() {
   console.log("🏢 Creating 3 store branches...")
   const branchList = [
     { id: generateId(), name: "Lourdes Main Branch", location: "123 Main St, Manila", isMain: true },
-    { id: generateId(), name: "North Branch", location: "456 North Ave, Quezon City", isMain: false },
-    { id: generateId(), name: "South Branch", location: "789 South Blvd, Makati", isMain: false },
+    { id: generateId(), name: "Lourdes Second Branch", location: "456 Second Ave, Quezon City", isMain: false },
+    { id: generateId(), name: "Lourdes Third Branch", location: "789 Third Blvd, Makati", isMain: false },
   ]
   await db.insert(branches).values(
     branchList.map((b) => ({
