@@ -13,7 +13,6 @@ Welcome to the **BentaHub** developer reference manual. This document serves as 
 | **Database** | PostgreSQL | Relational database storage |
 | **ORM** | Drizzle ORM | Database schema definitions, migrations, and seeders |
 | **Language** | TypeScript | Strong typing for client and server code |
-| **Containerization** | Docker | Docker Compose for local database & app setup |
 | **Package Manager** | pnpm | Fast, disk-efficient package management |
 | **Architecture** | Feature-Sliced Design (FSD) | Structural modularity, low coupling, and isolation |
 
@@ -251,12 +250,11 @@ src/
 ### Prerequisites
 - Node.js 22+
 - pnpm 11+
-- Docker Desktop (for PostgreSQL)
+- PostgreSQL (installed locally or cloud-hosted)
 
 ### Quick Start
 ```bash
-# 1. Start PostgreSQL
-docker compose up -d db
+# 1. Ensure PostgreSQL is running with a database named 'bentahub'
 
 # 2. Install dependencies
 pnpm install

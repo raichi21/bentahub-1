@@ -4,19 +4,30 @@ This runbook covers instructions for deploying, updating, and troubleshooting Be
 
 ## 🚀 Deployment Procedures
 
-BentaHub is containerized using Docker and Docker Compose.
+BentaHub requires a running PostgreSQL instance. For production, use a managed database service (e.g., Supabase, Neon, Railway, or a cloud provider's managed PostgreSQL).
 
 ### Production Build & Launch
 
-To build and run the production environment locally or on a staging server:
+To build and run the production environment:
 
 1. **Verify Environment Variables**:
    Ensure `.env` contains production-ready secrets and database connection URLs.
-2. **Build and Run Containers**:
+2. **Install dependencies**:
    ```bash
-   docker-compose up -d --build
+   pnpm install
    ```
-   This builds the Next.js `app` container via the multi-stage `Dockerfile` and pulls the PostgreSQL database image.
+3. **Push database schema**:
+   ```bash
+   pnpm run db:push
+   ```
+4. **Build the application**:
+   ```bash
+   pnpm run build
+   ```
+5. **Start the production server**:
+   ```bash
+   pnpm start
+   ```
 
 ### Database Updates
 
@@ -37,20 +48,16 @@ When database schemas change:
 
 ## 📊 Health Checks & Monitoring
 
-- **Database Health**: The `db` container has an integrated healthcheck running:
+- **Database Health**: Verify PostgreSQL is running and accessible:
   ```bash
   pg_isready -U postgres -d bentahub
-  ```
-- **Container Status**: Check status of active services:
-  ```bash
-  docker-compose ps
   ```
 
 ## 🛠️ Troubleshooting & Common Issues
 
 ### Issue: Database connection failures
 - **Cause**: The application starts before the Postgres database is ready to accept connections.
-- **Fix**: The `docker-compose.yml` uses a `condition: service_healthy` check on the database before booting the Next.js app. If running manually, ensure Postgres is running and accessible at the `DATABASE_URL` port.
+- **Fix**: Ensure PostgreSQL is running and accessible at the `DATABASE_URL` configured in your `.env` file.
 
 ### Issue: Multiprocessing ProcessPoolExecutor crashes on Windows
 - **Cause**: Windows lacks an automatic `fork` mechanism, which can crash process pool workers during scripts execution (like AST extraction).
@@ -82,8 +89,8 @@ To roll back a deployment:
    ```bash
    git revert <hash>
    ```
-2. Rebuild and restart the Docker container:
+2. Rebuild and restart the application:
    ```bash
-   docker-compose down
-   docker-compose up -d --build
+   pnpm run build
+   pnpm start
    ```

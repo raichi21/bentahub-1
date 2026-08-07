@@ -5,10 +5,7 @@ Welcome to the BentaHub contributing guide. Follow these instructions to set up 
 ## 🛠️ Local Setup
 
 1. **Prerequisites**: Ensure you have Node.js 20+ and `pnpm` (or `npm`) installed.
-2. **Database**: A PostgreSQL instance is required. You can start one locally using Docker:
-   ```bash
-   docker-compose up -d db
-   ```
+2. **Database**: A PostgreSQL instance is required. Install PostgreSQL locally and create a database named `bentahub`.
 3. **Environment**: Copy `.env.example` to `.env` and configure your database connection string and secrets:
    ```bash
    cp .env.example .env
@@ -72,10 +69,7 @@ For more details, see [FEATURE-SLICED-DESIGN.md](file:///c:/projects/bentahub/do
 | `db:push` | `drizzle-kit push` | Push schema changes directly to the PostgreSQL database |
 | `db:studio` | `drizzle-kit studio` | Start Drizzle Studio database UI client |
 | `db:seed` | `npx tsx src/drizzle/seed.ts` | Seed the database with initial test accounts, branches, and 12 months of transactions |
-| `docker:up` | `docker compose up -d` | Start the database and services container in the background |
-| `docker:down` | `docker compose down` | Stop and remove the Docker containers |
-| `docker:logs` | `docker compose logs -f` | Follow log output from Docker containers |
-| `docker:reset` | `docker compose down -v` | Stop the Docker containers and delete volumes (factory reset database) |
+
 
 <!-- AUTO-GENERATED END -->
 

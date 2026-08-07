@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
-import { eq, and, or, like, desc, sql } from "drizzle-orm"
+import { eq, and, desc } from "drizzle-orm"
 import type { UserMetricsData, UserRowData } from "@/types/admin"
 
 export interface UserFilterOptions {
@@ -19,7 +19,7 @@ export interface UsersPageData {
 export async function getUsers(filters: UserFilterOptions = { page: 1, pageSize: 15 }): Promise<UsersPageData> {
   const baseConditions = [eq(users.isActive, true)]
   if (filters.role) {
-    baseConditions.push(eq(users.role, filters.role as any))
+    baseConditions.push(eq(users.role, filters.role as "admin" | "cashier" | "staff" | "customer"))
   }
   const where = and(...baseConditions)
 

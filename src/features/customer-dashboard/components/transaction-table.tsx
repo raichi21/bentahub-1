@@ -26,14 +26,14 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [transactionToDelete, setTransactionToDelete] = useState<{ rawId: string; displayId: string } | null>(null)
-  const hasFetched = useRef(false)
+  const [hasFetched, setHasFetched] = useState(false)
 
   useEffect(() => {
-    if (!isLoading && orders.length === 0 && !hasFetched.current) {
-      hasFetched.current = true
+    if (!isLoading && orders.length === 0 && !hasFetched) {
+      setHasFetched(true)
       fetchOrders()
     }
-  }, [fetchOrders, isLoading, orders.length])
+  }, [fetchOrders, isLoading, orders.length, hasFetched])
 
   // Reset page when filters change
   useEffect(() => {
@@ -86,7 +86,7 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   const paginatedTransactions = transactions.slice(startIdx, startIdx + itemsPerPage)
   const totalPages = Math.ceil(transactions.length / itemsPerPage)
 
-  if ((isLoading || !hasFetched.current) && orders.length === 0) {
+  if ((isLoading || !hasFetched) && orders.length === 0) {
     return (
       <div className="bg-card border border-border rounded-xl shadow-sm p-12 flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

@@ -54,26 +54,5 @@ To seed the database with initial administrative and branch data:
 pnpm db:seed
 ```
 
-## Docker Support
-
-This project now includes a `Dockerfile` and `docker-compose.yml` for local development.
-
-1. Start the app and Postgres:
-   ```bash
-   docker compose up --build
-   ```
-
-2. The Next.js app will be available at `http://localhost:3000`.
-
-3. The Postgres service is configured with:
-   - `POSTGRES_USER=postgres`
-   - `POSTGRES_PASSWORD=postgres`
-   - `POSTGRES_DB=bentahub`
-
-4. To clean up and remove the database volume:
-   ```bash
-   docker compose down -v
-   ```
-
 > [!WARNING]
 > Running the seed script will clear all existing tables (branches, products, inventory, transactions) before insert! Only run this on a fresh database.
