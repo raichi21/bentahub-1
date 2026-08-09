@@ -12,7 +12,7 @@ const TOKEN_STORAGE_KEY = "bentahub_token"
 // Types
 // ---------------------------------------------------------------------------
 
-interface AuthUser {
+export interface AuthUser {
   userId: string
   email: string
   fullName: string

@@ -8,6 +8,7 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { createInsertSchema, createSelectSchema } from "drizzle-zod"
@@ -15,6 +16,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod"
 // ─────────────────────────── ENUMS ───────────────────────────
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "cashier", "staff", "customer"])
+export const oauthProviderEnum = pgEnum("oauth_provider", ["google", "facebook"])
 export const orderStatusEnum = pgEnum("order_status", ["pending", "processing", "ready", "completed", "cancelled"])
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "gcash"])
 export const productStockStatusEnum = pgEnum("product_stock_status", ["in-stock", "low-stock", "out-of-stock"])
@@ -40,7 +42,7 @@ export const users = pgTable(
   {
     id: varchar("id", { length: 36 }).primaryKey(),
     email: varchar("email", { length: 255 }).notNull().unique(),
-    password: varchar("password", { length: 255 }).notNull(),
+    password: varchar("password", { length: 255 }),
     fullName: varchar("full_name", { length: 255 }).notNull(),
     phone: varchar("phone", { length: 20 }),
     role: userRoleEnum("role").default("customer").notNull(),
@@ -59,6 +61,42 @@ export const insertUserSchema = createInsertSchema(users).omit({ id: true, creat
 export const selectUserSchema = createSelectSchema(users)
 export type User = typeof users.$inferSelect
 export type InsertUser = typeof users.$inferInsert
+
+// ── OAuth Accounts ──
+export const oauthAccounts = pgTable(
+  "oauth_accounts",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: oauthProviderEnum("provider").notNull(),
+    providerUserId: varchar("provider_user_id", { length: 255 }).notNull(),
+    providerEmail: varchar("provider_email", { length: 255 }),
+    createdAt,
+    updatedAt,
+  },
+  (table) => ({
+    providerUnique: uniqueIndex("oauth_provider_user_unique").on(table.provider, table.providerUserId),
+    userIdIdx: index("oauth_accounts_user_id_idx").on(table.userId),
+  })
+)
+
+export const oauthAccountsRelations = relations(oauthAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [oauthAccounts.userId],
+    references: [users.id],
+  }),
+}))
+
+export const usersRelations = relations(users, ({ many }) => ({
+  oauthAccounts: many(oauthAccounts),
+}))
+
+export const insertOauthAccountSchema = createInsertSchema(oauthAccounts).omit({ id: true, createdAt: true, updatedAt: true })
+export const selectOauthAccountSchema = createSelectSchema(oauthAccounts)
+export type OauthAccount = typeof oauthAccounts.$inferSelect
+export type InsertOauthAccount = typeof oauthAccounts.$inferInsert
 
 // ── Email Verifications ──
 export const emailVerifications = pgTable(

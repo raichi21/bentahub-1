@@ -4,12 +4,13 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { LogIn, Mail } from "lucide-react"
-import { AuthHeader, PasswordInput } from "@/features/user-mgmt"
+import { AuthHeader, PasswordInput, SocialAuthButtons } from "@/features/user-mgmt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
+import { useSearchParams } from "next/navigation"
 import type { LoginResponseData } from "@/types/auth"
 
 type LoginResponse = {
@@ -20,10 +21,11 @@ type LoginResponse = {
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
-  const [error, setError] = React.useState("")
+  const [error, setError] = React.useState(searchParams.get("oauth_error") ?? "")
   const { setToken, setUser } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,6 +175,18 @@ export default function LoginPage() {
               </Button>
             </div>
           </form>
+
+          <div className="flex items-center gap-3 mt-6">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              or continue with
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="mt-4">
+            <SocialAuthButtons />
+          </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don&apos;t have an account?{" "}

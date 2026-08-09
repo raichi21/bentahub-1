@@ -4,7 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { UserPlus, Mail, User } from "lucide-react"
-import { AuthHeader, PasswordInput } from "@/features/user-mgmt"
+import { AuthHeader, PasswordInput, SocialAuthButtons } from "@/features/user-mgmt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -197,6 +197,18 @@ export function RegisterForm() {
               </Button>
             </div>
           </form>
+
+          <div className="flex items-center gap-3 mt-6">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              or continue with
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="mt-4">
+            <SocialAuthButtons />
+          </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{" "}

@@ -58,6 +58,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
 
     // --- Password check -----------------------------------------------------
 
+    // Users created via social login have no password set; they must sign in
+    // with their OAuth provider instead of email + password.
+    if (!user.password) {
+      return NextResponse.json(
+        { success: false, message: "This account uses a social sign-in. Please use the Google or Facebook button to log in." },
+        { status: 401 }
+      )
+    }
+
     const isPasswordValid = await verifyPassword(password, user.password)
 
     if (!isPasswordValid) {
