@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
     }) as Array<{
       id: string; userId: string; status: string; paymentMethod: string
       totalAmount: string; branch: string; notes: string | null
+      phone: string | null
       isPaid: boolean; paidAt: Date | null; pickupDeadline: Date | null
       createdAt: Date; updatedAt: Date
       user: { id: string; fullName: string; email: string; phone: string | null }
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
       createdAt: o.createdAt.toISOString(),
       customerName: o.user.fullName,
       customerEmail: o.user.email,
-      customerPhone: o.user.phone || "",
+      customerPhone: o.phone || "",
       items: o.items.map((i) => ({
         productName: i.productName,
         quantity: i.quantity,
@@ -101,7 +102,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { orderId, action, reason } = body
+    const { orderId, action } = body
 
     if (!orderId || !action) {
       return NextResponse.json({ success: false, message: "orderId and action required" }, { status: 400 })
@@ -155,9 +156,9 @@ export async function PATCH(request: NextRequest) {
           relatedProductId: null,
         }))
       )
-    } else if (action === "deny") {
+    } else if (action === "cancel") {
       if (order.status !== "pending") {
-        return NextResponse.json({ success: false, message: "Only pending reservations can be denied" }, { status: 400 })
+        return NextResponse.json({ success: false, message: "Only pending reservations can be cancelled" }, { status: 400 })
       }
 
       await db.update(orders)
@@ -168,10 +169,8 @@ export async function PATCH(request: NextRequest) {
         id: generateId(),
         userId: order.userId,
         type: "order-status",
-        title: "Reservation Denied",
-        message: reason
-          ? `Your reservation at ${order.branch} has been denied. Reason: ${reason}`
-          : `Your reservation at ${order.branch} has been denied. Please contact the store for more information.`,
+        title: "Reservation Cancelled",
+        message: `Your reservation at ${order.branch} has been cancelled — pickup deadline has passed.`,
         relatedOrderId: orderId,
         isRead: false,
         readAt: null,
@@ -179,19 +178,17 @@ export async function PATCH(request: NextRequest) {
         relatedProductId: null,
       })
 
-      const adminUsersDeny = await db.query.users.findMany({
+      const adminUsersCancel = await db.query.users.findMany({
         where: and(eq(users.role, "admin"), eq(users.isActive, true)),
       })
 
       await db.insert(notifications).values(
-        adminUsersDeny.map((a) => ({
+        adminUsersCancel.map((a) => ({
           id: generateId(),
           userId: a.id,
           type: "order-status" as const,
-          title: "Reservation Denied",
-          message: reason
-            ? `Order ${orderId} at ${order.branch} was denied by ${staff.fullName}. Reason: ${reason}`
-            : `Order ${orderId} at ${order.branch} was denied by ${staff.fullName}.`,
+          title: "Reservation Cancelled",
+          message: `Order ${orderId} at ${order.branch} was cancelled by ${staff.fullName} — pickup deadline has passed.`,
           relatedOrderId: orderId,
           isRead: false,
           readAt: null,
@@ -240,7 +237,7 @@ export async function PATCH(request: NextRequest) {
         }))
       )
     } else {
-      return NextResponse.json({ success: false, message: "Invalid action. Use: confirm, deny, or ready" }, { status: 400 })
+      return NextResponse.json({ success: false, message: "Invalid action. Use: confirm, cancel, or ready" }, { status: 400 })
     }
 
     return NextResponse.json({ success: true, message: "Reservation updated successfully" })

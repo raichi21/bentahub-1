@@ -16,7 +16,6 @@ export function CustomerSettings() {
   const { user, token } = useAuth()
 
   const [fullName, setFullName] = useState("")
-  const [phone, setPhone] = useState("")
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>({ orderUpdates: true })
 
   const [profileSaving, setProfileSaving] = useState(false)
@@ -29,7 +28,6 @@ export function CustomerSettings() {
     if (!user) return
     const timer = setTimeout(() => {
       setFullName(user.fullName)
-      setPhone(user.phone ?? "")
     }, 0)
     return () => clearTimeout(timer)
   }, [user])
@@ -58,7 +56,7 @@ export function CustomerSettings() {
       const res = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: authHeaders(),
-        body: JSON.stringify({ fullName, phone: phone || null }),
+        body: JSON.stringify({ fullName }),
       })
       const data = await res.json()
       setProfileMessage(data.success ? "Saved!" : data.message)
@@ -100,15 +98,6 @@ export function CustomerSettings() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Your full name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="settings-phone">Phone (optional)</Label>
-            <Input
-              id="settings-phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="09XXXXXXXXX"
             />
           </div>
           <div className="flex items-center gap-3">

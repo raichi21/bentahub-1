@@ -12,6 +12,7 @@ import {
   Store,
   FileText,
   ShoppingBag,
+  Phone,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
@@ -31,6 +32,8 @@ export default function CheckoutPage() {
   const { createOrder, isLoading } = useOrders()
 
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
+  const [phone, setPhone] = useState("")
+  const [phoneError, setPhoneError] = useState<string | null>(null)
   const [notes, setNotes] = useState("")
   const [orderError, setOrderError] = useState<string | null>(null)
   const [orderSuccess, setOrderSuccess] = useState(false)
@@ -47,10 +50,20 @@ export default function CheckoutPage() {
     try {
       setOrderError(null)
 
+      if (!phone.trim()) {
+        setOrderError("Phone number is required")
+        return
+      }
+
+      if (!/^09\d{9}$/.test(phone.trim())) {
+        setOrderError("Phone number must be 11 digits starting with 09")
+        return
+      }
+
       // Reuse existing order ID if payment was retried after a failure
       let orderId = createdOrderId
       if (!orderId) {
-        const order = await createOrder(paymentMethod, branch, notes)
+        const order = await createOrder(paymentMethod, branch, phone.trim(), notes)
         setCreatedOrderId(order.id)
         orderId = order.id
       }
@@ -226,6 +239,41 @@ export default function CheckoutPage() {
             </div>
           </section>
 
+          {/* Phone Number */}
+          <section className="bg-card border border-border rounded-lg p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <Phone className="h-5 w-5 text-muted-foreground" />
+              Phone Number
+            </h2>
+            <input
+              type="tel"
+              value={phone}
+              maxLength={11}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "").slice(0, 11)
+                setPhone(val)
+                if (val && !/^09\d{0,9}$/.test(val)) {
+                  setPhoneError("Must start with 09")
+                } else {
+                  setPhoneError(null)
+                }
+              }}
+              placeholder="09XXXXXXXXX"
+              className={`w-full p-3.5 border rounded-xl bg-background text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm ${
+                phoneError ? "border-red-500" : "border-border"
+              }`}
+            />
+            {phoneError ? (
+              <p className="text-xs text-red-500 mt-2">{phoneError}</p>
+            ) : phone.length > 0 && phone.length < 11 ? (
+              <p className="text-xs text-muted-foreground mt-2">{phone.length}/11 digits</p>
+            ) : phone.length === 11 ? (
+              <p className="text-xs text-green-600 mt-2">11/11 digits ✓</p>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-2">We&apos;ll text or call you when your item is ready for pickup.</p>
+            )}
+          </section>
+
           {/* Order Notes */}
           <section className="bg-card border border-border rounded-lg p-6">
             <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
@@ -307,7 +355,7 @@ export default function CheckoutPage() {
             {/* Proceed Button */}
             <Button
               onClick={handleSubmitOrder}
-              disabled={isLoading || isRedirecting}
+              disabled={isLoading || isRedirecting || !/^09\d{9}$/.test(phone)}
               size="lg"
               className="w-full bg-primary text-white py-6 rounded-xl font-bold text-base active:scale-[0.98] transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:shadow-none"
             >

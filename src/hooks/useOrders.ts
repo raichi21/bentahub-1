@@ -64,7 +64,7 @@ export function useOrders() {
    * @param notes - Optional order notes
    */
   const createOrder = useCallback(
-    async (paymentMethod: "cash" | "gcash", branch: string, notes?: string) => {
+    async (paymentMethod: "cash" | "gcash", branch: string, phone: string, notes?: string) => {
       if (!user) throw new Error("User not authenticated")
 
       if (!token) throw new Error("No authentication token found")
@@ -76,7 +76,7 @@ export function useOrders() {
         const response = await fetch("/api/customer/orders", {
           method: "POST",
           headers: authHeaders(token),
-          body: JSON.stringify({ paymentMethod, branch, notes }),
+          body: JSON.stringify({ paymentMethod, branch, phone, notes }),
         })
 
         if (!response.ok) {

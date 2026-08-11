@@ -243,6 +243,7 @@ export const orders = pgTable("orders", {
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
   branch: varchar("branch", { length: 100 }).notNull(),
   notes: varchar("notes", { length: 500 }),
+  phone: varchar("phone", { length: 20 }),
   isPaid: boolean("is_paid").default(false).notNull(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   pickupDeadline: timestamp("pickup_deadline", { withTimezone: true }),

@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
         code: `PK-${o.id.slice(0, 8).toUpperCase()}`,
         date: o.paidAt?.toISOString() || o.createdAt.toISOString(),
         status: o.status === "completed" ? "completed" : "ready",
+        pickupDeadline: o.pickupDeadline?.toISOString() || null,
       }))
 
     return NextResponse.json({
@@ -124,6 +125,10 @@ export async function PATCH(request: NextRequest) {
     } else if (action === "complete") {
       await db.update(orders)
         .set({ status: "completed" })
+        .where(eq(orders.id, orderId))
+    } else if (action === "cancel") {
+      await db.update(orders)
+        .set({ status: "cancelled" })
         .where(eq(orders.id, orderId))
     } else {
       return NextResponse.json({ success: false, message: "Invalid action" }, { status: 400 })

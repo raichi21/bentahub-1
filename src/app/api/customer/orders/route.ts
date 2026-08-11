@@ -69,10 +69,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { paymentMethod, branch, notes } = body
+    const { paymentMethod, branch, notes, phone } = body
 
     if (!paymentMethod || !branch) {
       return apiError("Payment method and branch are required")
+    }
+
+    if (!phone || typeof phone !== "string" || phone.trim().length === 0) {
+      return apiError("Phone number is required")
+    }
+
+    if (!/^09\d{9}$/.test(phone.trim())) {
+      return apiError("Phone number must be 11 digits starting with 09")
     }
 
     if (!["cash", "gcash"].includes(paymentMethod)) {
@@ -115,6 +123,7 @@ export async function POST(request: NextRequest) {
       totalAmount: totalAmount.toFixed(2),
       branch,
       notes: notes || null,
+      phone: phone.trim(),
       isPaid: false,
       paidAt: null,
       pickupDeadline,

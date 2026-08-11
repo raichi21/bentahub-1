@@ -86,6 +86,7 @@ export default function PickupPage() {
             code: `PK-${txn.id.slice(0, 8).toUpperCase()}`,
             date: new Date().toISOString(),
             status: "ready",
+            pickupDeadline: null,
           },
         ])
       }
@@ -119,6 +120,23 @@ export default function PickupPage() {
     }
   }, [token])
 
+  const handleCancelPickup = useCallback(async (pickupId: string) => {
+    try {
+      const res = await fetch("/api/staff/pickups", {
+        method: "PATCH",
+        headers: authHeaders(token!),
+        body: JSON.stringify({ orderId: pickupId, action: "cancel" }),
+      })
+
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.message)
+
+      setPickups((prev) => prev.filter((p) => p.id !== pickupId))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to cancel pickup")
+    }
+  }, [token])
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -146,6 +164,7 @@ export default function PickupPage() {
         pickups={pickups}
         onVerifyPayment={handleVerifyPayment}
         onCompletePickup={handleCompletePickup}
+        onCancelPickup={handleCancelPickup}
       />
     </div>
   )

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/hooks/useAuth"
-import { Calendar, Clock, AlertCircle, CheckCircle, XCircle } from "lucide-react"
+import { Calendar, Clock, AlertCircle, CheckCircle, Trash2 } from "lucide-react"
 import { ConfirmReservationModal } from "@/features/staff-dashboard/components/confirm-reservation-modal"
-import { DenyReservationModal } from "@/features/staff-dashboard/components/deny-reservation-modal"
+import { CancelReservationModal } from "@/features/staff-dashboard/components/cancel-reservation-modal"
 import { ReadyReservationModal } from "@/features/staff-dashboard/components/ready-reservation-modal"
 
 interface ReservationItem {
@@ -38,7 +38,8 @@ export default function ReservationsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   const [confirmModal, setConfirmModal] = useState<ReservationItem | null>(null)
-  const [denyModal, setDenyModal] = useState<ReservationItem | null>(null)
+  const [cancelModal, setCancelModal] = useState<ReservationItem | null>(null)
+  const [cancelOverdueModal, setCancelOverdueModal] = useState<ReservationItem | null>(null)
   const [readyModal, setReadyModal] = useState<ReservationItem | null>(null)
 
   const fetchReservations = useCallback(async () => {
@@ -90,21 +91,22 @@ export default function ReservationsPage() {
     }
   }
 
-  const handleDeny = async (orderId: string, reason: string) => {
+  const handleCancel = async (orderId: string) => {
     if (!token) return
     setActionLoading(orderId)
     try {
       const res = await fetch("/api/staff/reservations", {
         method: "PATCH",
         headers: authHeaders(token),
-        body: JSON.stringify({ orderId, action: "deny", reason: reason || undefined }),
+        body: JSON.stringify({ orderId, action: "cancel" }),
       })
       const json = await res.json()
       if (!json.success) {
-        alert(json.message || "Failed to deny reservation")
+        alert(json.message || "Failed to cancel reservation")
         return
       }
-      setDenyModal(null)
+      setCancelModal(null)
+      setCancelOverdueModal(null)
       fetchReservations()
     } catch {
       alert("An error occurred")
@@ -147,6 +149,11 @@ export default function ReservationsPage() {
     return d.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })
   }
 
+  function isOverdue(deadline: string | null): boolean {
+    if (!deadline) return false
+    return new Date(deadline) < new Date()
+  }
+
   if (authLoading || (!fetched && token)) {
     return (
       <div className="space-y-4">
@@ -171,12 +178,20 @@ export default function ReservationsPage() {
         loading={actionLoading === confirmModal?.id}
       />
 
-      <DenyReservationModal
-        isOpen={!!denyModal}
-        onClose={() => setDenyModal(null)}
-        onDeny={(reason) => denyModal && handleDeny(denyModal.id, reason)}
-        reservation={denyModal ? { customerName: denyModal.customerName, totalAmount: denyModal.totalAmount } : null}
-        loading={actionLoading === denyModal?.id}
+      <CancelReservationModal
+        isOpen={!!cancelModal}
+        onClose={() => setCancelModal(null)}
+        onCancel={() => cancelModal && handleCancel(cancelModal.id)}
+        reservation={cancelModal ? { customerName: cancelModal.customerName, totalAmount: cancelModal.totalAmount } : null}
+        loading={actionLoading === cancelModal?.id}
+      />
+
+      <CancelReservationModal
+        isOpen={!!cancelOverdueModal}
+        onClose={() => setCancelOverdueModal(null)}
+        onCancel={() => cancelOverdueModal && handleCancel(cancelOverdueModal.id)}
+        reservation={cancelOverdueModal ? { customerName: cancelOverdueModal.customerName, totalAmount: cancelOverdueModal.totalAmount } : null}
+        loading={actionLoading === cancelOverdueModal?.id}
       />
 
       <ReadyReservationModal
@@ -242,9 +257,10 @@ export default function ReservationsPage() {
                   {formatDate(r.createdAt)}
                 </span>
                 {r.pickupDeadline && (
-                  <span className="flex items-center gap-1">
+                  <span className={`flex items-center gap-1 ${isOverdue(r.pickupDeadline) ? "text-red-600 font-bold" : ""}`}>
                     <AlertCircle className="w-3.5 h-3.5" />
                     Pickup by: {formatDate(r.pickupDeadline)}
+                    {isOverdue(r.pickupDeadline) && <span className="ml-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">Overdue</span>}
                   </span>
                 )}
                 <span className="capitalize">{r.paymentMethod}</span>
@@ -282,11 +298,11 @@ export default function ReservationsPage() {
                       {actionLoading === r.id ? "..." : <><CheckCircle className="w-3.5 h-3.5" /> Confirm</>}
                     </button>
                     <button
-                      onClick={() => setDenyModal(r)}
+                      onClick={() => setCancelModal(r)}
                       disabled={actionLoading === r.id}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
                     >
-                      <XCircle className="w-3.5 h-3.5" /> Deny
+                      <Trash2 className="w-3.5 h-3.5" /> Cancel
                     </button>
                   </>
                 )}
@@ -303,6 +319,16 @@ export default function ReservationsPage() {
                   <span className="text-xs text-green-600 font-bold flex items-center gap-1">
                     <CheckCircle className="w-3.5 h-3.5" /> Ready for Pickup
                   </span>
+                )}
+                {isOverdue(r.pickupDeadline) && (
+                  <button
+                    onClick={() => setCancelOverdueModal(r)}
+                    disabled={actionLoading === r.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 ml-auto"
+                    title="Cancel overdue reservation"
+                  >
+                    {actionLoading === r.id ? "..." : <Trash2 className="w-3.5 h-3.5" />}
+                  </button>
                 )}
               </div>
             </div>

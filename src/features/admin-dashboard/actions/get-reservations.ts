@@ -59,6 +59,7 @@ export async function getReservations(filters: ReservationFilterOptions = { page
     },
   }) as Array<{
     id: string; userId: string; status: string; totalAmount: string; branch: string
+    phone: string | null
     pickupDeadline: Date | null; createdAt: Date
     user: { fullName: string; email: string }
     items: Array<{ id: string; productName: string; quantity: number; price: string; subtotal: string }>
@@ -87,7 +88,7 @@ export async function getReservations(filters: ReservationFilterOptions = { page
       customerName: name,
       customerInitials: getInitials(name),
       customerEmail: o.user.email || "",
-      customerPhone: null,
+      customerPhone: o.phone || null,
       branch: o.branch,
       itemsCount: o.items.length,
       totalAmount: o.totalAmount,

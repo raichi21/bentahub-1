@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Search, CreditCard, Package, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { Search, CreditCard, Package, CheckCircle2, XCircle, Clock, Trash2 } from "lucide-react"
 import { VerifyPickupModal } from "./verify-pickup-modal"
+import { CancelReservationModal } from "./cancel-reservation-modal"
 import { cn } from "@/lib/utils"
 
 type Tab = "payments" | "pickups"
@@ -28,6 +29,7 @@ export interface PickupItem {
   code: string
   date: string
   status: "ready" | "completed"
+  pickupDeadline: string | null
 }
 
 interface PaymentPickupListProps {
@@ -35,15 +37,17 @@ interface PaymentPickupListProps {
   pickups: PickupItem[]
   onVerifyPayment: (paymentId: string) => void
   onCompletePickup: (pickupId: string) => void
+  onCancelPickup?: (pickupId: string) => void
 }
 
-export function PaymentPickupList({ payments, pickups, onVerifyPayment, onCompletePickup }: PaymentPickupListProps) {
+export function PaymentPickupList({ payments, pickups, onVerifyPayment, onCompletePickup, onCancelPickup }: PaymentPickupListProps) {
   const [activeTab, setActiveTab] = useState<Tab>("payments")
   const [paymentSearch, setPaymentSearch] = useState("")
   const [pickupSearch, setPickupSearch] = useState("")
   const [paymentPage, setPaymentPage] = useState(1)
   const [pickupPage, setPickupPage] = useState(1)
   const [verifyModal, setVerifyModal] = useState<{ type: "payment" | "pickup"; item: PaymentItem | PickupItem } | null>(null)
+  const [cancelPickupModal, setCancelPickupModal] = useState<PickupItem | null>(null)
 
   const filteredPayments = payments.filter((p) => {
     const q = paymentSearch.toLowerCase()
@@ -73,6 +77,11 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
     setVerifyModal(null)
   }
 
+  function isOverdue(deadline: string | null): boolean {
+    if (!deadline) return false
+    return new Date(deadline) < new Date()
+  }
+
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
       <VerifyPickupModal
@@ -88,6 +97,19 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
           date: verifyModal.item.date,
         } : null}
         onConfirm={handleConfirm}
+      />
+
+      <CancelReservationModal
+        isOpen={!!cancelPickupModal}
+        onClose={() => setCancelPickupModal(null)}
+        onCancel={() => {
+          if (cancelPickupModal && onCancelPickup) {
+            onCancelPickup(cancelPickupModal.id)
+          }
+          setCancelPickupModal(null)
+        }}
+        reservation={cancelPickupModal ? { customerName: cancelPickupModal.customerName, totalAmount: 0 } : null}
+        loading={false}
       />
 
       <div className="border-b border-border">
@@ -259,11 +281,22 @@ export function PaymentPickupList({ payments, pickups, onVerifyPayment, onComple
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {p.status === "ready" ? (
-                            <button onClick={() => setVerifyModal({ type: "pickup", item: p })} className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-[10px] font-bold hover:bg-primary/95 transition-colors shadow-xs">Complete Pickup</button>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground font-medium">Done</span>
-                          )}
+                          <div className="flex items-center justify-end gap-2">
+                            {p.status === "ready" ? (
+                              <button onClick={() => setVerifyModal({ type: "pickup", item: p })} className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-[10px] font-bold hover:bg-primary/95 transition-colors shadow-xs">Complete Pickup</button>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground font-medium">Done</span>
+                            )}
+                            {p.status === "ready" && isOverdue(p.pickupDeadline) && onCancelPickup && (
+                              <button
+                                onClick={() => setCancelPickupModal(p)}
+                                className="p-1.5 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                title="Cancel overdue pickup"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
