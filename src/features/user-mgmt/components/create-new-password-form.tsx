@@ -8,6 +8,7 @@ import { AuthHeader, PasswordInput } from "@/features/user-mgmt"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PASSWORD_RULES, getPasswordErrors } from "@/lib/password-validation"
 
 export function CreateNewPasswordForm() {
   const router = useRouter()
@@ -37,8 +38,8 @@ export function CreateNewPasswordForm() {
       return
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long")
+    if (getPasswordErrors(password).length > 0) {
+      setError("Password does not meet the requirements below")
       return
     }
 
@@ -144,12 +145,25 @@ export function CreateNewPasswordForm() {
               </Label>
               <PasswordInput
                 id="password"
-                placeholder="Minimum 8 characters"
+                placeholder="Enter your new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading || !token}
                 required
               />
+              <div className="pt-1 space-y-1">
+                {PASSWORD_RULES.map((rule) => {
+                  const passed = rule.test(password)
+                  return (
+                    <p key={rule.id} className={`flex items-center gap-1.5 text-xs ${passed ? "text-green-600" : "text-muted-foreground"}`}>
+                      <span className={passed ? "text-green-600" : "text-muted-foreground/60"}>
+                        {passed ? "✓" : "✗"}
+                      </span>
+                      {rule.label}
+                    </p>
+                  )
+                })}
+              </div>
             </div>
 
             <div className="space-y-1.5">

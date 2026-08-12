@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { registerUser } from "@/features/user-mgmt/actions/register"
+import { PASSWORD_RULES, getPasswordErrors } from "@/lib/password-validation"
 import type { RegisterPayload } from "@/types/auth"
 
 export function RegisterForm() {
@@ -47,8 +48,8 @@ export function RegisterForm() {
       return
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long")
+    if (getPasswordErrors(formData.password).length > 0) {
+      setError("Password does not meet the requirements below")
       setIsLoading(false)
       return
     }
@@ -162,7 +163,19 @@ export function RegisterForm() {
                 disabled={isLoading}
                 required
               />
-              <p className="text-xs text-muted-foreground">At least 8 characters</p>
+              <div className="pt-1 space-y-1">
+                {PASSWORD_RULES.map((rule) => {
+                  const passed = rule.test(formData.password)
+                  return (
+                    <p key={rule.id} className={`flex items-center gap-1.5 text-xs ${passed ? "text-green-600" : "text-muted-foreground"}`}>
+                      <span className={passed ? "text-green-600" : "text-muted-foreground/60"}>
+                        {passed ? "✓" : "✗"}
+                      </span>
+                      {rule.label}
+                    </p>
+                  )
+                })}
+              </div>
             </div>
 
             {/* Confirm Password */}

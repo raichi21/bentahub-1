@@ -3,10 +3,8 @@ import { db } from "@/servers/db"
 import { users, passwordResetTokens } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import { hashPassword } from "@/lib/auth-utils"
+import { PASSWORD_RULES } from "@/lib/password-validation"
 import type { AuthResponse } from "@/types/auth"
-
-/** Minimum password length enforced at reset. */
-const MIN_PASSWORD_LENGTH = 8
 
 /** Maximum number of reset attempts before the token is invalidated. */
 const MAX_RESET_ATTEMPTS = 5
@@ -31,14 +29,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
       )
     }
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
-        },
-        { status: 400 }
-      )
+    for (const rule of PASSWORD_RULES) {
+      if (!rule.test(password)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: rule.label,
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // --- Lookup reset token -------------------------------------------------

@@ -5,17 +5,35 @@ import { users, emailVerifications } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import { generateId, generateVerificationCode, hashPassword, hashVerificationCode } from "@/lib/auth-utils"
 import { sendVerificationEmail } from "@/lib/email-service"
+import { PASSWORD_RULES } from "@/lib/password-validation"
 import type { AuthResponse } from "@/types/auth"
 
-const registerSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z.string(),
-  fullName: z.string().min(2, "Full name must be at least 2 characters long"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-})
+const registerSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(1, "Password is required"),
+    confirmPassword: z.string(),
+    fullName: z.string().min(2, "Full name must be at least 2 characters long"),
+  })
+  .superRefine((data, ctx) => {
+    for (const rule of PASSWORD_RULES) {
+      if (!rule.test(data.password)) {
+        ctx.addIssue({
+          code: "custom",
+          message: rule.label,
+          path: ["password"],
+        })
+        return
+      }
+    }
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+      })
+    }
+  })
 
 /**
  * POST /api/auth/register
