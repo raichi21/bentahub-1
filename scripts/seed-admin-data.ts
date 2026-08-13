@@ -55,11 +55,10 @@ async function run() {
   )
 
   // 3. Seed Users
-  console.log("👑 Creating admin user (admin@bentahub.com)...")
+  console.log("👑 Creating system users...")
   const adminPasswordHash = await hashPassword("admin123")
   const staffPasswordHash = await hashPassword("staff123")
   const cashierPasswordHash = await hashPassword("cash123")
-  const customerPasswordHash = await hashPassword("cust123")
 
   await db.insert(users).values([
     {
@@ -89,16 +88,6 @@ async function run() {
       fullName: "Cashier One",
       role: "cashier",
       branch: "Lourdes Main Branch",
-      isEmailVerified: true,
-      isActive: true,
-    },
-    {
-      id: generateId(),
-      email: "customer1@gmail.com",
-      password: customerPasswordHash,
-      fullName: "Juan Dela Cruz",
-      role: "customer",
-      branch: null,
       isEmailVerified: true,
       isActive: true,
     },
@@ -139,7 +128,6 @@ async function run() {
   console.log("- Admin User: admin@bentahub.com / admin123")
   console.log("- Staff User: staff1@bentahub.com / staff123")
   console.log("- Cashier User: cashier1@bentahub.com / cash123")
-  console.log("- Customer User: customer1@gmail.com / cust123")
   process.exit(0)
 }
 
