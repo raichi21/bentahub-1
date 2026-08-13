@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { ContentCard } from "@/components/layouts"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Loader2, Bell, CheckCircle, XCircle } from "lucide-react"
 
 interface NotifPrefs {
@@ -13,24 +11,12 @@ interface NotifPrefs {
 }
 
 export function CustomerSettings() {
-  const { user, token } = useAuth()
+  const { token } = useAuth()
 
-  const [fullName, setFullName] = useState("")
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>({ orderUpdates: true })
 
-  const [profileSaving, setProfileSaving] = useState(false)
   const [notifSaving, setNotifSaving] = useState(false)
-
-  const [profileMessage, setProfileMessage] = useState<string | null>(null)
   const [notifMessage, setNotifMessage] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!user) return
-    const timer = setTimeout(() => {
-      setFullName(user.fullName)
-    }, 0)
-    return () => clearTimeout(timer)
-  }, [user])
 
   const authHeaders = useCallback(() => ({
     Authorization: `Bearer ${token}`,
@@ -47,25 +33,6 @@ export function CustomerSettings() {
       })
       .catch(() => {})
   }, [token, authHeaders])
-
-  async function handleSaveProfile() {
-    if (!token) return
-    setProfileSaving(true)
-    setProfileMessage(null)
-    try {
-      const res = await fetch("/api/customer/profile", {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({ fullName }),
-      })
-      const data = await res.json()
-      setProfileMessage(data.success ? "Saved!" : data.message)
-    } catch {
-      setProfileMessage("Failed to save")
-    } finally {
-      setProfileSaving(false)
-    }
-  }
 
   async function handleSaveNotif() {
     if (!token) return
@@ -88,33 +55,6 @@ export function CustomerSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Profile */}
-      <ContentCard title="Profile" subtitle="Edit your personal information">
-        <div className="space-y-4 max-w-md">
-          <div className="space-y-2">
-            <Label htmlFor="settings-name">Full Name</Label>
-            <Input
-              id="settings-name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Your full name"
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={handleSaveProfile} disabled={profileSaving}>
-              {profileSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Save Changes
-            </Button>
-            {profileMessage && (
-              <span className={`text-sm ${profileMessage === "Saved!" ? "text-green-600" : "text-red-600"}`}>
-                {profileMessage === "Saved!" ? <CheckCircle className="w-4 h-4 inline mr-1" /> : <XCircle className="w-4 h-4 inline mr-1" />}
-                {profileMessage}
-              </span>
-            )}
-          </div>
-        </div>
-      </ContentCard>
-
       {/* Notification Preferences */}
       <ContentCard title="Notification Preferences" subtitle="Control what notifications you receive">
         <div className="space-y-4 max-w-md">

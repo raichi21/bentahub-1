@@ -53,6 +53,7 @@ export default function OAuthResultPage() {
         email: payload.email ?? "",
         fullName: payload.fullName ?? "",
         phone: null,
+        image: null,
         branch: null,
         role: payload.role ?? "customer",
         isEmailVerified: true,

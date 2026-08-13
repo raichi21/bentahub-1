@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Calendar,
   Settings,
+  User,
   LogOut
 } from "lucide-react"
 import { APP_NAME } from "@/config"
@@ -104,6 +105,18 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
       {/* Footer */}
       <div className="p-4 mt-auto">
         <nav className="space-y-1">
+          <Link
+            href="/customer/profile"
+            className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm font-medium",
+              activePath === "/customer/profile"
+                ? "bg-primary text-white"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            )}
+          >
+            <User className="h-5 w-5" />
+            <span>Profile</span>
+          </Link>
           <Link
             href="/customer/settings"
             className={cn(

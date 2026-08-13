@@ -96,6 +96,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
             email: user.email,
             fullName: user.fullName,
             phone: user.phone,
+            image: user.image,
             branch: user.branch,
             role: user.role,
             isEmailVerified: user.isEmailVerified,

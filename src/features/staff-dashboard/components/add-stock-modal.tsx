@@ -187,7 +187,7 @@ export function AddStockModal({ isOpen, onClose, onSave, categories }: AddStockM
                 onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               >
-                {["pcs", "bag", "pack", "bottle", "box", "jar", "loaf"].map((u) => (<option key={u} value={u}>{u}</option>))}
+                {["pcs", "kg", "box", "pack", "bottle", "dozen"].map((u) => (<option key={u} value={u}>{u}</option>))}
               </select>
             </div>
             <div className="space-y-1.5">

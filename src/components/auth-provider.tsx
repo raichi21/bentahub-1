@@ -17,6 +17,7 @@ export interface AuthUser {
   email: string
   fullName: string
   phone: string | null
+  image: string | null
   branch: string | null
   role: string
   isEmailVerified: boolean

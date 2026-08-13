@@ -8,6 +8,7 @@ import { verifyToken, extractToken } from "@/lib/auth-utils"
 const updateProfileSchema = z.object({
   fullName: z.string().min(1, "Name is required").max(255),
   phone: z.string().max(20).nullable().optional(),
+  image: z.string().max(3_000_000).nullable().optional(),
   branch: z.string().max(50).nullable().optional(),
 })
 
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
         email: true,
         fullName: true,
         phone: true,
+        image: true,
         branch: true,
         role: true,
         isEmailVerified: true,
@@ -77,11 +79,14 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const { fullName, phone, branch } = parsed.data
+    const { fullName, phone, image, branch } = parsed.data
 
     const updateData: Partial<typeof users.$inferInsert> = {
       fullName,
       phone: phone ?? null,
+    }
+    if (image !== undefined) {
+      updateData.image = image
     }
     if (branch !== undefined) {
       updateData.branch = branch
@@ -92,6 +97,9 @@ export async function PUT(request: NextRequest) {
       .where(eq(users.id, userId))
 
     const responseData: Record<string, string | null> = { userId, fullName, phone: phone ?? null }
+    if (image !== undefined) {
+      responseData.image = image
+    }
     if (branch !== undefined) {
       responseData.branch = branch
     }

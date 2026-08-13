@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter, usePathname } from "next/navigation"
+import Image from "next/image"
 import { Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/hooks/useAuth"
@@ -23,6 +24,7 @@ const ROUTE_TITLES: Record<string, string> = {
   "/customer/reservations": "Reservations",
   "/customer/orders": "Transaction History",
   "/customer/notifications": "Notifications",
+  "/customer/profile": "Profile",
   "/customer/settings": "Settings",
 }
 
@@ -34,6 +36,7 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/customer/reservations": "Track your active orders",
   "/customer/orders": "View your completed and past orders",
   "/customer/notifications": "Stay updated with your latest activities",
+  "/customer/profile": "Manage your personal information",
   "/customer/settings": "Manage your account settings",
 }
 
@@ -95,8 +98,12 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
 
         {/* User Pill */}
         <div className="flex items-center gap-3 select-none">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 flex-shrink-0">
-            {initials}
+          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 flex-shrink-0 overflow-hidden">
+            {user?.image ? (
+              <Image src={user.image} alt={displayName} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+            ) : (
+              initials
+            )}
           </div>
           <div className="flex-col hidden sm:flex">
             <span className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">{displayName}</span>

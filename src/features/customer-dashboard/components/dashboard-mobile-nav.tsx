@@ -28,7 +28,7 @@ export function DashboardMobileNav({ activePath }: DashboardMobileNavProps) {
     {
       label: "Profile",
       icon: User,
-      path: "/customer/settings", // Assuming settings acts as profile for now
+      path: "/customer/profile",
     },
   ]
 
