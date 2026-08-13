@@ -95,16 +95,18 @@ export function CustomerProfile() {
       <div className="space-y-6 max-w-md">
         {/* Avatar */}
         <div className="flex items-center gap-5">
-          <div className="relative w-24 h-24 rounded-full bg-primary/10 border border-border overflow-hidden flex-shrink-0 flex items-center justify-center">
-            {image ? (
-              <Image src={image} alt="Profile picture" width={96} height={96} className="w-full h-full object-cover" unoptimized />
-            ) : (
-              <span className="text-2xl font-bold text-primary">{initials}</span>
-            )}
+          <div className="relative w-24 h-24 rounded-full bg-primary/10 border border-border flex-shrink-0">
+            <div className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center">
+              {image ? (
+                <Image src={image} alt="Profile picture" width={96} height={96} className="w-full h-full object-cover" unoptimized />
+              ) : (
+                <span className="text-2xl font-bold text-primary">{initials}</span>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors"
+              className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md border-2 border-background hover:bg-primary/90 transition-colors"
               title="Change profile picture"
             >
               <Camera className="w-4 h-4" />

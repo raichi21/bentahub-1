@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react"
 import {
   CatalogToolbar,
   CategorySidebar,
@@ -19,6 +19,22 @@ const DEFAULT_CATEGORY = "All Products"
 const DEFAULT_BRANCH = "Lourdes Main Branch"
 
 export default function CatalogPage() {
+  return (
+    <Suspense fallback={<CatalogLoading />}>
+      <CatalogPageInner />
+    </Suspense>
+  )
+}
+
+function CatalogLoading() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+    </div>
+  )
+}
+
+function CatalogPageInner() {
   const { products: fetchedProducts, fetchProducts, isLoading, error } = useProducts()
   const { itemCount } = useCart()
   const router = useRouter()

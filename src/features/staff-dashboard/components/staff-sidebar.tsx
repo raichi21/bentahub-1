@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Store, Activity, Bell, PackageSearch, CheckCircle2, Calendar, LogOut, X } from "lucide-react"
+import { LayoutDashboard, Activity, Bell, PackageSearch, CheckCircle2, Calendar, LogOut, X } from "lucide-react"
+import { StoreLogo } from "@/components/store-logo"
+import { useStoreSettings } from "@/hooks/useStoreSettings"
 import { cn } from "@/lib/utils"
 import { NotificationBadge } from "./notification-badge"
 
@@ -33,6 +35,7 @@ interface StaffSidebarProps {
 export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const { storeName } = useStoreSettings()
 
   const handleNav = () => {
     onClose()
@@ -57,15 +60,13 @@ export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="px-6 py-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/30 flex-shrink-0">
-            <Store className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-bold text-lg tracking-tight truncate">BentaHub</span>
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-              Staff Panel
-            </span>
-          </div>
+        <StoreLogo boxClassName="bg-blue-600 shadow-lg shadow-blue-600/30" />
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="font-bold text-lg tracking-tight truncate">{storeName}</span>
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+            Staff Panel
+          </span>
+        </div>
           <button onClick={onClose} aria-label="Close sidebar" className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors md:hidden flex-shrink-0">
             <X className="h-5 w-5" />
           </button>

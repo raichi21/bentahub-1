@@ -14,9 +14,10 @@ import {
   Truck,
   Settings,
   LogOut,
-  Store,
   X
 } from "lucide-react"
+import { StoreLogo } from "@/components/store-logo"
+import { useStoreSettings } from "@/hooks/useStoreSettings"
 import { cn } from "@/lib/utils"
 
 interface AdminSidebarProps {
@@ -27,6 +28,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps) {
   const router = useRouter()
+  const { storeName } = useStoreSettings()
 
   const handleLogout = async () => {
     try {
@@ -76,13 +78,11 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
       )}>
         {/* Header */}
         <div className="px-6 py-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-            <Store className="h-6 w-6 text-white" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="font-bold text-lg tracking-tight truncate">BentaHub</span>
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest">Admin Panel</span>
-          </div>
+        <StoreLogo />
+        <div className="flex flex-col min-w-0">
+          <span className="font-bold text-lg tracking-tight truncate">{storeName}</span>
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest">Admin Panel</span>
+        </div>
           <button onClick={onClose} aria-label="Close sidebar" className="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors md:hidden">
             <X className="h-5 w-5" />
           </button>

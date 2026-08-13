@@ -3,6 +3,7 @@ import { Poppins, Lora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
+import { StoreSettingsProvider } from "@/components/store-settings-provider";
 
 const fontSans = Poppins({
   subsets: ["latin"],
@@ -34,7 +35,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <StoreSettingsProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </StoreSettingsProvider>
         </ThemeProvider>
       </body>
     </html>

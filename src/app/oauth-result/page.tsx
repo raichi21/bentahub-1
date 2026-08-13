@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { Suspense, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import type { AuthUser } from "@/components/auth-provider"
@@ -14,6 +14,25 @@ import type { AuthUser } from "@/components/auth-provider"
  * URL so the token does not linger in browser history.
  */
 export default function OAuthResultPage() {
+  return (
+    <Suspense fallback={<OAuthResultLoading />}>
+      <OAuthResultInner />
+    </Suspense>
+  )
+}
+
+function OAuthResultLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-3">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+        <p className="text-muted-foreground">Completing your sign-in...</p>
+      </div>
+    </div>
+  )
+}
+
+function OAuthResultInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setToken, setUser } = useAuth()

@@ -453,3 +453,19 @@ export const insertInventoryBatchSchema = createInsertSchema(inventoryBatches).o
 export const selectInventoryBatchSchema = createSelectSchema(inventoryBatches)
 export type InventoryBatch = typeof inventoryBatches.$inferSelect
 export type InsertInventoryBatch = typeof inventoryBatches.$inferInsert
+
+// ── Store Settings (single-row system configuration) ──
+export const storeSettings = pgTable("store_settings", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  storeName: varchar("store_name", { length: 255 }).notNull().default("BentaHub"),
+  logo: text("logo"),
+  storeAddress: varchar("store_address", { length: 255 }),
+  storeContact: varchar("store_contact", { length: 50 }),
+  storeEmail: varchar("store_email", { length: 255 }),
+  updatedAt,
+})
+
+export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit({ id: true, updatedAt: true })
+export const selectStoreSettingsSchema = createSelectSchema(storeSettings)
+export type StoreSettings = typeof storeSettings.$inferSelect
+export type InsertStoreSettings = typeof storeSettings.$inferInsert

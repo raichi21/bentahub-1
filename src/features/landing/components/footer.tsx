@@ -1,9 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { Store, Globe, MessageCircle, Share2 } from "lucide-react"
+import { Globe, MessageCircle, Share2 } from "lucide-react"
+import { StoreLogo } from "@/components/store-logo"
+import { useStoreSettings } from "@/hooks/useStoreSettings"
 
 export function Footer() {
+  const { storeName } = useStoreSettings()
+  const currentYear = new Date().getFullYear()
+
   return (
     <footer className="bg-zinc-900 text-zinc-100 py-12 mt-12">
       <div className="container mx-auto px-4 max-w-7xl">
@@ -11,8 +16,8 @@ export function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-4">
             <div className="flex items-center gap-2 mb-4">
-              <Store className="h-6 w-6 text-primary" />
-              <span className="font-heading text-xl font-bold text-white">BentaHub</span>
+              <StoreLogo variant="bare" size="sm" iconClassName="text-primary" />
+              <span className="font-heading text-xl font-bold text-white">{storeName}</span>
             </div>
             <p className="text-sm text-zinc-400 mb-6 max-w-xs">
               Your neighborhood digital community store. Reserve essentials online and pick up at your convenience.
@@ -62,7 +67,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-zinc-500">
-            © 2026 BentaHub. All rights reserved.
+            © {currentYear} {storeName}. All rights reserved.
           </p>
         </div>
       </div>

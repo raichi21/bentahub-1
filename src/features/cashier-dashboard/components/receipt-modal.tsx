@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { X, Printer, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { useStoreSettings } from "@/hooks/useStoreSettings"
 import type { Transaction } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
@@ -15,6 +16,7 @@ const PRINT_SERVER_URL = process.env.NEXT_PUBLIC_PRINT_SERVER_URL || "http://loc
 
 export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
   const { user } = useAuth()
+  const { storeName } = useStoreSettings()
   const [printing, setPrinting] = useState(false)
   const [printStatus, setPrintStatus] = useState<"idle" | "success" | "error">("idle")
   const [printMessage, setPrintMessage] = useState("")
@@ -102,7 +104,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
           {/* Business branding */}
           <div className="text-center">
-          <h3 className="text-lg font-black text-card-foreground tracking-tight">BentaHub Retail</h3>
+          <h3 className="text-lg font-black text-card-foreground tracking-tight">{storeName} Retail</h3>
           <p className="text-[10px] text-muted-foreground font-medium">{user?.branch || "Lourdes Main Branch, Metro Manila"}</p>
           <p className="text-[10px] text-muted-foreground font-mono mt-1">Receipt No: BH-{String(transaction.receiptNumber).padStart(6, "0")}</p>
           </div>
@@ -191,7 +193,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
           {/* Thank you phrase */}
           <div className="text-center pt-4">
-            <p className="text-[10px] text-muted-foreground italic">Thank you for shopping with BentaHub!</p>
+            <p className="text-[10px] text-muted-foreground italic">Thank you for shopping with {storeName}!</p>
             <p className="text-[9px] text-muted-foreground/60 font-mono mt-1">Please keep this receipt for return/refund requests</p>
           </div>
         </div>

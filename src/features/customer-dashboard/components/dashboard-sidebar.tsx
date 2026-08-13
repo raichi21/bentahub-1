@@ -7,14 +7,13 @@ import {
   Store,
   History,
   Bell,
-  Store as StoreIcon,
   ShoppingCart,
   Calendar,
-  Settings,
   User,
   LogOut
 } from "lucide-react"
-import { APP_NAME } from "@/config"
+import { StoreLogo } from "@/components/store-logo"
+import { useStoreSettings } from "@/hooks/useStoreSettings"
 import { cn } from "@/lib/utils"
 
 interface DashboardSidebarProps {
@@ -23,6 +22,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
   const router = useRouter()
+  const { storeName } = useStoreSettings()
 
   const sections = [
     {
@@ -61,11 +61,9 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
     <aside className="hidden md:flex flex-col w-[280px] bg-[#0c1221] text-white fixed inset-y-0 left-0 z-40">
       {/* Header */}
       <div className="px-6 py-8 flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-          <StoreIcon className="h-6 w-6 text-white" />
-        </div>
+        <StoreLogo />
         <div className="flex flex-col min-w-0">
-          <span className="font-bold text-lg tracking-tight truncate">{APP_NAME}</span>
+          <span className="font-bold text-lg tracking-tight truncate">{storeName}</span>
           <span className="text-[10px] text-slate-400 uppercase tracking-widest">Customer Portal</span>
         </div>
       </div>
@@ -116,18 +114,6 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
           >
             <User className="h-5 w-5" />
             <span>Profile</span>
-          </Link>
-          <Link
-            href="/customer/settings"
-            className={cn(
-              "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm font-medium",
-              activePath === "/customer/settings"
-                ? "bg-primary text-white"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
-            )}
-          >
-            <Settings className="h-5 w-5" />
-            <span>Settings</span>
           </Link>
           <button
             onClick={handleLogout}

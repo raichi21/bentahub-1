@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { 
   ArrowLeft, 
@@ -23,6 +23,22 @@ import Link from "next/link"
 import { cn, formatOrderId } from "@/lib/utils"
 
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutPageInner />
+    </Suspense>
+  )
+}
+
+function CheckoutLoading() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+    </div>
+  )
+}
+
+function CheckoutPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, token } = useAuth()

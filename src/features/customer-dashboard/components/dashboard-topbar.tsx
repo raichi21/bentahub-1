@@ -25,7 +25,6 @@ const ROUTE_TITLES: Record<string, string> = {
   "/customer/orders": "Transaction History",
   "/customer/notifications": "Notifications",
   "/customer/profile": "Profile",
-  "/customer/settings": "Settings",
 }
 
 const ROUTE_DESCRIPTIONS: Record<string, string> = {
@@ -37,7 +36,6 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/customer/orders": "View your completed and past orders",
   "/customer/notifications": "Stay updated with your latest activities",
   "/customer/profile": "Manage your personal information",
-  "/customer/settings": "Manage your account settings",
 }
 
 interface DashboardTopbarProps {

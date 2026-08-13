@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { CheckCircle, XCircle, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -13,6 +13,14 @@ import {
 const HISTORY_TABS = ["All", "Completed", "Cancelled"]
 
 export default function TransactionsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TransactionsPageInner />
+    </Suspense>
+  )
+}
+
+function TransactionsPageInner() {
   const searchParams = useSearchParams()
   const { fetchOrders } = useOrders()
   const [activeTab, setActiveTab] = useState("All")

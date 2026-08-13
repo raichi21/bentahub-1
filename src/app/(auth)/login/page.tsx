@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { LogIn, Mail } from "lucide-react"
 import { AuthHeader, PasswordInput, SocialAuthButtons } from "@/features/user-mgmt"
@@ -20,6 +21,14 @@ type LoginResponse = {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  )
+}
+
+function LoginPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = React.useState("")

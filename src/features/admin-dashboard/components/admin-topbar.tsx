@@ -42,6 +42,7 @@ export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopba
     subtitle = "Manage and review recent system, inventory, and user activities."
   } else if (pathname.includes("/admin/settings")) {
     title = "Settings"
+    subtitle = "Configure system settings and branches"
   }
 
   return (

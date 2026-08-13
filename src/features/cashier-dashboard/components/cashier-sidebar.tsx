@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Store, ClipboardList, LogOut, Monitor, X } from "lucide-react"
+import { ClipboardList, LogOut, Monitor, X } from "lucide-react"
+import { StoreLogo } from "@/components/store-logo"
+import { useStoreSettings } from "@/hooks/useStoreSettings"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -28,6 +30,7 @@ interface CashierSidebarProps {
 export function CashierSidebar({ isOpen, onClose }: CashierSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const { storeName } = useStoreSettings()
 
   const handleNav = () => {
     onClose()
@@ -53,15 +56,13 @@ export function CashierSidebar({ isOpen, onClose }: CashierSidebarProps) {
       )}>
         {/* Brand Header */}
         <div className="px-6 py-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/30 flex-shrink-0">
-            <Store className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-bold text-lg tracking-tight truncate">BentaHub</span>
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-              Cashier Panel
-            </span>
-          </div>
+        <StoreLogo boxClassName="shadow-lg shadow-primary/30" />
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="font-bold text-lg tracking-tight truncate">{storeName}</span>
+          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+            Cashier Panel
+          </span>
+        </div>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors md:hidden flex-shrink-0">
             <X className="h-5 w-5" />
           </button>
