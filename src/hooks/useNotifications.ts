@@ -59,7 +59,7 @@ export function useNotifications() {
         const message = error instanceof Error ? error.message : "Unknown error"
         notificationsStore.setError(message)
         console.error("Failed to fetch notifications:", error)
-        throw error
+        return null
       } finally {
         isFetchingRef.current = false
         notificationsStore.setLoading(false)
