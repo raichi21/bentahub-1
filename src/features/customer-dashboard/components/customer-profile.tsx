@@ -91,11 +91,11 @@ export function CustomerProfile() {
     .slice(0, 2)
 
   return (
-    <ContentCard title="Profile" subtitle="Edit your personal information">
+    <ContentCard subtitle="Edit your personal information">
       <div className="space-y-6 max-w-md">
         {/* Avatar */}
         <div className="flex items-center gap-5">
-          <div className="relative w-24 h-24 rounded-full bg-primary/10 border border-border flex-shrink-0">
+          <div className="relative w-24 h-24 rounded-full bg-primary/10 border border-border shrink-0">
             <div className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center">
               {image ? (
                 <Image src={image} alt="Profile picture" width={96} height={96} className="w-full h-full object-cover" unoptimized />

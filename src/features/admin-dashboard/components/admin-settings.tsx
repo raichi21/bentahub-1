@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
-import { ContentCard, PageHeader } from "@/components/layouts"
+import { ContentCard } from "@/components/layouts"
 import { Button } from "@/components/ui/button"
 import { Loader2, Save, Store, Plus, Pencil, Power, PowerOff, Camera, X, Store as StoreIcon } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
@@ -194,14 +194,9 @@ export function AdminSettings() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <PageHeader
-        title="Settings"
-        description="Configure system settings and branches."
-      />
-
-      {/* ── System Configuration ── */}
+      {/* ── BentaHub Configuration ── */}
       <ContentCard
-        title="System Configuration"
+        title="BentaHub Configuration"
         subtitle="General settings for your system — name, logo, and contact information."
       >
         <div className="space-y-6">
