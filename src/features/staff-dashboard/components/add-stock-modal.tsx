@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import Image from "next/image"
 import { X, Plus, Image as ImageIcon, ImagePlus } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface ProductForm {
   name: string
@@ -19,23 +20,32 @@ interface AddStockModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (product: ProductForm) => void
+  categories: string[]
 }
 
-const CATEGORIES = ["Groceries", "Beverages", "Household", "Pharmacy", "Snacks", "Bakery"]
+const NEW_CATEGORY = "__new__"
 
-export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
+export function AddStockModal({ isOpen, onClose, onSave, categories }: AddStockModalProps) {
   const [form, setForm] = useState<ProductForm>({
-    name: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "",
+    name: "", category: categories[0] ?? NEW_CATEGORY, stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "",
     expiryDate: ""
   })
+  const [newCategory, setNewCategory] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isNewCategoryMode = form.category === NEW_CATEGORY
+  const trimmedNewCategory = newCategory.trim()
+  const isDuplicateCategory = categories.some((c) => c.toLowerCase() === trimmedNewCategory.toLowerCase())
+  const isInvalidCategoryName = trimmedNewCategory.toLowerCase() === NEW_CATEGORY
+  const isCategoryValid = !isNewCategoryMode || (trimmedNewCategory.length > 0 && !isDuplicateCategory && !isInvalidCategoryName)
+  const isValid = Boolean(form.name.trim()) && isCategoryValid
 
   if (!isOpen) return null
 
   const handleSave = () => {
-    if (!form.name.trim()) return
-    onSave({ ...form })
-    setForm({ name: "", category: "Groceries", stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "", expiryDate: "" })
+    if (!isValid) return
+    const category = isNewCategoryMode ? trimmedNewCategory : form.category
+    onSave({ ...form, category })
     onClose()
   }
 
@@ -59,8 +69,6 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
     // Reset the input so the same file can be re-selected
     e.target.value = ""
   }
-
-  const isValid = form.name.trim()
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -133,15 +141,34 @@ export function AddStockModal({ isOpen, onClose, onSave }: AddStockModalProps) {
               </div>
             </div>
 
-            <div className="space-y-1.5">
+            <div className={cn("space-y-1.5", isNewCategoryMode && "sm:col-span-2")}>
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</label>
               <select
                 value={form.category}
                 onChange={(e) => handleCategoryChange(e.target.value)}
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               >
-                {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
+                {categories.map((c) => (<option key={c} value={c}>{c}</option>))}
+                <option value={NEW_CATEGORY}>＋ Add new category...</option>
               </select>
+              {isNewCategoryMode && (
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="Type new category name..."
+                    className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  />
+                  {trimmedNewCategory.length === 0 ? (
+                    <p className="text-xs text-red-500 font-medium">Category name is required</p>
+                  ) : isDuplicateCategory ? (
+                    <p className="text-xs text-red-500 font-medium">Category &quot;{trimmedNewCategory}&quot; already exists</p>
+                  ) : isInvalidCategoryName ? (
+                    <p className="text-xs text-red-500 font-medium">Please enter a different category name</p>
+                  ) : null}
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Stock Quantity</label>

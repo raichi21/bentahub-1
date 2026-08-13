@@ -14,6 +14,7 @@ export interface Product {
   branch: string
   sku: string
   isActive: boolean
+  nearestExpiry?: string | null
   createdAt: Date
   updatedAt: Date
 }

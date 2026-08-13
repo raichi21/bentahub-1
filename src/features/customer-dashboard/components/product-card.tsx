@@ -37,6 +37,8 @@ export function ProductCard({
   const isOutOfStock = stockStatus === "out-of-stock"
   const isLowStock = stockStatus === "low-stock"
 
+  const detailHref = `/customer/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
+
   const handleAddToCart = async () => {
     try {
       setError(null)
@@ -54,7 +56,7 @@ export function ProductCard({
       isOutOfStock && "opacity-75"
     )}>
       {/* Image Container */}
-      <Link href={`/customer/catalog/${id}`} className="block">
+      <Link href={detailHref} className="block">
         <div className="relative aspect-square bg-muted">
           <Image
             src={image}
@@ -70,7 +72,7 @@ export function ProductCard({
           {/* View Details Overlay */}
           <button
             type="button"
-            onClick={() => router.push(`/customer/catalog/${id}`)}
+            onClick={() => router.push(detailHref)}
             className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm text-xs font-medium text-foreground hover:bg-background"
           >
             <Eye className="w-3.5 h-3.5" />
@@ -109,7 +111,7 @@ export function ProductCard({
 
       {/* Card Body */}
       <div className="p-4 flex flex-col flex-1">
-        <Link href={`/customer/catalog/${id}`} className="flex-1 group/link">
+        <Link href={detailHref} className="flex-1 group/link">
           <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-1 block">
             {category}
           </span>

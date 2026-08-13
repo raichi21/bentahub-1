@@ -51,13 +51,14 @@ export function useProducts() {
    * Fetch a single product by ID
    */
   const fetchProductById = useCallback(
-    async (id: string) => {
+    async (id: string, branch?: string) => {
       if (productsStore.isLoading) return
       try {
         productsStore.setLoading(true)
         productsStore.setError(null)
 
-        const response = await fetch(`/api/customer/products/${id}`)
+        const query = branch ? `?branch=${encodeURIComponent(branch)}` : ""
+        const response = await fetch(`/api/customer/products/${id}${query}`)
         if (!response.ok) throw new Error("Failed to fetch product")
 
         const data = await response.json()

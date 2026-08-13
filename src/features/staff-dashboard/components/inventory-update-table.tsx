@@ -46,6 +46,10 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
     return ["All", ...Array.from(set)]
   }, [initialProducts])
 
+  const productCategories = useMemo(() => {
+    return Array.from(new Set(initialProducts.map((p) => p.category)))
+  }, [initialProducts])
+
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase())
@@ -81,7 +85,9 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
       <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} />
-      <AddStockModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={(p) => onAddProduct?.(p)} />
+      {showAddModal && (
+        <AddStockModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={(p) => onAddProduct?.(p)} categories={productCategories} />
+      )}
 
       <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
         <h4 className="font-bold text-lg text-foreground">Inventory Stock</h4>

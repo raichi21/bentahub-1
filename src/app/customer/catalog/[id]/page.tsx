@@ -3,28 +3,31 @@
 import { useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, ShoppingCart, Package, Store, Tag, Weight, Loader2, CheckCircle } from "lucide-react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { ArrowLeft, ShoppingCart, Package, Store, Tag, Weight, Clock, Loader2, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useProducts } from "@/hooks/useProducts"
 import { useCart } from "@/hooks/useCart"
+import { formatExpiryDate, getExpiryDays } from "@/lib/staff-utils"
 import { cn } from "@/lib/utils"
 
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { currentProduct, fetchProductById, isLoading, error } = useProducts()
   const { addToCart, isLoading: cartLoading } = useCart()
 
   const productId = params.id as string
+  const branch = searchParams.get("branch")
 
   useEffect(() => {
     if (productId) {
-      fetchProductById(productId).catch(() => {
+      fetchProductById(productId, branch ?? undefined).catch(() => {
         // Product not found — handled via error state
       })
     }
-  }, [productId, fetchProductById])
+  }, [productId, branch, fetchProductById])
 
   const handleAddToCart = async () => {
     if (!currentProduct) return
@@ -60,6 +63,11 @@ export default function ProductDetailPage() {
   }
 
   const isOutOfStock = currentProduct.stockStatus === "out-of-stock"
+
+  const expiryDays = getExpiryDays(currentProduct.nearestExpiry ?? null)
+  const formattedExpiry = formatExpiryDate(currentProduct.nearestExpiry ?? null)
+  const isExpiryUrgent = expiryDays !== null && expiryDays <= 7
+  const isExpiryWarning = expiryDays !== null && expiryDays <= 30
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -167,6 +175,16 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border">
+              <Clock className={cn("h-5 w-5 shrink-0", isExpiryUrgent ? "text-red-500" : isExpiryWarning ? "text-amber-500" : "text-muted-foreground")} />
+              <div>
+                <p className="text-xs text-muted-foreground">Expiry Date</p>
+                <p className={cn("text-sm font-medium", isExpiryUrgent ? "text-red-600 font-bold" : isExpiryWarning ? "text-amber-600 font-bold" : "text-foreground")}>
+                  {formattedExpiry ?? "—"}
+                  {expiryDays !== null && (isExpiryUrgent || isExpiryWarning) ? ` (${expiryDays}d)` : ""}
+                </p>
+              </div>
+            </div>
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border">
               <Package className="h-5 w-5 text-muted-foreground shrink-0" />
               <div>
