@@ -107,12 +107,12 @@ async function run() {
   // 4. Seed Products & Inventory
   console.log("🛍️  Creating sample products...")
   const sampleProducts = [
-    { name: "Kopiko Blanca TWIN", category: "Coffee", price: "15.00", sku: "SKU-KOPIKO-BLANCA", stock: 150 },
-    { name: "Kopiko Brown TWIN", category: "Coffee", price: "15.00", sku: "SKU-KOPIKO-BROWN", stock: 120 },
-    { name: "Nescafé 3-in-1 Original", category: "Coffee", price: "12.00", sku: "SKU-NESCAFE-ORIG", stock: 200 },
-    { name: "Great Taste White Twin", category: "Coffee", price: "14.00", sku: "SKU-GT-WHITE", stock: 180 },
-    { name: "Milo Active-Go 22g", category: "Beverages", price: "10.00", sku: "SKU-MILO-22G", stock: 250 },
-    { name: "Bear Brand Powdered 33g", category: "Beverages", price: "18.00", sku: "SKU-BEARBRAND-33G", stock: 160 },
+    { name: "Safeguard Bar Soap", category: "Personal Care", price: "45.00", sku: "SKU-SAFEGUARD", stock: 150, image: "/images/landing/safeguard.png" },
+    { name: "Lucky Me! Pancit Canton", category: "Instant Meals", price: "15.00", sku: "SKU-PANCIT-CANTON", stock: 200, image: "/images/landing/pancit-canton.png" },
+    { name: "Asukal (White Sugar)", category: "Pantry", price: "60.00", sku: "SKU-ASUKAL", stock: 100, image: "/images/landing/asukal.png" },
+    { name: "Buko Pandan Rice", category: "Grains", price: "55.00", sku: "SKU-RICE", stock: 120, image: "/images/landing/rice.png" },
+    { name: "Cooking Oil", category: "Pantry", price: "35.00", sku: "SKU-COOKING-OIL", stock: 180, image: "/images/landing/cooking-oil.png" },
+    { name: "Jack 'n Jill VCut Chips", category: "Snacks", price: "25.00", sku: "SKU-VCUT", stock: 160, image: "/images/landing/vcut.png" },
   ]
 
   for (const prod of sampleProducts) {
@@ -125,6 +125,7 @@ async function run() {
       sku: prod.sku,
       branch: "Lourdes Main Branch",
       quantity: prod.stock,
+      image: prod.image,
       stockStatus: "in-stock",
       isActive: true,
     })
