@@ -104,16 +104,9 @@ async function run() {
     },
   ])
 
-  // 4. Seed Products & Inventory
-  console.log("🛍️  Creating sample products...")
-  const sampleProducts = [
-    { name: "Safeguard Bar Soap", category: "Personal Care", price: "45.00", sku: "SKU-SAFEGUARD", stock: 150, image: "/images/landing/safeguard.png" },
-    { name: "Lucky Me! Pancit Canton", category: "Instant Meals", price: "15.00", sku: "SKU-PANCIT-CANTON", stock: 200, image: "/images/landing/pancit-canton.png" },
-    { name: "Asukal (White Sugar)", category: "Pantry", price: "60.00", sku: "SKU-ASUKAL", stock: 100, image: "/images/landing/asukal.png" },
-    { name: "Buko Pandan Rice", category: "Grains", price: "55.00", sku: "SKU-RICE", stock: 120, image: "/images/landing/rice.png" },
-    { name: "Cooking Oil", category: "Pantry", price: "35.00", sku: "SKU-COOKING-OIL", stock: 180, image: "/images/landing/cooking-oil.png" },
-    { name: "Jack 'n Jill VCut Chips", category: "Snacks", price: "25.00", sku: "SKU-VCUT", stock: 160, image: "/images/landing/vcut.png" },
-  ]
+  // 4. Seed Products & Inventory (Empty by default, managed by staff)
+  console.log("🛍️  Skipping sample products (empty catalog)...")
+  const sampleProducts: Array<{ name: string; category: string; price: string; sku: string; stock: number; image?: string }> = []
 
   for (const prod of sampleProducts) {
     const prodId = generateId()
