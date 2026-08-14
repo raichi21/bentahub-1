@@ -1,1 +1,0 @@
-ALTER TABLE "cart_items" ALTER COLUMN "image" SET DATA TYPE text;

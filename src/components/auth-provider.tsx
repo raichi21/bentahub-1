@@ -104,27 +104,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const storedToken = getStoredToken()
 
       if (!storedToken) {
-        // Auto-login with dev admin account so pages work without manual login
-        try {
-          const res = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: "admin@bentahub.com",
-              password: "admin123",
-            }),
-          })
-          const json = await res.json()
-          if (!cancelled && json.success && json.data?.token && json.data?.user) {
-            storeToken(json.data.token)
-            setTokenState(json.data.token)
-            setUser(json.data.user)
-            setIsLoading(false)
-            return
-          }
-        } catch {
-          // Auto-login failed — fall through to normal unauthenticated state
-        }
+        // No stored session — stay unauthenticated.
+        // (Removed: a dev-only auto-login used to sign everyone in as the seeded
+        // admin account, which was a security hole on deployed environments.)
         if (!cancelled) setIsLoading(false)
         return
       }

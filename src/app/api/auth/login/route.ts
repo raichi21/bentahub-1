@@ -107,9 +107,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     )
   } catch (error) {
     console.error("Login error:", error)
-    return NextResponse.json(
-      { success: false, message: "An error occurred during login" },
-      { status: 500 }
-    )
+    const message =
+      process.env.NODE_ENV === "production"
+        ? "An error occurred during login"
+        : error instanceof Error
+          ? error.message
+          : "An error occurred during login"
+    return NextResponse.json({ success: false, message }, { status: 500 })
   }
 }

@@ -3,16 +3,29 @@ import bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server"
 
+/**
+ * Known insecure values that must never be used as a real JWT secret.
+ * The template placeholder ships in `.env.example` and the dev fallback
+ * below is public in this file — accepting them in production would let
+ * anyone forge admin tokens.
+ */
+const INSECURE_SECRETS: readonly string[] = [
+  "your-secret-key-change-in-production",
+  "default-secret-key-for-development-purposes-only",
+]
+
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET
-  if (secret) {
+  if (secret && !INSECURE_SECRETS.includes(secret)) {
     return secret
   }
   // In production a real secret is mandatory — a hardcoded fallback would let
   // anyone forge admin tokens. In development we fall back to a fixed dev value
   // so builds/pushes don't crash on machines without a .env.local.
   if (process.env.NODE_ENV === "production") {
-    throw new Error("JWT_SECRET must be set in production")
+    throw new Error(
+      "JWT_SECRET must be set to a strong, unique value in production (the template placeholder is not allowed)"
+    )
   }
   return "default-secret-key-for-development-purposes-only"
 }

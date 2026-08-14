@@ -85,6 +85,10 @@ export async function POST(request: NextRequest) {
       })),
       successUrl: `${baseUrl}/cashier?gcash_success=receipt_${nextReceiptNumber}`,
       cancelUrl: `${baseUrl}/cashier?gcash_cancelled=receipt_${nextReceiptNumber}`,
+      billing: {
+        name: user.fullName,
+        email: user.email,
+      },
     })
 
     // Store PaymentIntent ID on the transaction (for status checking)
@@ -106,6 +110,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("GCash payment error:", error)
+    const detail = error instanceof Error ? error.message : "Failed to process GCash payment"
+    console.error("GCash payment error detail:", detail)
     return apiError("Failed to process GCash payment", 500)
   }
 }

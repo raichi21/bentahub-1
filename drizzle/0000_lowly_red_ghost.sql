@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS "cart_items" (
 	"price" numeric(10, 2) NOT NULL,
 	"quantity" integer DEFAULT 1 NOT NULL,
 	"subtotal" numeric(10, 2) NOT NULL,
-	"image" varchar(500),
+	"image" text,
 	"category" varchar(100),
 	"branch" varchar(100) NOT NULL,
 	"added_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS "orders" (
 	"total_amount" numeric(10, 2) NOT NULL,
 	"branch" varchar(100) NOT NULL,
 	"notes" varchar(500),
+	"phone" varchar(20),
 	"is_paid" boolean DEFAULT false NOT NULL,
 	"paid_at" timestamp with time zone,
 	"pickup_deadline" timestamp with time zone,
@@ -191,6 +192,16 @@ CREATE TABLE IF NOT EXISTS "products" (
 	CONSTRAINT "products_sku_unique" UNIQUE("sku")
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "store_settings" (
+	"id" varchar(36) PRIMARY KEY NOT NULL,
+	"store_name" varchar(255) DEFAULT 'BentaHub' NOT NULL,
+	"logo" text,
+	"store_address" varchar(255),
+	"store_contact" varchar(50),
+	"store_email" varchar(255),
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "transaction_items" (
 	"id" varchar(36) PRIMARY KEY NOT NULL,
 	"transaction_id" varchar(36) NOT NULL,
@@ -219,6 +230,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"password" varchar(255),
 	"full_name" varchar(255) NOT NULL,
 	"phone" varchar(20),
+	"image" text,
 	"role" "user_role" DEFAULT 'customer' NOT NULL,
 	"branch" varchar(50),
 	"is_email_verified" boolean DEFAULT false NOT NULL,

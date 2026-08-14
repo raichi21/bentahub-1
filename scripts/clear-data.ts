@@ -1,5 +1,7 @@
 import { readFileSync, existsSync } from "fs"
 import { resolve } from "path"
+import type { AnyPgTable } from "drizzle-orm/pg-core"
+import { count as countAll } from "drizzle-orm"
 
 // Load .env.local before importing app modules
 const envPath = resolve(process.cwd(), ".env.local")
@@ -37,10 +39,11 @@ async function run() {
     branches,
   } = await import("@/servers/schemas")
 
-  const count = async (label: string, table: any) => {
-    const rows = await db.select({ id: table.id }).from(table)
-    console.log(`  ${label}: ${rows.length}`)
-    return rows.length
+  const count = async (label: string, table: AnyPgTable) => {
+    const rows = await db.select({ value: countAll() }).from(table)
+    const total = rows[0]?.value ?? 0
+    console.log(`  ${label}: ${total}`)
+    return total
   }
 
   console.log("🧹 Starting BentaHub data clear...")
