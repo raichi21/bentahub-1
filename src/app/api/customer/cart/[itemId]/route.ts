@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
 import { cartItems } from "@/servers/schemas"
-import { eq, and } from "drizzle-orm"
+import { eq, and, sql } from "drizzle-orm"
 import { extractToken, verifyToken } from "@/lib/auth-utils"
 
 async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
@@ -49,36 +49,28 @@ export async function PUT(
       )
     }
 
-    // Fetch cart item to verify ownership
-    const item = await db
-      .select()
-      .from(cartItems)
+    // Ownership is enforced by the WHERE clause itself: only the user's own
+    // row can be updated. No separate pre-SELECT needed — one query total.
+    const updated = await db
+      .update(cartItems)
+      .set({
+        quantity,
+        subtotal: sql`(${cartItems.price} * ${quantity})::numeric(10, 2)`,
+      })
       .where(
         and(
           eq(cartItems.id, itemId),
           eq(cartItems.userId, userId)
         )
       )
-      .limit(1)
+      .returning()
 
-    if (!item.length) {
+    if (updated.length === 0) {
       return NextResponse.json(
         { success: false, message: "Cart item not found" },
         { status: 404 }
       )
     }
-
-    const cartItem = item[0]
-    const newSubtotal = (Number(cartItem.price) * quantity).toFixed(2)
-
-    const updated = await db
-      .update(cartItems)
-      .set({
-        quantity,
-        subtotal: newSubtotal,
-      })
-      .where(eq(cartItems.id, itemId))
-      .returning()
 
     return NextResponse.json(
       {
@@ -117,26 +109,24 @@ export async function DELETE(
 
     const { itemId } = await params
 
-    // Verify ownership before deleting
-    const item = await db
-      .select()
-      .from(cartItems)
+    // Ownership is enforced by the WHERE clause itself: only the user's own
+    // row can be deleted. No separate pre-SELECT needed — one query total.
+    const deleted = await db
+      .delete(cartItems)
       .where(
         and(
           eq(cartItems.id, itemId),
           eq(cartItems.userId, userId)
         )
       )
-      .limit(1)
+      .returning({ id: cartItems.id })
 
-    if (!item.length) {
+    if (deleted.length === 0) {
       return NextResponse.json(
         { success: false, message: "Cart item not found" },
         { status: 404 }
       )
     }
-
-    await db.delete(cartItems).where(eq(cartItems.id, itemId))
 
     return NextResponse.json(
       {

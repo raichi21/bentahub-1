@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { 
@@ -8,7 +8,8 @@ import {
   Plus, 
   Trash2, 
   HelpCircle, 
-  ShoppingCart
+  ShoppingCart,
+  Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
@@ -20,68 +21,34 @@ export default function CartPage() {
   const { user } = useAuth()
   const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()
   const [isProcessing, setIsProcessing] = useState(false)
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const quantityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Fetch cart on mount
   useEffect(() => {
     fetchCart()
   }, [fetchCart])
 
+  // All cart mutations are optimistic: the store updates instantly and the
+  // server syncs in the background (see useCartActions). No disabled states.
+
   const handleIncrement = async (itemId: string, currentQuantity: number) => {
-    setUpdatingId(itemId)
-    try {
-      await updateCartItem(itemId, Math.min(currentQuantity + 1, 99))
-    } catch (err) {
-      console.error("Failed to increment:", err)
-    } finally {
-      setUpdatingId(null)
-    }
+    await updateCartItem(itemId, Math.min(currentQuantity + 1, 99))
   }
 
   const handleDecrement = async (itemId: string, currentQuantity: number) => {
     if (currentQuantity > 1) {
-      setUpdatingId(itemId)
-      try {
-        await updateCartItem(itemId, currentQuantity - 1)
-      } catch (err) {
-        console.error("Failed to decrement:", err)
-      } finally {
-        setUpdatingId(null)
-      }
+      await updateCartItem(itemId, currentQuantity - 1)
     }
   }
 
   const handleRemove = async (itemId: string) => {
-    setUpdatingId(itemId)
-    try {
-      await removeFromCart(itemId)
-    } catch (err) {
-      console.error("Failed to remove:", err)
-    } finally {
-      setUpdatingId(null)
-    }
+    await removeFromCart(itemId)
   }
 
   const handleQuantityChange = (itemId: string, value: string) => {
     const num = parseInt(value, 10)
     if (!isNaN(num) && num >= 1 && num <= 99) {
-      // Clear previous timeout to debounce rapid keystrokes
-      if (quantityTimeoutRef.current) {
-        clearTimeout(quantityTimeoutRef.current)
-      }
-
-      quantityTimeoutRef.current = setTimeout(async () => {
-        setUpdatingId(itemId)
-        try {
-          await updateCartItem(itemId, num)
-        } catch (err) {
-          console.error("Failed to update quantity:", err)
-        } finally {
-          setUpdatingId(null)
-          quantityTimeoutRef.current = null
-        }
-      }, 500)
+      // Optimistic — server sync is debounced inside the hook
+      updateCartItem(itemId, num)
     }
   }
 
@@ -96,14 +63,6 @@ export default function CartPage() {
   const bond = RESERVATION_BOND
   const totalDue = subtotal + serviceFee + bond
 
-  if (isLoading && items.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Loading cart...</p>
-      </div>
-    )
-  }
-
   return (
     <div className="max-w-6xl mx-auto">
       {error && (
@@ -113,12 +72,19 @@ export default function CartPage() {
       )}
 
       {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-96 gap-4">
-          <p className="text-muted-foreground text-lg">Your cart is empty</p>
-          <Button onClick={() => router.push("/customer/catalog")}>
-            Continue Shopping
-          </Button>
-        </div>
+        isLoading ? (
+          <div className="flex flex-col items-center justify-center h-96 gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground text-lg">Loading cart...</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-96 gap-4">
+            <p className="text-muted-foreground text-lg">Your cart is empty</p>
+            <Button onClick={() => router.push("/customer/catalog")}>
+              Continue Shopping
+            </Button>
+          </div>
+        )
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Left: Item List & Schedule */}
@@ -152,8 +118,7 @@ export default function CartPage() {
                       <div className="flex items-center border border-border rounded-lg overflow-hidden h-10">
                         <button
                           onClick={() => handleDecrement(item.id, item.quantity)}
-                          disabled={updatingId === item.id}
-                          className="px-3 hover:bg-muted transition-colors h-full flex items-center disabled:opacity-50"
+                          className="px-3 hover:bg-muted transition-colors h-full flex items-center"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -162,20 +127,17 @@ export default function CartPage() {
                           type="text"
                           value={item.quantity}
                           onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                          disabled={updatingId === item.id}
                         />
                         <button
                           onClick={() => handleIncrement(item.id, item.quantity)}
-                          disabled={updatingId === item.id}
-                          className="px-3 hover:bg-muted transition-colors h-full flex items-center disabled:opacity-50"
+                          className="px-3 hover:bg-muted transition-colors h-full flex items-center"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
                       <button
                         onClick={() => handleRemove(item.id)}
-                        disabled={updatingId === item.id}
-                        className="text-destructive text-xs hover:underline flex items-center gap-1 disabled:opacity-50"
+                        className="text-destructive text-xs hover:underline flex items-center gap-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Remove
                       </button>

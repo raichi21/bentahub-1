@@ -37,6 +37,16 @@ export function useCartActions() {
   const { user, token } = useAuth()
   const fetchingRef = useRef(false)
 
+  // Per-item pending quantity syncs. Each entry debounces the PUT so rapid
+  // +/- taps coalesce into a single server call, and remembers the last
+  // server-confirmed values so a failure can roll the row back.
+  interface PendingQuantitySync {
+    timer: ReturnType<typeof setTimeout> | null
+    lastGoodQuantity: number
+    lastGoodSubtotal: number
+  }
+  const quantitySyncsRef = useRef<Map<string, PendingQuantitySync>>(new Map())
+
   /**
    * Fetch cart from backend
    */
@@ -169,67 +179,121 @@ export function useCartActions() {
   )
 
   /**
-   * Update cart item quantity
+   * Update cart item quantity — OPTIMISTIC.
+   * The store updates instantly so +/- taps and typing feel immediate;
+   * the server PUT is debounced (~500ms) and coalesced per item. On
+   * failure the row rolls back to the last server-confirmed values.
    */
   const updateCartItem = useCallback(
     async (itemId: string, quantity: number) => {
       if (!user || !token) return
 
-      try {
-        useCartStore.getState().setError(null)
+      const state = useCartStore.getState()
+      state.setError(null)
 
-        const response = await fetch(`/api/customer/cart/${itemId}`, {
-          method: "PUT",
-          headers: authHeaders(token),
-          body: JSON.stringify({ quantity }),
-        })
+      const item = state.items.find((i) => i.id === itemId)
+      if (!item) return
 
-        if (!response.ok) throw new Error("Failed to update cart item")
-
-        const data = await response.json()
-        useCartStore.getState().updateItem(itemId, {
-          quantity: data.data.quantity,
-          subtotal: Number(data.data.subtotal),
-        })
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error"
-        useCartStore.getState().setError(message)
-        console.error("Failed to update cart item:", error)
-        throw error
+      const synced = quantitySyncsRef.current.get(itemId) ?? {
+        timer: null,
+        lastGoodQuantity: item.quantity,
+        lastGoodSubtotal: item.subtotal,
       }
+
+      // ── Optimistic: apply instantly (store recomputes the subtotal) ──
+      state.updateItem(itemId, { quantity })
+
+      // ── Debounced server sync (one PUT with the final quantity) ──
+      if (synced.timer) clearTimeout(synced.timer)
+      synced.timer = setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/customer/cart/${itemId}`, {
+            method: "PUT",
+            headers: authHeaders(token),
+            body: JSON.stringify({ quantity }),
+          })
+
+          if (!response.ok) throw new Error("Failed to update cart item")
+
+          const data = await response.json()
+          // Adopt the authoritative values from the server
+          const current = quantitySyncsRef.current.get(itemId)
+          useCartStore.getState().updateItem(itemId, {
+            quantity: data.data.quantity,
+            subtotal: Number(data.data.subtotal),
+          })
+          if (current) {
+            current.lastGoodQuantity = Number(data.data.quantity)
+            current.lastGoodSubtotal = Number(data.data.subtotal)
+          }
+        } catch (error) {
+          // Roll back to the last server-confirmed values
+          const current = quantitySyncsRef.current.get(itemId)
+          useCartStore.getState().updateItem(itemId, {
+            quantity: current?.lastGoodQuantity ?? 1,
+            subtotal: current?.lastGoodSubtotal ?? 0,
+          })
+          const message = error instanceof Error ? error.message : "Unknown error"
+          useCartStore.getState().setError(message)
+          console.error("Failed to update cart item:", error)
+        }
+      }, 500)
+
+      quantitySyncsRef.current.set(itemId, synced)
     },
     [user, token]
   )
 
   /**
-   * Remove item from cart
+   * Remove item from cart — OPTIMISTIC.
+   * The row disappears instantly; the DELETE runs in the background and
+   * the item is restored on failure.
    */
   const removeFromCart = useCallback(
     async (itemId: string) => {
       if (!user || !token) return
 
-      try {
-        useCartStore.getState().setError(null)
+      // Cancel any pending quantity sync for this item first
+      const pending = quantitySyncsRef.current.get(itemId)
+      if (pending?.timer) clearTimeout(pending.timer)
+      quantitySyncsRef.current.delete(itemId)
 
+      const state = useCartStore.getState()
+      state.setError(null)
+
+      const previous = state.items.find((i) => i.id === itemId)
+      if (!previous) return
+
+      // ── Optimistic: remove instantly ──
+      state.removeItem(itemId)
+
+      try {
         const response = await fetch(`/api/customer/cart/${itemId}`, {
           method: "DELETE",
           headers: authHeaders(token),
         })
 
         if (!response.ok) throw new Error("Failed to remove item from cart")
-
-        useCartStore.getState().removeItem(itemId)
       } catch (error) {
+        // Restore the item on failure
+        const current = useCartStore.getState()
+        if (!current.items.some((i) => i.id === itemId)) {
+          current.addItem(previous)
+        }
         const message = error instanceof Error ? error.message : "Unknown error"
-        useCartStore.getState().setError(message)
+        current.setError(message)
         console.error("Failed to remove from cart:", error)
-        throw error
       }
     },
     [user, token]
   )
 
   const clearCart = useCallback(() => {
+    // Cancel pending quantity syncs so no ghost PUTs fire after clearing
+    quantitySyncsRef.current.forEach((sync) => {
+      if (sync.timer) clearTimeout(sync.timer)
+    })
+    quantitySyncsRef.current.clear()
     useCartStore.getState().clearCart()
   }, [])
 
