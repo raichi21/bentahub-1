@@ -2,15 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 const TOKEN_STORAGE_KEY = "bentahub_token"
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 export interface AuthUser {
   userId: string
