@@ -190,10 +190,20 @@ export async function retrievePaymentIntent(id: string): Promise<PayMongoPayment
   }
 }
 
+/**
+ * True only when the payment has been definitively settled. "processing"
+ * is NOT final — the payment may still fail, so it must not mark an order
+ * as paid.
+ */
 export function isPaymentSuccessful(status: string): boolean {
-  return ["succeeded", "processing"].includes(status)
+  return status === "succeeded"
 }
 
+/** True while the customer still has a payment action pending (including mid-processing). */
 export function isPaymentPending(status: string): boolean {
-  return status === "awaiting_payment_method" || status === "awaiting_next_action"
+  return (
+    status === "awaiting_payment_method" ||
+    status === "awaiting_next_action" ||
+    status === "processing"
+  )
 }

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { db } from "@/servers/db"
-import { users, notificationPreferences } from "@/servers/schemas"
+import { db } from "@/drizzle/db"
+import { users, notificationPreferences } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
-import { verifyToken, extractToken } from "@/lib/auth-utils"
+import { getUserIdFromToken } from "@/lib/auth-utils"
 
 const updateProfileSchema = z.object({
   fullName: z.string().min(1, "Name is required").max(255),
@@ -12,16 +12,9 @@ const updateProfileSchema = z.object({
   branch: z.string().max(50).nullable().optional(),
 })
 
-function getUserId(request: NextRequest): string | null {
-  const token = extractToken(request)
-  if (!token) return null
-  const payload = verifyToken(token)
-  return payload?.userId ?? null
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserId(request)
+    const userId = getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }
@@ -64,7 +57,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = getUserId(request)
+    const userId = getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }

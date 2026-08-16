@@ -2,17 +2,9 @@ import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
 import { users, orders, orderItems } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
-import { extractToken, verifyToken } from "@/lib/auth-utils"
+import { getUserIdFromToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { createCheckoutSession } from "@/lib/paymongo"
-
-function getUserIdFromToken(request: NextRequest): string | null {
-  const token = extractToken(request)
-  if (!token) return null
-  const decoded = verifyToken(token)
-  if (!decoded) return null
-  return decoded.userId
-}
 
 export async function POST(request: NextRequest) {
   const userId = getUserIdFromToken(request)

@@ -47,6 +47,8 @@ function TransactionsPageInner() {
           if (json.success && json.data?.isPaid) {
             setBanner({ type: "success", message: "Payment successful! Your order is confirmed." })
             fetchOrders()
+          } else if (json.data?.status === "processing") {
+            setBanner({ type: "error", message: "Payment is still being processed. We'll update your order once it's confirmed." })
           } else {
             setBanner({ type: "error", message: "Payment pending. Please complete your GCash payment." })
           }

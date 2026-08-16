@@ -6,7 +6,11 @@ import { apiResponse, apiError } from "@/lib/api-response"
 
 /**
  * Compute the earliest future expiry date for a product in a given branch.
- * Falls back to the product's denormalized branch, then any branch inventory.
+ *
+ * When a branch is requested, the expiry is computed ONLY from that branch's
+ * inventory — falling back to another branch would show a customer an expiry
+ * that doesn't apply to what they're buying, so it returns `null` instead.
+ * When no branch is requested, best-effort fallbacks are fine.
  */
 async function getNearestExpiry(productId: string, branchName: string | null): Promise<string | null> {
   const now = new Date()
@@ -17,17 +21,14 @@ async function getNearestExpiry(productId: string, branchName: string | null): P
     const branchRecord = await db.query.branches.findFirst({
       where: eq(branches.name, branchName),
     })
-    if (branchRecord) {
-      inventory = await db.query.branchInventory.findMany({
-        where: and(
-          eq(branchInventory.productId, productId),
-          eq(branchInventory.branchId, branchRecord.id),
-        ),
-      })
-    }
-  }
-
-  if (!inventory || inventory.length === 0) {
+    if (!branchRecord) return null
+    inventory = await db.query.branchInventory.findMany({
+      where: and(
+        eq(branchInventory.productId, productId),
+        eq(branchInventory.branchId, branchRecord.id),
+      ),
+    })
+  } else {
     const product = await db.query.products.findFirst({
       where: eq(products.id, productId),
     })
@@ -44,12 +45,12 @@ async function getNearestExpiry(productId: string, branchName: string | null): P
         })
       }
     }
-  }
 
-  if (!inventory || inventory.length === 0) {
-    inventory = await db.query.branchInventory.findMany({
-      where: eq(branchInventory.productId, productId),
-    })
+    if (!inventory || inventory.length === 0) {
+      inventory = await db.query.branchInventory.findMany({
+        where: eq(branchInventory.productId, productId),
+      })
+    }
   }
 
   if (!inventory || inventory.length === 0) return null

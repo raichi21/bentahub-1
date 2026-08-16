@@ -1,18 +1,13 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
-import { cartItems, orders, orderItems } from "@/drizzle/schema"
+import { cartItems, orders, orderItems, branches, branchInventory } from "@/drizzle/schema"
 import { eq, and, inArray, isNull, desc } from "drizzle-orm"
-import { generateId, extractToken, verifyToken } from "@/lib/auth-utils"
+import { generateId, getUserIdFromToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 
-function getUserIdFromToken(request: NextRequest): string | null {
-  const token = extractToken(request)
-  if (!token) return null
-  const decoded = verifyToken(token)
-  if (!decoded) return null
-  return decoded.userId
-}
+/** Thrown by the checkout transaction when stock cannot fulfil an order. */
+class CheckoutError extends Error {}
 
 /**
  * GET /api/customer/orders
@@ -71,8 +66,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { paymentMethod, branch, notes, phone } = body
 
-    if (!paymentMethod || !branch) {
-      return apiError("Payment method and branch are required")
+    if (!paymentMethod) {
+      return apiError("Payment method is required")
     }
 
     if (!phone || typeof phone !== "string" || phone.trim().length === 0) {
@@ -95,6 +90,17 @@ export async function POST(request: NextRequest) {
 
     if (userCartItems.length === 0) {
       return apiError("Cart is empty")
+    }
+
+    // Derive the order branch from the cart (the cart is single-branch).
+    // The client-supplied branch may confirm it, but never override it.
+    const cartBranch = userCartItems.find((i) => i.branch)?.branch ?? null
+    if (cartBranch && branch && branch !== cartBranch) {
+      return apiError("Selected branch does not match the items in your cart", 400)
+    }
+    const effectiveBranch = cartBranch || branch
+    if (!effectiveBranch) {
+      return apiError("A pickup branch is required", 400)
     }
 
     // Calculate total amount (subtotal + service fee + bond)
@@ -121,7 +127,7 @@ export async function POST(request: NextRequest) {
       status: "pending" as const,
       paymentMethod: paymentMethod as "cash" | "gcash",
       totalAmount: totalAmount.toFixed(2),
-      branch,
+      branch: effectiveBranch,
       notes: notes || null,
       phone: phone.trim(),
       isPaid: false,
@@ -141,25 +147,60 @@ export async function POST(request: NextRequest) {
     }))
 
     // #10: Wrap inserts in a DB transaction — if server crashes mid-way,
-    // no orphaned orders or uncleared carts
-    const result = await db.transaction(async (tx) => {
-      const [createdOrder] = await tx
-        .insert(orders)
-        .values(newOrder)
-        .returning()
+    // no orphaned orders or uncleared carts. Stock is re-validated inside
+    // the transaction so a concurrent purchase can't be oversold.
+    let createdOrder: typeof orders.$inferSelect
+    try {
+      createdOrder = await db.transaction(async (tx) => {
+        const branchRecord = await tx.query.branches.findFirst({
+          where: eq(branches.name, effectiveBranch),
+        })
 
-      await tx.insert(orderItems).values(orderItemsData)
+        if (branchRecord) {
+          for (const item of userCartItems) {
+            const inv = await tx.query.branchInventory.findFirst({
+              where: and(
+                eq(branchInventory.productId, item.productId),
+                eq(branchInventory.branchId, branchRecord.id)
+              ),
+            })
+            if (inv) {
+              const available = Number(inv.quantity)
+              if (available <= 0) {
+                throw new CheckoutError(`"${item.productName}" is out of stock`)
+              }
+              if (Number(item.quantity) > available) {
+                throw new CheckoutError(
+                  `Only ${available} unit(s) of "${item.productName}" are available`
+                )
+              }
+            }
+          }
+        }
 
-      await tx.delete(cartItems).where(eq(cartItems.userId, userId))
+        const [order] = await tx
+          .insert(orders)
+          .values(newOrder)
+          .returning()
 
-      return createdOrder
-    })
+        await tx.insert(orderItems).values(orderItemsData)
+
+        await tx.delete(cartItems).where(eq(cartItems.userId, userId))
+
+        return order
+      })
+    } catch (txError) {
+      if (txError instanceof CheckoutError) {
+        return apiError(txError.message, 400)
+      }
+      throw txError
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Order created successfully",
-        data: { order: result, items: orderItemsData },
+        data: { order: createdOrder, items: orderItemsData },
       }),
       { status: 201, headers: { "content-type": "application/json" } }
     )

@@ -1,24 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { db } from "@/servers/db"
-import { notificationPreferences } from "@/servers/schemas"
+import { db } from "@/drizzle/db"
+import { notificationPreferences } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
-import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
+import { getUserIdFromToken, generateId } from "@/lib/auth-utils"
 
 const updateNotifPrefsSchema = z.object({
   orderUpdates: z.boolean(),
 })
 
-function getUserId(request: NextRequest): string | null {
-  const token = extractToken(request)
-  if (!token) return null
-  const payload = verifyToken(token)
-  return payload?.userId ?? null
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserId(request)
+    const userId = getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }
@@ -47,7 +40,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = getUserId(request)
+    const userId = getUserIdFromToken(request)
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }

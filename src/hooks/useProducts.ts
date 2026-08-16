@@ -8,9 +8,14 @@ export function useProducts() {
   /**
    * Fetch all products from backend
    * Supports optional filters: category, branch
+   *
+   * Pass an `AbortSignal` to cancel a superseded request (e.g. when the
+   * customer switches branch). An aborted request is ignored entirely —
+   * it never writes to the store or surfaces an error, so a stale response
+   * can't overwrite the products of the currently selected branch.
    */
   const fetchProducts = useCallback(
-    async (filters?: { category?: string; branch?: string }) => {
+    async (filters?: { category?: string; branch?: string; signal?: AbortSignal }) => {
       inflightRef.current++
       try {
         productsStore.setLoading(true)
@@ -23,7 +28,7 @@ export function useProducts() {
         const query = params.toString()
         const url = `/api/customer/products${query ? `?${query}` : ""}`
 
-        const response = await fetch(url)
+        const response = await fetch(url, filters?.signal ? { signal: filters.signal } : undefined)
         if (!response.ok) throw new Error("Failed to fetch products")
 
         const data = await response.json()
@@ -36,6 +41,8 @@ export function useProducts() {
         productsStore.setProducts(products)
         return products
       } catch (error) {
+        // A superseded request — ignore silently (the newer request owns the store).
+        if (error instanceof Error && error.name === "AbortError") return undefined
         const message = error instanceof Error ? error.message : "Unknown error"
         productsStore.setError(message)
         console.error("Failed to fetch products:", error)
@@ -92,15 +99,6 @@ export function useProducts() {
   /**
    * Get product from store by ID
    */
-  const getProductById = useCallback(
-    (id: string) => {
-      return productsStore.getProductById(id)
-    },
-    // productsStore actions are stable Zustand references — not needed in deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  )
-
   return {
     // State
     products: productsStore.products,
@@ -111,6 +109,5 @@ export function useProducts() {
     // Actions
     fetchProducts,
     fetchProductById,
-    getProductById,
   }
 }

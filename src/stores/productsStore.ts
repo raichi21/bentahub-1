@@ -28,7 +28,6 @@ export interface ProductsState {
   // Actions
   setProducts: (products: Product[]) => void
   setCurrentProduct: (product: Product | null) => void
-  getProductById: (id: string) => Product | null
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   updateProduct: (id: string, updates: Partial<Product>) => void
@@ -42,11 +41,6 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
 
   setProducts: (products) => set({ products }),
   setCurrentProduct: (product) => set({ currentProduct: product }),
-
-  getProductById: (id) => {
-    const { products } = get()
-    return products.find((p) => p.id === id) || null
-  },
 
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),

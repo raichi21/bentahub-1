@@ -1,23 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/servers/db"
-import { cartItems } from "@/servers/schemas"
+import { db } from "@/drizzle/db"
+import { cartItems, branches, branchInventory } from "@/drizzle/schema"
 import { eq, and, sql } from "drizzle-orm"
-import { extractToken, verifyToken } from "@/lib/auth-utils"
-
-async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
-  const token = extractToken(request)
-
-  if (!token) {
-    return null
-  }
-
-  const decoded = verifyToken(token)
-  if (!decoded) {
-    return null
-  }
-
-  return decoded.userId
-}
+import { getUserIdFromToken } from "@/lib/auth-utils"
+import { clampCartQuantity, validateCartQuantity } from "@/lib/cart"
 
 /**
  * PUT /api/customer/cart/[itemId]
@@ -29,7 +15,7 @@ export async function PUT(
   { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
-    const userId = await getUserIdFromToken(request)
+    const userId = getUserIdFromToken(request)
 
     if (!userId) {
       return NextResponse.json(
@@ -42,20 +28,67 @@ export async function PUT(
     const body = await request.json()
     const { quantity } = body
 
-    if (quantity === undefined || quantity < 1) {
+    const cappedQuantity = clampCartQuantity(quantity)
+    if (cappedQuantity === null) {
       return NextResponse.json(
         { success: false, message: "Invalid quantity" },
         { status: 400 }
       )
     }
 
+    // Load the user's own cart row together with its current branch stock
+    // so the new quantity can be validated before it is written.
+    const rows = await db
+      .select({
+        id: cartItems.id,
+        productId: cartItems.productId,
+        branch: cartItems.branch,
+        stockQuantity: branchInventory.quantity,
+      })
+      .from(cartItems)
+      .leftJoin(branches, eq(branches.name, cartItems.branch))
+      .leftJoin(
+        branchInventory,
+        and(
+          eq(branchInventory.productId, cartItems.productId),
+          eq(branchInventory.branchId, branches.id)
+        )
+      )
+      .where(
+        and(
+          eq(cartItems.id, itemId),
+          eq(cartItems.userId, userId)
+        )
+      )
+      .limit(1)
+
+    if (rows.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Cart item not found" },
+        { status: 404 }
+      )
+    }
+
+    const row = rows[0]
+    const availableStock =
+      row.stockQuantity === null || row.stockQuantity === undefined
+        ? null
+        : Number(row.stockQuantity)
+    const stockError = validateCartQuantity(cappedQuantity, availableStock)
+    if (stockError) {
+      return NextResponse.json(
+        { success: false, message: stockError },
+        { status: 400 }
+      )
+    }
+
     // Ownership is enforced by the WHERE clause itself: only the user's own
-    // row can be updated. No separate pre-SELECT needed — one query total.
+    // row can be updated.
     const updated = await db
       .update(cartItems)
       .set({
-        quantity,
-        subtotal: sql`(${cartItems.price} * ${quantity})::numeric(10, 2)`,
+        quantity: cappedQuantity,
+        subtotal: sql`(${cartItems.price} * ${cappedQuantity})::numeric(10, 2)`,
       })
       .where(
         and(
@@ -98,7 +131,7 @@ export async function DELETE(
   { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
-    const userId = await getUserIdFromToken(request)
+    const userId = getUserIdFromToken(request)
 
     if (!userId) {
       return NextResponse.json(

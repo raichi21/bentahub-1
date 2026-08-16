@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/servers/db"
-import { notifications } from "@/servers/schemas"
+import { db } from "@/drizzle/db"
+import { notifications } from "@/drizzle/schema"
 import { eq, and, desc } from "drizzle-orm"
-import { extractToken, verifyToken } from "@/lib/auth-utils"
-
-async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
-  const token = extractToken(request)
-
-  if (!token) {
-    return null
-  }
-
-  const decoded = verifyToken(token)
-  if (!decoded) {
-    return null
-  }
-
-  return decoded.userId
-}
+import { getUserIdFromToken } from "@/lib/auth-utils"
 
 /**
  * GET /api/customer/notifications
@@ -26,7 +11,7 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
  */
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getUserIdFromToken(request)
+    const userId = getUserIdFromToken(request)
 
     if (!userId) {
       return NextResponse.json(
@@ -90,7 +75,7 @@ export async function GET(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const userId = await getUserIdFromToken(request)
+    const userId = getUserIdFromToken(request)
 
     if (!userId) {
       return NextResponse.json(
@@ -125,7 +110,7 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = await getUserIdFromToken(request)
+    const userId = getUserIdFromToken(request)
 
     if (!userId) {
       return NextResponse.json(

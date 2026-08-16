@@ -76,21 +76,27 @@ function CatalogPageInner() {
     []
   )
 
-  // Fetch products for the current branch
+  // Fetch products for the current branch. When the branch changes, abort
+  // the previous in-flight request so its response can't overwrite the store
+  // with products from the now-deselected branch.
   const lastBranchRef = useRef("")
-  const activeFetchRef = useRef(0)
+  const fetchControllerRef = useRef<AbortController | null>(null)
   useEffect(() => {
     if (lastBranchRef.current === currentBranch && fetchedProducts.length > 0) return
     lastBranchRef.current = currentBranch
-    const fetchId = ++activeFetchRef.current
-    fetchProducts({ branch: currentBranch }).then((result) => {
-      // Ignore stale result if a newer fetch was started
-      if (fetchId !== activeFetchRef.current) return
-      return result
-    }).catch((error: unknown) => {
-      if (fetchId !== activeFetchRef.current) return
-      console.error("Failed to fetch products:", error)
+    fetchControllerRef.current?.abort()
+    const controller = new AbortController()
+    fetchControllerRef.current = controller
+    fetchProducts({ branch: currentBranch, signal: controller.signal }).catch((error: unknown) => {
+      // Aborted requests are handled (and ignored) inside the hook
+      if (error instanceof Error && error.name !== "AbortError") {
+        console.error("Failed to fetch products:", error)
+      }
     })
+    return () => {
+      controller.abort()
+      if (fetchControllerRef.current === controller) fetchControllerRef.current = null
+    }
   }, [fetchProducts, currentBranch, fetchedProducts.length])
 
   const categoryChanged = useCallback(

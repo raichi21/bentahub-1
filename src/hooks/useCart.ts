@@ -42,10 +42,8 @@ export function useCartActions() {
   // server-confirmed values so a failure can roll the row back.
   interface PendingQuantitySync {
     timer: ReturnType<typeof setTimeout> | null
-    /** Bumped on every optimistic edit; a stale PUT response is ignored unless it still matches sentVersion. */
+    /** Bumped on every optimistic edit; a stale PUT response is ignored unless it still matches the version captured when the request was dispatched. */
     version: number
-    /** The version this in-flight request represents, captured at dispatch time. */
-    sentVersion: number
     lastGoodQuantity: number
     lastGoodSubtotal: number
   }
@@ -203,7 +201,6 @@ export function useCartActions() {
       const synced = quantitySyncsRef.current.get(itemId) ?? {
         timer: null,
         version: 0,
-        sentVersion: -1,
         lastGoodQuantity: item.quantity,
         lastGoodSubtotal: item.subtotal,
       }
@@ -219,10 +216,11 @@ export function useCartActions() {
       synced.timer = setTimeout(async () => {
         const current = quantitySyncsRef.current.get(itemId)
         if (!current) return
-        // Capture which edit version this request represents. If the user
-        // edits again while this request is in flight, the version bumps
-        // and this response is treated as stale.
-        current.sentVersion = current.version
+        // Capture this request's edit version in a LOCAL so a later edit
+        // that bumps `current.version` (or a second timer that fires while
+        // this request is in flight) can never make this response pass the
+        // staleness check. The shared object's fields are NOT safe here.
+        const requestVersion = current.version
         try {
           const response = await fetch(`/api/customer/cart/${itemId}`, {
             method: "PUT",
@@ -235,7 +233,7 @@ export function useCartActions() {
           const data = await response.json()
           // Adopt the authoritative values from the server — only if no
           // newer edit happened while this request was in flight.
-          if (current.version === current.sentVersion) {
+          if (current.version === requestVersion) {
             useCartStore.getState().updateItem(itemId, {
               quantity: data.data.quantity,
               subtotal: Number(data.data.subtotal),
@@ -247,7 +245,7 @@ export function useCartActions() {
           // Roll back to the last server-confirmed values — only if this
           // request is still the newest edit for the item; otherwise the
           // newer debounced request owns the row.
-          if (current.version === current.sentVersion) {
+          if (current.version === requestVersion) {
             useCartStore.getState().updateItem(itemId, {
               quantity: current.lastGoodQuantity,
               subtotal: current.lastGoodSubtotal,

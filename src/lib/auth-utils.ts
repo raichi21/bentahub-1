@@ -122,6 +122,19 @@ export function extractToken(request: { headers: { get: (name: string) => string
 // ---------------------------------------------------------------------------
 
 /**
+ * Extract the `userId` from a NextRequest's Bearer token.
+ * Returns `null` when the token is missing or invalid.
+ */
+export function getUserIdFromToken(request: {
+  headers: { get: (name: string) => string | null }
+}): string | null {
+  const token = extractToken(request)
+  if (!token) return null
+  const payload = verifyToken(token)
+  return payload?.userId ?? null
+}
+
+/**
  * Verify that the request has a valid admin JWT.
  * Returns `{ userId, error }` — if `error` is set, return it immediately.
  */

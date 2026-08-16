@@ -1,23 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/servers/db"
-import { cartItems, products, branches, branchInventory } from "@/servers/schemas"
+import { db } from "@/drizzle/db"
+import { cartItems, products, branches, branchInventory } from "@/drizzle/schema"
 import { eq, and, sql } from "drizzle-orm"
-import { generateId, extractToken, verifyToken } from "@/lib/auth-utils"
-
-async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
-  const token = extractToken(request)
-
-  if (!token) {
-    return null
-  }
-
-  const decoded = verifyToken(token)
-  if (!decoded) {
-    return null
-  }
-
-  return decoded.userId
-}
+import { generateId, getUserIdFromToken } from "@/lib/auth-utils"
+import { clampCartQuantity, MAX_ITEM_QUANTITY, validateCartQuantity } from "@/lib/cart"
 
 /**
  * GET /api/customer/cart
@@ -25,7 +11,7 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
  */
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getUserIdFromToken(request)
+    const userId = getUserIdFromToken(request)
 
     if (!userId) {
       return NextResponse.json(
@@ -69,7 +55,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const userId = await getUserIdFromToken(request)
+    const userId = getUserIdFromToken(request)
 
     if (!userId) {
       return NextResponse.json(
@@ -81,7 +67,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { productId, quantity, branch } = body
 
-    if (!productId || !quantity || quantity < 1) {
+    const requestedQuantity = clampCartQuantity(quantity)
+    if (!productId || requestedQuantity === null) {
       return NextResponse.json(
         { success: false, message: "Invalid product ID or quantity" },
         { status: 400 }
@@ -155,24 +142,27 @@ export async function POST(request: NextRequest) {
 
     const unitPrice = Number(row.price)
     const existingQuantity = row.cartId ? Number(row.cartQuantity) : 0
-    const newQuantity = existingQuantity + quantity
+    const newQuantity = existingQuantity + requestedQuantity
     const effectiveBranch = branch || row.productBranch
 
+    if (newQuantity > MAX_ITEM_QUANTITY) {
+      return NextResponse.json(
+        { success: false, message: `Maximum of ${MAX_ITEM_QUANTITY} units per item` },
+        { status: 400 }
+      )
+    }
+
     // Stock validation (only when the requested branch resolves)
-    if (row.stockQuantity !== null && row.stockQuantity !== undefined) {
-      const available = Number(row.stockQuantity)
-      if (available <= 0) {
-        return NextResponse.json(
-          { success: false, message: "This product is out of stock at the selected branch" },
-          { status: 400 }
-        )
-      }
-      if (newQuantity > available) {
-        return NextResponse.json(
-          { success: false, message: `Only ${available} item(s) available at the selected branch` },
-          { status: 400 }
-        )
-      }
+    const availableStock =
+      row.stockQuantity === null || row.stockQuantity === undefined
+        ? null
+        : Number(row.stockQuantity)
+    const stockError = validateCartQuantity(newQuantity, availableStock)
+    if (stockError) {
+      return NextResponse.json(
+        { success: false, message: stockError },
+        { status: 400 }
+      )
     }
 
     if (row.cartId) {
@@ -229,8 +219,8 @@ export async function POST(request: NextRequest) {
       productId,
       productName: row.name,
       price: row.price.toString(),
-      quantity,
-      subtotal: (unitPrice * quantity).toFixed(2),
+      quantity: requestedQuantity,
+      subtotal: (unitPrice * requestedQuantity).toFixed(2),
       image: row.image || "",
       category: row.category,
       branch: effectiveBranch,

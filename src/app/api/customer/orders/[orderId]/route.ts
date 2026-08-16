@@ -2,16 +2,8 @@ import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
 import { orders, orderItems } from "@/drizzle/schema"
 import { eq, and, isNull } from "drizzle-orm"
-import { extractToken, verifyToken } from "@/lib/auth-utils"
+import { getUserIdFromToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
-
-function getUserIdFromToken(request: NextRequest): string | null {
-  const token = extractToken(request)
-  if (!token) return null
-  const decoded = verifyToken(token)
-  if (!decoded) return null
-  return decoded.userId
-}
 
 /**
  * GET /api/customer/orders/[orderId]
