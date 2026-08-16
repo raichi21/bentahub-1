@@ -42,6 +42,10 @@ export function useCartActions() {
   // server-confirmed values so a failure can roll the row back.
   interface PendingQuantitySync {
     timer: ReturnType<typeof setTimeout> | null
+    /** Bumped on every optimistic edit; a stale PUT response is ignored unless it still matches sentVersion. */
+    version: number
+    /** The version this in-flight request represents, captured at dispatch time. */
+    sentVersion: number
     lastGoodQuantity: number
     lastGoodSubtotal: number
   }
@@ -183,6 +187,8 @@ export function useCartActions() {
    * The store updates instantly so +/- taps and typing feel immediate;
    * the server PUT is debounced (~500ms) and coalesced per item. On
    * failure the row rolls back to the last server-confirmed values.
+   * A per-item version guard ignores stale in-flight responses so an
+   * older request can never overwrite a newer edit.
    */
   const updateCartItem = useCallback(
     async (itemId: string, quantity: number) => {
@@ -196,9 +202,14 @@ export function useCartActions() {
 
       const synced = quantitySyncsRef.current.get(itemId) ?? {
         timer: null,
+        version: 0,
+        sentVersion: -1,
         lastGoodQuantity: item.quantity,
         lastGoodSubtotal: item.subtotal,
       }
+      // Mark this as a new edit so any response from an earlier request
+      // becomes stale and is ignored.
+      synced.version++
 
       // ── Optimistic: apply instantly (store recomputes the subtotal) ──
       state.updateItem(itemId, { quantity })
@@ -206,6 +217,12 @@ export function useCartActions() {
       // ── Debounced server sync (one PUT with the final quantity) ──
       if (synced.timer) clearTimeout(synced.timer)
       synced.timer = setTimeout(async () => {
+        const current = quantitySyncsRef.current.get(itemId)
+        if (!current) return
+        // Capture which edit version this request represents. If the user
+        // edits again while this request is in flight, the version bumps
+        // and this response is treated as stale.
+        current.sentVersion = current.version
         try {
           const response = await fetch(`/api/customer/cart/${itemId}`, {
             method: "PUT",
@@ -216,23 +233,26 @@ export function useCartActions() {
           if (!response.ok) throw new Error("Failed to update cart item")
 
           const data = await response.json()
-          // Adopt the authoritative values from the server
-          const current = quantitySyncsRef.current.get(itemId)
-          useCartStore.getState().updateItem(itemId, {
-            quantity: data.data.quantity,
-            subtotal: Number(data.data.subtotal),
-          })
-          if (current) {
+          // Adopt the authoritative values from the server — only if no
+          // newer edit happened while this request was in flight.
+          if (current.version === current.sentVersion) {
+            useCartStore.getState().updateItem(itemId, {
+              quantity: data.data.quantity,
+              subtotal: Number(data.data.subtotal),
+            })
             current.lastGoodQuantity = Number(data.data.quantity)
             current.lastGoodSubtotal = Number(data.data.subtotal)
           }
         } catch (error) {
-          // Roll back to the last server-confirmed values
-          const current = quantitySyncsRef.current.get(itemId)
-          useCartStore.getState().updateItem(itemId, {
-            quantity: current?.lastGoodQuantity ?? 1,
-            subtotal: current?.lastGoodSubtotal ?? 0,
-          })
+          // Roll back to the last server-confirmed values — only if this
+          // request is still the newest edit for the item; otherwise the
+          // newer debounced request owns the row.
+          if (current.version === current.sentVersion) {
+            useCartStore.getState().updateItem(itemId, {
+              quantity: current.lastGoodQuantity,
+              subtotal: current.lastGoodSubtotal,
+            })
+          }
           const message = error instanceof Error ? error.message : "Unknown error"
           useCartStore.getState().setError(message)
           console.error("Failed to update cart item:", error)

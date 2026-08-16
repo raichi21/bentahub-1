@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
+import { useCartStore } from "@/stores/cartStore"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 
 export default function CartPage() {
@@ -30,13 +31,23 @@ export default function CartPage() {
   // All cart mutations are optimistic: the store updates instantly and the
   // server syncs in the background (see useCartActions). No disabled states.
 
+  // Read the freshest quantity from the store rather than the render
+  // closure, so rapid +/- taps each compute from the latest value instead
+  // of firing duplicate requests with the same stale quantity.
+  const getLatestQuantity = (itemId: string, fallback: number) => {
+    const latest = useCartStore.getState().items.find((i) => i.id === itemId)
+    return latest ? latest.quantity : fallback
+  }
+
   const handleIncrement = async (itemId: string, currentQuantity: number) => {
-    await updateCartItem(itemId, Math.min(currentQuantity + 1, 99))
+    const base = getLatestQuantity(itemId, currentQuantity)
+    await updateCartItem(itemId, Math.min(base + 1, 99))
   }
 
   const handleDecrement = async (itemId: string, currentQuantity: number) => {
-    if (currentQuantity > 1) {
-      await updateCartItem(itemId, currentQuantity - 1)
+    const base = getLatestQuantity(itemId, currentQuantity)
+    if (base > 1) {
+      await updateCartItem(itemId, base - 1)
     }
   }
 
