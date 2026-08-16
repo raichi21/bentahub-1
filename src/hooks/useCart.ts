@@ -282,7 +282,12 @@ export function useCartActions() {
             body: JSON.stringify({ quantity }),
           })
 
-          if (!response.ok) throw new Error("Failed to update cart item")
+          if (!response.ok) {
+            // Surface the server's real reason (e.g. quantity over the
+            // branch's available stock) instead of a generic message.
+            const errorData = await response.json().catch(() => null)
+            throw new Error(errorData?.message || "Failed to update cart item")
+          }
 
           const data = await response.json()
           // Adopt the authoritative values from the server — only if no
@@ -296,6 +301,14 @@ export function useCartActions() {
             current.lastGoodSubtotal = Number(data.data.subtotal)
           }
         } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error"
+          // The row may not exist on the server yet — the item id was an
+          // optimistic temp id used while the add-to-cart POST was still in
+          // flight. Re-sync so the store adopts the authoritative id instead
+          // of showing a confusing "not found" error.
+          if (message === "Cart item not found") {
+            void fetchCart()
+          }
           // Roll back to the last server-confirmed values — only if this
           // request is still the newest edit for the item; otherwise the
           // newer debounced request owns the row.
@@ -305,7 +318,6 @@ export function useCartActions() {
               subtotal: current.lastGoodSubtotal,
             })
           }
-          const message = error instanceof Error ? error.message : "Unknown error"
           useCartStore.getState().setError(message)
           console.error("Failed to update cart item:", error)
         }
@@ -313,7 +325,7 @@ export function useCartActions() {
 
       quantitySyncsRef.current.set(itemId, synced)
     },
-    [user, token]
+    [user, token, fetchCart]
   )
 
   /**

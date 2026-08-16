@@ -49,6 +49,10 @@ function okResponse(payload: unknown): Response {
   return { ok: true, status: 200, json: async () => payload } as unknown as Response
 }
 
+function badResponse(payload: unknown, status = 400): Response {
+  return { ok: false, status, json: async () => payload } as unknown as Response
+}
+
 describe("useCartActions quantity sync", () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -161,6 +165,93 @@ describe("useCartActions quantity sync", () => {
     expect(after.quantity).toBe(1)
     expect(after.subtotal).toBe(10)
     expect(useCartStore.getState().error).toBe("network down")
+  })
+
+  it("surfaces the server's message (e.g. stock limit) when the sync fails", async () => {
+    useCartStore.getState().setItems([makeItem()])
+    const { result } = renderHook(() => useCartActions())
+
+    const response = deferred<Response>()
+    const fetchMock = vi.fn().mockImplementationOnce(() => response.promise)
+    vi.stubGlobal("fetch", fetchMock)
+
+    await act(async () => {
+      result.current.updateCartItem("item-1", 25)
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(500)
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      response.resolve(
+        badResponse({ success: false, message: "Only 20 item(s) available at the selected branch" })
+      )
+    })
+    const after = useCartStore.getState().items[0]
+    expect(after.quantity).toBe(1)
+    expect(after.subtotal).toBe(10)
+    expect(useCartStore.getState().error).toBe(
+      "Only 20 item(s) available at the selected branch"
+    )
+  })
+
+  it("re-syncs the cart when the sync fails with a not-found temp id", async () => {
+    useCartStore.getState().setItems([makeItem({ id: "pending-1" })])
+    const { result } = renderHook(() => useCartActions())
+
+    const putResponse = deferred<Response>()
+    const cartResponse = deferred<Response>()
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(() => putResponse.promise) // PUT
+      .mockImplementationOnce(() => cartResponse.promise) // fetchCart GET
+    vi.stubGlobal("fetch", fetchMock)
+
+    await act(async () => {
+      result.current.updateCartItem("pending-1", 2)
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(500)
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    // PUT fails: the temp row doesn't exist on the server yet (the add POST
+    // was still in flight) → the hook re-syncs the cart and rolls back
+    await act(async () => {
+      putResponse.resolve(badResponse({ success: false, message: "Cart item not found" }, 404))
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(useCartStore.getState().items[0].quantity).toBe(1)
+
+    // The re-sync adopts the authoritative server row (real id) instead of
+    // leaving the store stuck on the temp id
+    await act(async () => {
+      cartResponse.resolve(
+        okResponse({
+          data: {
+            items: [
+              {
+                id: "server-1",
+                productId: "prod-1",
+                productName: "Rice",
+                price: 10,
+                quantity: 1,
+                subtotal: 10,
+                image: "",
+                category: "Grains",
+                branch: "Main Branch",
+                addedAt: "2026-01-01T00:00:00Z",
+                updatedAt: "2026-01-01T00:00:00Z",
+              },
+            ],
+          },
+        })
+      )
+    })
+    const after = useCartStore.getState().items
+    expect(after).toHaveLength(1)
+    expect(after[0].id).toBe("server-1")
   })
 
   it("does not roll back to a stale failed response once a newer edit owns the row", async () => {
