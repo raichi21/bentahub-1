@@ -17,7 +17,9 @@ export default function ProductDetailPage() {
   const searchParams = useSearchParams()
   const { currentProduct, fetchProductById, isLoading, error } = useProducts()
   const { addToCart } = useCartActions()
-  const [adding, setAdding] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [added, setAdded] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   const productId = params.id as string
   const branch = searchParams.get("branch")
@@ -31,8 +33,14 @@ export default function ProductDetailPage() {
   }, [productId, branch, fetchProductById])
 
   const handleAddToCart = async () => {
-    if (!currentProduct || adding) return
-    setAdding(true)
+    if (!currentProduct || pending) return
+    setAddError(null)
+    setPending(true)
+    // Instant optimistic feedback — the item is already in the cart store
+    // at this point; the server call reconciles in the background and the
+    // store rolls back on failure.
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1200)
     try {
       await addToCart(currentProduct.id, 1, currentProduct.branch, {
         productName: currentProduct.name,
@@ -41,9 +49,12 @@ export default function ProductDetailPage() {
         category: currentProduct.category,
       })
     } catch (err) {
+      setAdded(false)
+      const message = err instanceof Error ? err.message : "Failed to add to cart"
+      setAddError(message)
       console.error("Failed to add to cart:", err)
     } finally {
-      setAdding(false)
+      setPending(false)
     }
   }
 
@@ -216,15 +227,18 @@ export default function ProductDetailPage() {
                 size="lg"
                 className="w-full gap-2"
                 onClick={handleAddToCart}
-                disabled={adding}
+                disabled={pending}
               >
-                {adding ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                {added ? (
+                  <CheckCircle className="h-5 w-5" />
                 ) : (
                   <ShoppingCart className="h-5 w-5" />
                 )}
-                {adding ? "Adding..." : "Add to Cart"}
+                {added ? "Added to Cart" : "Add to Cart"}
               </Button>
+            )}
+            {addError && (
+              <p className="text-sm text-destructive text-center">{addError}</p>
             )}
             <Link
               href="/customer/catalog"

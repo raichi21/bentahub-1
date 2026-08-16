@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, Bell, Eye, Loader2, Check } from "lucide-react"
+import { ShoppingCart, Bell, Eye, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useCartActions } from "@/hooks/useCart"
@@ -32,7 +32,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const router = useRouter()
   const { addToCart } = useCartActions()
-  const [adding, setAdding] = useState(false)
+  const [pending, setPending] = useState(false)
   const [added, setAdded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,9 +42,14 @@ export function ProductCard({
   const detailHref = `/customer/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
   const handleAddToCart = async () => {
-    if (adding) return
+    if (pending) return
     setError(null)
-    setAdding(true)
+    setPending(true)
+    // Instant optimistic feedback — the item is already in the cart store
+    // at this point; the server call reconciles in the background and the
+    // store rolls back on failure.
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1200)
     try {
       const numericPrice =
         typeof price === "string" ? parseFloat(price.replace(/[₱,]/g, "")) : price
@@ -54,14 +59,13 @@ export function ProductCard({
         image,
         category,
       })
-      setAdded(true)
-      setTimeout(() => setAdded(false), 1200)
     } catch (err) {
+      setAdded(false)
       const message = err instanceof Error ? err.message : "Failed to add to cart"
       setError(message)
       console.error(message)
     } finally {
-      setAdding(false)
+      setPending(false)
     }
   }
 
@@ -157,16 +161,14 @@ export function ProductCard({
               size="sm" 
               className="w-full gap-1.5" 
               onClick={handleAddToCart}
-              disabled={adding}
+              disabled={pending}
             >
-              {adding ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : added ? (
+              {added ? (
                 <Check className="size-3.5" />
               ) : (
                 <ShoppingCart className="size-3.5" />
               )}
-              {adding ? "Adding..." : added ? "Added" : "Add to Cart"}
+              {added ? "Added" : "Add to Cart"}
             </Button>
           )}
           {error && (

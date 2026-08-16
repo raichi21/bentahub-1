@@ -96,38 +96,46 @@ export async function POST(request: NextRequest) {
       ? eq(branches.name, branch)
       : sql`false`
 
-    const rows = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        price: products.price,
-        image: products.image,
-        category: products.category,
-        isActive: products.isActive,
-        productBranch: products.branch,
-        cartId: cartItems.id,
-        cartQuantity: cartItems.quantity,
-        cartBranch: cartItems.branch,
-        stockQuantity: branchInventory.quantity,
-      })
-      .from(products)
-      .leftJoin(
-        cartItems,
-        and(
-          eq(cartItems.productId, products.id),
-          eq(cartItems.userId, userId)
+    // Run both reads in parallel — neither depends on the other, and both
+    // only need userId/productId/branch which are known up front.
+    const [rows, existingBranches] = await Promise.all([
+      db
+        .select({
+          id: products.id,
+          name: products.name,
+          price: products.price,
+          image: products.image,
+          category: products.category,
+          isActive: products.isActive,
+          productBranch: products.branch,
+          cartId: cartItems.id,
+          cartQuantity: cartItems.quantity,
+          cartBranch: cartItems.branch,
+          stockQuantity: branchInventory.quantity,
+        })
+        .from(products)
+        .leftJoin(
+          cartItems,
+          and(
+            eq(cartItems.productId, products.id),
+            eq(cartItems.userId, userId)
+          )
         )
-      )
-      .leftJoin(branches, branchCondition)
-      .leftJoin(
-        branchInventory,
-        and(
-          eq(branchInventory.productId, products.id),
-          eq(branchInventory.branchId, branches.id)
+        .leftJoin(branches, branchCondition)
+        .leftJoin(
+          branchInventory,
+          and(
+            eq(branchInventory.productId, products.id),
+            eq(branchInventory.branchId, branches.id)
+          )
         )
-      )
-      .where(eq(products.id, productId))
-      .limit(1)
+        .where(eq(products.id, productId))
+        .limit(1),
+      db
+        .selectDistinct({ branch: cartItems.branch })
+        .from(cartItems)
+        .where(eq(cartItems.userId, userId)),
+    ])
 
     if (rows.length === 0) {
       return NextResponse.json(
@@ -200,11 +208,6 @@ export async function POST(request: NextRequest) {
 
     // Single-branch cart: reject a new item from a different branch
     if (effectiveBranch) {
-      const existingBranches = await db
-        .selectDistinct({ branch: cartItems.branch })
-        .from(cartItems)
-        .where(eq(cartItems.userId, userId))
-
       if (
         existingBranches.length > 0 &&
         existingBranches.some((b) => b.branch !== effectiveBranch)
