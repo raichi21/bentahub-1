@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { verifyToken, extractToken } from "@/lib/auth-utils"
+import { verifyToken, extractToken, hashPassword } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
@@ -11,6 +11,8 @@ const updateUserSchema = z.object({
   role: z.enum(["admin", "cashier", "staff", "customer"]).optional(),
   branch: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
+  // Optional — when present, the admin resets the user's password.
+  password: z.string().min(8, "Password must be at least 8 characters").optional(),
 })
 
 function checkAuth(token: string | null): { userId?: string; error?: NextResponse } {
@@ -51,8 +53,17 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: firstError }, { status: 400 })
     }
 
+    // Hash an optional new password before it touches the database — the
+    // raw value is never persisted. When absent, the existing password stays.
+    const { password, ...rest } = parsed.data
+    const updateData = {
+      ...rest,
+      ...(password ? { password: await hashPassword(password) } : {}),
+      updatedAt: new Date(),
+    }
+
     await db.update(users)
-      .set({ ...parsed.data, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(users.id, userId))
 
     return NextResponse.json({ success: true, message: "User updated successfully" })

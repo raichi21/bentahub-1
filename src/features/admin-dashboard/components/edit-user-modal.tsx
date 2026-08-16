@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { User, X, Loader2 } from "lucide-react"
+import { User, X, Eye, EyeOff, Loader2 } from "lucide-react"
 import type { UserRowData } from "@/types/admin"
 
 interface BranchOption {
@@ -23,6 +23,10 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
   const [role, setRole] = useState("cashier")
   const [branch, setBranch] = useState("")
   const [branches, setBranches] = useState<BranchOption[]>([])
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -33,6 +37,10 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
       setEmail(user.email)
       setRole(user.role)
       setBranch(user.branch || "")
+      setNewPassword("")
+      setConfirmPassword("")
+      setShowPassword(false)
+      setShowConfirmPassword(false)
     }, 0)
     return () => clearTimeout(timer)
   }, [user])
@@ -53,13 +61,23 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name || !email) return
+    if (newPassword && newPassword !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
     setSubmitting(true)
     setError("")
     try {
       const res = await fetch(`/api/admin/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fullName: name, email, role, branch: branch || null }),
+        body: JSON.stringify({
+          fullName: name,
+          email,
+          role,
+          branch: branch || null,
+          password: newPassword || undefined,
+        }),
       })
       const data = await res.json()
       if (data.success) {
@@ -123,6 +141,39 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
                       <option key={b.id} value={b.name}>{b.name}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Change Password (optional) */}
+            <div className="pt-5 border-t border-border space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  Change Password
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Optional</span>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Leave blank to keep the current password.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">New Password</label>
+                <div className="relative">
+                  <input className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="••••••••" type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Confirm Password</label>
+                <div className="relative">
+                  <input className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="••••••••" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </div>
             </div>
