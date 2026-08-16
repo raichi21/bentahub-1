@@ -53,7 +53,7 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
         if (Array.isArray(d)) setBranches(d)
         else if (d.data && Array.isArray(d.data)) setBranches(d.data)
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [isOpen, token])
 
   if (!isOpen || !user) return null
@@ -148,12 +148,10 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
             {/* Change Password (optional) */}
             <div className="pt-5 border-t border-border space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                   Change Password
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Optional</span>
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Leave blank to keep the current password.
                 </p>
               </div>
 
