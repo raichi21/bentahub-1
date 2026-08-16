@@ -139,6 +139,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         if (!cancelled && data.success && data.data) {
+          const currentToken = getStoredToken()
+
+          // A newer login (e.g., OAuth sign-in) may have replaced the stored
+          // token while this verification was in flight. If so, do not let the
+          // stale session overwrite the active user.
+          if (currentToken !== storedToken) {
+            if (!cancelled) setIsLoading(false)
+            return
+          }
+
           setTokenState(storedToken)
           setUser(data.data)
         } else {
