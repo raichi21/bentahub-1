@@ -115,7 +115,7 @@ function LoginPageInner() {
 
   return (
     <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <AuthHeader subtitle="Lourdes Sari-Sari Store" />
+      <AuthHeader subtitle="Welcome back! Sign in to continue" />
 
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">

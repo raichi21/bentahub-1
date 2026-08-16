@@ -49,7 +49,7 @@ export function ForgotPasswordForm() {
 
   return (
     <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <AuthHeader subtitle="Lourdes Sari-Sari Store" />
+      <AuthHeader subtitle="We'll help you recover your account" />
 
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">

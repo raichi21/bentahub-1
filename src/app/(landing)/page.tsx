@@ -1,19 +1,13 @@
-import { 
-  HeroSection, 
-  StatsBar, 
-  BranchGrid, 
-  ProductGrid, 
+import {
+  HeroSection,
   CtaBanner,
-  Footer
+  Footer,
 } from "@/features/landing"
 
 export default function LandingPage() {
   return (
     <>
       <HeroSection />
-      <StatsBar />
-      <BranchGrid />
-      <ProductGrid />
       <CtaBanner />
       <Footer />
     </>

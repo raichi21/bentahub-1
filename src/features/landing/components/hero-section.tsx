@@ -1,8 +1,11 @@
 "use client"
 
 import Image from "next/image"
+import { useStoreSettings } from "@/hooks/useStoreSettings"
 
 export function HeroSection() {
+  const { storeName } = useStoreSettings()
+
   return (
     <section className="relative h-[650px] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -24,7 +27,7 @@ export function HeroSection() {
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-            Lourdes Sari-Sari Store, <span className="text-accent">Now Digital</span>
+            {storeName}, <span className="text-accent">Now Digital</span>
           </h1>
 
           {/* Subtitle */}

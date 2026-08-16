@@ -3,7 +3,7 @@
  *
  * Responsible for:
  * - Public landing page components
- * - Hero, Stats, Branches, Products sections
+ * - Navbar, Hero, CTA, Footer sections
  *
  * Consumed by: src/app/(landing)/
  */

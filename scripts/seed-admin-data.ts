@@ -23,7 +23,7 @@ if (!process.env.DATABASE_URL) {
 
 async function run() {
   const { db } = await import("@/servers/db")
-  const { users, branches, branchInventory, products, transactions, transactionItems } = await import("@/servers/schemas")
+  const { users, branches, transactions, transactionItems } = await import("@/servers/schemas")
   const { hashPassword, generateId } = await import("@/lib/auth-utils")
 
   console.log("🌱 Starting BentaHub database seed...")
@@ -32,8 +32,6 @@ async function run() {
   console.log("🗑️  Clearing existing data...")
   await db.delete(transactionItems).catch(() => {})
   await db.delete(transactions).catch(() => {})
-  await db.delete(branchInventory).catch(() => {})
-  await db.delete(products).catch(() => {})
   await db.delete(users).catch(() => {})
   await db.delete(branches).catch(() => {})
 
@@ -93,35 +91,8 @@ async function run() {
     },
   ])
 
-  // 4. Seed Products & Inventory (Empty by default, managed by staff)
-  console.log("🛍️  Skipping sample products (empty catalog)...")
-  const sampleProducts: Array<{ name: string; category: string; price: string; sku: string; stock: number; image?: string }> = []
-
-  for (const prod of sampleProducts) {
-    const prodId = generateId()
-    await db.insert(products).values({
-      id: prodId,
-      name: prod.name,
-      category: prod.category,
-      price: prod.price,
-      sku: prod.sku,
-      branch: "Lourdes Main Branch",
-      quantity: prod.stock,
-      image: prod.image,
-      stockStatus: "in-stock",
-      isActive: true,
-    })
-
-    for (const b of branchList) {
-      await db.insert(branchInventory).values({
-        id: generateId(),
-        branchId: b.id,
-        productId: prodId,
-        quantity: prod.stock,
-        lowStockThreshold: 10,
-      })
-    }
-  }
+  // 4. Products & Inventory are managed manually via the admin panel —
+  //    no demo product data is seeded.
 
   console.log("✅ BentaHub database seeded successfully!")
   console.log("\nSummary:")

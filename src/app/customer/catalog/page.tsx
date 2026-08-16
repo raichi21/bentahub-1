@@ -174,7 +174,7 @@ function CatalogPageInner() {
         onBranchChange={branchChanged}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        branches={branches.length > 0 ? branches : ["Lourdes Main Branch", "Lourdes Second Branch", "Lourdes Third Branch"]}
+        branches={branches}
       />
 
       {/* Main Content Area with Sidebar */}

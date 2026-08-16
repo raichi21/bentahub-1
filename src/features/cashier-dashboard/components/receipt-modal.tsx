@@ -201,7 +201,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
           {/* Business branding */}
           <div className="text-center">
           <h3 className="text-lg font-black text-card-foreground tracking-tight">{storeName} Retail</h3>
-          <p className="text-[10px] text-muted-foreground font-medium">{user?.branch || "Lourdes Main Branch, Metro Manila"}</p>
+          <p className="text-[10px] text-muted-foreground font-medium">{user?.branch ?? ""}</p>
           <p className="text-[10px] text-muted-foreground font-mono mt-1">Receipt No: BH-{String(transaction.receiptNumber).padStart(6, "0")}</p>
           </div>
 

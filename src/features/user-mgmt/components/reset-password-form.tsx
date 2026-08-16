@@ -70,7 +70,7 @@ export function ResetPasswordForm() {
   if (success) {
     return (
       <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <AuthHeader subtitle="Lourdes Sari-Sari Store" />
+        <AuthHeader subtitle="Almost done — redirecting you next" />
 
         <Card className="border-border shadow-sm">
           <CardContent className="pt-8">
@@ -93,7 +93,7 @@ export function ResetPasswordForm() {
 
   return (
     <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <AuthHeader subtitle="Lourdes Sari-Sari Store" />
+      <AuthHeader subtitle="Enter the code we sent to your email" />
 
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">

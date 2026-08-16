@@ -18,7 +18,7 @@ export interface ProductCardProps {
   image: string
   stockStatus: "in-stock" | "low-stock" | "out-of-stock"
   weight?: string
-  branch?: string
+  branch: string
 }
 
 export function ProductCard({
@@ -29,7 +29,7 @@ export function ProductCard({
   image,
   stockStatus,
   weight,
-  branch = "Lourdes Main Branch",
+  branch,
 }: ProductCardProps) {
   const router = useRouter()
   const { addToCart } = useCartActions()
