@@ -2,17 +2,19 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { ContentCard } from "@/components/layouts"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, CheckCircle, XCircle, Camera, X, Mail, Phone } from "lucide-react"
+import { Loader2, CheckCircle, XCircle, Camera, X, Mail, Phone, LogOut } from "lucide-react"
 
 const MAX_IMAGE_SIZE = 2_000_000
 
 export function CustomerProfile() {
-  const { user, token, setUser } = useAuth()
+  const { user, token, setUser, logout } = useAuth()
+  const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [fullName, setFullName] = useState("")
@@ -84,6 +86,11 @@ export function CustomerProfile() {
     }
   }
 
+  async function handleLogout() {
+    await logout()
+    router.push("/login")
+  }
+
   const initials = (fullName || user?.fullName || "U")
     .split(" ")
     .map((n) => n.charAt(0).toUpperCase())
@@ -91,7 +98,8 @@ export function CustomerProfile() {
     .slice(0, 2)
 
   return (
-    <ContentCard subtitle="Edit your personal information">
+    <>
+      <ContentCard subtitle="Edit your personal information">
       <div className="space-y-6 max-w-md">
         {/* Avatar */}
         <div className="flex items-center gap-5">
@@ -192,7 +200,17 @@ export function CustomerProfile() {
             </span>
           )}
         </div>
-      </div>
-    </ContentCard>
+        </div>
+      </ContentCard>
+
+      <ContentCard subtitle="Sign out of your account">
+        <div className="max-w-md">
+          <Button type="button" variant="destructive" className="w-full flex items-center justify-center gap-2" onClick={handleLogout}>
+            <LogOut className="w-4 h-4" />
+            Logout
+          </Button>
+        </div>
+      </ContentCard>
+    </>
   )
 }
