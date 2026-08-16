@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Store, CreditCard, Calendar, Clock, ShoppingBag, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { PageHeader, ContentCard } from "@/components/layouts"
 import { OrderTracker } from "./order-tracker"
 import { CancelOrderModal } from "./cancel-order-modal"
 import { useOrders } from "@/hooks/useOrders"
+import { useAuth } from "@/hooks/useAuth"
 import { formatOrderId, cn } from "@/lib/utils"
 import type { Order } from "@/stores/ordersStore"
 
@@ -26,9 +27,11 @@ const statusColorMap: Record<string, string> = {
 export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
   const router = useRouter()
   const { orders, fetchOrders, cancelOrder } = useOrders()
+  const { token } = useAuth()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const fetchedAllRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -44,8 +47,9 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
         return
       }
 
-      // No orders loaded yet — fetch first
-      if (orders.length === 0) {
+      // No orders loaded yet — fetch the full list once per mount
+      if (orders.length === 0 && !fetchedAllRef.current) {
+        fetchedAllRef.current = true
         try {
           await fetchOrders()
         } catch {
@@ -60,7 +64,9 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
 
       // Not in the list — try single-order fetch as fallback
       try {
-        const res = await fetch(`/api/customer/orders/${orderId}`)
+        const res = await fetch(`/api/customer/orders/${orderId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
         const data = await res.json()
         if (data.success && !cancelled) setOrder(data.data)
       } catch (err) {
@@ -71,7 +77,7 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
     load()
 
     return () => { cancelled = true }
-  }, [orderId, orders, fetchOrders])
+  }, [orderId, orders, fetchOrders, token])
 
   if (loading) {
     return (

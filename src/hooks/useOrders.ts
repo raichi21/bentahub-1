@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import { useOrdersStore, type Order } from "@/stores/ordersStore"
 import { useAuth } from "./useAuth"
 
@@ -12,13 +12,14 @@ function authHeaders(token: string): HeadersInit {
 export function useOrders() {
   const { user, token } = useAuth()
   const ordersStore = useOrdersStore()
+  const inflightRef = useRef(0)
 
   /**
    * Fetch user's orders from backend
    */
   const fetchOrders = useCallback(async () => {
     if (!user || !token) return
-    if (ordersStore.isLoading) return
+    inflightRef.current++
 
     try {
       ordersStore.setLoading(true)
@@ -52,7 +53,8 @@ export function useOrders() {
       console.error("Failed to fetch orders:", error)
       throw error
     } finally {
-      ordersStore.setLoading(false)
+      inflightRef.current--
+      if (inflightRef.current === 0) ordersStore.setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token])

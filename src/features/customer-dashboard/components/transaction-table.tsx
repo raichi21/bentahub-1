@@ -17,7 +17,7 @@ interface TransactionFilters {
 
 export function TransactionTable({ filters }: { filters: TransactionFilters }) {
   const router = useRouter()
-  const { orders, fetchOrders, isLoading, cancelOrder, deleteOrder } = useOrders()
+  const { orders, fetchOrders, isLoading, deleteOrder } = useOrders()
   const [page, setPage] = useState(1)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedTransaction, setSelectedTransaction] = useState<{
@@ -220,7 +220,6 @@ export function TransactionTable({ filters }: { filters: TransactionFilters }) {
           transaction={selectedTransaction}
           isOpen={isModalOpen}
           onClose={() => { setIsModalOpen(false); setSelectedOrder(null); setSelectedTransaction(null) }}
-          onCancelOrder={cancelOrder}
         />
       )}
 

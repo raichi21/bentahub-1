@@ -4,10 +4,10 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, Bell, Eye } from "lucide-react"
+import { ShoppingCart, Bell, Eye, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useCart } from "@/hooks/useCart"
+import { useCartActions } from "@/hooks/useCart"
 
 export interface ProductCardProps {
   id: string
@@ -31,7 +31,9 @@ export function ProductCard({
   branch = "Lourdes Main Branch",
 }: ProductCardProps) {
   const router = useRouter()
-  const { addToCart, isLoading } = useCart()
+  const { addToCart } = useCartActions()
+  const [adding, setAdding] = useState(false)
+  const [added, setAdded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isOutOfStock = stockStatus === "out-of-stock"
@@ -40,13 +42,26 @@ export function ProductCard({
   const detailHref = `/customer/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
   const handleAddToCart = async () => {
+    if (adding) return
+    setError(null)
+    setAdding(true)
     try {
-      setError(null)
-      await addToCart(id, 1, branch)
+      const numericPrice =
+        typeof price === "string" ? parseFloat(price.replace(/[₱,]/g, "")) : price
+      await addToCart(id, 1, branch, {
+        productName: name,
+        price: numericPrice,
+        image,
+        category,
+      })
+      setAdded(true)
+      setTimeout(() => setAdded(false), 1200)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to add to cart"
       setError(message)
       console.error(message)
+    } finally {
+      setAdding(false)
     }
   }
 
@@ -142,10 +157,16 @@ export function ProductCard({
               size="sm" 
               className="w-full gap-1.5" 
               onClick={handleAddToCart}
-              disabled={isLoading}
+              disabled={adding}
             >
-              <ShoppingCart className="size-3.5" />
-              {isLoading ? "Adding..." : "Add to Cart"}
+              {adding ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : added ? (
+                <Check className="size-3.5" />
+              ) : (
+                <ShoppingCart className="size-3.5" />
+              )}
+              {adding ? "Adding..." : added ? "Added" : "Add to Cart"}
             </Button>
           )}
           {error && (

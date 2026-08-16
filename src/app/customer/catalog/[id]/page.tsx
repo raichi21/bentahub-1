@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, ShoppingCart, Package, Store, Tag, Weight, Clock, Loader2, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useProducts } from "@/hooks/useProducts"
-import { useCart } from "@/hooks/useCart"
+import { useCartActions } from "@/hooks/useCart"
 import { formatExpiryDate, getExpiryDays } from "@/lib/staff-utils"
 import { cn } from "@/lib/utils"
 
@@ -16,7 +16,8 @@ export default function ProductDetailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { currentProduct, fetchProductById, isLoading, error } = useProducts()
-  const { addToCart, isLoading: cartLoading } = useCart()
+  const { addToCart } = useCartActions()
+  const [adding, setAdding] = useState(false)
 
   const productId = params.id as string
   const branch = searchParams.get("branch")
@@ -30,11 +31,19 @@ export default function ProductDetailPage() {
   }, [productId, branch, fetchProductById])
 
   const handleAddToCart = async () => {
-    if (!currentProduct) return
+    if (!currentProduct || adding) return
+    setAdding(true)
     try {
-      await addToCart(currentProduct.id, 1, currentProduct.branch)
+      await addToCart(currentProduct.id, 1, currentProduct.branch, {
+        productName: currentProduct.name,
+        price: Number(currentProduct.price),
+        image: currentProduct.image,
+        category: currentProduct.category,
+      })
     } catch (err) {
       console.error("Failed to add to cart:", err)
+    } finally {
+      setAdding(false)
     }
   }
 
@@ -207,10 +216,14 @@ export default function ProductDetailPage() {
                 size="lg"
                 className="w-full gap-2"
                 onClick={handleAddToCart}
-                disabled={cartLoading}
+                disabled={adding}
               >
-                <ShoppingCart className="h-5 w-5" />
-                {cartLoading ? "Adding..." : "Add to Cart"}
+                {adding ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ShoppingCart className="h-5 w-5" />
+                )}
+                {adding ? "Adding..." : "Add to Cart"}
               </Button>
             )}
             <Link

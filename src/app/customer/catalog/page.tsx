@@ -36,7 +36,7 @@ function CatalogLoading() {
 
 function CatalogPageInner() {
   const { products: fetchedProducts, fetchProducts, isLoading, error } = useProducts()
-  const { itemCount } = useCart()
+  const { itemCount, fetchCart } = useCart()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -46,6 +46,11 @@ function CatalogPageInner() {
   const currentPage = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage)
   const [searchQuery, setSearchQuery] = useState("")
   const [branches, setBranches] = useState<string[]>([])
+
+  // Load cart from the server so the FAB badge reflects the real state
+  useEffect(() => {
+    fetchCart()
+  }, [fetchCart])
 
   // Fetch branches from API
   useEffect(() => {

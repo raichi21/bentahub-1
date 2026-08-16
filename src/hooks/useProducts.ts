@@ -1,8 +1,9 @@
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import { useProductsStore, type Product } from "@/stores/productsStore"
 
 export function useProducts() {
   const productsStore = useProductsStore()
+  const inflightRef = useRef(0)
 
   /**
    * Fetch all products from backend
@@ -10,6 +11,7 @@ export function useProducts() {
    */
   const fetchProducts = useCallback(
     async (filters?: { category?: string; branch?: string }) => {
+      inflightRef.current++
       try {
         productsStore.setLoading(true)
         productsStore.setError(null)
@@ -39,7 +41,8 @@ export function useProducts() {
         console.error("Failed to fetch products:", error)
         throw error
       } finally {
-        productsStore.setLoading(false)
+        inflightRef.current--
+        if (inflightRef.current === 0) productsStore.setLoading(false)
       }
     },
     // productsStore actions are stable Zustand references — not needed in deps
@@ -52,7 +55,7 @@ export function useProducts() {
    */
   const fetchProductById = useCallback(
     async (id: string, branch?: string) => {
-      if (productsStore.isLoading) return
+      inflightRef.current++
       try {
         productsStore.setLoading(true)
         productsStore.setError(null)
@@ -77,7 +80,8 @@ export function useProducts() {
         console.error("Failed to fetch product:", error)
         throw error
       } finally {
-        productsStore.setLoading(false)
+        inflightRef.current--
+        if (inflightRef.current === 0) productsStore.setLoading(false)
       }
     },
     // productsStore actions are stable Zustand references — not needed in deps

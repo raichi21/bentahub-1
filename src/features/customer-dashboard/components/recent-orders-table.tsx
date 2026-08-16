@@ -35,10 +35,12 @@ export function RecentOrdersTable() {
         }),
         total: `₱${Number(order.totalAmount).toFixed(2)}`,
         status: 
+          order.status === "pending" ? "Pending" :
           order.status === "ready" ? "Ready for Pickup" :
           order.status === "completed" ? "Completed" :
           "Processing",
         statusVariant: 
+          order.status === "pending" ? "warning" :
           order.status === "ready" ? "primary" :
           order.status === "completed" ? "secondary" :
           "warning" as "primary" | "secondary" | "warning",

@@ -44,7 +44,7 @@ function CheckoutPageInner() {
   const { user, token } = useAuth()
   const branch = searchParams.get("branch") || user?.branch || "Lourdes Main Branch"
 
-  const { items, total, clearCart, isLoading: cartLoading } = useCart()
+  const { items, total, clearCart, isLoading: cartLoading, fetchCart } = useCart()
   const { createOrder, isLoading } = useOrders()
 
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
@@ -55,12 +55,19 @@ function CheckoutPageInner() {
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
   const [isRedirecting, setIsRedirecting] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
+
+  // Hydrate the cart from the server so a hard refresh on this page
+  // doesn't briefly see an empty cart and bounce the user back.
+  useEffect(() => {
+    fetchCart().finally(() => setHydrated(true))
+  }, [fetchCart])
 
   useEffect(() => {
-    if (!cartLoading && items.length === 0 && !orderSuccess) {
+    if (!cartLoading && hydrated && items.length === 0 && !orderSuccess) {
       router.push("/customer/cart")
     }
-  }, [items, cartLoading, router, orderSuccess])
+  }, [items, cartLoading, router, orderSuccess, hydrated])
 
   const handleSubmitOrder = async () => {
     try {

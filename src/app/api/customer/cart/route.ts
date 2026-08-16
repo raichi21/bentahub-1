@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { cartItems, products } from "@/servers/schemas"
-import { eq, and } from "drizzle-orm"
+import { cartItems, products, branches, branchInventory } from "@/servers/schemas"
+import { eq, and, sql } from "drizzle-orm"
 import { generateId, extractToken, verifyToken } from "@/lib/auth-utils"
 
 async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
@@ -88,49 +88,104 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch product details
-    const product = await db
-      .select()
+    // Single read query: product + existing cart row (left join on userId)
+    // + per-branch stock (when a branch is provided).
+    // When no branch is given, the branch join matches nothing (sql`false`)
+    // so stock fields resolve to null and stock validation is skipped.
+    const branchCondition = branch
+      ? eq(branches.name, branch)
+      : sql`false`
+
+    const rows = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        price: products.price,
+        image: products.image,
+        category: products.category,
+        isActive: products.isActive,
+        productBranch: products.branch,
+        cartId: cartItems.id,
+        cartQuantity: cartItems.quantity,
+        cartBranch: cartItems.branch,
+        stockQuantity: branchInventory.quantity,
+      })
       .from(products)
+      .leftJoin(
+        cartItems,
+        and(
+          eq(cartItems.productId, products.id),
+          eq(cartItems.userId, userId)
+        )
+      )
+      .leftJoin(branches, branchCondition)
+      .leftJoin(
+        branchInventory,
+        and(
+          eq(branchInventory.productId, products.id),
+          eq(branchInventory.branchId, branches.id)
+        )
+      )
       .where(eq(products.id, productId))
       .limit(1)
 
-    if (!product.length) {
+    if (rows.length === 0) {
       return NextResponse.json(
         { success: false, message: "Product not found" },
         { status: 404 }
       )
     }
 
-    const productData = product[0]
+    const row = rows[0]
 
-    // Check if item already exists in cart
-    const existingItem = await db
-      .select()
-      .from(cartItems)
-      .where(
-        and(
-          eq(cartItems.userId, userId),
-          eq(cartItems.productId, productId)
-        )
+    if (row.isActive === false) {
+      return NextResponse.json(
+        { success: false, message: "Product is not available" },
+        { status: 404 }
       )
-      .limit(1)
+    }
 
-    const subtotal = (Number(productData.price) * quantity).toFixed(2)
+    const unitPrice = Number(row.price)
+    const existingQuantity = row.cartId ? Number(row.cartQuantity) : 0
+    const newQuantity = existingQuantity + quantity
+    const effectiveBranch = branch || row.productBranch
 
-    if (existingItem.length > 0) {
-      // Update quantity
-      const existingCartItem = existingItem[0]
-      const newQuantity = existingCartItem.quantity + quantity
-      const newSubtotal = (Number(productData.price) * newQuantity).toFixed(2)
+    // Stock validation (only when the requested branch resolves)
+    if (row.stockQuantity !== null && row.stockQuantity !== undefined) {
+      const available = Number(row.stockQuantity)
+      if (available <= 0) {
+        return NextResponse.json(
+          { success: false, message: "This product is out of stock at the selected branch" },
+          { status: 400 }
+        )
+      }
+      if (newQuantity > available) {
+        return NextResponse.json(
+          { success: false, message: `Only ${available} item(s) available at the selected branch` },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (row.cartId) {
+      // Keep carts single-branch: reject re-adding the same product for a different branch
+      if (effectiveBranch && row.cartBranch && row.cartBranch !== effectiveBranch) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `This item is already in your cart for ${row.cartBranch}. Please finish that reservation first.`,
+          },
+          { status: 400 }
+        )
+      }
 
       const updated = await db
         .update(cartItems)
         .set({
           quantity: newQuantity,
-          subtotal: newSubtotal,
+          subtotal: (unitPrice * newQuantity).toFixed(2),
         })
-        .where(eq(cartItems.id, existingCartItem.id))
+        .where(eq(cartItems.id, row.cartId))
         .returning()
 
       return NextResponse.json(
@@ -141,32 +196,53 @@ export async function POST(request: NextRequest) {
         },
         { status: 200 }
       )
-    } else {
-      // Add new item to cart
-      const newCartItem = {
-        id: generateId(),
-        userId,
-        productId,
-        productName: productData.name,
-        price: productData.price.toString(),
-        quantity,
-        subtotal,
-        image: productData.image || "",
-        category: productData.category,
-        branch: branch || productData.branch,
-      }
-
-      const created = await db.insert(cartItems).values(newCartItem).returning()
-
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Item added to cart",
-          data: created[0],
-        },
-        { status: 201 }
-      )
     }
+
+    // Single-branch cart: reject a new item from a different branch
+    if (effectiveBranch) {
+      const existingBranches = await db
+        .selectDistinct({ branch: cartItems.branch })
+        .from(cartItems)
+        .where(eq(cartItems.userId, userId))
+
+      if (
+        existingBranches.length > 0 &&
+        existingBranches.some((b) => b.branch !== effectiveBranch)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Your cart already has items from ${existingBranches[0].branch}. Please finish that reservation before ordering from another branch.`,
+          },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Add new item to cart
+    const newCartItem = {
+      id: generateId(),
+      userId,
+      productId,
+      productName: row.name,
+      price: row.price.toString(),
+      quantity,
+      subtotal: (unitPrice * quantity).toFixed(2),
+      image: row.image || "",
+      category: row.category,
+      branch: effectiveBranch,
+    }
+
+    const created = await db.insert(cartItems).values(newCartItem).returning()
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Item added to cart",
+        data: created[0],
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error("Error adding to cart:", error)
     return NextResponse.json(

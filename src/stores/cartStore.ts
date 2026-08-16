@@ -51,21 +51,18 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   addItem: (item) => {
     const { items } = get()
-    const existingItem = items.find((i) => i.productId === item.productId)
+    const existingIndex = items.findIndex((i) => i.productId === item.productId)
 
-    if (existingItem) {
-      // API already merged quantity — use returned data directly
-      const updated = items.map((i) =>
-        i.productId === item.productId
-          ? {
-              ...i,
-              quantity: item.quantity,
-              price: Number(item.price),
-              subtotal: Number(item.subtotal),
-              updatedAt: new Date(),
-            }
-          : i
-      )
+    if (existingIndex >= 0) {
+      // Replace the whole row with the authoritative item (from the server
+      // or an optimistic temp). Keeps the server row id after reconcile.
+      const updated = [...items]
+      updated[existingIndex] = {
+        ...item,
+        price: Number(item.price),
+        subtotal: Number(item.subtotal),
+        updatedAt: new Date(),
+      }
       set({ items: updated })
     } else {
       set({ items: [...items, { ...item, price: Number(item.price), subtotal: Number(item.subtotal) }] })
@@ -82,8 +79,9 @@ export const useCartStore = create<CartState>((set, get) => ({
             ...item,
             ...updates,
             subtotal:
+              updates.subtotal ??
               (updates.quantity ?? item.quantity) *
-              (updates.price ?? item.price),
+                (updates.price ?? item.price),
             updatedAt: new Date(),
           }
         : item

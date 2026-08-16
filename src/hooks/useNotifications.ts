@@ -15,6 +15,7 @@ export function useNotifications() {
   const { user, token } = useAuth()
   const notificationsStore = useNotificationsStore()
   const isFetchingRef = useRef(false)
+  const hasLoadedRef = useRef(false)
 
   /**
    * Fetch user's notifications from backend
@@ -25,9 +26,11 @@ export function useNotifications() {
       if (!token) return
       if (isFetchingRef.current) return
 
+      const isFirstLoad = !hasLoadedRef.current
+
       try {
         isFetchingRef.current = true
-        notificationsStore.setLoading(true)
+        if (isFirstLoad) notificationsStore.setLoading(true)
         notificationsStore.setError(null)
 
         const params = new URLSearchParams()
@@ -62,7 +65,10 @@ export function useNotifications() {
         return null
       } finally {
         isFetchingRef.current = false
-        notificationsStore.setLoading(false)
+        hasLoadedRef.current = true
+        // Only clear the loading flag on the initial load; background
+        // polls should not flip the spinner on every 30s tick.
+        if (isFirstLoad) notificationsStore.setLoading(false)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
