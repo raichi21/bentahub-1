@@ -1,4 +1,5 @@
 import type { Product } from "@/types/cashier"
+import { formatPHDate } from "@/lib/date"
 
 export function getStockStatus(product: Product): "in-stock" | "low-stock" | "out-of-stock" {
   if (product.stock === 0) return "out-of-stock"
@@ -16,7 +17,7 @@ export function getExpiryDays(nearestExpiry: string | null): number | null {
 /** Format an expiry date string for display (e.g. "Dec 31, 2026"). */
 export function formatExpiryDate(nearestExpiry: string | null): string | null {
   if (!nearestExpiry) return null
-  return new Date(nearestExpiry).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+  return formatPHDate(new Date(nearestExpiry), { month: "short", day: "numeric", year: "numeric" })
 }
 
 /** Check if a product's nearest expiry is within 30 days. */

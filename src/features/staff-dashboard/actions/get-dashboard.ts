@@ -2,6 +2,7 @@ import { db } from "@/servers/db"
 import { branchInventory, transactions, orders, branches } from "@/servers/schemas"
 import { eq, and, gte, sql } from "drizzle-orm"
 import type { StaffDashboardData } from "@/types/staff"
+import { startOfManilaDay } from "@/lib/date"
 
 interface RawBranchInventory {
   id: string
@@ -61,8 +62,7 @@ export async function getStaffDashboard(branchName: string): Promise<StaffDashbo
     (i) => i.quantity < i.lowStockThreshold
   ).length
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = startOfManilaDay()
 
   const allTransactions = await db.query.transactions.findMany({
     where: and(

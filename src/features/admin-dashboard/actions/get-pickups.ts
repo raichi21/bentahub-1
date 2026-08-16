@@ -1,6 +1,7 @@
 import { db } from "@/servers/db"
 import { orders } from "@/servers/schemas"
 import { eq, and, gte, lte, desc, type SQL } from "drizzle-orm"
+import { formatPHDateTime, startOfManilaDay, endOfManilaDay } from "@/lib/date"
 
 export interface PickupFilterOptions {
   status?: string
@@ -21,7 +22,7 @@ function getInitials(name: string): string {
 }
 
 function formatDate(d: Date): string {
-  return d.toLocaleDateString("en-PH", {
+  return formatPHDateTime(d, {
     year: "numeric", month: "short", day: "numeric",
     hour: "2-digit", minute: "2-digit", hour12: true,
   })
@@ -40,12 +41,10 @@ export async function getPickups(filters: PickupFilterOptions = { page: 1, pageS
     baseConditions.push(eq(orders.branch, branchMap.get(filters.branch) ?? filters.branch))
   }
   if (filters.dateFrom) {
-    baseConditions.push(gte(orders.createdAt, new Date(filters.dateFrom)))
+    baseConditions.push(gte(orders.createdAt, startOfManilaDay(new Date(filters.dateFrom))))
   }
   if (filters.dateTo) {
-    const endDate = new Date(filters.dateTo)
-    endDate.setHours(23, 59, 59, 999)
-    baseConditions.push(lte(orders.createdAt, endDate))
+    baseConditions.push(lte(orders.createdAt, endOfManilaDay(new Date(filters.dateTo))))
   }
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined

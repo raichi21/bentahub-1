@@ -1,6 +1,7 @@
 import { db } from "@/servers/db"
 import { transactions } from "@/servers/schemas"
 import { eq, and, gte, lte, desc, type SQL } from "drizzle-orm"
+import { formatPHDateTime, startOfManilaDay, endOfManilaDay } from "@/lib/date"
 
 export interface HistoryFilterOptions {
   dateFrom?: string
@@ -18,7 +19,7 @@ function formatCurrency(amount: number): string {
 }
 
 function formatDate(d: Date): string {
-  return d.toLocaleDateString("en-PH", {
+  return formatPHDateTime(d, {
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", hour12: true,
   })
@@ -30,12 +31,10 @@ export async function getHistory(filters: HistoryFilterOptions = { page: 1, page
 
   const baseConditions: SQL[] = []
   if (filters.dateFrom) {
-    baseConditions.push(gte(transactions.createdAt, new Date(filters.dateFrom)))
+    baseConditions.push(gte(transactions.createdAt, startOfManilaDay(new Date(filters.dateFrom))))
   }
   if (filters.dateTo) {
-    const endDate = new Date(filters.dateTo)
-    endDate.setHours(23, 59, 59, 999)
-    baseConditions.push(lte(transactions.createdAt, endDate))
+    baseConditions.push(lte(transactions.createdAt, endOfManilaDay(new Date(filters.dateTo))))
   }
   if (filters.branchId) {
     baseConditions.push(eq(transactions.branchId, filters.branchId))

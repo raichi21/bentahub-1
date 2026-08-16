@@ -2,6 +2,7 @@ import { db } from "@/servers/db"
 import { orders } from "@/servers/schemas"
 import { eq, and, gte, lte, desc, type SQL } from "drizzle-orm"
 import type { ReservationMetricsData, ReservationRowData, ReservationItemData } from "@/types/admin"
+import { startOfManilaDay, endOfManilaDay } from "@/lib/date"
 
 export interface ReservationFilterOptions {
   branch?: string
@@ -40,12 +41,10 @@ export async function getReservations(filters: ReservationFilterOptions = { page
     baseConditions.push(eq(orders.status, filters.status as "pending" | "processing" | "ready" | "completed" | "cancelled"))
   }
   if (filters.dateFrom) {
-    baseConditions.push(gte(orders.createdAt, new Date(filters.dateFrom)))
+    baseConditions.push(gte(orders.createdAt, startOfManilaDay(new Date(filters.dateFrom))))
   }
   if (filters.dateTo) {
-    const endDate = new Date(filters.dateTo)
-    endDate.setHours(23, 59, 59, 999)
-    baseConditions.push(lte(orders.createdAt, endDate))
+    baseConditions.push(lte(orders.createdAt, endOfManilaDay(new Date(filters.dateTo))))
   }
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined

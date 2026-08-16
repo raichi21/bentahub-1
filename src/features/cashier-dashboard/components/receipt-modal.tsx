@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { X, Printer, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { X, Printer, Download, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { jsPDF } from "jspdf"
 import { useAuth } from "@/hooks/useAuth"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
 import type { Transaction } from "@/types/cashier"
@@ -12,7 +13,80 @@ interface ReceiptModalProps {
   onClose: () => void
 }
 
-const PRINT_SERVER_URL = process.env.NEXT_PUBLIC_PRINT_SERVER_URL || "http://localhost:3001"
+const PRINT_SERVER_URL = process.env.NEXT_PUBLIC_PRINT_SERVER_URL?.trim() || ""
+
+function buildReceiptPdf(
+  transaction: Transaction,
+  storeName: string,
+  dateStr: string
+) {
+  const doc = new jsPDF()
+  const w = doc.internal.pageSize.getWidth()
+  const right = w - 14
+  let y = 16
+
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.text(`${storeName} Retail`, w / 2, y, { align: "center" })
+  y += 7
+
+  doc.setFontSize(9)
+  doc.setFont("helvetica", "normal")
+  doc.text(`Receipt No: BH-${String(transaction.receiptNumber).padStart(6, "0")}`, w / 2, y, { align: "center" })
+  y += 5
+  doc.text(`Date: ${dateStr}`, w / 2, y, { align: "center" })
+  y += 5
+  doc.text(`Cashier: ${transaction.cashier}`, w / 2, y, { align: "center" })
+  y += 5
+  doc.text(`Status: ${transaction.status.toUpperCase()}`, w / 2, y, { align: "center" })
+  y += 12
+
+  doc.setFontSize(10)
+  doc.setFont("helvetica", "bold")
+  doc.text("Items", 14, y)
+  y += 6
+
+  doc.setFont("helvetica", "normal")
+  transaction.items.forEach((item) => {
+    doc.text(`${item.qty} x ${item.name}`, 14, y)
+    doc.text(`\u20B1${(item.qty * item.price).toFixed(2)}`, right, y, { align: "right" })
+    y += 6
+  })
+  y += 4
+
+  doc.text("Subtotal", 14, y)
+  doc.text(`\u20B1${transaction.subtotal.toFixed(2)}`, right, y, { align: "right" })
+  y += 6
+
+  if (transaction.discount > 0) {
+    doc.text("Discount", 14, y)
+    doc.text(`-\u20B1${transaction.discount.toFixed(2)}`, right, y, { align: "right" })
+    y += 6
+  }
+
+  doc.setFont("helvetica", "bold")
+  doc.text("Total Bill", 14, y)
+  doc.text(`\u20B1${transaction.total.toFixed(2)}`, right, y, { align: "right" })
+  y += 6
+
+  doc.setFont("helvetica", "normal")
+  doc.text("Amount Paid", 14, y)
+  doc.text(`\u20B1${transaction.amountPaid.toFixed(2)}`, right, y, { align: "right" })
+  y += 6
+  doc.text("Change Due", 14, y)
+  doc.text(`\u20B1${transaction.change.toFixed(2)}`, right, y, { align: "right" })
+  y += 6
+  doc.text("Payment Type", 14, y)
+  doc.text(transaction.paymentMethod.toUpperCase(), right, y, { align: "right" })
+  y += 14
+
+  doc.setFontSize(9)
+  doc.text(`Thank you for shopping with ${storeName}!`, w / 2, y, { align: "center" })
+  y += 5
+  doc.text("Please keep this receipt for return/refund requests.", w / 2, y, { align: "center" })
+
+  doc.save(`receipt-BH-${String(transaction.receiptNumber).padStart(6, "0")}.pdf`)
+}
 
 export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
   const { user } = useAuth()
@@ -38,6 +112,21 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     setPrinting(true)
     setPrintStatus("idle")
     setPrintMessage("")
+
+    // No print server configured → save a PDF instead of trying to connect.
+    if (!PRINT_SERVER_URL) {
+      try {
+        buildReceiptPdf(transaction, storeName, formattedDate)
+        setPrintStatus("success")
+        setPrintMessage("Print server not configured — receipt saved as PDF")
+      } catch {
+        setPrintStatus("error")
+        setPrintMessage("Failed to generate receipt PDF")
+      } finally {
+        setPrinting(false)
+      }
+      return
+    }
 
     try {
       const res = await fetch(`${PRINT_SERVER_URL}/print`, {
@@ -71,8 +160,15 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
         setPrintMessage(json.message || "Print failed")
       }
     } catch {
-      setPrintStatus("error")
-      setPrintMessage("Cannot connect to print server. Make sure it's running.")
+      // Print server unreachable (e.g. not deployed) → fall back to PDF.
+      try {
+        buildReceiptPdf(transaction, storeName, formattedDate)
+        setPrintStatus("success")
+        setPrintMessage("Print server unavailable — receipt saved as PDF")
+      } catch {
+        setPrintStatus("error")
+        setPrintMessage("Cannot connect to print server, and PDF generation failed")
+      }
     } finally {
       setPrinting(false)
     }
@@ -230,6 +326,24 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
               <Printer className="w-4 h-4" />
             )}
             <span>{printing ? "Printing..." : "Print Receipt"}</span>
+          </button>
+          <button
+            onClick={() => {
+              setPrintStatus("idle")
+              try {
+                buildReceiptPdf(transaction, storeName, formattedDate)
+                setPrintStatus("success")
+                setPrintMessage("Receipt saved as PDF")
+              } catch {
+                setPrintStatus("error")
+                setPrintMessage("Failed to generate receipt PDF")
+              }
+            }}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 border border-border hover:bg-accent rounded-xl text-xs font-bold text-muted-foreground transition-colors"
+            title="Download receipt as PDF"
+          >
+            <Download className="w-4 h-4" />
+            <span>PDF</span>
           </button>
           <button
             onClick={onClose}

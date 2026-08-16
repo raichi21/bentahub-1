@@ -5,6 +5,7 @@ import { eq, and, inArray, isNull, desc } from "drizzle-orm"
 import { generateId, getUserIdFromToken } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
+import { nextPickupDeadline } from "@/lib/date"
 
 /** Thrown by the checkout transaction when stock cannot fulfil an order. */
 class CheckoutError extends Error {}
@@ -114,12 +115,7 @@ export async function POST(request: NextRequest) {
 
     // Create order
     const orderId = generateId()
-    const now = new Date()
-    const pickupDeadline = new Date(now)
-    pickupDeadline.setHours(17, 0, 0, 0) // 5:00 PM
-    if (now >= pickupDeadline) {
-      pickupDeadline.setDate(pickupDeadline.getDate() + 1)
-    }
+    const pickupDeadline = nextPickupDeadline()
 
     const newOrder = {
       id: orderId,

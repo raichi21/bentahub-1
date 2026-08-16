@@ -2,6 +2,7 @@ import { db } from "@/servers/db"
 import { notifications } from "@/servers/schemas"
 import { eq, and, desc } from "drizzle-orm"
 import type { Notification as DbNotification } from "@/drizzle/schema"
+import { formatPHDate } from "@/lib/date"
 
 export interface AdminNotificationItem {
   id: string
@@ -63,7 +64,7 @@ function timeAgo(date: Date): string {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d ago`
-  return date.toLocaleDateString("en-PH", { month: "short", day: "numeric" })
+  return formatPHDate(date, { month: "short", day: "numeric" })
 }
 
 export async function getAdminNotifications(

@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
+import { formatPHDate } from "@/lib/date"
 
 interface ExportTableAsPdfOptions {
   title: string
@@ -19,7 +20,7 @@ export function exportTableAsPdf({ title, subtitle, metrics, headers, rows, file
 
   doc.setFontSize(9)
   doc.setTextColor(107, 114, 128)
-  const dateLine = subtitle ?? `Generated on ${new Date().toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
+  const dateLine = subtitle ?? `Generated on ${formatPHDate(new Date(), { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
   doc.text(dateLine, 14, 26)
 
   let y = 32
