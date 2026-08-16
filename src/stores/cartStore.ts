@@ -12,6 +12,12 @@ export interface CartItem {
   branch: string
   addedAt: Date
   updatedAt: Date
+  /**
+   * Max units the customer can hold at the cart's branch (from
+   * branchInventory). `null` = unknown (no branch/inventory row) — the
+   * server-side validation stays as the backstop in that case.
+   */
+  availableStock?: number | null
 }
 
 export interface CartState {

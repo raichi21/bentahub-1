@@ -45,6 +45,7 @@ export default function ProductDetailPage() {
       price: Number(currentProduct.price),
       image: currentProduct.image,
       category: currentProduct.category,
+      availableStock: currentProduct.quantity ?? null,
     }).catch((err) => {
       const message = err instanceof Error ? err.message : "Failed to add to cart"
       setAddError(message)
@@ -77,6 +78,9 @@ export default function ProductDetailPage() {
   }
 
   const isOutOfStock = currentProduct.stockStatus === "out-of-stock"
+  const atMax =
+    currentProduct.quantity != null &&
+    inCartQty >= currentProduct.quantity
 
   const expiryDays = getExpiryDays(currentProduct.nearestExpiry ?? null)
   const formattedExpiry = formatExpiryDate(currentProduct.nearestExpiry ?? null)
@@ -221,9 +225,13 @@ export default function ProductDetailPage() {
                 size="lg"
                 className="w-full gap-2"
                 onClick={handleAddToCart}
+                disabled={atMax}
+                title={atMax ? "Maximum stock reached" : undefined}
               >
                 <ShoppingCart className="h-5 w-5" />
-                {inCartQty > 0 ? `In Cart · ${inCartQty}` : "Add to Cart"}
+                {inCartQty > 0
+                  ? (atMax ? "Max Stock Reached" : `In Cart · ${inCartQty}`)
+                  : "Add to Cart"}
               </Button>
             )}
             {addError && (

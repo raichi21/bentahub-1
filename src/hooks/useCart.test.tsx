@@ -254,6 +254,31 @@ describe("useCartActions quantity sync", () => {
     expect(after[0].id).toBe("server-1")
   })
 
+  it("adopts the server's availableStock from a successful sync", async () => {
+    useCartStore.getState().setItems([
+      makeItem({ quantity: 20, subtotal: 200, availableStock: 20 }),
+    ])
+    const { result } = renderHook(() => useCartActions())
+
+    const response = deferred<Response>()
+    const fetchMock = vi.fn().mockImplementationOnce(() => response.promise)
+    vi.stubGlobal("fetch", fetchMock)
+
+    await act(async () => {
+      result.current.updateCartItem("item-1", 20)
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(500)
+    })
+
+    await act(async () => {
+      response.resolve(okResponse({ data: { quantity: 20, subtotal: 200, availableStock: 18 } }))
+    })
+    const after = useCartStore.getState().items[0]
+    expect(after.quantity).toBe(20)
+    expect(after.availableStock).toBe(18)
+  })
+
   it("does not roll back to a stale failed response once a newer edit owns the row", async () => {
     useCartStore.getState().setItems([makeItem()])
     const { result } = renderHook(() => useCartActions())
@@ -366,6 +391,31 @@ describe("useCartActions add / fetch merge / remove-during-add", () => {
     expect(items[0].id).toBe("server-1")
     expect(items[0].productId).toBe("prod-1")
     expect(useCartStore.getState().itemCount).toBe(1)
+  })
+
+  it("carries availableStock from the snapshot and reconciles with the server value", async () => {
+    const { result } = renderHook(() => useCartActions())
+
+    const addResponse = deferred<Response>()
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
+      const method = init?.method ?? "GET"
+      if (method === "POST") return addResponse.promise
+      throw new Error(`unexpected ${method}`)
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    await act(async () => {
+      result.current.addToCart("prod-1", 1, "Main Branch", { ...snapshot, availableStock: 20 })
+    })
+    // Optimistic row carries the catalog's stock limit immediately
+    expect(useCartStore.getState().items[0].availableStock).toBe(20)
+
+    await act(async () => {
+      addResponse.resolve(okResponse({ data: { ...serverData, availableStock: 19 } }))
+    })
+    const after = useCartStore.getState().items[0]
+    expect(after.id).toBe("server-1")
+    expect(after.availableStock).toBe(19)
   })
 
   it("does not wipe a pending add when fetchCart lands a stale snapshot", async () => {

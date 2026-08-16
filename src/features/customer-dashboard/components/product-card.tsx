@@ -19,6 +19,8 @@ export interface ProductCardProps {
   stockStatus: "in-stock" | "low-stock" | "out-of-stock"
   weight?: string
   branch: string
+  /** Per-branch stock limit (null = unknown). */
+  availableStock?: number | null
 }
 
 export function ProductCard({
@@ -30,6 +32,7 @@ export function ProductCard({
   stockStatus,
   weight,
   branch,
+  availableStock,
 }: ProductCardProps) {
   const router = useRouter()
   const { addToCart } = useCartActions()
@@ -40,10 +43,12 @@ export function ProductCard({
 
   const isOutOfStock = stockStatus === "out-of-stock"
   const isLowStock = stockStatus === "low-stock"
+  const atMax = availableStock != null && inCartQty >= availableStock
 
   const detailHref = `/customer/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
   const handleAddToCart = () => {
+    if (atMax) return
     setError(null)
     // Fire-and-forget instant add: the store updates synchronously (the
     // button flips to "In Cart · N" immediately), the server call reconciles
@@ -56,6 +61,7 @@ export function ProductCard({
       price: numericPrice,
       image,
       category,
+      availableStock,
     }).catch((err) => {
       const message = err instanceof Error ? err.message : "Failed to add to cart"
       setError(message)
@@ -155,9 +161,13 @@ export function ProductCard({
               size="sm"
               className="w-full gap-1.5"
               onClick={handleAddToCart}
+              disabled={atMax}
+              title={atMax ? "Maximum stock reached" : undefined}
             >
               <ShoppingCart className="size-3.5" />
-              {inCartQty > 0 ? `In Cart · ${inCartQty}` : "Add to Cart"}
+              {inCartQty > 0
+                ? (atMax ? "Max Stock Reached" : `In Cart · ${inCartQty}`)
+                : "Add to Cart"}
             </Button>
           )}
           {error && (

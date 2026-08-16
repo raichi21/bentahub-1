@@ -19,6 +19,8 @@ export interface CartItemSnapshot {
   price: number
   image?: string | null
   category?: string | null
+  /** Branch stock limit for this product (from the catalog's per-branch quantity). */
+  availableStock?: number | null
 }
 
 function createTempId(): string {
@@ -148,6 +150,7 @@ export function useCartActions() {
             image: snapshot.image ?? "",
             category: snapshot.category ?? "",
             branch,
+            availableStock: snapshot.availableStock ?? null,
             addedAt: new Date(),
             updatedAt: new Date(),
           }
@@ -177,6 +180,7 @@ export function useCartActions() {
           ...data.data,
           price: Number(data.data.price),
           subtotal: Number(data.data.subtotal),
+          availableStock: data.data.availableStock ?? null,
           addedAt: new Date(data.data.addedAt),
           updatedAt: new Date(data.data.updatedAt),
         }
@@ -296,6 +300,7 @@ export function useCartActions() {
             useCartStore.getState().updateItem(itemId, {
               quantity: data.data.quantity,
               subtotal: Number(data.data.subtotal),
+              availableStock: data.data.availableStock ?? null,
             })
             current.lastGoodQuantity = Number(data.data.quantity)
             current.lastGoodSubtotal = Number(data.data.subtotal)

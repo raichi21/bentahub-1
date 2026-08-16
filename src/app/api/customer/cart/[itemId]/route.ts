@@ -109,7 +109,7 @@ export async function PUT(
       {
         success: true,
         message: "Cart item updated",
-        data: updated[0],
+        data: { ...updated[0], availableStock },
       },
       { status: 200 }
     )

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import { cartItems, products, branches, branchInventory } from "@/drizzle/schema"
-import { eq, and, sql } from "drizzle-orm"
+import { eq, and, sql, getTableColumns } from "drizzle-orm"
 import { generateId, getUserIdFromToken } from "@/lib/auth-utils"
 import { clampCartQuantity, MAX_ITEM_QUANTITY, validateCartQuantity } from "@/lib/cart"
 
@@ -21,8 +21,21 @@ export async function GET(request: NextRequest) {
     }
 
     const items = await db
-      .select()
+      .select({
+        ...getTableColumns(cartItems),
+        // Per-branch stock so the client can cap the quantity stepper at the
+        // real available units instead of relying on a server-side rejection.
+        availableStock: branchInventory.quantity,
+      })
       .from(cartItems)
+      .leftJoin(branches, eq(branches.name, cartItems.branch))
+      .leftJoin(
+        branchInventory,
+        and(
+          eq(branchInventory.productId, cartItems.productId),
+          eq(branchInventory.branchId, branches.id)
+        )
+      )
       .where(eq(cartItems.userId, userId))
 
     const total = items.reduce((sum, item) => sum + Number(item.subtotal), 0)
@@ -190,7 +203,7 @@ export async function POST(request: NextRequest) {
         {
           success: true,
           message: "Cart item updated",
-          data: updated[0],
+          data: { ...updated[0], availableStock },
         },
         { status: 200 }
       )
@@ -232,7 +245,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: "Item added to cart",
-        data: created[0],
+        data: { ...created[0], availableStock },
       },
       { status: 201 }
     )

@@ -136,6 +136,7 @@ function CatalogPageInner() {
       stockStatus: p.stockStatus,
       weight: p.weight,
       branch: p.branch,
+      availableStock: p.quantity ?? null,
     }))
   }, [fetchedProducts, currentCategory, searchQuery])
 

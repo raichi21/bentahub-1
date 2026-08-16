@@ -16,6 +16,8 @@ import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
 import { useCartStore } from "@/stores/cartStore"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
+import { MAX_ITEM_QUANTITY } from "@/lib/cart"
+import { cn } from "@/lib/utils"
 
 export default function CartPage() {
   const router = useRouter()
@@ -39,16 +41,20 @@ export default function CartPage() {
     return latest ? latest.quantity : fallback
   }
 
-  const handleIncrement = async (itemId: string, currentQuantity: number) => {
-    const base = getLatestQuantity(itemId, currentQuantity)
-    await updateCartItem(itemId, Math.min(base + 1, 99))
+  const handleIncrement = async (itemId: string) => {
+    const latest = useCartStore.getState().items.find((i) => i.id === itemId)
+    if (!latest) return
+    const max = latest.availableStock ?? MAX_ITEM_QUANTITY
+    const base = getLatestQuantity(itemId, latest.quantity)
+    // Cap at the branch's available stock so the + can never overshoot the
+    // stock limit and trigger a server rejection + rollback.
+    await updateCartItem(itemId, Math.min(base + 1, max))
   }
 
-  const handleDecrement = async (itemId: string, currentQuantity: number) => {
-    const base = getLatestQuantity(itemId, currentQuantity)
-    if (base > 1) {
-      await updateCartItem(itemId, base - 1)
-    }
+  const handleDecrement = async (itemId: string) => {
+    const latest = useCartStore.getState().items.find((i) => i.id === itemId)
+    if (!latest || latest.quantity <= 1) return
+    await updateCartItem(itemId, latest.quantity - 1)
   }
 
   const handleRemove = async (itemId: string) => {
@@ -57,9 +63,22 @@ export default function CartPage() {
 
   const handleQuantityChange = (itemId: string, value: string) => {
     const num = parseInt(value, 10)
-    if (!isNaN(num) && num >= 1 && num <= 99) {
+    if (!isNaN(num) && num >= 1) {
       // Optimistic — server sync is debounced inside the hook
       updateCartItem(itemId, num)
+    }
+  }
+
+  // Clamp a manually typed quantity back into [1, availableStock] when the
+  // field loses focus, so a typed over-stock value is corrected instead of
+  // erroring server-side.
+  const handleQuantityBlur = (itemId: string) => {
+    const latest = useCartStore.getState().items.find((i) => i.id === itemId)
+    if (!latest) return
+    const max = latest.availableStock ?? MAX_ITEM_QUANTITY
+    const clamped = Math.min(Math.max(latest.quantity, 1), max)
+    if (clamped !== latest.quantity) {
+      updateCartItem(itemId, clamped)
     }
   }
 
@@ -107,7 +126,9 @@ export default function CartPage() {
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</span>
               </div>
               <div className="divide-y divide-border">
-                {items.map((item) => (
+                {items.map((item) => {
+                  const atMax = item.availableStock != null && item.quantity >= item.availableStock
+                  return (
                   <div key={item.id} className="p-6 flex items-center gap-6 group">
                     <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
                       {item.image && (
@@ -128,7 +149,7 @@ export default function CartPage() {
                     <div className="flex flex-col items-end gap-2 shrink-0">
                       <div className="flex items-center border border-border rounded-lg overflow-hidden h-10">
                         <button
-                          onClick={() => handleDecrement(item.id, item.quantity)}
+                          onClick={() => handleDecrement(item.id)}
                           className="px-3 hover:bg-muted transition-colors h-full flex items-center"
                         >
                           <Minus className="h-4 w-4" />
@@ -138,14 +159,25 @@ export default function CartPage() {
                           type="text"
                           value={item.quantity}
                           onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                          onBlur={() => handleQuantityBlur(item.id)}
                         />
                         <button
-                          onClick={() => handleIncrement(item.id, item.quantity)}
-                          className="px-3 hover:bg-muted transition-colors h-full flex items-center"
+                          onClick={() => handleIncrement(item.id)}
+                          disabled={atMax}
+                          title={atMax ? "Maximum stock reached" : undefined}
+                          className={cn(
+                            "px-3 transition-colors h-full flex items-center",
+                            atMax ? "opacity-40 cursor-not-allowed" : "hover:bg-muted"
+                          )}
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
+                      {atMax && (
+                        <span className="text-[10px] text-muted-foreground">
+                          Max {item.availableStock} in stock
+                        </span>
+                      )}
                       <button
                         onClick={() => handleRemove(item.id)}
                         className="text-destructive text-xs hover:underline flex items-center gap-1"
@@ -154,7 +186,8 @@ export default function CartPage() {
                       </button>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
           </div>
