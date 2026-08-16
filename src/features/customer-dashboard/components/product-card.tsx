@@ -4,10 +4,11 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, Bell, Eye, Check } from "lucide-react"
+import { ShoppingCart, Bell, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useCartActions } from "@/hooks/useCart"
+import { useCartStore } from "@/stores/cartStore"
 
 export interface ProductCardProps {
   id: string
@@ -32,41 +33,34 @@ export function ProductCard({
 }: ProductCardProps) {
   const router = useRouter()
   const { addToCart } = useCartActions()
-  const [pending, setPending] = useState(false)
-  const [added, setAdded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Persistent in-cart quantity for this product. Subscribes to just this
+  // product's row so the card only re-renders when its own quantity changes.
+  const inCartQty = useCartStore((s) => s.items.find((i) => i.productId === id)?.quantity ?? 0)
 
   const isOutOfStock = stockStatus === "out-of-stock"
   const isLowStock = stockStatus === "low-stock"
 
   const detailHref = `/customer/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
-  const handleAddToCart = async () => {
-    if (pending) return
+  const handleAddToCart = () => {
     setError(null)
-    setPending(true)
-    // Instant optimistic feedback — the item is already in the cart store
-    // at this point; the server call reconciles in the background and the
-    // store rolls back on failure.
-    setAdded(true)
-    setTimeout(() => setAdded(false), 1200)
-    try {
-      const numericPrice =
-        typeof price === "string" ? parseFloat(price.replace(/[₱,]/g, "")) : price
-      await addToCart(id, 1, branch, {
-        productName: name,
-        price: numericPrice,
-        image,
-        category,
-      })
-    } catch (err) {
-      setAdded(false)
+    // Fire-and-forget instant add: the store updates synchronously (the
+    // button flips to "In Cart · N" immediately), the server call reconciles
+    // in the background, and the store rolls back on failure. Never awaits
+    // the round-trip so rapid taps stack units without locking the button.
+    const numericPrice =
+      typeof price === "string" ? parseFloat(price.replace(/[₱,]/g, "")) : price
+    addToCart(id, 1, branch, {
+      productName: name,
+      price: numericPrice,
+      image,
+      category,
+    }).catch((err) => {
       const message = err instanceof Error ? err.message : "Failed to add to cart"
       setError(message)
       console.error(message)
-    } finally {
-      setPending(false)
-    }
+    })
   }
 
   return (
@@ -157,18 +151,13 @@ export function ProductCard({
               Notify Me
             </Button>
           ) : (
-            <Button 
-              size="sm" 
-              className="w-full gap-1.5" 
+            <Button
+              size="sm"
+              className="w-full gap-1.5"
               onClick={handleAddToCart}
-              disabled={pending}
             >
-              {added ? (
-                <Check className="size-3.5" />
-              ) : (
-                <ShoppingCart className="size-3.5" />
-              )}
-              {added ? "Added" : "Add to Cart"}
+              <ShoppingCart className="size-3.5" />
+              {inCartQty > 0 ? `In Cart · ${inCartQty}` : "Add to Cart"}
             </Button>
           )}
           {error && (

@@ -49,6 +49,11 @@ export function useCartActions() {
   }
   const quantitySyncsRef = useRef<Map<string, PendingQuantitySync>>(new Map())
 
+  /** productIds with an add-to-cart POST still in flight. */
+  const pendingAddsRef = useRef<Map<string, number>>(new Map())
+  /** productIds removed while their add was still in flight — the add's reconcile cleans up the server row and stays out of the store. */
+  const pendingRemovesRef = useRef<Set<string>>(new Set())
+
   /**
    * Fetch cart from backend
    */
@@ -76,7 +81,20 @@ export function useCartActions() {
         updatedAt: new Date(item.updatedAt as string),
       })) as CartItem[]
 
-      useCartStore.getState().setItems(items)
+      // Merge instead of replacing wholesale: a row the server hasn't
+      // confirmed yet (an add still in flight, or one that landed after this
+      // fetch started) would otherwise be wiped and make a freshly added
+      // item flicker out. Rows the user removed are already gone from the
+      // store, so they aren't resurrected.
+      const serverProducts = new Set(items.map((i) => i.productId))
+      const current = useCartStore.getState()
+      const preserved = current.items.filter((i) => {
+        if (!serverProducts.has(i.productId)) return true
+        return (pendingAddsRef.current.get(i.productId) ?? 0) > 0
+      })
+      const preservedProducts = new Set(preserved.map((i) => i.productId))
+      const serverItems = items.filter((i) => !preservedProducts.has(i.productId))
+      useCartStore.getState().setItems([...preserved, ...serverItems])
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error"
       useCartStore.getState().setError(message)
@@ -95,7 +113,11 @@ export function useCartActions() {
    */
   const addToCart = useCallback(
     async (productId: string, quantity: number, branch: string, snapshot?: CartItemSnapshot) => {
-      if (!user || !token) return
+      if (!user || !token) {
+        // Reject loudly instead of silently no-oping: a tap during session
+        // hydration would otherwise flash "Added" while adding nothing.
+        throw new Error("Your session is still loading — please try again in a moment")
+      }
 
       // ── Optimistic update ──
       let optimisticId: string | null = null
@@ -134,6 +156,10 @@ export function useCartActions() {
         }
       }
 
+      // Track the in-flight add so fetchCart won't wipe the optimistic row
+      // and a remove during the round-trip is honored.
+      pendingAddsRef.current.set(productId, (pendingAddsRef.current.get(productId) ?? 0) + 1)
+
       try {
         const response = await fetch("/api/customer/cart", {
           method: "POST",
@@ -155,12 +181,35 @@ export function useCartActions() {
           updatedAt: new Date(data.data.updatedAt),
         }
 
-        // Reconcile: replace the optimistic row with the authoritative row
-        useCartStore.getState().addItem(serverItem)
+        if (pendingRemovesRef.current.has(productId)) {
+          // The user removed this item before the add landed — clean up the
+          // server row silently instead of re-adding it to the store.
+          void fetch(`/api/customer/cart/${serverItem.id}`, {
+            method: "DELETE",
+            headers: authHeaders(token),
+          }).catch(() => {})
+          return serverItem
+        }
+
+        // Reconcile: adopt the authoritative row, but never let a stale
+        // response shrink a quantity the user added while this request was
+        // in flight. The newer quantity stays, with the real server id.
+        const current = useCartStore.getState()
+        const existing = current.items.find((i) => i.productId === productId)
+        if (existing && Number(serverItem.quantity) < existing.quantity) {
+          current.addItem({
+            ...serverItem,
+            quantity: existing.quantity,
+            subtotal: Number((existing.quantity * Number(serverItem.price)).toFixed(2)),
+          })
+        } else {
+          current.addItem(serverItem)
+        }
         return serverItem
       } catch (error) {
-        // Rollback optimistic changes
-        if (snapshot) {
+        // Rollback optimistic changes — unless the user removed the row while
+        // the add was in flight, in which case keep it gone.
+        if (snapshot && !pendingRemovesRef.current.has(productId)) {
           const state = useCartStore.getState()
           if (previous) {
             state.updateItem(previous.id, {
@@ -175,8 +224,13 @@ export function useCartActions() {
         useCartStore.getState().setError(message)
         console.error("Failed to add to cart:", error)
         throw error
+      } finally {
+        const remaining = (pendingAddsRef.current.get(productId) ?? 1) - 1
+        if (remaining <= 0) pendingAddsRef.current.delete(productId)
+        else pendingAddsRef.current.set(productId, remaining)
+        pendingRemovesRef.current.delete(productId)
       }
-    },
+  },
     [user, token]
   )
 
@@ -284,6 +338,14 @@ export function useCartActions() {
 
       // ── Optimistic: remove instantly ──
       state.removeItem(itemId)
+
+      // If this row is a pending add (its POST is still in flight), the
+      // add's reconcile cleans up the server row and keeps it out of the
+      // store — no DELETE needed here (the temp row has no server id).
+      if ((pendingAddsRef.current.get(previous.productId) ?? 0) > 0) {
+        pendingRemovesRef.current.add(previous.productId)
+        return
+      }
 
       try {
         const response = await fetch(`/api/customer/cart/${itemId}`, {

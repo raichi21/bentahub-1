@@ -8,6 +8,7 @@ import { ArrowLeft, ShoppingCart, Package, Store, Tag, Weight, Clock, Loader2, C
 import { Button } from "@/components/ui/button"
 import { useProducts } from "@/hooks/useProducts"
 import { useCartActions } from "@/hooks/useCart"
+import { useCartStore } from "@/stores/cartStore"
 import { formatExpiryDate, getExpiryDays } from "@/lib/staff-utils"
 import { cn } from "@/lib/utils"
 
@@ -17,12 +18,13 @@ export default function ProductDetailPage() {
   const searchParams = useSearchParams()
   const { currentProduct, fetchProductById, isLoading, error } = useProducts()
   const { addToCart } = useCartActions()
-  const [pending, setPending] = useState(false)
-  const [added, setAdded] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
 
   const productId = params.id as string
   const branch = searchParams.get("branch")
+  // Persistent in-cart quantity for this product, so the button reflects the
+  // live cart state instantly and stays that way.
+  const inCartQty = useCartStore((s) => s.items.find((i) => i.productId === productId)?.quantity ?? 0)
 
   useEffect(() => {
     if (productId) {
@@ -32,30 +34,22 @@ export default function ProductDetailPage() {
     }
   }, [productId, branch, fetchProductById])
 
-  const handleAddToCart = async () => {
-    if (!currentProduct || pending) return
+  const handleAddToCart = () => {
+    if (!currentProduct) return
     setAddError(null)
-    setPending(true)
-    // Instant optimistic feedback — the item is already in the cart store
-    // at this point; the server call reconciles in the background and the
-    // store rolls back on failure.
-    setAdded(true)
-    setTimeout(() => setAdded(false), 1200)
-    try {
-      await addToCart(currentProduct.id, 1, currentProduct.branch, {
-        productName: currentProduct.name,
-        price: Number(currentProduct.price),
-        image: currentProduct.image,
-        category: currentProduct.category,
-      })
-    } catch (err) {
-      setAdded(false)
+    // Fire-and-forget instant add: the store updates synchronously (button
+    // flips to "In Cart · N" immediately), the server call reconciles in the
+    // background, and the store rolls back on failure.
+    addToCart(currentProduct.id, 1, currentProduct.branch, {
+      productName: currentProduct.name,
+      price: Number(currentProduct.price),
+      image: currentProduct.image,
+      category: currentProduct.category,
+    }).catch((err) => {
       const message = err instanceof Error ? err.message : "Failed to add to cart"
       setAddError(message)
       console.error("Failed to add to cart:", err)
-    } finally {
-      setPending(false)
-    }
+    })
   }
 
   if (isLoading) {
@@ -227,14 +221,9 @@ export default function ProductDetailPage() {
                 size="lg"
                 className="w-full gap-2"
                 onClick={handleAddToCart}
-                disabled={pending}
               >
-                {added ? (
-                  <CheckCircle className="h-5 w-5" />
-                ) : (
-                  <ShoppingCart className="h-5 w-5" />
-                )}
-                {added ? "Added to Cart" : "Add to Cart"}
+                <ShoppingCart className="h-5 w-5" />
+                {inCartQty > 0 ? `In Cart · ${inCartQty}` : "Add to Cart"}
               </Button>
             )}
             {addError && (

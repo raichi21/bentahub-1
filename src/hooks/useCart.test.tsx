@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { renderHook, act, cleanup } from "@testing-library/react"
-import { useCartActions } from "./useCart"
+import { useCartActions, type CartItemSnapshot } from "./useCart"
 import { useCartStore, type CartItem } from "@/stores/cartStore"
 
+let mockAuth: { user: { userId: string } | null; token: string | null } = {
+  user: { userId: "user-1" },
+  token: "test-token",
+}
+
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ user: { userId: "user-1" }, token: "test-token" }),
+  useAuth: () => mockAuth,
 }))
 
 function makeItem(overrides: Partial<CartItem> = {}): CartItem {
@@ -48,6 +53,7 @@ describe("useCartActions quantity sync", () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.spyOn(console, "error").mockImplementation(() => {})
+    mockAuth = { user: { userId: "user-1" }, token: "test-token" }
     useCartStore.setState({ items: [], itemCount: 0, total: 0, isLoading: false, error: null })
   })
 
@@ -196,5 +202,183 @@ describe("useCartActions quantity sync", () => {
     const after = useCartStore.getState().items[0]
     expect(after.quantity).toBe(5)
     expect(after.subtotal).toBe(50)
+  })
+})
+
+describe("useCartActions add / fetch merge / remove-during-add", () => {
+  const snapshot: CartItemSnapshot = {
+    productName: "Rice",
+    price: 10,
+    image: "",
+    category: "Grains",
+  }
+  const serverData = {
+    id: "server-1",
+    productId: "prod-1",
+    productName: "Rice",
+    price: 10,
+    quantity: 1,
+    subtotal: 10,
+    image: "",
+    category: "Grains",
+    branch: "Main Branch",
+    addedAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z",
+  }
+
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    mockAuth = { user: { userId: "user-1" }, token: "test-token" }
+    useCartStore.setState({ items: [], itemCount: 0, total: 0, isLoading: false, error: null })
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it("rejects addToCart while the session is still loading (auth hydration)", async () => {
+    mockAuth = { user: null, token: null }
+    const { result } = renderHook(() => useCartActions())
+
+    await expect(
+      result.current.addToCart("prod-1", 1, "Main Branch", snapshot)
+    ).rejects.toThrow("session is still loading")
+    expect(useCartStore.getState().items).toHaveLength(0)
+  })
+
+  it("adds optimistically and reconciles with the server id", async () => {
+    const { result } = renderHook(() => useCartActions())
+
+    const addResponse = deferred<Response>()
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
+      const method = init?.method ?? "GET"
+      if (method === "POST") return addResponse.promise
+      throw new Error(`unexpected ${method}`)
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    await act(async () => {
+      result.current.addToCart("prod-1", 1, "Main Branch", snapshot)
+    })
+    // Optimistic row is visible before the server round-trip completes
+    let items = useCartStore.getState().items
+    expect(items).toHaveLength(1)
+    expect(items[0].quantity).toBe(1)
+
+    await act(async () => {
+      addResponse.resolve(okResponse({ data: serverData }))
+    })
+    items = useCartStore.getState().items
+    expect(items).toHaveLength(1)
+    expect(items[0].id).toBe("server-1")
+    expect(items[0].productId).toBe("prod-1")
+    expect(useCartStore.getState().itemCount).toBe(1)
+  })
+
+  it("does not wipe a pending add when fetchCart lands a stale snapshot", async () => {
+    const { result } = renderHook(() => useCartActions())
+
+    const addResponse = deferred<Response>()
+    const cartResponse = deferred<Response>()
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
+      const method = init?.method ?? "GET"
+      if (method === "POST") return addResponse.promise
+      if (method === "GET") return cartResponse.promise
+      throw new Error(`unexpected ${method}`)
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    // Add starts; its POST is still in flight
+    await act(async () => {
+      result.current.addToCart("prod-1", 1, "Main Branch", snapshot)
+    })
+    expect(useCartStore.getState().items).toHaveLength(1)
+
+    // A concurrent cart fetch returns an empty server cart (the add hadn't
+    // landed on the server yet) — the optimistic row must survive
+    const fetchPromise = result.current.fetchCart()
+    await act(async () => {
+      cartResponse.resolve(okResponse({ data: { items: [] } }))
+      await fetchPromise
+    })
+    expect(useCartStore.getState().items).toHaveLength(1)
+
+    // The add finally lands — the row adopts the real server id
+    await act(async () => {
+      addResponse.resolve(okResponse({ data: serverData }))
+    })
+    const after = useCartStore.getState().items
+    expect(after).toHaveLength(1)
+    expect(after[0].id).toBe("server-1")
+  })
+
+  it("removing while the add is in flight cleans up the server row and stays out of the store", async () => {
+    const { result } = renderHook(() => useCartActions())
+
+    const addResponse = deferred<Response>()
+    const deleteResponse = deferred<Response>()
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
+      const method = init?.method ?? "GET"
+      if (method === "POST") return addResponse.promise
+      if (method === "DELETE") return deleteResponse.promise
+      throw new Error(`unexpected ${method}`)
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    await act(async () => {
+      result.current.addToCart("prod-1", 1, "Main Branch", snapshot)
+    })
+    const tempId = useCartStore.getState().items[0].id
+
+    // User removes the row while the add POST is still in flight
+    await act(async () => {
+      result.current.removeFromCart(tempId)
+    })
+    expect(useCartStore.getState().items).toHaveLength(0)
+
+    // The add lands — it must not resurrect the row; instead it issues a
+    // silent DELETE for the server row
+    await act(async () => {
+      addResponse.resolve(okResponse({ data: serverData }))
+    })
+    expect(useCartStore.getState().items).toHaveLength(0)
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/customer/cart/server-1",
+      expect.objectContaining({ method: "DELETE" })
+    )
+  })
+
+  it("does not resurrect an item removed during a failed add", async () => {
+    const { result } = renderHook(() => useCartActions())
+
+    const addResponse = deferred<Response>()
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
+      const method = init?.method ?? "GET"
+      if (method === "POST") return addResponse.promise
+      throw new Error(`unexpected ${method}`)
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    // Swallow the re-thrown error below so the test has no unhandled rejection
+    const addPromise = result.current
+      .addToCart("prod-1", 1, "Main Branch", snapshot)
+      .catch(() => {})
+    expect(useCartStore.getState().items).toHaveLength(1)
+    const tempId = useCartStore.getState().items[0].id
+
+    await act(async () => {
+      result.current.removeFromCart(tempId)
+    })
+    expect(useCartStore.getState().items).toHaveLength(0)
+
+    // The add fails AFTER the user removed the row — rollback must not
+    // restore it
+    await act(async () => {
+      addResponse.reject(new Error("network down"))
+      await addPromise
+    })
+    expect(useCartStore.getState().items).toHaveLength(0)
   })
 })
