@@ -14,6 +14,7 @@ const ITEMS_PER_PAGE = 6
 interface AddProductData {
   name: string
   sku?: string
+  barcode?: string
   category: string
   stock: number
   reorderLevel: number
@@ -52,7 +53,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
 
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((p) => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase()) || p.barcode.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesCat = categoryFilter === "All" || p.category === categoryFilter
       const status = getStockStatus(p)
       const expiringSoon = isExpiringSoon(p.nearestExpiry)
@@ -96,7 +97,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by product name or SKU..."
+              placeholder="Search by product name, SKU, or barcode..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
@@ -159,6 +160,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                         <div>
                           <p className="text-sm font-bold text-foreground">{p.name}</p>
                           <p className="text-[10px] font-mono text-muted-foreground">SKU: {p.sku}</p>
+                          {p.barcode && <p className="text-[10px] font-mono text-muted-foreground">Barcode: {p.barcode}</p>}
                         </div>
                       </div>
                     </td>

@@ -28,7 +28,8 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
     return products.filter((p) => {
       const matchesSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchQuery.toLowerCase())
+        p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.barcode.toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesCat = categoryFilter === "All" || p.category === categoryFilter
 
@@ -63,7 +64,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <input
             type="text"
-            placeholder="Search by product name or SKU..."
+            placeholder="Search by product name, SKU, or barcode..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value)
@@ -180,6 +181,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                           <div>
                             <p className="text-sm font-bold text-foreground">{p.name}</p>
                             <p className="text-[10px] font-mono text-muted-foreground">SKU: {p.sku}</p>
+                            {p.barcode && <p className="text-[10px] font-mono text-muted-foreground">Barcode: {p.barcode}</p>}
                           </div>
                         </div>
                       </td>

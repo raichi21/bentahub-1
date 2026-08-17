@@ -16,6 +16,7 @@ export type StockStatus = "in-stock" | "low-stock" | "out-of-stock"
 export interface Product {
   id: string
   sku: string
+  barcode: string
   name: string
   price: number
   category: ProductCategory

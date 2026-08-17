@@ -23,6 +23,7 @@ interface InventoryWithProduct {
     quantity: number
     branch: string
     sku: string | null
+    barcode: string | null
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -91,6 +92,7 @@ export async function getStaffProducts(branchName: string): Promise<StaffProduct
     return {
       id: inv.product.id,
       sku: inv.product.sku ?? "",
+      barcode: inv.product.barcode ?? "",
       name: inv.product.name,
       price: parseFloat(inv.product.price),
       category: inv.product.category,

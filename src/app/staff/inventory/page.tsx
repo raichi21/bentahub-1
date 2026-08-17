@@ -38,6 +38,7 @@ export default function InventoryPage() {
         (p: StaffProductItem) => ({
           id: p.id,
           sku: p.sku,
+          barcode: p.barcode,
           name: p.name,
           price: p.price,
           category: p.category as Product["category"],
@@ -98,7 +99,7 @@ export default function InventoryPage() {
     }
   }
 
-  const handleAddProduct = async (data: { name: string; sku?: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string; expiryDate?: string; supplier?: string }) => {
+  const handleAddProduct = async (data: { name: string; sku?: string; barcode?: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string; expiryDate?: string; supplier?: string }) => {
     if (!token) return
 
     try {

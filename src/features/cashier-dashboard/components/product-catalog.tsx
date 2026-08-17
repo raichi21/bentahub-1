@@ -60,7 +60,8 @@ export function ProductCatalog({ products, isLoading, error, onAddProduct }: Pro
     return products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchQuery.toLowerCase())
+        product.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.barcode.toLowerCase().includes(searchQuery.toLowerCase())
       
       const matchesCategory =
         selectedCategory === "All" || product.category === selectedCategory

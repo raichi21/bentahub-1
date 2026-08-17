@@ -13,6 +13,7 @@ export interface StaffDashboardData {
 export interface StaffProductItem {
   id: string
   sku: string
+  barcode: string
   name: string
   price: number
   category: string

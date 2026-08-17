@@ -12,6 +12,7 @@ interface ProductForm {
   reorderLevel: number
   unit: string
   price: number
+  barcode: string
   image: string
   expiryDate: string
 }
@@ -27,7 +28,7 @@ const NEW_CATEGORY = "__new__"
 
 export function AddStockModal({ isOpen, onClose, onSave, categories }: AddStockModalProps) {
   const [form, setForm] = useState<ProductForm>({
-    name: "", category: categories[0] ?? NEW_CATEGORY, stock: 0, reorderLevel: 10, unit: "pcs", price: 0, image: "",
+    name: "", category: categories[0] ?? NEW_CATEGORY, stock: 0, reorderLevel: 10, unit: "pcs", price: 0, barcode: "", image: "",
     expiryDate: ""
   })
   const [newCategory, setNewCategory] = useState("")
@@ -91,6 +92,19 @@ export function AddStockModal({ isOpen, onClose, onSave, categories }: AddStockM
                 placeholder="e.g. Premium Jasmine Rice"
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               />
+            </div>
+
+            {/* Barcode */}
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Barcode (Optional)</label>
+              <input
+                type="text"
+                value={form.barcode}
+                onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value }))}
+                placeholder="e.g. 4800016551234 (EAN-13)"
+                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+              <p className="text-[10px] text-muted-foreground">The printed barcode on the product packaging. Leave blank if none.</p>
             </div>
 
             {/* Product Photo Section */}

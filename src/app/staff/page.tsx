@@ -50,6 +50,7 @@ export default function StaffPage() {
           (p: StaffProductItem) => ({
             id: p.id,
             sku: p.sku,
+            barcode: p.barcode,
             name: p.name,
             price: p.price,
             category: p.category as Product["category"],
@@ -163,6 +164,7 @@ export default function StaffPage() {
                   <div>
                     <p className="text-sm font-bold text-foreground">{p.name}</p>
                     <p className="text-[10px] font-mono text-muted-foreground">Product Code: {p.sku}</p>
+                    {p.barcode && <p className="text-[10px] font-mono text-muted-foreground">Barcode: {p.barcode}</p>}
                   </div>
                   <div className="text-right">
                     <p className={cn("text-sm font-mono font-bold", p.stock === 0 ? "text-red-600" : "text-amber-600")}>

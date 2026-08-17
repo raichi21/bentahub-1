@@ -37,6 +37,7 @@ export function useCashierProducts(): UseCashierProductsResult {
         (p: StaffProductItem) => ({
           id: p.id,
           sku: p.sku,
+          barcode: p.barcode,
           name: p.name,
           price: p.price,
           category: p.category as Product["category"],

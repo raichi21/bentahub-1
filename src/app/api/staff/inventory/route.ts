@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate } = body
+    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate, barcode } = body
 
     if (!name || !category || price === undefined) {
       return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })
@@ -128,6 +128,7 @@ export async function POST(request: NextRequest) {
 
     const productId = generateId()
     const sku = generateSku(category)
+    const barcodeValue = barcode && typeof barcode === "string" && barcode.trim() ? barcode.trim() : null
     const stockQty = Math.max(0, stock || 0)
     const threshold = reorderLevel !== undefined ? Math.max(0, reorderLevel) : 10
     const stockStatus = stockQty === 0 ? "out-of-stock" : stockQty <= threshold ? "low-stock" : "in-stock"
@@ -139,6 +140,7 @@ export async function POST(request: NextRequest) {
       name,
       description: null,
       sku,
+      barcode: barcodeValue,
       category,
       price: price.toString(),
       image: productImage,

@@ -193,6 +193,7 @@ export const products = pgTable("products", {
   quantity: integer("quantity").default(0).notNull(),
   branch: varchar("branch", { length: 100 }).notNull(),
   sku: varchar("sku", { length: 100 }).unique(),
+  barcode: varchar("barcode", { length: 50 }).unique(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt,
   updatedAt,

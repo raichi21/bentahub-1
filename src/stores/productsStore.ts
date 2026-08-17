@@ -13,6 +13,7 @@ export interface Product {
   quantity: number
   branch: string
   sku: string
+  barcode: string
   isActive: boolean
   nearestExpiry?: string | null
   createdAt: Date
