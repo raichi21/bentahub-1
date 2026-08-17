@@ -138,9 +138,11 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const [manualCode, setManualCode] = useState("")
   const [showSteps, setShowSteps] = useState(false)
   const retryCountRef = useRef(0)
+  const stoppedRef = useRef(false)
 
   const startCamera = useCallback(async () => {
     setPhase("checking")
+    stoppedRef.current = false
 
     // 1. In-app browser check
     if (detectInAppBrowser()) {
@@ -185,6 +187,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         { facingMode: "environment" },
         { fps: 5, qrbox: { width: 300, height: 200 } },
         (decodedText: string) => {
+          stoppedRef.current = true
           scanner.stop().catch(() => {})
           onScan(decodedText)
           onClose()
@@ -206,6 +209,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
             { facingMode: "user" },
             { fps: 5, qrbox: { width: 300, height: 200 } },
             (decodedText: string) => {
+              stoppedRef.current = true
               scanner.stop().catch(() => {})
               onScan(decodedText)
               onClose()
@@ -235,18 +239,19 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     return () => {
       cancelled = true
       const s = html5QrCodeRef.current as { stop: () => Promise<void> } | null
-      if (s) {
-        s.stop().catch(() => {})
+      if (s && !stoppedRef.current) {
+        try { s.stop().catch(() => {}) } catch { /* already stopped */ }
       }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRetry = useCallback(() => {
     retryCountRef.current = 0
+    stoppedRef.current = false
     // Clean up existing scanner first
     const s = html5QrCodeRef.current as { stop: () => Promise<void> } | null
     if (s) {
-      s.stop().catch(() => {})
+      try { s.stop().catch(() => {}) } catch { /* already stopped */ }
       html5QrCodeRef.current = null
     }
     startCamera()
