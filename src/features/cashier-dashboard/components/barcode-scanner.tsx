@@ -360,28 +360,23 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
             </div>
           )}
 
-          {/* Loading state */}
-          {(phase === "checking" || phase === "requesting") && (
-            <div className="relative">
-              <div id="cashier-barcode-scanner-element" className="w-full aspect-video bg-black rounded-lg overflow-hidden" />
+          {/* Scanner View — always rendered so html5-qrcode video stream stays attached */}
+          <div className="relative">
+            <div id="cashier-barcode-scanner-element" className="w-full aspect-video bg-black rounded-lg overflow-hidden" />
+            {(phase === "checking" || phase === "requesting") && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-lg text-white">
                 <Loader2 className="w-8 h-8 animate-spin mb-2" />
                 <p className="text-sm">
                   {phase === "checking" ? "Checking camera..." : "Starting camera..."}
                 </p>
               </div>
-            </div>
-          )}
-
-          {/* Ready state */}
-          {phase === "ready" && (
-            <div className="relative">
-              <div id="cashier-barcode-scanner-element" className="w-full aspect-video bg-black rounded-lg overflow-hidden" />
+            )}
+            {phase === "ready" && (
               <p className="text-xs text-muted-foreground text-center mt-2">
                 Point the camera at a barcode
               </p>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Manual input — always visible */}
           <div className="space-y-2">
