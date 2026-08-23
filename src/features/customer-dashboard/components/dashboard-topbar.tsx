@@ -2,8 +2,9 @@
 
 import { useRouter, usePathname } from "next/navigation"
 import Image from "next/image"
-import { Bell, Menu } from "lucide-react"
+import { Bell, Menu, LogIn } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/useAuth"
 import { useNotifications } from "@/hooks/useNotifications"
 import { cn } from "@/lib/utils"
@@ -75,39 +76,53 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* Notifications */}
-        <button
-          onClick={() => router.push("/customer/notifications")}
-          className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-200 dark:border-slate-800 relative flex-shrink-0"
-        >
-          <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
-            <span className={cn(
-              "absolute -top-1 -right-1 rounded-full bg-red-500 text-white text-[10px] font-bold ring-2 ring-white dark:ring-slate-900 flex items-center justify-center",
-              unreadCount > 9 ? "min-w-[20px] h-5 px-1" : "w-5 h-5"
-            )}>
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </button>
+        {user ? (
+          <>
+            {/* Notifications */}
+            <button
+              onClick={() => router.push("/customer/notifications")}
+              className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-200 dark:border-slate-800 relative flex-shrink-0"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className={cn(
+                  "absolute -top-1 -right-1 rounded-full bg-red-500 text-white text-[10px] font-bold ring-2 ring-white dark:ring-slate-900 flex items-center justify-center",
+                  unreadCount > 9 ? "min-w-[20px] h-5 px-1" : "w-5 h-5"
+                )}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
 
-        {/* Vertical Divider */}
-        <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+            {/* Vertical Divider */}
+            <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
-        {/* User Pill */}
-        <div className="flex items-center gap-3 select-none">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 flex-shrink-0 overflow-hidden">
-            {user?.image ? (
-              <Image src={user.image} alt={displayName} width={40} height={40} className="w-full h-full object-cover" unoptimized />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className="flex-col hidden sm:flex">
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">{displayName}</span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Customer</span>
-          </div>
-        </div>
+            {/* User Pill */}
+            <div className="flex items-center gap-3 select-none">
+              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 flex-shrink-0 overflow-hidden">
+                {user?.image ? (
+                  <Image src={user.image} alt={displayName} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+                ) : (
+                  initials
+                )}
+              </div>
+              <div className="flex-col hidden sm:flex">
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">{displayName}</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Customer</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Guest: Sign In button */
+          <Button
+            size="sm"
+            onClick={() => router.push("/login")}
+            className="gap-1.5 flex-shrink-0"
+          >
+            <LogIn className="w-4 h-4" />
+            Sign In
+          </Button>
+        )}
       </div>
     </header>
   )

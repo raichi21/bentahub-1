@@ -21,12 +21,15 @@ import { useOrders } from "@/hooks/useOrders"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import Link from "next/link"
 import { cn, formatOrderId } from "@/lib/utils"
+import { AuthGate } from "@/components/auth-gate"
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<CheckoutLoading />}>
-      <CheckoutPageInner />
-    </Suspense>
+    <AuthGate>
+      <Suspense fallback={<CheckoutLoading />}>
+        <CheckoutPageInner />
+      </Suspense>
+    </AuthGate>
   )
 }
 

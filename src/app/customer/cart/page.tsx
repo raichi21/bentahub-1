@@ -18,8 +18,17 @@ import { useCartStore } from "@/stores/cartStore"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import { MAX_ITEM_QUANTITY } from "@/lib/cart"
 import { cn } from "@/lib/utils"
+import { AuthGate } from "@/components/auth-gate"
 
 export default function CartPage() {
+  return (
+    <AuthGate>
+      <CartPageInner />
+    </AuthGate>
+  )
+}
+
+function CartPageInner() {
   const router = useRouter()
   const { user } = useAuth()
   const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()

@@ -8,6 +8,7 @@ import { ShoppingCart, Bell, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useCartActions } from "@/hooks/useCart"
+import { useAuth } from "@/hooks/useAuth"
 import { useCartStore } from "@/stores/cartStore"
 
 export interface ProductCardProps {
@@ -36,6 +37,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const router = useRouter()
   const { addToCart } = useCartActions()
+  const { user } = useAuth()
   const [error, setError] = useState<string | null>(null)
   // Persistent in-cart quantity for this product. Subscribes to just this
   // product's row so the card only re-renders when its own quantity changes.
@@ -48,6 +50,11 @@ export function ProductCard({
   const detailHref = `/customer/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
   const handleAddToCart = () => {
+    // Guests sign in first — return them here after login
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(detailHref)}`)
+      return
+    }
     if (atMax) return
     setError(null)
     // Fire-and-forget instant add: the store updates synchronously (the

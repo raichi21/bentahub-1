@@ -6,8 +6,17 @@ import { useOrders } from "@/hooks/useOrders"
 import { KPICard } from "@/features/admin-dashboard"
 import { RecentOrdersTable, NearbyBranches } from "@/features/customer-dashboard"
 import { PageHeader, ContentCard } from "@/components/layouts"
+import { AuthGate } from "@/components/auth-gate"
 
 export default function CustomerPage() {
+  return (
+    <AuthGate>
+      <CustomerPageInner />
+    </AuthGate>
+  )
+}
+
+function CustomerPageInner() {
   const { user } = useAuth()
   const { orders } = useOrders()
   const displayName = user?.fullName || "Welcome"

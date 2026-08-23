@@ -27,7 +27,7 @@ export function Navbar() {
               Home
             </Link>
             <Link 
-              href="/customer" 
+              href="/customer/catalog" 
               className="text-muted-foreground hover:text-foreground transition-colors px-1 pt-1"
             >
               Browse Products

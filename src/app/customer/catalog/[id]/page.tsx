@@ -8,6 +8,7 @@ import { ArrowLeft, ShoppingCart, Package, Store, Tag, Weight, Clock, Loader2, C
 import { Button } from "@/components/ui/button"
 import { useProducts } from "@/hooks/useProducts"
 import { useCartActions } from "@/hooks/useCart"
+import { useAuth } from "@/hooks/useAuth"
 import { useCartStore } from "@/stores/cartStore"
 import { formatExpiryDate, getExpiryDays } from "@/lib/staff-utils"
 import { cn } from "@/lib/utils"
@@ -18,6 +19,7 @@ export default function ProductDetailPage() {
   const searchParams = useSearchParams()
   const { currentProduct, fetchProductById, isLoading, error } = useProducts()
   const { addToCart } = useCartActions()
+  const { user } = useAuth()
   const [addError, setAddError] = useState<string | null>(null)
 
   const productId = params.id as string
@@ -36,6 +38,11 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!currentProduct) return
+    // Guests sign in first — return them to this product after login
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`)
+      return
+    }
     setAddError(null)
     // Fire-and-forget instant add: the store updates synchronously (button
     // flips to "In Cart · N" immediately), the server call reconciles in the

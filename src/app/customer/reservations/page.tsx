@@ -5,10 +5,19 @@ import { cn, formatOrderId, formatOrderTitle } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useOrders } from "@/hooks/useOrders"
 import { Loader2, Package } from "lucide-react"
+import { AuthGate } from "@/components/auth-gate"
 
 const ACTIVE_ORDER_TABS = ["All", "Pending", "Processing", "Ready"]
 
 export default function ReservationsPage() {
+  return (
+    <AuthGate>
+      <ReservationsPageInner />
+    </AuthGate>
+  )
+}
+
+function ReservationsPageInner() {
   const router = useRouter()
   const tabs = ACTIVE_ORDER_TABS
   const [activeTab, setActiveTab] = useState("All")

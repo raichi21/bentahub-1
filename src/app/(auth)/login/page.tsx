@@ -97,7 +97,12 @@ function LoginPageInner() {
       // Success - client-side navigation based on role
       const role = user?.role
       console.log("Login successful, redirecting to", role)
-      if (role === "admin") {
+      // Honor ?redirect= (same-origin paths only) so guests return to
+      // where they came from — e.g. a product they tried to add to cart.
+      const redirectTo = searchParams.get("redirect")
+      if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+        router.push(redirectTo)
+      } else if (role === "admin") {
         router.push("/admin")
       } else if (role === "staff") {
         router.push("/staff")

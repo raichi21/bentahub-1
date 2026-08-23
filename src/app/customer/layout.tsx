@@ -2,38 +2,24 @@
 
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { useAuth } from "@/hooks/useAuth"
 import {
   DashboardSidebar,
   DashboardTopbar,
   DashboardMobileNav
 } from "@/features/customer-dashboard"
 
+/**
+ * Customer shell layout. Auth is NOT enforced here so guests can browse
+ * the public catalog pages (/customer/catalog). Sensitive pages wrap
+ * themselves in <AuthGate />, which redirects guests to /login.
+ */
 export default function CustomerLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const { isLoading, isAuthenticated } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-
-  // Show loading state while verifying authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verifying your session...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // This component will not render if not authenticated (useAuth redirects)
-  if (!isAuthenticated) {
-    return null
-  }
 
   return (
     <div className="min-h-screen bg-background">
