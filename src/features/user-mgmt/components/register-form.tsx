@@ -91,7 +91,7 @@ export function RegisterForm() {
 
       <Card className="border-border shadow-md">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Create an account</CardTitle>
+          <CardTitle className="text-xl font-semibold">Sign Up</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

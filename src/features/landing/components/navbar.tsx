@@ -37,10 +37,10 @@ export function Navbar() {
           {/* Auth Buttons */}
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
+              <Link href="/login">Sign In</Link>
             </Button>
             <Button asChild>
-              <Link href="/register">Register</Link>
+              <Link href="/register">Sign Up</Link>
             </Button>
           </div>
         </div>
