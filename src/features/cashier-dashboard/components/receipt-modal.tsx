@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, Printer, Download, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { X, Printer, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { jsPDF } from "jspdf"
 import { useAuth } from "@/hooks/useAuth"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
@@ -326,24 +326,6 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
               <Printer className="w-4 h-4" />
             )}
             <span>{printing ? "Printing..." : "Print Receipt"}</span>
-          </button>
-          <button
-            onClick={() => {
-              setPrintStatus("idle")
-              try {
-                buildReceiptPdf(transaction, storeName, formattedDate)
-                setPrintStatus("success")
-                setPrintMessage("Receipt saved as PDF")
-              } catch {
-                setPrintStatus("error")
-                setPrintMessage("Failed to generate receipt PDF")
-              }
-            }}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 border border-border hover:bg-accent rounded-xl text-xs font-bold text-muted-foreground transition-colors"
-            title="Download receipt as PDF"
-          >
-            <Download className="w-4 h-4" />
-            <span>PDF</span>
           </button>
           <button
             onClick={onClose}
