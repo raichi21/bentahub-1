@@ -261,8 +261,8 @@ function LoginPageInner() {
           ) : (
             <p className="text-center text-xs text-muted-foreground mt-6">
               {selectedRole === "admin"
-                ? "Admins sign in with their personal email (e.g. Gmail)."
-                : "Use your @bentahub.com work email to sign in."}
+                ? "Admin accounts are provisioned by the system owner."
+                : "The administrator will provide your account"}
             </p>
           )}
 
