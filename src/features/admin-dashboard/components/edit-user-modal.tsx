@@ -58,6 +58,17 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
 
   if (!isOpen || !user) return null
 
+  // Admins are not bound to a single branch; Cashier & Staff need a real
+  // branch because their POS/inventory queries are scoped by branch name.
+  const handleRoleChange = (newRole: string) => {
+    setRole(newRole)
+    if (newRole === "admin") {
+      setBranch("")
+    } else if ((newRole === "cashier" || newRole === "staff") && !branch) {
+      setBranch(branches[0]?.name || "")
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name || !email) return
@@ -126,7 +137,7 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Role</label>
-                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={role} onChange={(e) => setRole(e.target.value)}>
+                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={role} onChange={(e) => handleRoleChange(e.target.value)}>
                     <option value="admin">Admin</option>
                     <option value="cashier">Cashier</option>
                     <option value="staff">Staff</option>

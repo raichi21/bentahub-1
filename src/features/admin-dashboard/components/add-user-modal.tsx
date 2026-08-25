@@ -42,9 +42,20 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
 
   if (!isOpen) return null
 
+  // Admins are not bound to a single branch; Cashier & Staff need a real
+  // branch because their POS/inventory queries are scoped by branch name.
+  const handleRoleChange = (newRole: string) => {
+    setRole(newRole)
+    if (newRole === "admin") {
+      setBranch("")
+    } else if (!branch) {
+      setBranch(branches[0]?.name || "")
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !password || !branch) return
+    if (!name || !email || !password) return
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       return
@@ -130,7 +141,7 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Role</label>
-                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={role} onChange={(e) => setRole(e.target.value)}>
+                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={role} onChange={(e) => handleRoleChange(e.target.value)}>
                     <option value="admin">Admin</option>
                     <option value="cashier">Cashier</option>
                     <option value="staff">Staff</option>
@@ -138,7 +149,8 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch Assignment</label>
-                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={branch} onChange={(e) => setBranch(e.target.value)} required>
+                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={branch} onChange={(e) => setBranch(e.target.value)}>
+                    <option value="">All Branches</option>
                     {branches.map((b) => (
                       <option key={b.id} value={b.name}>{b.name}</option>
                     ))}
