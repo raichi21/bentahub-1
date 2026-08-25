@@ -133,17 +133,7 @@ export function InventoryStatusTable({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed", minWidth: 1020 }}>
-          <colgroup>
-            <col style={{ width: "18%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "16%" }} />
-            <col style={{ width: "11%" }} />
-            <col style={{ width: "11%" }} />
-            <col style={{ width: "13%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "9%" }} />
-          </colgroup>
+        <table className="w-full text-left border-collapse" style={{ minWidth: 1020 }}>
           <thead>
             <tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-widest">
               <th className="px-6 py-4 whitespace-nowrap">Product</th>
@@ -166,9 +156,9 @@ export function InventoryStatusTable({
 
               return (
                 <tr key={`${item.productId}-${item.branchId}`} className="hover:bg-primary/5 transition-colors cursor-pointer group">
-                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate" title={item.productName}>{item.productName}</td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate" title={item.category}>{item.category}</td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate" title={item.branchName}>{item.branchName}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate max-w-[220px]" title={item.productName}>{item.productName}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate max-w-[140px]" title={item.category}>{item.category}</td>
+                  <td className="px-6 py-4 font-medium text-sm text-foreground truncate max-w-[160px]" title={item.branchName}>{item.branchName}</td>
                   <td className="px-6 py-4 font-mono font-medium text-sm text-foreground whitespace-nowrap">{item.totalQuantity}</td>
                   <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{item.reorderLevel}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{expiryCell(item)}</td>
