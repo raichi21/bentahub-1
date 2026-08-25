@@ -72,9 +72,9 @@ export default function MonitoringPage() {
   function exportCSV() {
     if (!data) return
     const rows = data.inventoryStatus.map((i: InventoryStatusItem) =>
-      [i.productName, i.category, i.branchName, i.totalQuantity, i.reorderLevel, i.status, i.lastUpdated].join(",")
+      [i.productName, i.category, i.branchName, i.totalQuantity, i.reorderLevel, i.earliestExpiry ? new Date(i.earliestExpiry).toLocaleDateString("en-PH") : "", i.status, i.lastUpdated].join(",")
     )
-    const csv = ["Product,Category,Branch,Quantity,Reorder Level,Status,Last Updated", ...rows].join("\n")
+    const csv = ["Product,Category,Branch,Quantity,Reorder Level,Nearest Expiry,Status,Last Updated", ...rows].join("\n")
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -86,7 +86,7 @@ export default function MonitoringPage() {
     if (!data) return
     const tableRows = data.inventoryStatus.map((i: InventoryStatusItem) => [
       i.productName, i.category, i.branchName, String(i.totalQuantity),
-      String(i.reorderLevel), i.status, new Date(i.lastUpdated).toLocaleDateString(),
+      String(i.reorderLevel), i.earliestExpiry ? new Date(i.earliestExpiry).toLocaleDateString("en-PH") : "—", i.status, new Date(i.lastUpdated).toLocaleDateString(),
     ])
     exportTableAsPdf({
       title: "Inventory Monitoring Report",
@@ -95,7 +95,7 @@ export default function MonitoringPage() {
         { label: "Low Stock Items", value: String(data.metrics.lowStockItems.value) },
         { label: "Pending Reservations", value: String(data.metrics.pendingReservations.value) },
       ],
-      headers: ["Product", "Category", "Branch", "Quantity", "Reorder Level", "Status", "Last Updated"],
+      headers: ["Product", "Category", "Branch", "Quantity", "Reorder Level", "Nearest Expiry", "Status", "Last Updated"],
       rows: tableRows,
       filename: `monitoring-report-${new Date().toISOString().slice(0, 10)}.pdf`,
     })

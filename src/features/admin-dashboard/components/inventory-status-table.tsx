@@ -20,6 +20,19 @@ function formatDate(dateStr: string | Date): string {
   return d.toLocaleDateString("en-PH", { month: "numeric", day: "numeric", year: "numeric" })
 }
 
+function expiryCell(item: InventoryStatusItem) {
+  if (!item.earliestExpiry) {
+    return <span className="text-sm text-muted-foreground">—</span>
+  }
+  const days = Math.ceil((new Date(item.earliestExpiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const color = days <= 7 ? "text-red-600" : days <= 30 ? "text-amber-600" : "text-foreground"
+  return (
+    <span className={`text-xs font-mono font-bold ${color}`} title={`${days} day${days === 1 ? "" : "s"} left`}>
+      {formatDate(item.earliestExpiry)}
+    </span>
+  )
+}
+
 export function InventoryStatusTable({
   data,
   branches = [],
@@ -120,15 +133,16 @@ export function InventoryStatusTable({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed", minWidth: 900 }}>
+        <table className="w-full text-left border-collapse" style={{ tableLayout: "fixed", minWidth: 1020 }}>
           <colgroup>
-            <col style={{ width: "20%" }} />
-            <col style={{ width: "14%" }} />
             <col style={{ width: "18%" }} />
             <col style={{ width: "12%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "12%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "9%" }} />
           </colgroup>
           <thead>
             <tr className="bg-muted/40 border-b border-border text-[11px] font-bold uppercase tracking-widest">
@@ -137,6 +151,7 @@ export function InventoryStatusTable({
               <th className="px-6 py-4 whitespace-nowrap">Branch</th>
               <th className="px-6 py-4 whitespace-nowrap">Total Quantity</th>
               <th className="px-6 py-4 whitespace-nowrap">Reorder Level</th>
+              <th className="px-6 py-4 whitespace-nowrap">Nearest Expiry</th>
               <th className="px-6 py-4 whitespace-nowrap">Status</th>
               <th className="px-6 py-4 whitespace-nowrap">Last Updated</th>
             </tr>
@@ -156,6 +171,7 @@ export function InventoryStatusTable({
                   <td className="px-6 py-4 font-medium text-sm text-foreground truncate" title={item.branchName}>{item.branchName}</td>
                   <td className="px-6 py-4 font-mono font-medium text-sm text-foreground whitespace-nowrap">{item.totalQuantity}</td>
                   <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{item.reorderLevel}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{expiryCell(item)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${statusColor}`}>
                       {item.status}
@@ -168,7 +184,7 @@ export function InventoryStatusTable({
           </tbody>
         </table>
       </div>
-      {totalPages > 1 && (
+      {filtered.length > 0 && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20">
           <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
             {filtered.length} of {data.length} PRODUCTS

@@ -68,6 +68,7 @@ export interface InventoryStatusItem {
   reorderLevel: number
   status: "In Stock" | "Low Stock" | "Critical"
   lastUpdated: string | Date
+  earliestExpiry?: string | null
 }
 
 export interface SystemAlertItem {

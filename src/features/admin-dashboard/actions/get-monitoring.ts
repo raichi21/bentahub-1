@@ -1,5 +1,5 @@
 import { db } from "@/servers/db"
-import { and, isNotNull, gte, lte } from "drizzle-orm"
+import { and, isNotNull, gte } from "drizzle-orm"
 import { inventoryBatches } from "@/servers/schemas"
 import type { MonitoringData, InventoryStatusItem, SystemAlertItem, ExpiringItemData } from "@/types/admin"
 
@@ -120,6 +120,7 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
         reorderLevel: avgThreshold,
         status,
         lastUpdated: agg.lastUpdated,
+        earliestExpiry: earliestExpiryMap.get(`${agg.branchId}|${productId}`)?.toISOString() ?? null,
       })
     }
 
@@ -142,14 +143,15 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
     (t: RawTransaction) => new Date(t.createdAt) >= todayStart
   ).length
 
-  // --- Expiring Items (batches expiring within 30 days) ---
-  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+  // --- Expiring Items + Nearest Expiry (batches not yet expired) ---
+  // The query intentionally has no 30-day ceiling so the inventory table can
+  // show each product-branch's earliest future expiry; the Expiring Soon
+  // section filters back down to the 30-day window below.
   const allBatches = await db.query.inventoryBatches.findMany({
     where: and(
       gte(inventoryBatches.quantity, 1),
       isNotNull(inventoryBatches.expiryDate),
       gte(inventoryBatches.expiryDate, now),
-      lte(inventoryBatches.expiryDate, thirtyDaysFromNow),
     ),
     with: {
       branchInventory: {
@@ -191,7 +193,20 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
         branchName: b.branchInventory.branch.name,
       }
     })
+    .filter((item) => item.daysUntilExpiry <= 30)
     .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry)
+
+  // Earliest future expiry per product-branch, for the inventory table's
+  // Nearest Expiry column.
+  const earliestExpiryMap = new Map<string, Date>()
+  for (const b of allBatches) {
+    if (!b.expiryDate) continue
+    const key = `${b.branchInventory.branchId}|${b.branchInventory.productId}`
+    const existing = earliestExpiryMap.get(key)
+    if (!existing || b.expiryDate.getTime() < existing.getTime()) {
+      earliestExpiryMap.set(key, b.expiryDate)
+    }
+  }
 
   // --- Inventory Status (All Branches = full breakdown; selected branch = that branch's rows only) ---
   const inventoryStatus = buildInventoryStatus(filteredInventory)
