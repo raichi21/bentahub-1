@@ -9,6 +9,9 @@ import type { AuthResponse } from "@/types/auth"
 /** Maximum number of reset attempts before the token is invalidated. */
 const MAX_RESET_ATTEMPTS = 5
 
+/** Internal work-account domain — not a registered domain, mail sent here bounces. */
+const INTERNAL_DOMAIN = "@bentahub.com"
+
 /**
  * POST /api/auth/reset-password
  *
@@ -93,6 +96,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
       return NextResponse.json(
         { success: false, message: "User not found" },
         { status: 404 }
+      )
+    }
+
+    if (user.email.toLowerCase().endsWith(INTERNAL_DOMAIN)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid or expired reset token" },
+        { status: 400 }
       )
     }
 

@@ -15,6 +15,9 @@ const updateUserSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters").optional(),
 })
 
+/** Internal work-account domain required for cashier/staff accounts. */
+const INTERNAL_DOMAIN = "@bentahub.com"
+
 function checkAuth(token: string | null): { userId?: string; error?: NextResponse } {
   if (!token) {
     return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
@@ -56,6 +59,19 @@ export async function PATCH(
     // Hash an optional new password before it touches the database — the
     // raw value is never persisted. When absent, the existing password stays.
     const { password, ...rest } = parsed.data
+
+    const effectiveRole = rest.role ?? existing.role
+    const effectiveEmail = rest.email ?? existing.email
+    if (
+      (effectiveRole === "cashier" || effectiveRole === "staff") &&
+      !effectiveEmail.toLowerCase().endsWith(INTERNAL_DOMAIN)
+    ) {
+      return NextResponse.json(
+        { success: false, message: `Cashier and Staff accounts require an ${INTERNAL_DOMAIN} email` },
+        { status: 400 }
+      )
+    }
+
     const updateData = {
       ...rest,
       ...(password ? { password: await hashPassword(password) } : {}),

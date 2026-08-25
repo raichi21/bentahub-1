@@ -44,9 +44,9 @@ The application enforces four distinct user permission loops based on role-based
 ```
 
 ### 👑 Admin Workflow (`/admin/*`)
-1. **Secure Login**: Accesses the global administrative panel with cross-branch privileges via `/login?redirect=/admin`. Admin accounts use `@bentahub.com` email domain.
+1. **Secure Login**: Accesses the global administrative panel with cross-branch privileges via `/login?redirect=/admin`. Admin accounts use a personal email (e.g. Gmail) so password recovery reaches a real mailbox.
 2. **Analytics & Monitoring**: Centralized dashboard with overview KPIs, sales tracking, and live monitoring. Drills down into individual branch metrics.
-3. **User Management**: Creates staff and cashier accounts (enforced `@bentahub.com` email domain), manages credentials, and activates/deactivates users.
+3. **User Management**: Creates staff and cashier accounts (enforced `@bentahub.com` email domain) and admin accounts (any valid email), manages credentials, and activates/deactivates users.
 4. **Settings**: Configures store-wide settings (store name, address, contact info, currency, business hours, notification preferences, security rules).
 5. **Sales & History**: Views all transactions cross-branch, manages payments, pickups, and reservations.
 
@@ -75,7 +75,7 @@ To prevent scope creep and support efficient storefront operations, developers m
 - 💸 **Strict Payment Methods**: Operations are strictly restricted to **Cash** and **GCash**. Do not integrate Credit Cards, Maya, or other digital wallets without formal scrum review.
 - 🚚 **No Delivery Architecture**: Operations focus purely on walk-in and in-store pickup. Do not build shipping modules, fleet tracking, customer address managers, or dispatch pipelines.
 - 🔒 **Role-Based Security**: Staff and cashier users must be branch-locked; they must never query or mutate data belonging to other branches. Only Admins possess cross-branch query privileges.
-- 📧 **Email Domain Rules**: `@bentahub.com` — admin, staff, and cashier accounts only. **Gmail only** — customer/regular user accounts.
+- 📧 **Email Domain Rules**: Admin accounts use a personal email (e.g. Gmail) so password recovery works. Cashier and staff accounts must use `@bentahub.com` (unowned domain — password reset is admin-only for them). Customers may register with any personal email or sign in via Google/Facebook.
 
 ---
 
@@ -124,9 +124,9 @@ export const users = pgTable("users", {
 4. **Issue JWT**: On success, a JWT token is returned stored in `localStorage` (key: `bentahub_token`).
 
 ### 🚦 Login Flow
-1. **Customer Login** (`/login`): Accepts Gmail accounts only. `@bentahub.com` emails are blocked with a hint to use the Admin Sign In page.
-2. **Admin Login** (`/login?redirect=/admin`): Accepts admin/staff/cashier accounts (must use `@bentahub.com` domain).
-3. **Role-Based Redirect**: After successful login — admin goes to `/admin`, staff to `/staff`, cashier to `/cashier`, customer to `/customer`.
+1. **"Sign In As:" Role Selector** (`/login`): Four tabs — Admin / Staff / Cashier / Customer (Customer pre-selected). The selected type must match the account's real role or sign-in is rejected with a hint to switch tabs.
+2. **Social Sign-In**: Google/Facebook buttons appear only on the Customer tab (internal roles cannot OAuth).
+3. **Role-Based Redirect**: After successful login — admin goes to `/admin`, staff to `/staff`, cashier to `/cashier`, customer to `/customer`. A `?redirect=` param takes precedence when present.
 
 ---
 
@@ -274,6 +274,8 @@ pnpm dev
 |---|---|
 | **Email** | `admin@bentahub.com` |
 | **Password** | `admin123` |
+
+> ⚠️ Seed accounts are for **local development only** — do not run seeds against production. `@bentahub.com` is not a registered domain: those accounts cannot receive password-reset email. In production, create the real admin with a personal email via Add User, then deactivate the seed accounts.
 
 ### Key Scripts
 | Command | Description |

@@ -7,16 +7,23 @@ import { getUsers } from "@/features/admin-dashboard/actions/get-users"
 
 const ADMIN_DOMAIN = "@bentahub.com"
 
-const createUserSchema = z.object({
-  email: z.string().email("Invalid email address").refine(
-    (email) => email.toLowerCase().endsWith(ADMIN_DOMAIN),
-    { message: `Only ${ADMIN_DOMAIN} emails are allowed` }
-  ),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  role: z.enum(["admin", "cashier", "staff"], { message: "Role must be admin, cashier, or staff" }),
-  branch: z.string().optional(),
-})
+const createUserSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    fullName: z.string().min(2, "Full name must be at least 2 characters"),
+    role: z.enum(["admin", "cashier", "staff"], { message: "Role must be admin, cashier, or staff" }),
+    branch: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.role !== "admin" && !data.email.toLowerCase().endsWith(ADMIN_DOMAIN)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["email"],
+        message: `Cashier and Staff accounts require an ${ADMIN_DOMAIN} email`,
+      })
+    }
+  })
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {

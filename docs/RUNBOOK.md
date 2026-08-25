@@ -82,6 +82,19 @@ After running `pnpm db:seed`, the following accounts are available:
 
 All accounts have verified email and are active. Employees are assigned to specific branches.
 
+> ⚠️ **Local dev only.** Never run `pnpm db:seed` against production. The `@bentahub.com` domain is unowned, so these accounts cannot receive password-reset email — in production, provision the real admin with a personal email (Add User → Admin), verify login, then deactivate all seeded accounts.
+
+## 🔐 Production Account Rules
+
+| Role   | Email rule                        | Password reset                     |
+|--------|-----------------------------------|------------------------------------|
+| admin  | Any valid email (personal Gmail ok) | Self-service forgot password works |
+| cashier| Must end in `@bentahub.com`       | Admin-only (Edit User modal)       |
+| staff  | Must end in `@bentahub.com`       | Admin-only (Edit User modal)       |
+| customer| Any email / Google / Facebook    | Self-service forgot password works |
+
+Forgot-password requests for `@bentahub.com` addresses return the generic success message but never generate a token or send email (the domain is unowned; mail would bounce silently).
+
 ## 🔄 Rollback Procedures
 
 To roll back a deployment:

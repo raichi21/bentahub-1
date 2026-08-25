@@ -105,6 +105,10 @@ export function ForgotPasswordForm() {
             </div>
           </form>
 
+          <p className="text-xs text-muted-foreground/80 text-center mt-4">
+            Staff &amp; Cashier accounts: contact your administrator for password resets.
+          </p>
+
           <p className="text-center text-sm text-muted-foreground mt-6">
             Remember your password?{" "}
             <Link href="/login" className="text-primary font-bold hover:underline">

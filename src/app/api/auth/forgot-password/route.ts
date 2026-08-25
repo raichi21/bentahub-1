@@ -10,6 +10,9 @@ import type { AuthResponse } from "@/types/auth"
 /** Reset token expiry in hours. */
 const RESET_TOKEN_EXPIRY_HOURS = 1
 
+/** Internal work-account domain — not a registered domain, mail sent here bounces. */
+const INTERNAL_DOMAIN = "@bentahub.com"
+
 
 /**
  * POST /api/auth/forgot-password
@@ -40,6 +43,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     const safeMessage = "If an account exists with this email, a password reset link will be sent"
 
     if (!user) {
+      return NextResponse.json({ success: true, message: safeMessage }, { status: 200 })
+    }
+
+    if (user.email.toLowerCase().endsWith(INTERNAL_DOMAIN)) {
       return NextResponse.json({ success: true, message: safeMessage }, { status: 200 })
     }
 

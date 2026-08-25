@@ -13,6 +13,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
 import { useSearchParams } from "next/navigation"
 import type { LoginResponseData } from "@/types/auth"
+import { cn } from "@/lib/utils"
+
+type SigninRole = "admin" | "staff" | "cashier" | "customer"
+
+const SIGNIN_ROLES: { value: SigninRole; label: string }[] = [
+  { value: "admin", label: "Admin" },
+  { value: "staff", label: "Staff" },
+  { value: "cashier", label: "Cashier" },
+  { value: "customer", label: "Customer" },
+]
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin",
+  staff: "Staff",
+  cashier: "Cashier",
+  customer: "Customer",
+}
 
 type LoginResponse = {
   success: boolean
@@ -35,6 +52,7 @@ function LoginPageInner() {
   const [password, setPassword] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState(searchParams.get("oauth_error") ?? "")
+  const [selectedRole, setSelectedRole] = React.useState<SigninRole>("customer")
   const { setToken, setUser } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +105,15 @@ function LoginPageInner() {
       // Save JWT token and user to auth context
       const token = data.data?.token
       const user = data.data?.user
+
+      if (user && selectedRole !== user.role) {
+        setIsLoading(false)
+        setError(
+          `These credentials belong to a ${ROLE_LABELS[user.role] ?? user.role} account. Please select "${ROLE_LABELS[user.role] ?? user.role}" above and try again.`
+        )
+        return
+      }
+
       if (token) {
         setToken(token)
       }
@@ -124,7 +151,10 @@ function LoginPageInner() {
 
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Sign In</CardTitle>
+          <CardTitle className="text-xl font-semibold">Sign In As:</CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Choose your account type to continue
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -133,6 +163,29 @@ function LoginPageInner() {
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
+
+            <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1" role="group" aria-label="Account type">
+              {SIGNIN_ROLES.map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole(r.value)
+                    setError("")
+                  }}
+                  disabled={isLoading}
+                  aria-pressed={selectedRole === r.value}
+                  className={cn(
+                    "py-2 text-xs font-bold rounded-md transition-colors disabled:opacity-60",
+                    selectedRole === r.value
+                      ? "bg-background text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -191,17 +244,27 @@ function LoginPageInner() {
             </div>
           </form>
 
-          <div className="flex items-center gap-3 mt-6">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-              or continue with
-            </span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
+          {selectedRole === "customer" ? (
+            <>
+              <div className="flex items-center gap-3 mt-6">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                  or continue with
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
 
-          <div className="mt-4">
-            <SocialAuthButtons />
-          </div>
+              <div className="mt-4">
+                <SocialAuthButtons />
+              </div>
+            </>
+          ) : (
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              {selectedRole === "admin"
+                ? "Admins sign in with their personal email (e.g. Gmail)."
+                : "Use your @bentahub.com work email to sign in."}
+            </p>
+          )}
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don&apos;t have an account?{" "}

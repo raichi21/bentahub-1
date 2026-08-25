@@ -100,7 +100,12 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</label>
-                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="robert.fox@bentahub.com" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder={role === "admin" ? "youremail@gmail.com" : "robert.fox@bentahub.com"} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <p className="text-[11px] text-muted-foreground">
+                  {role === "admin"
+                    ? "Admins can use a personal email (e.g. Gmail) so password recovery reaches a real mailbox."
+                    : "Cashier & Staff accounts require an @bentahub.com email."}
+                </p>
               </div>
 
               <div className="space-y-1.5">
