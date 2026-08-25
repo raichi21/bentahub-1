@@ -180,7 +180,7 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
           )}
         </div>
 
-        {totalCount > pageSize && (
+        {totalCount > 0 && (
           <div className="px-6 py-4 bg-muted/5 border-t border-border flex justify-between items-center">
             <p className="text-xs text-muted-foreground font-medium">
               Showing {start} to {end} of {totalCount} entries

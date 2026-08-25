@@ -200,7 +200,7 @@ export function PaymentTable({
           )}
         </div>
 
-        {totalCount > pageSize && (
+        {totalCount > 0 && (
           <div className="px-6 py-4 bg-muted/20 border-t border-border flex justify-between items-center">
             <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
               Showing {payments.length > 0 ? start : 0} to {end} of {totalCount} results
