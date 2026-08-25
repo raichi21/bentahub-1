@@ -266,12 +266,14 @@ function LoginPageInner() {
             </p>
           )}
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary font-bold hover:underline">
-              Sign Up
-            </Link>
-          </p>
+          {selectedRole === "customer" && (
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="text-primary font-bold hover:underline">
+                Sign Up
+              </Link>
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
