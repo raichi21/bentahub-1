@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import { cartItems, products, branches, branchInventory } from "@/drizzle/schema"
 import { eq, and, sql, getTableColumns } from "drizzle-orm"
-import { generateId, getUserIdFromToken } from "@/lib/auth-utils"
+import { generateId, getRoleScopedUserId } from "@/lib/auth-utils"
 import { clampCartQuantity, MAX_ITEM_QUANTITY, validateCartQuantity } from "@/lib/cart"
 
 /**
@@ -11,7 +11,7 @@ import { clampCartQuantity, MAX_ITEM_QUANTITY, validateCartQuantity } from "@/li
  */
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
 
     if (!userId) {
       return NextResponse.json(
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
 
     if (!userId) {
       return NextResponse.json(

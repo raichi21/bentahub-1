@@ -11,7 +11,8 @@ import {
 /**
  * Customer shell layout. Auth is NOT enforced here so guests can browse
  * the public catalog pages (/customer/catalog). Sensitive pages wrap
- * themselves in <AuthGate />, which redirects guests to /login.
+ * themselves in <RoleGate allow={["customer"]} />, which redirects guests
+ * to /login and bounces non-customer roles to their own dashboard.
  */
 export default function CustomerLayout({
   children,

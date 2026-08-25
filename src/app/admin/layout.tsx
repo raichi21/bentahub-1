@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { usePathname } from "next/navigation"
 import { AdminSidebar, AdminTopbar } from "@/features/admin-dashboard"
+import { RoleGate } from "@/components/role-gate"
+
+const ALLOWED_ROLES = ["admin"]
 
 export default function AdminLayout({
   children,
@@ -13,7 +16,8 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background">
+    <RoleGate allow={ALLOWED_ROLES}>
+      <div className="min-h-screen bg-background">
       <AdminSidebar activePath={pathname} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-h-screen md:ml-[280px] overflow-hidden">
@@ -23,5 +27,6 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
+    </RoleGate>
   )
 }

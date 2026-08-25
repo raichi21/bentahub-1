@@ -3,20 +3,16 @@ import { retrievePaymentIntent } from "@/lib/paymongo"
 import { db } from "@/servers/db"
 import { transactions } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { extractToken, verifyToken } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { completeGcashTransaction } from "@/features/cashier-dashboard/actions/finalize-transaction"
 
 export async function GET(request: NextRequest) {
   try {
     // Auth check
-    const token = extractToken(request)
-    if (!token) {
-      return apiError("Authentication required", 401)
-    }
-    const payload = verifyToken(token)
-    if (!payload) {
-      return apiError("Invalid or expired token", 401)
+    const auth = checkRoleAuth(extractToken(request), ["cashier"], "Cashier area")
+    if (auth.error) {
+      return auth.error
     }
 
     const paymentIntentId = request.nextUrl.searchParams.get("paymentIntentId")

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches, products, branchInventory, inventoryBatches, notifications } from "@/servers/schemas"
 import { eq, and } from "drizzle-orm"
@@ -25,18 +25,13 @@ function generateSku(category: string): string {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const token = extractToken(request)
-    if (!token) {
-      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
-    }
-
-    const payload = verifyToken(token)
-    if (!payload) {
-      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    if (auth.error) {
+      return auth.error
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, payload.userId),
+      where: eq(users.id, auth.userId),
     })
     if (!user) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
@@ -94,18 +89,13 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = extractToken(request)
-    if (!token) {
-      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
-    }
-
-    const payload = verifyToken(token)
-    if (!payload) {
-      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    if (auth.error) {
+      return auth.error
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, payload.userId),
+      where: eq(users.id, auth.userId),
     })
     if (!user) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })

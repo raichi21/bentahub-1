@@ -1,10 +1,10 @@
 import { CustomerNotificationsFeed } from "@/features/customer-dashboard"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 export default function CustomerNotificationsPage() {
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <CustomerNotificationsFeed />
-    </AuthGate>
+    </RoleGate>
   )
 }

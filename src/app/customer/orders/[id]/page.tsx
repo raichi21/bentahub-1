@@ -2,14 +2,14 @@
 
 import { useParams } from "next/navigation"
 import { OrderDetailPage } from "@/features/customer-dashboard"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 export default function OrderDetailRoute() {
   const params = useParams()
   const orderId = params.id as string
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <OrderDetailPage orderId={orderId} />
-    </AuthGate>
+    </RoleGate>
   )
 }

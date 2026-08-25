@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { verifyToken, extractToken, generateId } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches, transactions, transactionItems } from "@/servers/schemas"
 import { eq, max } from "drizzle-orm"
@@ -8,18 +8,13 @@ import { apiResponse, apiError } from "@/lib/api-response"
 
 export async function POST(request: NextRequest) {
   try {
-    const token = extractToken(request)
-    if (!token) {
-      return apiError("Authentication required", 401)
-    }
-
-    const payload = verifyToken(token)
-    if (!payload) {
-      return apiError("Invalid or expired token", 401)
+    const auth = checkRoleAuth(extractToken(request), ["cashier"], "Cashier area")
+    if (auth.error) {
+      return auth.error
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, payload.userId),
+      where: eq(users.id, auth.userId),
     })
     if (!user) {
       return apiError("User not found", 404)

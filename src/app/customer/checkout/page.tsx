@@ -21,15 +21,15 @@ import { useOrders } from "@/hooks/useOrders"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import Link from "next/link"
 import { cn, formatOrderId } from "@/lib/utils"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 export default function CheckoutPage() {
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <Suspense fallback={<CheckoutLoading />}>
         <CheckoutPageInner />
       </Suspense>
-    </AuthGate>
+    </RoleGate>
   )
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { verifyToken, extractToken } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { notifications } from "@/servers/schemas"
 import { eq, and, desc, inArray } from "drizzle-orm"
@@ -66,14 +66,9 @@ function timeAgo(date: Date): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const token = extractToken(request)
-    if (!token) {
-      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
-    }
-
-    const payload = verifyToken(token)
-    if (!payload) {
-      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    if (auth.error) {
+      return auth.error
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -84,13 +79,13 @@ export async function GET(request: NextRequest) {
     let query = db
       .select()
       .from(notifications)
-      .where(eq(notifications.userId, payload.userId))
+      .where(eq(notifications.userId, auth.userId))
 
     if (unreadOnly) {
       query = db
         .select()
         .from(notifications)
-        .where(and(eq(notifications.userId, payload.userId), eq(notifications.isRead, false)))
+        .where(and(eq(notifications.userId, auth.userId), eq(notifications.isRead, false)))
     }
 
     const rows = (await query
@@ -101,7 +96,7 @@ export async function GET(request: NextRequest) {
     const unreadRows = (await db
       .select()
       .from(notifications)
-      .where(and(eq(notifications.userId, payload.userId), eq(notifications.isRead, false)))) as DbNotification[]
+      .where(and(eq(notifications.userId, auth.userId), eq(notifications.isRead, false)))) as DbNotification[]
 
     const mapped: NotificationItem[] = rows.map((n) => ({
       id: n.id,
@@ -132,14 +127,9 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const token = extractToken(request)
-    if (!token) {
-      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
-    }
-
-    const payload = verifyToken(token)
-    if (!payload) {
-      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    if (auth.error) {
+      return auth.error
     }
 
     const body = await request.json()
@@ -149,7 +139,7 @@ export async function PATCH(request: NextRequest) {
       await db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })
-        .where(and(eq(notifications.userId, payload.userId), eq(notifications.isRead, false)))
+        .where(and(eq(notifications.userId, auth.userId), eq(notifications.isRead, false)))
       return NextResponse.json({ success: true, message: "All notifications marked as read" })
     }
 
@@ -157,7 +147,7 @@ export async function PATCH(request: NextRequest) {
       await db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })
-        .where(and(inArray(notifications.id, ids), eq(notifications.userId, payload.userId)))
+        .where(and(inArray(notifications.id, ids), eq(notifications.userId, auth.userId)))
       return NextResponse.json({ success: true, message: `${ids.length} notifications marked as read` })
     }
 
@@ -166,7 +156,7 @@ export async function PATCH(request: NextRequest) {
       await db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })
-        .where(and(eq(notifications.id, notificationId), eq(notifications.userId, payload.userId)))
+        .where(and(eq(notifications.id, notificationId), eq(notifications.userId, auth.userId)))
       return NextResponse.json({ success: true, message: "Notification marked as read" })
     }
 
@@ -179,19 +169,14 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const token = extractToken(request)
-    if (!token) {
-      return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
-    }
-
-    const payload = verifyToken(token)
-    if (!payload) {
-      return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
+    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    if (auth.error) {
+      return auth.error
     }
 
     await db
       .delete(notifications)
-      .where(eq(notifications.userId, payload.userId))
+      .where(eq(notifications.userId, auth.userId))
 
     return NextResponse.json({ success: true, message: "All notifications cleared" })
   } catch (error) {

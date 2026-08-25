@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
 import { cartItems, orders, orderItems, branches, branchInventory } from "@/drizzle/schema"
 import { eq, and, inArray, isNull, desc } from "drizzle-orm"
-import { generateId, getUserIdFromToken } from "@/lib/auth-utils"
+import { generateId, getRoleScopedUserId } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import { nextPickupDeadline } from "@/lib/date"
@@ -15,7 +15,7 @@ class CheckoutError extends Error {}
  * Retrieve all orders with their items for the authenticated user
  */
 export async function GET(request: NextRequest) {
-  const userId = getUserIdFromToken(request)
+  const userId = getRoleScopedUserId(request, ["customer"])
   if (!userId) return apiError("Unauthorized", 401)
 
   try {
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
  * Body: { paymentMethod: "cash" | "gcash", branch: string, notes?: string }
  */
 export async function POST(request: NextRequest) {
-  const userId = getUserIdFromToken(request)
+  const userId = getRoleScopedUserId(request, ["customer"])
   if (!userId) return apiError("Unauthorized", 401)
 
   try {

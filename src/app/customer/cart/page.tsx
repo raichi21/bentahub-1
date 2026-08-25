@@ -18,13 +18,13 @@ import { useCartStore } from "@/stores/cartStore"
 import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import { MAX_ITEM_QUANTITY } from "@/lib/cart"
 import { cn } from "@/lib/utils"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 export default function CartPage() {
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <CartPageInner />
-    </AuthGate>
+    </RoleGate>
   )
 }
 

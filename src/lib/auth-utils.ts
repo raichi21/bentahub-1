@@ -135,6 +135,21 @@ export function getUserIdFromToken(request: {
 }
 
 /**
+ * Extract the `userId` from a valid JWT whose role is in `allowedRoles`.
+ * Returns `null` when the token is missing/invalid or the role is not allowed.
+ */
+export function getRoleScopedUserId(
+  request: { headers: { get: (name: string) => string | null } },
+  allowedRoles: readonly string[]
+): string | null {
+  const token = extractToken(request)
+  if (!token) return null
+  const payload = verifyToken(token)
+  if (!payload || !allowedRoles.includes(payload.role)) return null
+  return payload.userId
+}
+
+/**
  * Verify that the request has a valid admin JWT.
  * Returns `{ userId, error }` — if `error` is set, return it immediately.
  */
@@ -148,6 +163,33 @@ export function checkAdminAuth(token: string | null): { userId?: string; error?:
   }
   if (payload.role !== "admin") {
     return { error: NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 }) }
+  }
+  return { userId: payload.userId }
+}
+
+/**
+ * Verify that the request has a valid JWT whose role is in `allowedRoles`.
+ * Returns `{ userId, error }` — if `error` is set, return it immediately.
+ */
+export function checkRoleAuth(
+  token: string | null,
+  allowedRoles: readonly string[],
+  label?: string
+): { userId: string; error?: never } | { userId?: never; error: NextResponse } {
+  if (!token) {
+    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
+  }
+  const payload = verifyToken(token)
+  if (!payload) {
+    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
+  }
+  if (!allowedRoles.includes(payload.role)) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: `${label ?? "This area"} requires a ${allowedRoles.join(" or ")} account` },
+        { status: 403 }
+      ),
+    }
   }
   return { userId: payload.userId }
 }

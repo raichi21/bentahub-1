@@ -3,7 +3,7 @@ import { z } from "zod"
 import { db } from "@/drizzle/db"
 import { users, notificationPreferences } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
-import { getUserIdFromToken } from "@/lib/auth-utils"
+import { getRoleScopedUserId } from "@/lib/auth-utils"
 
 const updateProfileSchema = z.object({
   fullName: z.string().min(1, "Name is required").max(255),
@@ -14,7 +14,7 @@ const updateProfileSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }

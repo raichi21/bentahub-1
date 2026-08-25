@@ -2,12 +2,12 @@ import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
 import { users, orders, orderItems } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
-import { getUserIdFromToken } from "@/lib/auth-utils"
+import { getRoleScopedUserId } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { createCheckoutSession } from "@/lib/paymongo"
 
 export async function POST(request: NextRequest) {
-  const userId = getUserIdFromToken(request)
+  const userId = getRoleScopedUserId(request, ["customer"])
   if (!userId) return apiError("Unauthorized", 401)
 
   try {

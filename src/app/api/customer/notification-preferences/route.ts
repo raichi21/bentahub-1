@@ -3,7 +3,7 @@ import { z } from "zod"
 import { db } from "@/drizzle/db"
 import { notificationPreferences } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
-import { getUserIdFromToken, generateId } from "@/lib/auth-utils"
+import { getRoleScopedUserId, generateId } from "@/lib/auth-utils"
 
 const updateNotifPrefsSchema = z.object({
   orderUpdates: z.boolean(),
@@ -11,7 +11,7 @@ const updateNotifPrefsSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
     }

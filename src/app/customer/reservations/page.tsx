@@ -5,15 +5,15 @@ import { cn, formatOrderId, formatOrderTitle } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useOrders } from "@/hooks/useOrders"
 import { Loader2, Package } from "lucide-react"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 const ACTIVE_ORDER_TABS = ["All", "Pending", "Processing", "Ready"]
 
 export default function ReservationsPage() {
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <ReservationsPageInner />
-    </AuthGate>
+    </RoleGate>
   )
 }
 

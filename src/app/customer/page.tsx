@@ -6,13 +6,13 @@ import { useOrders } from "@/hooks/useOrders"
 import { KPICard } from "@/features/admin-dashboard"
 import { RecentOrdersTable, NearbyBranches } from "@/features/customer-dashboard"
 import { PageHeader, ContentCard } from "@/components/layouts"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 export default function CustomerPage() {
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <CustomerPageInner />
-    </AuthGate>
+    </RoleGate>
   )
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { verifyToken, extractToken } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
@@ -8,26 +8,14 @@ import type { StaffApiResponse, StaffDashboardData } from "@/types/staff"
 
 export async function GET(request: NextRequest): Promise<NextResponse<StaffApiResponse<StaffDashboardData>>> {
   try {
-    const token = extractToken(request)
+    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
 
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Authentication required" },
-        { status: 401 },
-      )
-    }
-
-    const payload = verifyToken(token)
-
-    if (!payload) {
-      return NextResponse.json(
-        { success: false, message: "Invalid or expired token" },
-        { status: 401 },
-      )
+    if (auth.error) {
+      return auth.error as NextResponse<StaffApiResponse<StaffDashboardData>>
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, payload.userId),
+      where: eq(users.id, auth.userId),
     })
 
     if (!user) {

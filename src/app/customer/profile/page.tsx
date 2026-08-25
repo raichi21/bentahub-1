@@ -1,14 +1,14 @@
 "use client"
 
 import { CustomerProfile } from "@/features/customer-dashboard"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 export default function ProfilePage() {
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <div className="space-y-6">
         <CustomerProfile />
       </div>
-    </AuthGate>
+    </RoleGate>
   )
 }

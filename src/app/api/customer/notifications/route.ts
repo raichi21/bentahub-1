@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import { notifications } from "@/drizzle/schema"
 import { eq, and, desc } from "drizzle-orm"
-import { getUserIdFromToken } from "@/lib/auth-utils"
+import { getRoleScopedUserId } from "@/lib/auth-utils"
 
 /**
  * GET /api/customer/notifications
@@ -11,7 +11,7 @@ import { getUserIdFromToken } from "@/lib/auth-utils"
  */
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
 
     if (!userId) {
       return NextResponse.json(
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
 
     if (!userId) {
       return NextResponse.json(
@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = getUserIdFromToken(request)
+    const userId = getRoleScopedUserId(request, ["customer"])
 
     if (!userId) {
       return NextResponse.json(

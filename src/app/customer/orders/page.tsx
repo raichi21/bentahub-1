@@ -9,17 +9,17 @@ import {
   TransactionFilters,
   TransactionTable
 } from "@/features/customer-dashboard"
-import { AuthGate } from "@/components/auth-gate"
+import { RoleGate } from "@/components/role-gate"
 
 const HISTORY_TABS = ["All", "Completed", "Cancelled"]
 
 export default function TransactionsPage() {
   return (
-    <AuthGate>
+    <RoleGate allow={["customer"]}>
       <Suspense fallback={null}>
         <TransactionsPageInner />
       </Suspense>
-    </AuthGate>
+    </RoleGate>
   )
 }
 
