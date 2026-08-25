@@ -3,7 +3,17 @@
 import { useRouter } from "next/navigation"
 import { Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useAuth } from "@/hooks/useAuth"
 import { useAdminNotifications } from "@/hooks/useAdminNotifications"
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
 
 interface AdminTopbarProps {
   pathname?: string
@@ -12,7 +22,10 @@ interface AdminTopbarProps {
 
 export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopbarProps) {
   const { unreadCount } = useAdminNotifications({ pollInterval: 0 })
+  const { user } = useAuth()
   const router = useRouter()
+  const displayName = user?.fullName || "Admin User"
+  const initials = getInitials(displayName)
   let title = "Dashboard"
   let subtitle = ""
 
@@ -83,10 +96,10 @@ export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopba
         {/* User Pill - show only initials on very small screens */}
         <div className="flex items-center gap-3 select-none">
           <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 flex-shrink-0">
-            AU
+            {initials}
           </div>
           <div className="flex-col hidden sm:flex">
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">Admin User</span>
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">{displayName}</span>
             <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">
               Admin
             </span>
