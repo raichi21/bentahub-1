@@ -44,7 +44,7 @@ export function LowStockByCategoryCard({ data }: LowStockByCategoryCardProps) {
           <p className="text-xs text-muted-foreground">No category data available</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 flex-1 justify-center">
+        <div className="flex flex-col gap-4 flex-1">
           {data.map((item) => {
             const severity = getSeverity(item.lowStockPercentage)
             return (

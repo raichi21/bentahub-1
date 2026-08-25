@@ -182,7 +182,7 @@ export function UserTable({
         </table>
       </div>
 
-      {totalCount > pageSize && (
+      {totalCount > 0 && (
         <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-muted/20">
           <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
             Showing {users.length > 0 ? start : 0} to {end} of {totalCount} results

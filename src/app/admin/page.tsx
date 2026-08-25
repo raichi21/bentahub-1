@@ -52,7 +52,7 @@ export default function AdminPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">

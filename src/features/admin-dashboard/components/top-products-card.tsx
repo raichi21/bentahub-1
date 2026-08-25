@@ -44,7 +44,7 @@ export function TopProductsCard({ data }: TopProductsCardProps) {
           <p className="text-xs text-muted-foreground">No sales data available</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 flex-1 justify-center">
+        <div className="flex flex-col gap-4 flex-1">
           {data.map((item, i) => (
             <div key={item.productId} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-sm">

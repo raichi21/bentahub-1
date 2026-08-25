@@ -187,8 +187,8 @@ export function PickupTable({ pickups, totalCount, page, pageSize, branches, bra
         </div>
 
         {totalCount > 0 && (
-          <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/5">
-            <p className="text-xs text-muted-foreground font-medium">
+          <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/20">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
               Showing {start} to {end} of {totalCount} entries
             </p>
             <div className="flex gap-2">

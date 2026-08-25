@@ -47,7 +47,7 @@ export function PaymentBreakdownCard({ data }: PaymentBreakdownCardProps) {
           <p className="text-xs text-muted-foreground">No payment data available</p>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-5 flex-1 justify-center">
+        <div className="flex flex-col items-center gap-5 flex-1">
           <svg viewBox="0 0 160 160" width="160" height="160" className="w-36 h-36 aspect-square">
             {/* GCash segment (full circle background) */}
             <circle

@@ -181,8 +181,8 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
         </div>
 
         {totalCount > 0 && (
-          <div className="px-6 py-4 bg-muted/5 border-t border-border flex justify-between items-center">
-            <p className="text-xs text-muted-foreground font-medium">
+          <div className="px-6 py-4 bg-muted/20 border-t border-border flex justify-between items-center">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
               Showing {start} to {end} of {totalCount} entries
             </p>
             <div className="flex gap-2">

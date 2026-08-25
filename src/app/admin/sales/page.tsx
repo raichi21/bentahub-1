@@ -96,7 +96,7 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <KPICard
           title="Total Sales"
