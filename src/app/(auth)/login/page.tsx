@@ -15,20 +15,18 @@ import { useSearchParams } from "next/navigation"
 import type { LoginResponseData } from "@/types/auth"
 import { cn } from "@/lib/utils"
 
-type SigninRole = "admin" | "staff" | "cashier" | "customer"
+type SigninRole = "admin" | "customer"
 
 const SIGNIN_ROLES: { value: SigninRole; label: string }[] = [
-  { value: "admin", label: "Admin" },
-  { value: "staff", label: "Staff" },
-  { value: "cashier", label: "Cashier" },
-  { value: "customer", label: "Customer" },
+  { value: "admin", label: "Administrator" },
+  { value: "customer", label: "Customers" },
 ]
 
 const ROLE_LABELS: Record<string, string> = {
-  admin: "Admin",
+  admin: "Administrator",
   staff: "Staff",
   cashier: "Cashier",
-  customer: "Customer",
+  customer: "Customers",
 }
 
 type LoginResponse = {
@@ -106,10 +104,18 @@ function LoginPageInner() {
       const token = data.data?.token
       const user = data.data?.user
 
-      if (user && selectedRole !== user.role) {
+      if (user && selectedRole === "admin" && user.role === "customer") {
         setIsLoading(false)
         setError(
           `These credentials belong to a ${ROLE_LABELS[user.role] ?? user.role} account. Please select "${ROLE_LABELS[user.role] ?? user.role}" above and try again.`
+        )
+        return
+      }
+
+      if (user && selectedRole === "customer" && user.role !== "customer") {
+        setIsLoading(false)
+        setError(
+          "Management accounts (Administrator, Staff, Cashier) sign in under the Administrator tab."
         )
         return
       }
@@ -164,7 +170,7 @@ function LoginPageInner() {
               </div>
             )}
 
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1" role="group" aria-label="Account type">
+            <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" role="group" aria-label="Account type">
               {SIGNIN_ROLES.map((r) => (
                 <button
                   key={r.value}
@@ -244,36 +250,28 @@ function LoginPageInner() {
             </div>
           </form>
 
-          {selectedRole === "customer" ? (
-            <>
-              <div className="flex items-center gap-3 mt-6">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-                  or continue with
-                </span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
+          <div className="flex items-center gap-3 mt-6">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              or continue with
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
 
-              <div className="mt-4">
-                <SocialAuthButtons />
-              </div>
-            </>
-          ) : (
-            <p className="text-center text-xs text-muted-foreground mt-6">
-              {selectedRole === "admin"
-                ? "Admin accounts are provisioned by the system owner."
-                : "The administrator will provide your account"}
-            </p>
-          )}
+          <div className="mt-4">
+            <SocialAuthButtons />
+          </div>
 
-          {selectedRole === "customer" && (
-            <p className="text-center text-sm text-muted-foreground mt-6">
-              Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-primary font-bold hover:underline">
-                Sign Up
-              </Link>
-            </p>
-          )}
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            Management accounts (Administrator, Staff, and Cashier) are managed by the system administrator.
+          </p>
+
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="text-primary font-bold hover:underline">
+              Sign Up
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>
