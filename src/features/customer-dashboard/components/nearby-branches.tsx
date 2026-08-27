@@ -77,7 +77,7 @@ export function NearbyBranches() {
         {branches.map((branch) => (
           <button
             key={branch.id}
-            onClick={() => router.push(`/customer/catalog?branch=${encodeURIComponent(branch.name)}`)}
+            onClick={() => router.push(`/catalog?branch=${encodeURIComponent(branch.name)}`)}
             className="p-4 md:p-6 flex items-start gap-4 w-full text-left hover:bg-muted/50 transition-colors"
           >
             <div className="size-10 bg-muted rounded-lg flex items-center justify-center shrink-0">

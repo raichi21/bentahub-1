@@ -77,7 +77,7 @@ export default function ProductDetailPage() {
         <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-foreground mb-2">Product Not Found</h2>
         <p className="text-muted-foreground mb-6">This product may be unavailable or no longer exists.</p>
-        <Button onClick={() => router.push("/customer/catalog")}>
+        <Button onClick={() => router.push("/catalog")}>
           Back to Catalog
         </Button>
       </div>
@@ -245,7 +245,7 @@ export default function ProductDetailPage() {
               <p className="text-sm text-destructive text-center">{addError}</p>
             )}
             <Link
-              href="/customer/catalog"
+              href="/catalog"
               className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Continue Browsing

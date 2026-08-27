@@ -47,7 +47,7 @@ export function ProductCard({
   const isLowStock = stockStatus === "low-stock"
   const atMax = availableStock != null && inCartQty >= availableStock
 
-  const detailHref = `/customer/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
+  const detailHref = `/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
   const handleAddToCart = () => {
     // Guests sign in first — return them here after login

@@ -35,7 +35,7 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
     {
       title: "Shop",
       items: [
-        { label: "Browse Products", icon: Store, path: "/customer/catalog" },
+        { label: "Browse Products", icon: Store, path: "/catalog" },
         { label: "Cart", icon: ShoppingCart, path: "/customer/cart" },
       ]
     },

@@ -71,7 +71,7 @@ function CatalogPageInner() {
       if (branch !== DEFAULT_BRANCH) params.set("branch", branch)
       if (page > 1) params.set("page", String(page))
       const query = params.toString()
-      return `/customer/catalog${query ? `?${query}` : ""}`
+      return `/catalog${query ? `?${query}` : ""}`
     },
     []
   )

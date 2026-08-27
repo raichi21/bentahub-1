@@ -18,7 +18,7 @@ export function DashboardMobileNav({ activePath }: DashboardMobileNavProps) {
     {
       label: "Browse",
       icon: Store,
-      path: "/customer/catalog",
+      path: "/catalog",
     },
     {
       label: "Cart",

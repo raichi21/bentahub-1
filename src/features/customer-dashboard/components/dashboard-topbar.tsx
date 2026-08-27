@@ -19,7 +19,6 @@ function getInitials(fullName: string): string {
 
 const ROUTE_TITLES: Record<string, string> = {
   "/customer": "Dashboard",
-  "/customer/catalog": "Browse Products",
   "/customer/cart": "Cart",
   "/customer/checkout": "Checkout",
   "/customer/reservations": "Reservations",
@@ -30,7 +29,6 @@ const ROUTE_TITLES: Record<string, string> = {
 
 const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/customer": "Browse, reserve, and track your orders",
-  "/customer/catalog": "Explore our products and services",
   "/customer/cart": "Review your selected items",
   "/customer/checkout": "Complete your reservation",
   "/customer/reservations": "Track your active orders",

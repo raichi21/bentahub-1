@@ -10,7 +10,7 @@ import {
 
 /**
  * Customer shell layout. Auth is NOT enforced here so guests can browse
- * the public catalog pages (/customer/catalog). Sensitive pages wrap
+ * the public catalog at /catalog (landing area). Sensitive pages wrap
  * themselves in <RoleGate allow={["customer"]} />, which redirects guests
  * to /login and bounces non-customer roles to their own dashboard.
  */
