@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react"
 import {
   CatalogToolbar,
-  CategorySidebar,
-  ProductCard,
-  Pagination
+  CategorySidebar
 } from "@/features/customer-dashboard"
+import { Pagination } from "@/features/customer-dashboard/components/pagination"
+import { CatalogProductCard } from "@/features/landing/components/catalog-product-card"
+import type { CatalogProductCardProps } from "@/features/landing/components/catalog-product-card"
 import { ShoppingCart } from "lucide-react"
-import type { ProductCardProps } from "@/features/customer-dashboard/components/product-card"
 import Link from "next/link"
 import { useProducts } from "@/hooks/useProducts"
 import { useCart } from "@/hooks/useCart"
@@ -114,7 +114,7 @@ function CatalogPageInner() {
   )
 
   // Filter products client-side based on selected category, branch & search
-  const displayProducts: ProductCardProps[] = useMemo(() => {
+  const displayProducts: CatalogProductCardProps[] = useMemo(() => {
     const source = fetchedProducts.length > 0 ? fetchedProducts : []
 
     const byCategory = currentCategory === DEFAULT_CATEGORY
@@ -165,7 +165,7 @@ function CatalogPageInner() {
   )
 
   return (
-    <div className="flex flex-col h-full -m-4 md:-m-6">
+    <div className="flex flex-col min-h-screen">
       {/* Toolbar */}
       <CatalogToolbar
         showingFrom={showingFrom}
@@ -179,38 +179,40 @@ function CatalogPageInner() {
       />
 
       {/* Main Content Area with Sidebar */}
-      <div className="flex flex-1">
-        {/* Sidebar - Hidden on mobile */}
-        <CategorySidebar
-          activeCategory={currentCategory}
-          onSelectCategory={categoryChanged}
-          products={fetchedProducts}
-        />
-
-        {/* Product Grid Area */}
-        <div className="flex-1 p-4 md:p-6 overflow-auto">
-          {isLoading && !displayProducts.length && (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">Loading products...</p>
-            </div>
-          )}
-          {error && (
-            <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200">
-              {error}
-            </div>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {paginatedProducts.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          <Pagination
-            currentPage={safePage}
-            totalPages={totalPages}
-            onPageChange={pageChanged}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="flex flex-1">
+          {/* Sidebar - Hidden on mobile */}
+          <CategorySidebar
+            activeCategory={currentCategory}
+            onSelectCategory={categoryChanged}
+            products={fetchedProducts}
           />
+
+          {/* Product Grid Area */}
+          <div className="flex-1 overflow-hidden">
+            {isLoading && !displayProducts.length && (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-muted-foreground">Loading products...</p>
+              </div>
+            )}
+            {error && (
+              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200">
+                {error}
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {paginatedProducts.map((product) => (
+                <CatalogProductCard key={product.id} {...product} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <Pagination
+              currentPage={safePage}
+              totalPages={totalPages}
+              onPageChange={pageChanged}
+            />
+          </div>
         </div>
       </div>
 
