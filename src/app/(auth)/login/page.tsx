@@ -250,28 +250,32 @@ function LoginPageInner() {
             </div>
           </form>
 
-          <div className="flex items-center gap-3 mt-6">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-              or continue with
-            </span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
+          {selectedRole === "customer" ? (
+            <>
+              <div className="flex items-center gap-3 mt-6">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                  or continue with
+                </span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
 
-          <div className="mt-4">
-            <SocialAuthButtons />
-          </div>
+              <div className="mt-4">
+                <SocialAuthButtons />
+              </div>
 
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Management accounts (Administrator, Staff, and Cashier) are managed by the system administrator.
-          </p>
-
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary font-bold hover:underline">
-              Sign Up
-            </Link>
-          </p>
+              <p className="text-center text-sm text-muted-foreground mt-6">
+                Don&apos;t have an account?{" "}
+                <Link href="/register" className="text-primary font-bold hover:underline">
+                  Sign Up
+                </Link>
+              </p>
+            </>
+          ) : (
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              Management accounts (Administrator, Staff, and Cashier) are managed by the system administrator.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
