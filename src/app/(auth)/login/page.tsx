@@ -273,7 +273,7 @@ function LoginPageInner() {
             </>
           ) : (
             <p className="text-center text-xs text-muted-foreground mt-6">
-              Management accounts (Administrator, Staff, and Cashier) are managed by the system administrator.
+              Bentahub Administrator is responsible for managing the accounts of Administrators, Staff, and Cashiers.
             </p>
           )}
         </CardContent>
