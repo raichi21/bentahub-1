@@ -221,7 +221,13 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
   }
 
   // --- Inventory Status (All Branches = full breakdown; selected branch = that branch's rows only) ---
-  const inventoryStatus = buildInventoryStatus(filteredInventory)
+  const inventoryStatus = buildInventoryStatus(
+    dateStart && dateEnd
+      ? filteredInventory.filter(
+          (i: RawInventory) => i.updatedAt >= dateStart && i.updatedAt <= dateEnd,
+        )
+      : filteredInventory,
+  )
 
   // --- System Alerts from real low stock data ---
   const alerts: SystemAlertItem[] = []
