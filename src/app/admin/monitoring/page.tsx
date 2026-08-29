@@ -15,9 +15,7 @@ export default function MonitoringPage() {
   const [data, setData] = useState<MonitoringData | null>(null)
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([])
   const [selectedBranch, setSelectedBranch] = useState("all")
-  const [datePreset, setDatePreset] = useState("")
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
+  const [selectedDate, setSelectedDate] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
   const [branchesFetched, setBranchesFetched] = useState(false)
@@ -28,8 +26,10 @@ export default function MonitoringPage() {
 
     const params = new URLSearchParams()
     if (selectedBranch !== "all") params.set("branchId", selectedBranch)
-    if (dateFrom) params.set("dateFrom", dateFrom)
-    if (dateTo) params.set("dateTo", dateTo)
+    if (selectedDate) {
+      params.set("dateFrom", selectedDate)
+      params.set("dateTo", selectedDate)
+    }
     const query = params.toString()
 
     fetch(`/api/admin/monitoring${query ? `?${query}` : ""}`, {
@@ -56,7 +56,7 @@ export default function MonitoringPage() {
       .finally(() => {
         setFetched(true)
       })
-  }, [token, selectedBranch, dateFrom, dateTo])
+  }, [token, selectedBranch, selectedDate])
 
   // Fetch branches for filter dropdown (public endpoint — no auth needed)
   useEffect(() => {
@@ -237,12 +237,8 @@ export default function MonitoringPage() {
         onBranchChange={setSelectedBranch}
         onExportCSV={exportCSV}
         onExportPDF={exportPDF}
-        datePreset={datePreset}
-        onDatePresetChange={(preset, from, to) => {
-          setDatePreset(preset)
-          setDateFrom(from)
-          setDateTo(to)
-        }}
+        dateValue={selectedDate}
+        onDateValueChange={setSelectedDate}
       />
     </div>
   )

@@ -11,9 +11,7 @@ export default function SalesPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<SalesApiData | null>(null)
   const [branchId, setBranchId] = useState("")
-  const [datePreset, setDatePreset] = useState("")
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
+  const [selectedDate, setSelectedDate] = useState("")
   const [page, setPage] = useState(1)
   const [, setError] = useState<string | null>(null)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
@@ -23,8 +21,10 @@ export default function SalesPage() {
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (branchId) params.set("branchId", branchId)
-      if (dateFrom) params.set("dateFrom", dateFrom)
-      if (dateTo) params.set("dateTo", dateTo)
+      if (selectedDate) {
+        params.set("dateFrom", selectedDate)
+        params.set("dateTo", selectedDate)
+      }
 
       const res = await fetch(`/api/admin/sales?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -45,7 +45,7 @@ export default function SalesPage() {
     } finally {
       setFirstLoadDone(true)
     }
-  }, [token, branchId, page, dateFrom, dateTo])
+  }, [token, branchId, page, selectedDate])
 
   useEffect(() => {
     const timer = setTimeout(() => fetchData(), 0)
@@ -59,10 +59,8 @@ export default function SalesPage() {
     setPage(1)
   }
 
-  const handleDatePresetChange = (preset: string, from: string, to: string) => {
-    setDatePreset(preset)
-    setDateFrom(from)
-    setDateTo(to)
+  const handleDateChange = (value: string) => {
+    setSelectedDate(value)
     setPage(1)
   }
 
@@ -135,8 +133,8 @@ export default function SalesPage() {
 
       <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
         <DateRangeFilter
-          value={datePreset}
-          onChange={handleDatePresetChange}
+          value={selectedDate}
+          onChange={handleDateChange}
         />
         <div className="text-xs text-muted-foreground ml-auto">
           {data ? `${data.overview.transactionCount.toLocaleString()} transactions` : "Loading..."}
