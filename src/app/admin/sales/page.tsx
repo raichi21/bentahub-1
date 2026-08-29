@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { TransactionDetailsTable, KPICard } from "@/features/admin-dashboard"
+import { TransactionDetailsTable, KPICard, DateRangeFilter } from "@/features/admin-dashboard"
 import { TrendingUp, Receipt, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { exportTableAsPdf } from "@/lib/export-pdf"
@@ -11,6 +11,8 @@ export default function SalesPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<SalesApiData | null>(null)
   const [branchId, setBranchId] = useState("")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [page, setPage] = useState(1)
   const [, setError] = useState<string | null>(null)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
@@ -20,6 +22,8 @@ export default function SalesPage() {
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: "15" })
       if (branchId) params.set("branchId", branchId)
+      if (dateFrom) params.set("dateFrom", dateFrom)
+      if (dateTo) params.set("dateTo", dateTo)
 
       const res = await fetch(`/api/admin/sales?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -40,7 +44,7 @@ export default function SalesPage() {
     } finally {
       setFirstLoadDone(true)
     }
-  }, [token, branchId, page])
+  }, [token, branchId, page, dateFrom, dateTo])
 
   useEffect(() => {
     const timer = setTimeout(() => fetchData(), 0)
@@ -51,6 +55,22 @@ export default function SalesPage() {
 
   const handleBranchChange = (fBranchId: string) => {
     setBranchId(fBranchId)
+    setPage(1)
+  }
+
+  const handleDateFromChange = (value: string) => {
+    setDateFrom(value)
+    setPage(1)
+  }
+
+  const handleDateToChange = (value: string) => {
+    setDateTo(value)
+    setPage(1)
+  }
+
+  const handleClearDate = () => {
+    setDateFrom("")
+    setDateTo("")
     setPage(1)
   }
 
@@ -119,6 +139,19 @@ export default function SalesPage() {
           trendType="up"
           icon={BarChart3}
         />
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+        <DateRangeFilter
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={handleDateFromChange}
+          onDateToChange={handleDateToChange}
+          onClear={handleClearDate}
+        />
+        <div className="text-xs text-muted-foreground ml-auto">
+          {data ? `${data.overview.transactionCount.toLocaleString()} transactions` : "Loading..."}
+        </div>
       </div>
 
       <TransactionDetailsTable

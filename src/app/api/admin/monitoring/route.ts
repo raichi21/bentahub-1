@@ -31,7 +31,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
     }
 
     const branchId = request.nextUrl.searchParams.get("branchId") || undefined
-    const data = await getMonitoringData(branchId)
+    const dateFrom = request.nextUrl.searchParams.get("dateFrom") || undefined
+    const dateTo = request.nextUrl.searchParams.get("dateTo") || undefined
+    const data = await getMonitoringData(branchId, dateFrom, dateTo)
 
     return NextResponse.json(
       { success: true, message: "Monitoring data retrieved successfully", data },

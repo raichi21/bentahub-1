@@ -40,7 +40,7 @@ function formatCurrency(amount: number): string {
   return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export async function getMonitoringData(branchId?: string): Promise<MonitoringData> {
+export async function getMonitoringData(branchId?: string, dateFrom?: string, dateTo?: string): Promise<MonitoringData> {
   const allBranches = await db.query.branches.findMany() as RawBranch[]
   const allProducts = await db.query.products.findMany() as RawProduct[]
   const allInventory = await db.query.branchInventory.findMany() as RawInventory[]
@@ -61,6 +61,10 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
 
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  // Date range bounds for the pending reservations metric
+  const dateStart = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null
+  const dateEnd = dateTo ? new Date(`${dateTo}T23:59:59.999`) : null
 
   // --- Total Stock Value ---
   const productPriceMap = new Map(allProducts.map((p: RawProduct) => [p.id, parseFloat(p.price)]))
@@ -139,6 +143,14 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
 
   // --- Pending Reservations (using pending transactions as proxy) ---
   const pendingTransactions = filteredTransactions.filter((t: RawTransaction) => t.status === "pending")
+  // When a date range is set, count pending reservations created within it.
+  // Otherwise keep the original behavior (all pending + today count).
+  const rangeFilteredPending = pendingTransactions.filter((t: RawTransaction) => {
+    if (!dateStart || !dateEnd) return true
+    const d = new Date(t.createdAt)
+    return d >= dateStart && d <= dateEnd
+  })
+  const pendingMetricCount = dateStart ? rangeFilteredPending.length : pendingTransactions.length
   const todayPending = pendingTransactions.filter(
     (t: RawTransaction) => new Date(t.createdAt) >= todayStart
   ).length
@@ -255,7 +267,7 @@ export async function getMonitoringData(branchId?: string): Promise<MonitoringDa
         severity: totalLowStockCount > 20 ? "Critical" : totalLowStockCount > 5 ? "Warning" : "Normal",
       },
       pendingReservations: {
-        value: pendingTransactions.length,
+        value: pendingMetricCount,
         todayCount: todayPending,
       },
     },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { InventoryStatusTable, KPICard } from "@/features/admin-dashboard"
+import { InventoryStatusTable, KPICard, DateRangeFilter } from "@/features/admin-dashboard"
 import { Package, AlertTriangle, Clock, ExternalLink } from "lucide-react"
 import type { MonitoringData, InventoryStatusItem, ExpiringItemData } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
@@ -15,6 +15,8 @@ export default function MonitoringPage() {
   const [data, setData] = useState<MonitoringData | null>(null)
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([])
   const [selectedBranch, setSelectedBranch] = useState("all")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
   const [branchesFetched, setBranchesFetched] = useState(false)
@@ -23,9 +25,13 @@ export default function MonitoringPage() {
   useEffect(() => {
     if (!token) return
 
-    const params = selectedBranch !== "all" ? `?branchId=${selectedBranch}` : ""
+    const params = new URLSearchParams()
+    if (selectedBranch !== "all") params.set("branchId", selectedBranch)
+    if (dateFrom) params.set("dateFrom", dateFrom)
+    if (dateTo) params.set("dateTo", dateTo)
+    const query = params.toString()
 
-    fetch(`/api/admin/monitoring${params}`, {
+    fetch(`/api/admin/monitoring${query ? `?${query}` : ""}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -49,7 +55,7 @@ export default function MonitoringPage() {
       .finally(() => {
         setFetched(true)
       })
-  }, [token, selectedBranch])
+  }, [token, selectedBranch, dateFrom, dateTo])
 
   // Fetch branches for filter dropdown (public endpoint — no auth needed)
   useEffect(() => {
@@ -137,6 +143,19 @@ export default function MonitoringPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
+      <div className="bg-card border border-border rounded-xl p-4">
+        <DateRangeFilter
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+          onClear={() => { setDateFrom(""); setDateTo("") }}
+        />
+        <p className="text-xs text-muted-foreground mt-2">
+          Filters the Pending Reservations metric by creation date.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <KPICard
           title="Total Stock Value"
