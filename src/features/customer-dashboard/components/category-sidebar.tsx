@@ -26,7 +26,7 @@ export function CategorySidebar({ activeCategory, onSelectCategory, products }: 
   }, [products])
 
   return (
-    <div className="w-56 shrink-0 hidden md:flex flex-col gap-6 p-4 border-r border-border min-h-[calc(100vh-8rem)]">
+    <div className="w-56 shrink-0 hidden md:flex flex-col gap-6 py-4 pr-4 border-r border-border min-h-[calc(100vh-8rem)]">
       {/* Categories */}
       <div>
         <h3 className="text-xs font-bold tracking-widest text-muted-foreground mb-3 uppercase">
