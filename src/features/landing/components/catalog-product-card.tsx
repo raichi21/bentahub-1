@@ -47,6 +47,8 @@ export function CatalogProductCard({
   const isOutOfStock = stockStatus === "out-of-stock"
   const isLowStock = stockStatus === "low-stock"
   const atMax = availableStock != null && inCartQty >= availableStock
+  // The public landing catalog is browse-only (no Add to Cart).
+  const isPublic = basePath === "/catalog"
 
   const detailHref = `${basePath}/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
@@ -156,7 +158,17 @@ export function CatalogProductCard({
         </Link>
 
         <div>
-          {isOutOfStock ? (
+          {isPublic ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full gap-1.5 text-foreground hover:text-primary hover:border-primary/60 hover:bg-primary/5"
+              onClick={() => router.push(detailHref)}
+            >
+              <Eye className="size-3.5" />
+              View Details
+            </Button>
+          ) : isOutOfStock ? (
             <Button size="sm" variant="outline" className="w-full gap-1.5" disabled>
               <Bell className="size-3.5" />
               Notify Me
@@ -176,7 +188,7 @@ export function CatalogProductCard({
                 : "Add to Cart"}
             </Button>
           )}
-          {error && (
+          {!isPublic && error && (
             <p className="text-xs text-destructive mt-1">{error}</p>
           )}
         </div>

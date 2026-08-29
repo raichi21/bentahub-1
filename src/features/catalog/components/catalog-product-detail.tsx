@@ -93,6 +93,8 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
   const atMax =
     currentProduct.quantity != null &&
     inCartQty >= currentProduct.quantity
+  // The public landing detail page is browse-only (no Add to Cart).
+  const isPublic = basePath === "/catalog"
 
   const expiryDays = getExpiryDays(currentProduct.nearestExpiry ?? null)
   const formattedExpiry = formatExpiryDate(currentProduct.nearestExpiry ?? null)
@@ -228,7 +230,9 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
 
           {/* Add to Cart Button */}
           <div className="mt-auto space-y-3">
-            {isOutOfStock ? (
+            {isPublic ? (
+              <></>
+            ) : isOutOfStock ? (
               <Button size="lg" className="w-full" disabled>
                 Temporarily Unavailable
               </Button>
@@ -246,7 +250,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
                   : "Add to Cart"}
               </Button>
             )}
-            {addError && (
+            {!isPublic && addError && (
               <p className="text-sm text-destructive text-center">{addError}</p>
             )}
             <Link
