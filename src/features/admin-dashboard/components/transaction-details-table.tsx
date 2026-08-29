@@ -68,10 +68,6 @@ export function TransactionDetailsTable({
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
-          <DateRangeFilter
-            value={dateValue ?? ""}
-            onChange={(v) => onDateValueChange?.(v)}
-          />
           <div ref={exportRef} className="relative">
             <button
               onClick={() => setExportOpen(!exportOpen)}
@@ -99,6 +95,10 @@ export function TransactionDetailsTable({
               </div>
             )}
           </div>
+          <DateRangeFilter
+            value={dateValue ?? ""}
+            onChange={(v) => onDateValueChange?.(v)}
+          />
         </div>
       </div>
 
