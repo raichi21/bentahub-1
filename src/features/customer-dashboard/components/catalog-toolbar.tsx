@@ -26,7 +26,7 @@ export function CatalogToolbar({
 }: CatalogToolbarProps) {
   return (
     <div className="bg-muted border-b border-border">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left: Branch Filter + Search */}
         <div className="flex items-center gap-3 flex-1 max-w-xl">
           <div className="flex items-center gap-2 shrink-0">
@@ -64,7 +64,7 @@ export function CatalogToolbar({
         </div>
       </div>
       {/* Pickup Hours Notice */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
+      <div className="px-4 sm:px-6 lg:px-8 pb-2 flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
         <Clock className="h-3 w-3" />
         <span>Reserve now, pickup at branch until <strong>5:00 PM</strong> (8:00 AM - 5:00 PM)</span>
       </div>
