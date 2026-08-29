@@ -1,7 +1,5 @@
 "use client"
 
-import { Calendar } from "lucide-react"
-
 interface DateRangeFilterProps {
   /** Selected date (YYYY-MM-DD). Empty string means no filter (All Time). */
   value: string
@@ -17,14 +15,11 @@ interface DateRangeFilterProps {
  */
 export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
   return (
-    <div className="flex items-center gap-1.5">
-      <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-      <input
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
-      />
-    </div>
+    <input
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+    />
   )
 }
