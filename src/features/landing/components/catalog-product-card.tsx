@@ -95,15 +95,17 @@ export function CatalogProductCard({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           />
 
-          {/* View Details Overlay */}
-          <button
-            type="button"
-            onClick={() => router.push(detailHref)}
-            className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background/90 backdrop-blur-sm border border-border/40 shadow-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            View
-          </button>
+          {/* View Details Overlay (customer only — public has a View Details button) */}
+          {!isPublic && (
+            <button
+              type="button"
+              onClick={() => router.push(detailHref)}
+              className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background/90 backdrop-blur-sm border border-border/40 shadow-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              View
+            </button>
+          )}
 
           {/* Stock Badge */}
           <div className="absolute top-2 left-2">

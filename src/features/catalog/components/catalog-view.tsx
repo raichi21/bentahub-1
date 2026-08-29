@@ -214,19 +214,21 @@ export function CatalogView({ basePath }: CatalogViewProps) {
         </div>
       </div>
 
-      {/* FAB Cart Button */}
-      <Link
-        href="/customer/cart"
-        className="fixed bottom-20 right-6 md:bottom-6 md:right-6 size-14 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors z-40"
-      >
-        <ShoppingCart className="h-6 w-6" />
-        {itemCount > 0 && (
-          <span className="absolute -top-1 -right-1 size-5 bg-destructive rounded-full flex items-center justify-center text-xs font-bold text-destructive-foreground">
-            {itemCount > 9 ? "9+" : itemCount}
-          </span>
-        )}
-        <span className="sr-only">View Cart</span>
-      </Link>
+      {/* FAB Cart Button (customer catalog only — public is browse-only) */}
+      {basePath !== "/catalog" && (
+        <Link
+          href="/customer/cart"
+          className="fixed bottom-20 right-6 md:bottom-6 md:right-6 size-14 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors z-40"
+        >
+          <ShoppingCart className="h-6 w-6" />
+          {itemCount > 0 && (
+            <span className="absolute -top-1 -right-1 size-5 bg-destructive rounded-full flex items-center justify-center text-xs font-bold text-destructive-foreground">
+              {itemCount > 9 ? "9+" : itemCount}
+            </span>
+          )}
+          <span className="sr-only">View Cart</span>
+        </Link>
+      )}
     </div>
   )
 }
