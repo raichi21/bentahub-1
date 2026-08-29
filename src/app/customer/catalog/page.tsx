@@ -2,12 +2,15 @@
 
 import { Suspense } from "react"
 import { CatalogView } from "@/features/catalog/components/catalog-view"
+import { RoleGate } from "@/components/role-gate"
 
-export default function CatalogPage() {
+export default function CustomerCatalogPage() {
   return (
-    <Suspense fallback={<CatalogLoading />}>
-      <CatalogView basePath="/catalog" />
-    </Suspense>
+    <RoleGate allow={["customer"]}>
+      <Suspense fallback={<CatalogLoading />}>
+        <CatalogView basePath="/customer/catalog" />
+      </Suspense>
+    </RoleGate>
   )
 }
 

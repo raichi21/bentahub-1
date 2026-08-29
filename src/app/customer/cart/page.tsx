@@ -119,7 +119,7 @@ function CartPageInner() {
         ) : (
           <div className="flex flex-col items-center justify-center h-96 gap-4">
             <p className="text-muted-foreground text-lg">Your cart is empty</p>
-            <Button onClick={() => router.push("/catalog")}>
+            <Button onClick={() => router.push("/customer/catalog")}>
               Continue Shopping
             </Button>
           </div>
@@ -238,7 +238,7 @@ function CartPageInner() {
                   {isProcessing ? "Processing..." : "Proceed to Checkout"}
                 </Button>
                 <button
-                  onClick={() => router.push("/catalog")}
+                  onClick={() => router.push("/customer/catalog")}
                   className="w-full bg-transparent border border-border text-muted-foreground py-4 rounded-lg font-semibold hover:bg-muted transition-colors flex items-center justify-center gap-2"
                 >
                   <ShoppingCart className="h-4 w-4" />

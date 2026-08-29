@@ -22,6 +22,8 @@ export interface CatalogProductCardProps {
   branch: string
   /** Per-branch stock limit (null = unknown). */
   availableStock?: number | null
+  /** Base route for the detail link (e.g. "/catalog" or "/customer/catalog"). */
+  basePath?: string
 }
 
 export function CatalogProductCard({
@@ -34,6 +36,7 @@ export function CatalogProductCard({
   weight,
   branch,
   availableStock,
+  basePath = "/catalog",
 }: CatalogProductCardProps) {
   const router = useRouter()
   const { addToCart } = useCartActions()
@@ -45,7 +48,7 @@ export function CatalogProductCard({
   const isLowStock = stockStatus === "low-stock"
   const atMax = availableStock != null && inCartQty >= availableStock
 
-  const detailHref = `/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
+  const detailHref = `${basePath}/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
   const handleAddToCart = () => {
     // Guests and non-customer roles (admin/staff/cashier) sign in as a
