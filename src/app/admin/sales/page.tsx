@@ -11,6 +11,7 @@ export default function SalesPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<SalesApiData | null>(null)
   const [branchId, setBranchId] = useState("")
+  const [datePreset, setDatePreset] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [page, setPage] = useState(1)
@@ -58,19 +59,10 @@ export default function SalesPage() {
     setPage(1)
   }
 
-  const handleDateFromChange = (value: string) => {
-    setDateFrom(value)
-    setPage(1)
-  }
-
-  const handleDateToChange = (value: string) => {
-    setDateTo(value)
-    setPage(1)
-  }
-
-  const handleClearDate = () => {
-    setDateFrom("")
-    setDateTo("")
+  const handleDatePresetChange = (preset: string, from: string, to: string) => {
+    setDatePreset(preset)
+    setDateFrom(from)
+    setDateTo(to)
     setPage(1)
   }
 
@@ -143,11 +135,8 @@ export default function SalesPage() {
 
       <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
         <DateRangeFilter
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          onDateFromChange={handleDateFromChange}
-          onDateToChange={handleDateToChange}
-          onClear={handleClearDate}
+          value={datePreset}
+          onChange={handleDatePresetChange}
         />
         <div className="text-xs text-muted-foreground ml-auto">
           {data ? `${data.overview.transactionCount.toLocaleString()} transactions` : "Loading..."}

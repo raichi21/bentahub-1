@@ -15,6 +15,7 @@ export default function MonitoringPage() {
   const [data, setData] = useState<MonitoringData | null>(null)
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([])
   const [selectedBranch, setSelectedBranch] = useState("all")
+  const [datePreset, setDatePreset] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -236,11 +237,12 @@ export default function MonitoringPage() {
         onBranchChange={setSelectedBranch}
         onExportCSV={exportCSV}
         onExportPDF={exportPDF}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        onDateFromChange={setDateFrom}
-        onDateToChange={setDateTo}
-        onDateClear={() => { setDateFrom(""); setDateTo("") }}
+        datePreset={datePreset}
+        onDatePresetChange={(preset, from, to) => {
+          setDatePreset(preset)
+          setDateFrom(from)
+          setDateTo(to)
+        }}
       />
     </div>
   )

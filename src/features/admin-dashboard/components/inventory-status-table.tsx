@@ -12,11 +12,8 @@ interface InventoryStatusTableProps {
   onBranchChange?: (value: string) => void
   onExportCSV?: () => void
   onExportPDF?: () => void
-  dateFrom?: string
-  dateTo?: string
-  onDateFromChange?: (value: string) => void
-  onDateToChange?: (value: string) => void
-  onDateClear?: () => void
+  datePreset?: string
+  onDatePresetChange?: (preset: string, from: string, to: string) => void
 }
 
 const ITEMS_PER_PAGE = 20
@@ -46,11 +43,8 @@ export function InventoryStatusTable({
   onBranchChange,
   onExportCSV,
   onExportPDF,
-  dateFrom,
-  dateTo,
-  onDateFromChange,
-  onDateToChange,
-  onDateClear,
+  datePreset,
+  onDatePresetChange,
 }: InventoryStatusTableProps) {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -115,11 +109,8 @@ export function InventoryStatusTable({
             ))}
           </select>
           <DateRangeFilter
-            dateFrom={dateFrom ?? ""}
-            dateTo={dateTo ?? ""}
-            onDateFromChange={(v) => { setPage(1); onDateFromChange?.(v) }}
-            onDateToChange={(v) => { setPage(1); onDateToChange?.(v) }}
-            onClear={() => { setPage(1); onDateClear?.() }}
+            value={datePreset ?? ""}
+            onChange={(preset, from, to) => { setPage(1); onDatePresetChange?.(preset, from, to) }}
           />
           <div ref={exportRef} className="relative">
             <button

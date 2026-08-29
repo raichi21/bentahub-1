@@ -3,61 +3,88 @@
 import { Calendar } from "lucide-react"
 
 interface DateRangeFilterProps {
-  /** Start date as YYYY-MM-DD string, or null/empty when unset. */
-  dateFrom: string
-  /** End date as YYYY-MM-DD string, or null/empty when unset. */
-  dateTo: string
-  onDateFromChange: (value: string) => void
-  onDateToChange: (value: string) => void
-  onClear: () => void
+  /** Selected preset key ("" = All Time). */
+  value: string
+  /**
+   * Called when a preset is chosen. Passes the chosen preset along with the
+   * resolved from/to dates (YYYY-MM-DD) so the caller can pass them to the API.
+   */
+  onChange: (value: string, from: string, to: string) => void
+}
+
+const PRESETS: Array<{ value: string; label: string }> = [
+  { value: "", label: "All Time" },
+  { value: "today", label: "Today" },
+  { value: "7d", label: "Last 7 Days" },
+  { value: "thisWeek", label: "This Week" },
+  { value: "thisMonth", label: "This Month" },
+  { value: "lastMonth", label: "Last Month" },
+]
+
+function toISODate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
+/** Resolves a preset key into inclusive from/to date strings (YYYY-MM-DD). */
+function resolvePreset(preset: string): { from: string; to: string } {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  switch (preset) {
+    case "today":
+      return { from: toISODate(today), to: toISODate(today) }
+    case "7d": {
+      const from = new Date(today)
+      from.setDate(from.getDate() - 6)
+      return { from: toISODate(from), to: toISODate(today) }
+    }
+    case "thisWeek": {
+      const dayOfWeek = (today.getDay() + 6) % 7 // Monday = 0
+      const from = new Date(today)
+      from.setDate(from.getDate() - dayOfWeek)
+      return { from: toISODate(from), to: toISODate(today) }
+    }
+    case "thisMonth": {
+      const from = new Date(today.getFullYear(), today.getMonth(), 1)
+      return { from: toISODate(from), to: toISODate(today) }
+    }
+    case "lastMonth": {
+      const from = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      const to = new Date(today.getFullYear(), today.getMonth(), 0)
+      return { from: toISODate(from), to: toISODate(to) }
+    }
+    default:
+      return { from: "", to: "" }
+  }
 }
 
 /**
- * Shared From/To date range filter for admin reports (sales, monitoring).
- * Native date inputs keep it dependency-free. Empty values mean "no filter".
+ * Shared single-control date range preset for admin reports (sales, monitoring).
+ * Uses a dropdown instead of two date inputs so the filter stays compact and
+ * consistent next to the Select Branches filter.
  */
-export function DateRangeFilter({
-  dateFrom,
-  dateTo,
-  onDateFromChange,
-  onDateToChange,
-  onClear,
-}: DateRangeFilterProps) {
-  const hasFilter = Boolean(dateFrom || dateTo)
-
+export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        <Calendar className="h-4 w-4" />
-      </div>
-      <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-        From
-      </label>
-      <input
-        type="date"
-        value={dateFrom}
-        onChange={(e) => onDateFromChange(e.target.value)}
-        className="border border-border rounded-lg bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-      />
-      <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-        To
-      </label>
-      <input
-        type="date"
-        value={dateTo}
-        min={dateFrom || undefined}
-        onChange={(e) => onDateToChange(e.target.value)}
-        className="border border-border rounded-lg bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-      />
-      {hasFilter && (
-        <button
-          type="button"
-          onClick={onClear}
-          className="ml-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-        >
-          Clear
-        </button>
-      )}
+    <div className="flex items-center gap-1.5">
+      <Calendar className="h-4 w-4 text-muted-foreground" />
+      <select
+        value={value}
+        onChange={(e) => {
+          const preset = e.target.value
+          const { from, to } = resolvePreset(preset)
+          onChange(preset, from, to)
+        }}
+        className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+      >
+        {PRESETS.map((p) => (
+          <option key={p.value} value={p.value}>
+            {p.label}
+          </option>
+        ))}
+      </select>
     </div>
   )
 }
