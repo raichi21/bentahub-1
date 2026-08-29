@@ -122,6 +122,7 @@ export interface SalesTransactionRowData {
   status: string
   receiptNumber: number | null
   gcashRef: string | null
+  cashierName: string | null
   items: TransactionItemData[]
 }
 

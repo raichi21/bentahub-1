@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
     await db.insert(transactions).values({
       id: transactionId,
       branchId: branchRecord.id,
+      cashierId: user.id,
       receiptNumber: nextReceiptNumber,
       totalAmount: totalAmount.toString(),
       paymentMethod: "gcash",

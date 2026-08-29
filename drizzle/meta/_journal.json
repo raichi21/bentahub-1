@@ -15,6 +15,13 @@
       "when": 1786954044582,
       "tag": "0001_empty_doctor_faustus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787979426615,
+      "tag": "0002_dry_corsair",
+      "breakpoints": true
     }
   ]
 }

@@ -7,13 +7,14 @@ import type { CartItem } from "@/types/cashier"
 
 export interface CreateTransactionInput {
   branchId: string
+  cashierId: string
   items: CartItem[]
   totalAmount: number
   paymentMethod: "cash" | "gcash"
 }
 
 export async function createTransaction(input: CreateTransactionInput) {
-  const { branchId, items, totalAmount, paymentMethod } = input
+  const { branchId, cashierId, items, totalAmount, paymentMethod } = input
   const transactionId = generateId()
 
   // Get the next sequential receipt number for this branch
@@ -37,6 +38,7 @@ export async function createTransaction(input: CreateTransactionInput) {
   await db.insert(transactions).values({
     id: transactionId,
     branchId,
+    cashierId,
     receiptNumber: nextReceiptNumber,
     totalAmount: totalAmount.toString(),
     paymentMethod,

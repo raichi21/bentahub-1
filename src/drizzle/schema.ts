@@ -328,6 +328,9 @@ export const transactions = pgTable("transactions", {
   branchId: varchar("branch_id", { length: 36 })
     .notNull()
     .references(() => branches.id, { onDelete: "cascade" }),
+  cashierId: varchar("cashier_id", { length: 36 }).references(() => users.id, {
+    onDelete: "set null",
+  }),
   receiptNumber: integer("receipt_number"),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
@@ -353,6 +356,10 @@ export const transactionRelations = relations(transactions, ({ one, many }) => (
   branch: one(branches, {
     fields: [transactions.branchId],
     references: [branches.id],
+  }),
+  cashier: one(users, {
+    fields: [transactions.cashierId],
+    references: [users.id],
   }),
   items: many(transactionItems),
 }))

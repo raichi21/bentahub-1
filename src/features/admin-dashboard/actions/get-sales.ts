@@ -26,6 +26,7 @@ export interface SalesTransactionRow {
   status: string
   receiptNumber: number | null
   gcashRef: string | null
+  cashierName: string | null
   items: Array<{ productName: string; quantity: number; price: number; subtotal: number }>
 }
 
@@ -81,10 +82,14 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
     orderBy: [desc(transactions.createdAt)],
     with: {
       items: true,
+      cashier: {
+        columns: { fullName: true },
+      },
     },
   }) as Array<{
     id: string; branchId: string; totalAmount: string; paymentMethod: string; status: string; createdAt: Date
     receiptNumber: number | null; gcashRef: string | null
+    cashier: { fullName: string } | null
     items: Array<{ productName: string; quantity: number; price: string; subtotal: string }>
   }>
 
@@ -121,6 +126,7 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
     status: t.status,
     receiptNumber: t.receiptNumber ?? null,
     gcashRef: t.gcashRef ?? null,
+    cashierName: t.cashier?.fullName ?? null,
     items: (t.items || []).map((i) => ({
       productName: i.productName,
       quantity: i.quantity,

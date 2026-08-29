@@ -45,6 +45,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction }: Transa
               <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Transaction Info</h4>
               <div className="space-y-1 text-sm">
                 <p className="text-muted-foreground">Transaction ID: <span className="font-semibold text-foreground">{transaction.displayId}</span></p>
+                <p className="text-muted-foreground">Cashier: <span className="font-semibold text-foreground">{transaction.cashierName || "—"}</span></p>
                 <p className="text-muted-foreground">Branch: <span className="font-semibold text-foreground">{transaction.branchName}</span></p>
                 <p className="text-muted-foreground">Date &amp; Time: <span className="font-semibold text-foreground">{dateDisplay}</span></p>
                 {transaction.receiptNumber != null && (

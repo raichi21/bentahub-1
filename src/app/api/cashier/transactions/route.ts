@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     const result = await createTransaction({
       branchId: branchRecord.id,
+      cashierId: auth.userId,
       items,
       totalAmount,
       paymentMethod,
