@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { TransactionDetailsTable, KPICard, DateRangeFilter } from "@/features/admin-dashboard"
+import { TransactionDetailsTable, KPICard } from "@/features/admin-dashboard"
 import { TrendingUp, Receipt, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { exportTableAsPdf } from "@/lib/export-pdf"
@@ -131,16 +131,6 @@ export default function SalesPage() {
         />
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
-        <DateRangeFilter
-          value={selectedDate}
-          onChange={handleDateChange}
-        />
-        <div className="text-xs text-muted-foreground ml-auto">
-          {data ? `${data.overview.transactionCount.toLocaleString()} transactions` : "Loading..."}
-        </div>
-      </div>
-
       <TransactionDetailsTable
         transactions={data?.transactions || []}
         totalCount={data?.totalCount || 0}
@@ -153,6 +143,8 @@ export default function SalesPage() {
         onExportCSV={exportCSV}
         onExportPDF={exportPDF}
         loading={isLoading}
+        dateValue={selectedDate}
+        onDateValueChange={handleDateChange}
       />
     </div>
   )

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { FileX, Loader2, Download, FileSpreadsheet, FileText } from "lucide-react"
 import type { SalesTransactionRowData } from "@/types/admin"
+import { DateRangeFilter } from "./date-range-filter"
 
 interface TransactionDetailsTableProps {
   transactions: SalesTransactionRowData[]
@@ -16,6 +17,8 @@ interface TransactionDetailsTableProps {
   onExportCSV?: () => void
   onExportPDF?: () => void
   loading: boolean
+  dateValue?: string
+  onDateValueChange?: (value: string) => void
 }
 
 export function TransactionDetailsTable({
@@ -30,6 +33,8 @@ export function TransactionDetailsTable({
   onExportCSV,
   onExportPDF,
   loading,
+  dateValue,
+  onDateValueChange,
 }: TransactionDetailsTableProps) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const [exportOpen, setExportOpen] = useState(false)
@@ -46,7 +51,12 @@ export function TransactionDetailsTable({
   return (
     <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
-        <h4 className="font-bold text-lg text-foreground">Transaction Details</h4>
+        <div className="flex items-center gap-3">
+          <h4 className="font-bold text-lg text-foreground">Transaction Details</h4>
+          <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest bg-muted px-2 py-0.5 rounded-full border border-border">
+            {totalCount.toLocaleString()} transactions
+          </span>
+        </div>
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
           <select
             value={branchId}
@@ -58,6 +68,10 @@ export function TransactionDetailsTable({
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
+          <DateRangeFilter
+            value={dateValue ?? ""}
+            onChange={(v) => onDateValueChange?.(v)}
+          />
           <div ref={exportRef} className="relative">
             <button
               onClick={() => setExportOpen(!exportOpen)}
