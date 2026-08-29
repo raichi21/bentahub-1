@@ -11,6 +11,14 @@ import { useCartActions } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
 import { useCartStore } from "@/stores/cartStore"
 
+/** Home dashboard route for each role (mirrors role-gate). */
+const ROLE_HOME: Record<string, string> = {
+  admin: "/admin",
+  staff: "/staff",
+  cashier: "/cashier",
+  customer: "/customer",
+}
+
 export interface CatalogProductCardProps {
   id: string
   name: string
@@ -48,8 +56,16 @@ export function CatalogProductCard({
   const detailHref = `/catalog/${id}${branch ? `?branch=${encodeURIComponent(branch)}` : ""}`
 
   const handleAddToCart = () => {
+    // Guests sign in first — return them here after login
     if (!user) {
       router.push(`/login?redirect=${encodeURIComponent(detailHref)}`)
+      return
+    }
+    // Non-customer roles (admin/staff/cashier) shouldn't use the customer
+    // cart — bounce them to their own dashboard instead of surfacing the
+    // API's 401 "Unauthorized".
+    if (user.role !== "customer") {
+      router.replace(ROLE_HOME[user.role] ?? "/admin")
       return
     }
     if (atMax) return
