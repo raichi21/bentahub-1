@@ -60,6 +60,7 @@ export async function getPickups(filters: PickupFilterOptions = { page: 1, pageS
     id: string; userId: string; status: string; paymentMethod: string
     totalAmount: string; branch: string; notes: string | null
     isPaid: boolean; paidAt: Date | null; pickupDeadline: Date | null
+    phone: string | null
     createdAt: Date; updatedAt: Date
     user: { id: string; fullName: string; email: string }
     items: Array<{ id: string; productName: string; quantity: number; price: string; subtotal: string }>
@@ -110,6 +111,7 @@ export async function getPickups(filters: PickupFilterOptions = { page: 1, pageS
       customerName: o.user.fullName,
       customerInitials: getInitials(o.user.fullName),
       customerEmail: o.user.email,
+      customerPhone: o.phone || null,
       branch: o.branch,
       itemsCount: o.items.length,
       items: o.items.map((item) => ({

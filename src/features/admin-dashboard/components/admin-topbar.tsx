@@ -35,9 +35,6 @@ export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopba
   } else if (pathname.includes("/admin/sales")) {
     title = "Sales Report"
     subtitle = "View daily sales and transaction records across all branches."
-  } else if (pathname.includes("/admin/reservations")) {
-    title = "Reservation Management"
-    subtitle = "Monitor and manage all customer reservations across branches with detailed tracking."
   } else if (pathname.includes("/admin/users")) {
     title = "User Management"
     subtitle = "The admin allow to Add, Edit, Remove, and manage users"

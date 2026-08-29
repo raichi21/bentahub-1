@@ -309,6 +309,7 @@ export interface PickupRowData {
   customerName: string
   customerInitials: string
   customerEmail: string
+  customerPhone: string | null
   branch: string
   itemsCount: number
   items: PickupItemData[]

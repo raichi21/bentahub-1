@@ -14,6 +14,9 @@ export function PickupDetailsModal({ isOpen, onClose, order }: PickupDetailsModa
 
   const total = order.items.reduce((sum, item) => sum + item.subtotal, 0)
   const isCompleted = order.status === "completed"
+  const scheduledDate = order.pickupDeadline
+    ? new Date(order.pickupDeadline).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "—"
 
   const statusStyles: Record<string, string> = {
     ready: "bg-accent/50 text-primary border border-primary/20",
@@ -47,7 +50,7 @@ export function PickupDetailsModal({ isOpen, onClose, order }: PickupDetailsModa
               <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Order Info</h4>
               <div className="space-y-1 text-sm">
                 <p className="text-muted-foreground">Order ID: <span className="font-semibold text-foreground">{order.displayId}</span></p>
-                <p className="text-muted-foreground">Scheduled Date: <span className="font-semibold text-foreground">{order.pickupDeadline || "—"}</span></p>
+                <p className="text-muted-foreground">Scheduled Date: <span className="font-semibold text-foreground">{scheduledDate}</span></p>
                 <p className="text-muted-foreground">Branch: <span className="font-semibold text-foreground">{order.branch}</span></p>
               </div>
             </div>
@@ -56,6 +59,7 @@ export function PickupDetailsModal({ isOpen, onClose, order }: PickupDetailsModa
               <div className="space-y-1 text-sm">
                 <p className="text-muted-foreground">Full Name: <span className="font-semibold text-foreground">{order.customerName}</span></p>
                 <p className="text-muted-foreground">Email: <span className="font-semibold text-foreground">{order.customerEmail}</span></p>
+                {order.customerPhone && <p className="text-muted-foreground">Phone: <span className="font-semibold text-foreground">{order.customerPhone}</span></p>}
               </div>
             </div>
           </div>

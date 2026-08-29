@@ -9,8 +9,6 @@ export { InventoryStatusTable } from "./inventory-status-table"
 
 export { TransactionDetailsTable } from "./transaction-details-table"
 
-export { ReservationTable } from "./reservation-table"
-
 export { UserTable } from "./user-table"
 
 export { PaymentTable } from "./payment-table"
@@ -29,7 +27,6 @@ export { AdminNotificationsFeed } from "./admin-notifications-feed"
 export { TopProductsCard } from "./top-products-card"
 export { LowStockByCategoryCard } from "./low-stock-by-category-card"
 export { PaymentBreakdownCard } from "./payment-breakdown-card"
-export { ReservationDetailsModal } from "./reservation-details-modal"
 export { AdminSettings } from "./admin-settings"
 export { AddBranchModal } from "./add-branch-modal"
 export { EditBranchModal } from "./edit-branch-modal"
