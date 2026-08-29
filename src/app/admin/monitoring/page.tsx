@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { InventoryStatusTable, KPICard, DateRangeFilter } from "@/features/admin-dashboard"
+import { InventoryStatusTable, KPICard } from "@/features/admin-dashboard"
 import { Package, AlertTriangle, Clock, ExternalLink } from "lucide-react"
 import type { MonitoringData, InventoryStatusItem, ExpiringItemData } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
@@ -143,19 +143,6 @@ export default function MonitoringPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="bg-card border border-border rounded-xl p-4">
-        <DateRangeFilter
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          onDateFromChange={setDateFrom}
-          onDateToChange={setDateTo}
-          onClear={() => { setDateFrom(""); setDateTo("") }}
-        />
-        <p className="text-xs text-muted-foreground mt-2">
-          Filters the Pending Reservations metric by creation date.
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <KPICard
           title="Total Stock Value"
@@ -249,6 +236,11 @@ export default function MonitoringPage() {
         onBranchChange={setSelectedBranch}
         onExportCSV={exportCSV}
         onExportPDF={exportPDF}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
+        onDateClear={() => { setDateFrom(""); setDateTo("") }}
       />
     </div>
   )

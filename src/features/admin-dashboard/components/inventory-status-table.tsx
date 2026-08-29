@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { Search, Download, FileSpreadsheet, FileText } from "lucide-react"
 import type { InventoryStatusItem } from "@/types/admin"
+import { DateRangeFilter } from "./date-range-filter"
 
 interface InventoryStatusTableProps {
   data: InventoryStatusItem[]
@@ -11,6 +12,11 @@ interface InventoryStatusTableProps {
   onBranchChange?: (value: string) => void
   onExportCSV?: () => void
   onExportPDF?: () => void
+  dateFrom?: string
+  dateTo?: string
+  onDateFromChange?: (value: string) => void
+  onDateToChange?: (value: string) => void
+  onDateClear?: () => void
 }
 
 const ITEMS_PER_PAGE = 20
@@ -40,6 +46,11 @@ export function InventoryStatusTable({
   onBranchChange,
   onExportCSV,
   onExportPDF,
+  dateFrom,
+  dateTo,
+  onDateFromChange,
+  onDateToChange,
+  onDateClear,
 }: InventoryStatusTableProps) {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -103,6 +114,13 @@ export function InventoryStatusTable({
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
+          <DateRangeFilter
+            dateFrom={dateFrom ?? ""}
+            dateTo={dateTo ?? ""}
+            onDateFromChange={(v) => { setPage(1); onDateFromChange?.(v) }}
+            onDateToChange={(v) => { setPage(1); onDateToChange?.(v) }}
+            onClear={() => { setPage(1); onDateClear?.() }}
+          />
           <div ref={exportRef} className="relative">
             <button
               onClick={() => setExportOpen(!exportOpen)}
