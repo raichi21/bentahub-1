@@ -164,6 +164,15 @@ function CatalogPageInner() {
     [currentBranch, currentCategory, queryString, router]
   )
 
+  // Collapse the grid to fewer columns when there aren't enough items to
+  // fill a row, so sparse branches don't leave awkward empty columns.
+  const gridCols =
+    paginatedProducts.length <= 2
+      ? "grid-cols-1 sm:grid-cols-2"
+      : paginatedProducts.length <= 4
+        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Toolbar */}
@@ -179,7 +188,7 @@ function CatalogPageInner() {
       />
 
       {/* Main Content Area with Sidebar */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div className="flex flex-1">
           {/* Sidebar - Hidden on mobile */}
           <CategorySidebar
@@ -200,7 +209,7 @@ function CatalogPageInner() {
                 {error}
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            <div className={`grid ${gridCols} gap-4 md:gap-6`}>
               {paginatedProducts.map((product) => (
                 <CatalogProductCard key={product.id} {...product} />
               ))}
