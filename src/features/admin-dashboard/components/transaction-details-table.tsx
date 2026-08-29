@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { FileX, Loader2, Download, FileSpreadsheet, FileText } from "lucide-react"
+import { FileX, Loader2, Download, FileSpreadsheet, FileText, Eye } from "lucide-react"
 import type { SalesTransactionRowData } from "@/types/admin"
 import { DateRangeFilter } from "./date-range-filter"
+import { TransactionDetailsModal } from "./transaction-details-modal"
 
 interface TransactionDetailsTableProps {
   transactions: SalesTransactionRowData[]
@@ -38,6 +39,7 @@ export function TransactionDetailsTable({
 }: TransactionDetailsTableProps) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const [exportOpen, setExportOpen] = useState(false)
+  const [viewingTransaction, setViewingTransaction] = useState<SalesTransactionRowData | null>(null)
   const exportRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export function TransactionDetailsTable({
   }, [])
 
   return (
+    <>
     <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
         <h4 className="font-bold text-lg text-foreground">Transaction Details</h4>
@@ -107,18 +110,19 @@ export function TransactionDetailsTable({
               <th className="px-6 py-4">Total</th>
               <th className="px-6 py-4">Payment</th>
               <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-20 text-center" colSpan={6}>
+                <td className="px-6 py-20 text-center" colSpan={7}>
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
                 </td>
               </tr>
             ) : transactions.length === 0 ? (
               <tr className="hover:bg-muted/20 transition-colors group">
-                <td className="px-6 py-20 text-center" colSpan={6}>
+                <td className="px-6 py-20 text-center" colSpan={7}>
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                       <FileX className="h-8 w-8" />
@@ -157,6 +161,15 @@ export function TransactionDetailsTable({
                       {t.status}
                     </span>
                   </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => setViewingTransaction(t)}
+                      className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -189,5 +202,13 @@ export function TransactionDetailsTable({
         </div>
       </div>
     </section>
+
+      <TransactionDetailsModal
+        key={viewingTransaction ? `details-${viewingTransaction.id}` : "details-closed"}
+        isOpen={viewingTransaction !== null}
+        onClose={() => setViewingTransaction(null)}
+        transaction={viewingTransaction}
+      />
+    </>
   )
 }

@@ -105,6 +105,13 @@ export interface SalesOverviewData {
   trend: string
 }
 
+export interface TransactionItemData {
+  productName: string
+  quantity: number
+  price: number
+  subtotal: number
+}
+
 export interface SalesTransactionRowData {
   id: string
   displayId: string
@@ -113,6 +120,9 @@ export interface SalesTransactionRowData {
   totalAmount: string
   paymentMethod: string
   status: string
+  receiptNumber: number | null
+  gcashRef: string | null
+  items: TransactionItemData[]
 }
 
 export interface SalesTrendPointData {

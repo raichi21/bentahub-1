@@ -24,6 +24,9 @@ export interface SalesTransactionRow {
   totalAmount: string
   paymentMethod: string
   status: string
+  receiptNumber: number | null
+  gcashRef: string | null
+  items: Array<{ productName: string; quantity: number; price: number; subtotal: number }>
 }
 
 export interface SalesTrendPoint {
@@ -76,8 +79,13 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
   const allMatched = await db.query.transactions.findMany({
     where,
     orderBy: [desc(transactions.createdAt)],
+    with: {
+      items: true,
+    },
   }) as Array<{
     id: string; branchId: string; totalAmount: string; paymentMethod: string; status: string; createdAt: Date
+    receiptNumber: number | null; gcashRef: string | null
+    items: Array<{ productName: string; quantity: number; price: string; subtotal: string }>
   }>
 
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
@@ -111,6 +119,14 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
     totalAmount: t.totalAmount,
     paymentMethod: t.paymentMethod,
     status: t.status,
+    receiptNumber: t.receiptNumber ?? null,
+    gcashRef: t.gcashRef ?? null,
+    items: (t.items || []).map((i) => ({
+      productName: i.productName,
+      quantity: i.quantity,
+      price: parseFloat(i.price),
+      subtotal: parseFloat(i.subtotal),
+    })),
   }))
 
   const salesTrend: SalesTrendPoint[] = []

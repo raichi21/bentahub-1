@@ -9,6 +9,7 @@ export { InventoryStatusTable } from "./inventory-status-table"
 
 export { TransactionDetailsTable } from "./transaction-details-table"
 
+export { TransactionDetailsModal } from "./transaction-details-modal"
 export { UserTable } from "./user-table"
 
 export { PaymentTable } from "./payment-table"
