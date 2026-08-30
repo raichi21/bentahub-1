@@ -50,7 +50,6 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
   const [highlightedSku, setHighlightedSku] = useState<string | null>(null)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
 
   const categories = useMemo(() => {
     const set = new Set(initialProducts.map((p) => p.category))
@@ -96,7 +95,8 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
   useEffect(() => {
     if (!openMenuId) return
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = e.target as HTMLElement | null
+      if (target && !target.closest("[data-action-menu]")) {
         setOpenMenuId(null)
       }
     }
@@ -106,7 +106,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
-      <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} />
+      <QuickStockModal key={editingProduct?.id ?? "none"} isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} />
       <ProductBatchesModal isOpen={!!batchProduct} onClose={() => setBatchProduct(null)} product={batchProduct} />
       {showAddModal && (
         <AddStockModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={(p) => onAddProduct?.(p)} categories={productCategories} />
@@ -217,7 +217,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                     </td>
                     <td className="px-6 py-4 text-sm font-mono text-muted-foreground">{p.reorderLevel} {p.unit}s</td>
                     <td className="px-6 py-4 text-right relative">
-                      <div ref={menuRef} className="inline-flex">
+                      <div data-action-menu className="inline-flex">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
                           className="inline-flex items-center justify-center p-2 rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:pointer-events-none transition-colors"
