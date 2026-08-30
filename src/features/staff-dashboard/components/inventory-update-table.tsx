@@ -228,7 +228,12 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         {openMenuId === p.id && (
-                          <div className="absolute right-4 top-14 z-20 w-44 rounded-xl border border-border bg-card shadow-lg overflow-hidden" role="menu">
+                          <div
+                            className="absolute right-4 top-14 z-20 w-44 rounded-xl border border-border bg-card shadow-lg overflow-hidden"
+                            role="menu"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <button
                               role="menuitem"
                               onClick={() => { setEditingProduct(p); setOpenMenuId(null) }}
