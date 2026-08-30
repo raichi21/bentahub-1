@@ -47,6 +47,8 @@ export default function InventoryPage() {
           image: p.image || "",
           unit: "pcs",
           nearestExpiry: p.nearestExpiry,
+          activeBatchCount: p.activeBatchCount ?? 0,
+          batches: p.batches ?? [],
         }),
       )
       setProducts(mapped)
@@ -66,7 +68,12 @@ export default function InventoryPage() {
 
   const isLoading = authLoading || (token !== null && !fetched && !error)
 
-  const handleStockUpdate = async (productId: string, newStock: number, newReorderLevel: number) => {
+  const handleStockUpdate = async (
+    productId: string,
+    newStock: number,
+    newReorderLevel: number,
+    batchInfo?: { batchNumber?: string; expiryDate?: string; supplier?: string }
+  ) => {
     if (!token) return
 
     setSavingId(productId)
@@ -76,7 +83,14 @@ export default function InventoryPage() {
       const res = await fetch("/api/staff/inventory", {
         method: "PATCH",
         headers: authHeaders(token),
-        body: JSON.stringify({ productId, stock: newStock, reorderLevel: newReorderLevel }),
+        body: JSON.stringify({
+          productId,
+          stock: newStock,
+          reorderLevel: newReorderLevel,
+          batchNumber: batchInfo?.batchNumber,
+          expiryDate: batchInfo?.expiryDate,
+          supplier: batchInfo?.supplier,
+        }),
       })
 
       const json = await res.json()

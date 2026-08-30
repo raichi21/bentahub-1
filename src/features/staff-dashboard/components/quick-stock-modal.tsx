@@ -6,22 +6,43 @@ import { X, Plus, Minus, Package } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
+interface BatchInfo {
+  batchNumber?: string
+  expiryDate?: string
+  supplier?: string
+}
+
 interface QuickStockModalProps {
   isOpen: boolean
   onClose: () => void
   product: Product | null
-  onSave: (productId: string, newStock: number, newReorderLevel: number) => void
+  onSave: (productId: string, newStock: number, newReorderLevel: number, batchInfo?: BatchInfo) => void
 }
 
 const DEFAULT_THRESHOLD = 10
 
 export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStockModalProps) {
   const [stock, setStock] = useState(product?.stock ?? 0)
+  const [batchNumber, setBatchNumber] = useState("")
+  const [expiryDate, setExpiryDate] = useState("")
+  const [supplier, setSupplier] = useState("")
 
   if (!isOpen || !product) return null
 
+  const currentStock = product.stock
+  const delta = Math.max(0, stock - currentStock)
+
   const handleSave = () => {
-    onSave(product.id, Math.max(0, stock), DEFAULT_THRESHOLD)
+    onSave(
+      product.id,
+      Math.max(0, stock),
+      DEFAULT_THRESHOLD,
+      {
+        batchNumber: batchNumber.trim() || undefined,
+        expiryDate: expiryDate || undefined,
+        supplier: supplier.trim() || undefined,
+      }
+    )
     onClose()
   }
 
@@ -37,7 +58,7 @@ export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStock
           </button>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+        <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
           <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-lg border border-border">
             <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden border border-border/50 flex-shrink-0 flex items-center justify-center">
               {product.image ? (
@@ -53,8 +74,23 @@ export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStock
             </div>
           </div>
 
+          <div className="rounded-lg border border-border divide-y divide-border/60">
+            <div className="p-3 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Current stock</span>
+              <span className="font-bold font-mono text-foreground">{currentStock} {product.unit}s</span>
+            </div>
+            <div className="p-3 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">New total</span>
+              <span className="font-bold font-mono text-primary">{Math.max(0, stock)} {product.unit}s</span>
+            </div>
+            <div className="p-3 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Restock amount</span>
+              <span className="font-bold font-mono text-emerald-600">{delta} {product.unit}s</span>
+            </div>
+          </div>
+
           <div className="space-y-3">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Current Stock ({product.unit}s)</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</label>
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setStock((s) => Math.max(0, s - 10))}
@@ -77,6 +113,45 @@ export function QuickStockModal({ isOpen, onClose, product, onSave }: QuickStock
               </button>
             </div>
           </div>
+
+          {delta > 0 && (
+            <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <p className="text-xs font-bold text-primary uppercase tracking-wider">
+                New Delivery ({delta} {product.unit}s)
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Batch Number</label>
+                  <input
+                    type="text"
+                    value={batchNumber}
+                    onChange={(e) => setBatchNumber(e.target.value)}
+                    placeholder="Optional (e.g. DEL-0912)"
+                    className="mt-1 w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Expiry Date</label>
+                  <input
+                    type="date"
+                    value={expiryDate}
+                    onChange={(e) => setExpiryDate(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Supplier</label>
+                  <input
+                    type="text"
+                    value={supplier}
+                    onChange={(e) => setSupplier(e.target.value)}
+                    placeholder="Optional"
+                    className="mt-1 w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground font-medium">Status:</span>

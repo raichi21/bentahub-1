@@ -1,7 +1,7 @@
 import { db } from "@/servers/db"
 import { branchInventory, branches, inventoryBatches } from "@/servers/schemas"
-import { eq, and, isNotNull, gte } from "drizzle-orm"
-import type { StaffProductsData, StaffProductItem } from "@/types/staff"
+import { eq, and, gt, inArray } from "drizzle-orm"
+import type { StaffProductsData, StaffProductItem, InventoryBatchItem } from "@/types/staff"
 
 interface InventoryWithProduct {
   id: string
@@ -49,6 +49,23 @@ function computeStockStatus(quantity: number, threshold: number): "in-stock" | "
   return "in-stock"
 }
 
+/**
+ * Compute a batch's display status:
+ *  - "next-to-sell"  -> FIFO/FEFO head (first batch that would be sold)
+ *  - "expiring"      -> has an expiry within the next 30 days
+ *  - "out"           -> no remaining quantity
+ *  - "normal"        -> anything else
+ */
+function computeBatchStatus(batch: InventoryBatchRecord, isHead: boolean, now: Date): InventoryBatchItem["status"] {
+  if (batch.quantity <= 0) return "out"
+  if (isHead) return "next-to-sell"
+  if (batch.expiryDate) {
+    const days = (new Date(batch.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    if (days >= 0 && days <= 30) return "expiring"
+  }
+  return "normal"
+}
+
 function getNearestExpiry(inventoryId: string, allBatches: InventoryBatchRecord[]): string | null {
   const now = new Date()
   const futureBatches = allBatches.filter(
@@ -81,14 +98,41 @@ export async function getStaffProducts(branchName: string): Promise<StaffProduct
   const allBatches = inventoryIds.length > 0
     ? await db.query.inventoryBatches.findMany({
         where: and(
-          gte(inventoryBatches.quantity, 1),
-          isNotNull(inventoryBatches.expiryDate),
+          gt(inventoryBatches.quantity, 0),
+          inArray(inventoryBatches.branchInventoryId, inventoryIds),
         ),
-      }) as unknown as InventoryBatchRecord[]
+        orderBy: (batches, { asc }) => [
+          asc(batches.expiryDate),
+          asc(batches.receivedDate),
+          asc(batches.createdAt),
+        ],
+      }) as unknown as (InventoryBatchRecord & { status?: never })[]
     : []
+
+  const now = new Date()
+
+  const batchesByInventory = new Map<string, InventoryBatchRecord[]>()
+  for (const inv of inventory) {
+    batchesByInventory.set(inv.id, [])
+  }
+  for (const batch of allBatches) {
+    const list = batchesByInventory.get(batch.branchInventoryId)
+    if (list) list.push(batch)
+  }
 
   const products: StaffProductItem[] = inventory.map((inv) => {
     const stockStatus = computeStockStatus(inv.quantity, inv.lowStockThreshold)
+    const invBatches = batchesByInventory.get(inv.id) ?? []
+    const batches: InventoryBatchItem[] = invBatches.map((b, idx) => ({
+      id: b.id,
+      batchNumber: b.batchNumber,
+      quantity: b.quantity,
+      originalQuantity: b.originalQuantity,
+      expiryDate: b.expiryDate ? b.expiryDate.toISOString() : null,
+      receivedDate: b.receivedDate.toISOString(),
+      supplier: b.supplier,
+      status: computeBatchStatus(b, idx === 0, now),
+    }))
     return {
       id: inv.product.id,
       sku: inv.product.sku ?? "",
@@ -101,6 +145,8 @@ export async function getStaffProducts(branchName: string): Promise<StaffProduct
       reorderLevel: inv.lowStockThreshold,
       stockStatus,
       nearestExpiry: getNearestExpiry(inv.id, allBatches),
+      activeBatchCount: invBatches.length,
+      batches,
     }
   })
 

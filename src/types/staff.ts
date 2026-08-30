@@ -10,6 +10,19 @@ export interface StaffDashboardData {
   kpis: StaffDashboardKpis
 }
 
+export type BatchStatus = "next-to-sell" | "normal" | "expiring" | "out"
+
+export interface InventoryBatchItem {
+  id: string
+  batchNumber: string | null
+  quantity: number
+  originalQuantity: number
+  expiryDate: string | null
+  receivedDate: string
+  supplier: string | null
+  status: BatchStatus
+}
+
 export interface StaffProductItem {
   id: string
   sku: string
@@ -22,6 +35,8 @@ export interface StaffProductItem {
   reorderLevel: number
   stockStatus: "in-stock" | "low-stock" | "out-of-stock"
   nearestExpiry: string | null
+  activeBatchCount?: number
+  batches?: InventoryBatchItem[]
 }
 
 export interface StaffProductsData {

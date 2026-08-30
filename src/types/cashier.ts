@@ -13,6 +13,19 @@ export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number]
 
 export type StockStatus = "in-stock" | "low-stock" | "out-of-stock"
 
+export type BatchStatus = "next-to-sell" | "normal" | "expiring" | "out"
+
+export interface InventoryBatchItem {
+  id: string
+  batchNumber: string | null
+  quantity: number
+  originalQuantity: number
+  expiryDate: string | null
+  receivedDate: string
+  supplier: string | null
+  status: BatchStatus
+}
+
 export interface Product {
   id: string
   sku: string
@@ -25,6 +38,8 @@ export interface Product {
   image: string
   unit: string
   nearestExpiry: string | null
+  activeBatchCount?: number
+  batches?: InventoryBatchItem[]
 }
 
 // ── Cart ─────────────────────────────────────────────────────────────

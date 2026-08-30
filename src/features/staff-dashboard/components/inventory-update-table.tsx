@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import Image from "next/image"
-import { Search, Edit3, Plus, Package, Clock } from "lucide-react"
+import { Search, Edit3, Plus, Package, Clock, Layers } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import { getStockStatus, getExpiryDays, formatExpiryDate, isExpiringSoon } from "@/lib/staff-utils"
 import { QuickStockModal } from "./quick-stock-modal"
 import { AddStockModal } from "./add-stock-modal"
+import { ProductBatchesModal } from "./product-batches-modal"
 import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 6
@@ -25,9 +26,15 @@ interface AddProductData {
   supplier?: string
 }
 
+interface BatchInfo {
+  batchNumber?: string
+  expiryDate?: string
+  supplier?: string
+}
+
 interface InventoryUpdateTableProps {
   products: Product[]
-  onStockUpdate: (productId: string, newStock: number, newReorderLevel: number) => void
+  onStockUpdate: (productId: string, newStock: number, newReorderLevel: number, batchInfo?: BatchInfo) => void
   onAddProduct?: (product: AddProductData) => void
   savingId?: string | null
 }
@@ -38,6 +45,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
   const [statusFilter, setStatusFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [batchProduct, setBatchProduct] = useState<Product | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [highlightedSku, setHighlightedSku] = useState<string | null>(null)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
@@ -86,6 +94,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
       <QuickStockModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} product={editingProduct} onSave={onStockUpdate} />
+      <ProductBatchesModal isOpen={!!batchProduct} onClose={() => setBatchProduct(null)} product={batchProduct} />
       {showAddModal && (
         <AddStockModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSave={(p) => onAddProduct?.(p)} categories={productCategories} />
       )}
@@ -130,6 +139,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
               <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Product</th>
               <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Category</th>
               <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Quantity</th>
+              <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Batches</th>
               <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Expiry</th>
               <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Status</th>
               <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Reorder Level</th>
@@ -139,7 +149,7 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
           <tbody className="divide-y divide-border/30">
             {paginatedProducts.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-xs text-muted-foreground">No stock records matched your query</td>
+                <td colSpan={8} className="p-8 text-center text-xs text-muted-foreground">No stock records matched your query</td>
               </tr>
             ) : (
               paginatedProducts.map((p) => {
@@ -166,6 +176,20 @@ export function InventoryUpdateTable({ products: initialProducts, onStockUpdate,
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">{p.category}</td>
                     <td className="px-6 py-4 text-sm font-mono font-bold text-foreground">{p.stock} {p.unit}s</td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => setBatchProduct(p)}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-bold transition-colors",
+                          (p.activeBatchCount ?? 0) > 0
+                            ? "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                            : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/60"
+                        )}
+                      >
+                        <Layers className="w-3 h-3" />
+                        {(p.activeBatchCount ?? 0) > 0 ? `${p.activeBatchCount ?? 0} ${(p.activeBatchCount ?? 0) === 1 ? "Batch" : "Batches"}` : "No Batch"}
+                      </button>
+                    </td>
                     <td className="px-6 py-4">
                       {(() => {
                         const days = getExpiryDays(p.nearestExpiry)

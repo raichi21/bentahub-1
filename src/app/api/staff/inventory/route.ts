@@ -46,13 +46,29 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { productId, stock, reorderLevel } = body
+    const { productId, stock, reorderLevel, batchNumber, expiryDate, supplier } = body
 
     if (!productId || stock === undefined) {
       return NextResponse.json({ success: false, message: "productId and stock are required" }, { status: 400 })
     }
 
     const stockQty = Math.max(0, stock)
+
+    // Fetch the current inventory row to compute the restock delta and to
+    // ensure the product is registered in this branch.
+    const existing = await db.query.branchInventory.findFirst({
+      where: and(
+        eq(branchInventory.branchId, branchRecord.id),
+        eq(branchInventory.productId, productId),
+      ),
+    })
+
+    if (!existing) {
+      return NextResponse.json({ success: false, message: "Product inventory not found" }, { status: 404 })
+    }
+
+    const currentQty = existing.quantity
+    const delta = Math.max(0, stockQty - currentQty)
 
     await db
       .update(branchInventory)
@@ -67,15 +83,21 @@ export async function PATCH(request: NextRequest) {
         )
       )
 
-    const stockStatus = stockQty === 0 ? "out-of-stock" : reorderLevel !== undefined && stockQty <= reorderLevel ? "low-stock" : "in-stock"
-
-    await db
-      .update(products)
-      .set({
-        quantity: stockQty,
-        stockStatus,
+    // Additive restock: record the incoming stock as a new inventory batch so
+    // the batch ledger stays consistent with branch_inventory. A positive delta
+    // (restock / new delivery) creates a batch; otherwise it's just an
+    // adjustment of quantity / reorder level.
+    if (delta > 0) {
+      await db.insert(inventoryBatches).values({
+        id: generateId(),
+        branchInventoryId: existing.id,
+        batchNumber: batchNumber || null,
+        quantity: delta,
+        originalQuantity: delta,
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+        supplier: supplier || null,
       })
-      .where(eq(products.id, productId))
+    }
 
     return NextResponse.json({ success: true, message: "Stock updated successfully" })
   } catch (error) {
