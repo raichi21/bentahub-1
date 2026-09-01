@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { KPICard, CashDrawerTable } from "@/features/admin-dashboard"
 import type { CashDrawerRow } from "@/features/admin-dashboard/components/cash-drawer-table"
-import { Wallet, BadgeCheck, Scale } from "lucide-react"
+import { Wallet, Scale } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { exportTableAsPdf } from "@/lib/export-pdf"
 
@@ -23,7 +23,7 @@ interface CashDrawerApiData {
 }
 
 export default function CashDrawerPage() {
-  const { token, isLoading: authLoading } = useAuth()
+  const { token, isLoading: authLoading, isAuthenticated } = useAuth()
   const [data, setData] = useState<CashDrawerApiData | null>(null)
   const [branchId, setBranchId] = useState("")
   const [cashierId, setCashierId] = useState("")
@@ -31,6 +31,7 @@ export default function CashDrawerPage() {
   const [dateTo, setDateTo] = useState("")
   const [page, setPage] = useState(1)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     if (!token) return
@@ -46,14 +47,20 @@ export default function CashDrawerPage() {
       const json = await res.json()
       if (json.success && json.data) {
         setData(json.data)
+        setError(null)
+      } else {
+        setError(json.message || "API returned success=false")
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setFirstLoadDone(true)
     }
   }, [token, branchId, cashierId, dateFrom, dateTo, page])
 
   useEffect(() => {
-    fetchData()
+    const timer = setTimeout(() => fetchData(), 0)
+    return () => clearTimeout(timer)
   }, [fetchData])
 
   const isLoading = authLoading || (token != null && !firstLoadDone)
@@ -83,22 +90,48 @@ export default function CashDrawerPage() {
 
   const metrics = data?.metrics
 
+  if (!authLoading && !token) {
+    return (
+      <div className="p-8 text-center max-w-7xl mx-auto w-full">
+        <p className="text-sm text-red-500">Not authenticated. Auth state: loading={String(authLoading)}, hasToken={String(!!token)}, isAuth={String(isAuthenticated)}</p>
+        <p className="text-sm text-red-500 mt-2">Try going to <a href="/login" className="underline">/login</a> to log in again.</p>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+              <div className="h-4 w-24 bg-muted rounded mb-4" />
+              <div className="h-8 w-32 bg-muted rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center max-w-7xl mx-auto w-full">
+        <p className="text-sm text-red-500">Error: {error}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <KPICard
           title="Total Network Cash"
           value={metrics?.totalNetworkCashDisplay ?? "₱0.00"}
           trend={`${metrics?.closedCount ?? 0} closed sessions`}
           trendType="up"
           icon={Wallet}
-        />
-        <KPICard
-          title="Open Sessions"
-          value={String(metrics?.openCount ?? 0)}
-          trend={`${metrics?.openCount ?? 0} drawer(s) currently open`}
-          trendType="warning"
-          icon={BadgeCheck}
         />
         <KPICard
           title="Total Discrepancy"

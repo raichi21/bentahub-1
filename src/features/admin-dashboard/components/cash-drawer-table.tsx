@@ -1,6 +1,7 @@
 "use client"
 
-import { Download, FileX } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Download, FileSpreadsheet, FileText, FileX } from "lucide-react"
 
 export interface CashDrawerRow {
   id: string
@@ -57,6 +58,17 @@ export function CashDrawerTable({
   onExportPDF,
   loading,
 }: CashDrawerTableProps) {
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
   const handleExportCsv = () => {
     const headers = ["Cash Drawer ID", "Branch", "Cashier", "Opened", "Closed", "Starting", "Expected", "Actual", "Net Impact", "Difference", "Status", "Notes"]
     const rows = sessions.map((s) => [
@@ -80,28 +92,14 @@ export function CashDrawerTable({
 
   return (
     <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-border flex flex-col xl:flex-row gap-4 items-end justify-between bg-muted/20">
+      <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
         <div>
           <h4 className="font-bold text-lg text-foreground">Cash Drawer Sessions</h4>
           <p className="text-xs text-muted-foreground mt-0.5">
             Opens, closings, expected vs. actual cash, and reconciliation differences.
           </p>
         </div>
-        <div className="flex flex-wrap items-end gap-2">
-          <input
-            type="date"
-            value={dateFrom}
-            max={dateTo || undefined}
-            onChange={(e) => onDateChange(e.target.value, dateTo)}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
-          />
-          <input
-            type="date"
-            value={dateTo}
-            min={dateFrom || undefined}
-            onChange={(e) => onDateChange(dateFrom, e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
-          />
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
           <select
             value={branchId}
             onChange={(e) => onBranchChange(e.target.value)}
@@ -122,6 +120,20 @@ export function CashDrawerTable({
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          <input
+            type="date"
+            value={dateFrom}
+            max={dateTo || undefined}
+            onChange={(e) => onDateChange(e.target.value, dateTo)}
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+          />
+          <input
+            type="date"
+            value={dateTo}
+            min={dateFrom || undefined}
+            onChange={(e) => onDateChange(dateFrom, e.target.value)}
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+          />
           {hasFilters && (
             <button
               onClick={() => { onBranchChange(""); onCashierChange(""); onDateChange("", "") }}
@@ -130,19 +142,32 @@ export function CashDrawerTable({
               Clear
             </button>
           )}
-          <div className="flex gap-2">
+          <div ref={exportRef} className="relative">
             <button
-              onClick={handleExportCsv}
-              className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all"
+              onClick={() => setExportOpen(!exportOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all w-full md:w-auto justify-center"
             >
-              <Download className="h-[18px] w-[18px]" /> CSV
+              <Download className="h-[18px] w-[18px]" />
+              Export
             </button>
-            <button
-              onClick={() => onExportPDF?.()}
-              className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all"
-            >
-              <Download className="h-[18px] w-[18px]" /> PDF
-            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                <button
+                  onClick={() => { handleExportCsv(); setExportOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                  Export as CSV (Excel)
+                </button>
+                <button
+                  onClick={() => { onExportPDF?.(); setExportOpen(false) }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors border-t border-border"
+                >
+                  <FileText className="h-4 w-4 text-red-600" />
+                  Export as PDF
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -163,24 +188,24 @@ export function CashDrawerTable({
             </div>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse" style={{ minWidth: 1020 }}>
             <thead className="bg-muted/40 border-b border-border">
               <tr className="text-[11px] font-bold uppercase tracking-widest">
-                <th className="px-5 py-4">ID / Status</th>
-                <th className="px-5 py-4">Branch / Cashier</th>
-                <th className="px-5 py-4">Opened / Closed</th>
-                <th className="px-5 py-4">Starting</th>
-                <th className="px-5 py-4">Expected</th>
-                <th className="px-5 py-4">Actual</th>
-                <th className="px-5 py-4">Net Impact</th>
-                <th className="px-5 py-4">Difference</th>
-                <th className="px-5 py-4">Notes</th>
+                <th className="px-6 py-4 whitespace-nowrap">ID / Status</th>
+                <th className="px-6 py-4 whitespace-nowrap">Branch / Cashier</th>
+                <th className="px-6 py-4 whitespace-nowrap">Opened / Closed</th>
+                <th className="px-6 py-4 whitespace-nowrap">Starting</th>
+                <th className="px-6 py-4 whitespace-nowrap">Expected</th>
+                <th className="px-6 py-4 whitespace-nowrap">Actual</th>
+                <th className="px-6 py-4 whitespace-nowrap">Net Impact</th>
+                <th className="px-6 py-4 whitespace-nowrap">Difference</th>
+                <th className="px-6 py-4 whitespace-nowrap">Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {sessions.map((s) => (
                 <tr key={s.id} className="hover:bg-primary/5 transition-colors">
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       <span className="font-mono font-medium text-sm text-foreground">{s.displayId}</span>
                       <span className={`inline-flex items-center self-start px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
@@ -192,19 +217,19 @@ export function CashDrawerTable({
                       </span>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="font-medium text-sm text-foreground">{s.branchName}</span>
                     <span className="block text-xs text-muted-foreground">{s.cashierName}</span>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4">
                     <span className="block text-sm text-foreground">{s.openedAtDisplay}</span>
                     <span className="block text-xs text-muted-foreground">{s.closedAtDisplay ?? "—"}</span>
                   </td>
-                  <td className="px-5 py-4 text-sm text-foreground font-medium">{s.startingCashDisplay}</td>
-                  <td className="px-5 py-4 text-sm text-foreground font-medium">{s.expectedEndingCashDisplay}</td>
-                  <td className="px-5 py-4 text-sm text-foreground font-medium">{s.actualEndingCashDisplay}</td>
-                  <td className="px-5 py-4 text-sm text-foreground font-medium">{s.netCashImpactDisplay}</td>
-                  <td className="px-5 py-4">
+                  <td className="px-6 py-4 text-sm text-foreground font-medium">{s.startingCashDisplay}</td>
+                  <td className="px-6 py-4 text-sm text-foreground font-medium">{s.expectedEndingCashDisplay}</td>
+                  <td className="px-6 py-4 text-sm text-foreground font-medium">{s.actualEndingCashDisplay}</td>
+                  <td className="px-6 py-4 text-sm text-foreground font-medium">{s.netCashImpactDisplay}</td>
+                  <td className="px-6 py-4">
                     {s.status === "open" ? (
                       <span className="text-xs text-muted-foreground">—</span>
                     ) : (
@@ -221,7 +246,7 @@ export function CashDrawerTable({
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-4 text-xs text-muted-foreground max-w-[180px] truncate" title={s.notes ?? ""}>
+                  <td className="px-6 py-4 text-xs text-muted-foreground max-w-[180px] truncate" title={s.notes ?? ""}>
                     {s.notes || "—"}
                   </td>
                 </tr>
