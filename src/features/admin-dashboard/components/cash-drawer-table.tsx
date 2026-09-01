@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Download, FileSpreadsheet, FileText, FileX } from "lucide-react"
+import { Download, FileSpreadsheet, FileText, FileX, Eye } from "lucide-react"
+import { CashDrawerDetailsModal } from "./cash-drawer-details-modal"
 
 export interface CashDrawerRow {
   id: string
@@ -60,6 +61,7 @@ export function CashDrawerTable({
 }: CashDrawerTableProps) {
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
+  const [selectedSession, setSelectedSession] = useState<CashDrawerRow | null>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -91,6 +93,7 @@ export function CashDrawerTable({
   const hasFilters = branchId || cashierId || dateFrom || dateTo
 
   return (
+    <>
     <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
         <div>
@@ -188,7 +191,7 @@ export function CashDrawerTable({
             </div>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse" style={{ minWidth: 1020 }}>
+          <table className="w-full text-left border-collapse" style={{ minWidth: 1080 }}>
             <thead className="bg-muted/40 border-b border-border">
               <tr className="text-[11px] font-bold uppercase tracking-widest">
                 <th className="px-6 py-4 whitespace-nowrap">ID / Status</th>
@@ -200,6 +203,7 @@ export function CashDrawerTable({
                 <th className="px-6 py-4 whitespace-nowrap">Net Impact</th>
                 <th className="px-6 py-4 whitespace-nowrap">Difference</th>
                 <th className="px-6 py-4 whitespace-nowrap">Notes</th>
+                <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -249,6 +253,15 @@ export function CashDrawerTable({
                   <td className="px-6 py-4 text-xs text-muted-foreground max-w-[180px] truncate" title={s.notes ?? ""}>
                     {s.notes || "—"}
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => setSelectedSession(s)}
+                      className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -283,5 +296,13 @@ export function CashDrawerTable({
         </div>
       )}
     </section>
+
+    <CashDrawerDetailsModal
+      key={selectedSession?.id ?? "none"}
+      isOpen={selectedSession !== null}
+      onClose={() => setSelectedSession(null)}
+      session={selectedSession}
+    />
+    </>
   )
 }

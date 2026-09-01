@@ -14,6 +14,7 @@ export { UserTable } from "./user-table"
 
 export { PaymentTable } from "./payment-table"
 export { CashDrawerTable } from "./cash-drawer-table"
+export { CashDrawerDetailsModal } from "./cash-drawer-details-modal"
 
 export { HistoryTable } from "./history-table"
 
