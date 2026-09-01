@@ -188,43 +188,31 @@ export function CashDrawerTable({
             </div>
           </div>
         ) : (
-          <table className="w-full text-left border-collapse" style={{ minWidth: 1080 }}>
+          <table className="w-full text-left border-collapse" style={{ minWidth: 900 }}>
             <thead className="bg-muted/40 border-b border-border">
               <tr className="text-[11px] font-bold uppercase tracking-widest">
-                <th className="px-6 py-4 whitespace-nowrap">ID / Status</th>
-                <th className="px-6 py-4 whitespace-nowrap">Branch / Cashier</th>
-                <th className="px-6 py-4 whitespace-nowrap">Opened / Closed</th>
+                <th className="px-6 py-4 whitespace-nowrap">ID</th>
+                <th className="px-6 py-4 whitespace-nowrap">Branch</th>
+                <th className="px-6 py-4 whitespace-nowrap">Opened</th>
                 <th className="px-6 py-4 whitespace-nowrap">Starting</th>
                 <th className="px-6 py-4 whitespace-nowrap">Expected</th>
                 <th className="px-6 py-4 whitespace-nowrap">Actual</th>
                 <th className="px-6 py-4 whitespace-nowrap">Net Impact</th>
                 <th className="px-6 py-4 whitespace-nowrap">Difference</th>
-                <th className="px-6 py-4 whitespace-nowrap">Notes</th>
                 <th className="px-6 py-4 whitespace-nowrap text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {sessions.map((s) => (
                 <tr key={s.id} className="hover:bg-primary/5 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-mono font-medium text-sm text-foreground">{s.displayId}</span>
-                      <span className={`inline-flex items-center self-start px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                        s.status === "open"
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {s.statusDisplay}
-                      </span>
-                    </div>
+                  <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">
+                    {s.displayId}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-sm text-foreground">{s.branchName}</span>
-                    <span className="block text-xs text-muted-foreground">{s.cashierName}</span>
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">
+                    {s.branchName}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="block text-sm text-foreground">{s.openedAtDisplay}</span>
-                    <span className="block text-xs text-muted-foreground">{s.closedAtDisplay ?? "—"}</span>
+                  <td className="px-6 py-4 text-sm text-foreground">
+                    {s.openedAtDisplay}
                   </td>
                   <td className="px-6 py-4 text-sm text-foreground font-medium">{s.startingCashDisplay}</td>
                   <td className="px-6 py-4 text-sm text-foreground font-medium">{s.expectedEndingCashDisplay}</td>
@@ -247,16 +235,14 @@ export function CashDrawerTable({
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-xs text-muted-foreground max-w-[180px] truncate" title={s.notes ?? ""}>
-                    {s.notes || "—"}
-                  </td>
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => setSelectedSession(s)}
-                      className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-foreground transition-colors"
                       title="View Details"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3.5 w-3.5 text-primary" />
+                      Details
                     </button>
                   </td>
                 </tr>

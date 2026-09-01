@@ -122,6 +122,11 @@ export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerD
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg border border-border">
             <div className="space-y-1.5 text-sm">
               <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Session Info</h4>
+              <p className="text-muted-foreground">Status: <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                session.status === "open"
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "bg-muted text-muted-foreground"
+              }`}>{session.statusDisplay}</span></p>
               <p className="text-muted-foreground">Branch: <span className="font-semibold text-foreground">{session.branchName}</span></p>
               <p className="text-muted-foreground">Cashier: <span className="font-semibold text-foreground">{session.cashierName}</span></p>
               <p className="text-muted-foreground">Opened: <span className="font-semibold text-foreground">{formatTime(session.openedAtDisplay)}</span></p>
