@@ -39,6 +39,7 @@ export default function CashierPage() {
         <CashDrawerModal
           mode={drawerMode}
           session={drawer.session}
+          lastClosedSession={drawer.lastClosedSession}
           isLoading={drawer.isLoading}
           onOpen={handleOpened}
           onCloseShift={handleClosed}
@@ -50,6 +51,7 @@ export default function CashierPage() {
         <CashDrawerModal
           mode="open"
           session={null}
+          lastClosedSession={drawer.lastClosedSession}
           isLoading={drawer.isLoading}
           onOpen={async (startingCash, notes) => {
             await drawer.openShift(startingCash, notes)

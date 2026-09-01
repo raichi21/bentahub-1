@@ -51,9 +51,40 @@ export async function GET(request: NextRequest) {
       sessionPayload = { ...openSession, expectedEndingCash: expected.toFixed(2) }
     }
 
+    const lastClosed = await db.query.cashDrawerSessions.findFirst({
+      where: and(
+        eq(cashDrawerSessions.branchId, branchRecord.id),
+        eq(cashDrawerSessions.status, "closed")
+      ),
+      orderBy: (sessions, { desc }) => [desc(sessions.closedAt), desc(sessions.createdAt)],
+      with: {
+        cashier: {
+          columns: {
+            id: true,
+            fullName: true,
+          },
+        },
+      },
+    })
+
+    const lastClosedSession = lastClosed
+      ? {
+          id: lastClosed.id,
+          actualEndingCash: lastClosed.actualEndingCash,
+          expectedEndingCash: lastClosed.expectedEndingCash,
+          startingCash: lastClosed.startingCash,
+          closedAt: lastClosed.closedAt ? lastClosed.closedAt.toISOString() : null,
+          notes: lastClosed.notes,
+          cashierName: lastClosed.cashier?.fullName ?? null,
+        }
+      : null
+
     return NextResponse.json({
       success: true,
-      data: { session: sessionPayload },
+      data: {
+        session: sessionPayload,
+        lastClosedSession,
+      },
     })
   } catch (error) {
     console.error("Get cash drawer session error:", error)

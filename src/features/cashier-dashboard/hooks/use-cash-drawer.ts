@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/hooks/useAuth"
-import type { CashDrawerSession } from "@/types/cashier"
+import type { CashDrawerSession, LastClosedSessionInfo } from "@/types/cashier"
 
 interface UseCashDrawerResult {
   session: CashDrawerSession | null
+  lastClosedSession: LastClosedSessionInfo | null
   isLoading: boolean
   canAcceptCash: boolean
   openShift: (startingCash: number, notes?: string) => Promise<void>
@@ -16,6 +17,7 @@ interface UseCashDrawerResult {
 export function useCashDrawer(): UseCashDrawerResult {
   const { token, isLoading: authLoading } = useAuth()
   const [session, setSession] = useState<CashDrawerSession | null>(null)
+  const [lastClosedSession, setLastClosedSession] = useState<LastClosedSessionInfo | null>(null)
   const [fetched, setFetched] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -30,6 +32,7 @@ export function useCashDrawer(): UseCashDrawerResult {
       if (!res.ok) return
       const json = await res.json()
       setSession(json.data?.session ?? null)
+      setLastClosedSession(json.data?.lastClosedSession ?? null)
     } catch {
       // non-fatal: leave session as-is
     } finally {
@@ -85,16 +88,17 @@ export function useCashDrawer(): UseCashDrawerResult {
       if (!res.ok || !json.success) {
         throw new Error(json.message || "Failed to close cash drawer session")
       }
-      setSession(json.data?.session ?? null)
-      setFetched(true)
+      setSession(null)
+      await refresh()
     },
-    [token, session]
+    [token, session, refresh]
   )
 
   const isLoading = authLoading || (token !== null && !fetched)
 
   return {
     session,
+    lastClosedSession,
     isLoading,
     canAcceptCash: !!session && session.status === "open",
     openShift,
@@ -102,3 +106,4 @@ export function useCashDrawer(): UseCashDrawerResult {
     refresh,
   }
 }
+

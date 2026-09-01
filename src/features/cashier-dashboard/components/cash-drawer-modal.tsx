@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { X, Wallet, Coins, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react"
-import type { CashDrawerSession } from "@/types/cashier"
+import { X, Wallet, Coins, AlertTriangle, CheckCircle2, Loader2, History, ArrowRight } from "lucide-react"
+import type { CashDrawerSession, LastClosedSessionInfo } from "@/types/cashier"
 import { formatPeso } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
@@ -11,6 +11,7 @@ const PRESET_AMOUNTS = [500, 1000, 1500, 2000]
 interface CashDrawerModalProps {
   mode: "open" | "close"
   session: CashDrawerSession | null
+  lastClosedSession?: LastClosedSessionInfo | null
   isLoading?: boolean
   onOpen: (startingCash: number, notes?: string) => Promise<void>
   onCloseShift: (actualEndingCash: number, notes?: string) => Promise<void>
@@ -20,6 +21,7 @@ interface CashDrawerModalProps {
 export function CashDrawerModal({
   mode,
   session,
+  lastClosedSession,
   isLoading,
   onOpen,
   onCloseShift,
@@ -89,9 +91,57 @@ export function CashDrawerModal({
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg text-sm text-muted-foreground">
                 <p className="font-semibold text-card-foreground mb-1">Starting Float</p>
                 <p className="text-xs">
-                  Ipasok ang perang naiwan sa cash drawer mula sa nakaraang shift (hal. ₱500 para sa panukli) bago magsimulang magbenta.
+                  Ilagay muna ang perang naiwan sa cash drawer mula sa nakaraang shift (hal. ₱500 na panukli) bago magsimula sa pagbebenta.
                 </p>
               </div>
+
+              {lastClosedSession && (
+                <div className="p-3.5 bg-muted/40 border border-border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5 text-primary" />
+                      Huling Naiwang Benta / Turnover
+                    </span>
+                    {lastClosedSession.closedAt && (
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        {new Date(lastClosedSession.closedAt).toLocaleDateString([], {
+                          month: "short",
+                          day: "numeric",
+                        })}{" "}
+                        {new Date(lastClosedSession.closedAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-base font-extrabold font-mono text-foreground">
+                        {formatPeso(lastClosedSession.actualEndingCash ?? lastClosedSession.expectedEndingCash)}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {lastClosedSession.cashierName ? `Isinara ni ${lastClosedSession.cashierName}` : "Mula sa nakaraang shift"}
+                        {lastClosedSession.notes ? ` • "${lastClosedSession.notes}"` : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const val = lastClosedSession.actualEndingCash ?? lastClosedSession.expectedEndingCash
+                        if (val !== null && val !== undefined) {
+                          setStartingCash(String(Number(val)))
+                        }
+                      }}
+                      className="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-colors flex items-center gap-1"
+                    >
+                      Gamitin Ito
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Starting Cash</label>

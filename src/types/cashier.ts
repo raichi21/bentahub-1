@@ -110,8 +110,19 @@ export interface CashDrawerSession {
   verifiedAt: string | null
 }
 
+export interface LastClosedSessionInfo {
+  id: string
+  actualEndingCash: string | null
+  expectedEndingCash: string | null
+  startingCash: string
+  closedAt: string | null
+  notes: string | null
+  cashierName?: string | null
+}
+
 export function formatPeso(value: string | number | null | undefined): string {
   const num = Number(value)
   if (!Number.isFinite(num)) return "₱0.00"
   return `₱${num.toFixed(2)}`
 }
+
