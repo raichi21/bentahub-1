@@ -15,7 +15,6 @@ import {
   LogOut,
   X,
   Banknote,
-  ShieldCheck,
 } from "lucide-react"
 import { StoreLogo } from "@/components/store-logo"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
@@ -62,7 +61,6 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
         { label: "Payments", icon: CreditCard, path: "/admin/payments" },
         { label: "Cash Drawer", icon: Banknote, path: "/admin/cash-drawer" },
         { label: "Transaction History", icon: History, path: "/admin/history" },
-        { label: "Audit Trail", icon: ShieldCheck, path: "/admin/audit-logs" },
         { label: "Pickups", icon: Truck, path: "/admin/pickups" },
       ]
     }

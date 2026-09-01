@@ -3,7 +3,6 @@ import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { cashDrawerSessions, branches, users, transactions } from "@/servers/schemas"
 import { eq, and, sql } from "drizzle-orm"
-import { logAuditEvent } from "@/lib/audit-logger"
 
 export async function GET(request: NextRequest) {
   try {
@@ -127,22 +126,6 @@ export async function POST(request: NextRequest) {
 
     const created = await db.query.cashDrawerSessions.findFirst({
       where: eq(cashDrawerSessions.id, sessionId),
-    })
-
-    void logAuditEvent({
-      userId: user.id,
-      userEmail: user.email,
-      userName: user.fullName,
-      userRole: user.role,
-      action: "CASH_DRAWER_OPENED",
-      category: "cash_drawer",
-      severity: "info",
-      branchId: branchRecord.id,
-      details: {
-        sessionId,
-        startingCash: parsedStartingCash.toFixed(2),
-        notes,
-      },
     })
 
     return NextResponse.json(

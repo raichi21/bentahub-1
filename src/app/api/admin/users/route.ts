@@ -4,7 +4,6 @@ import { extractToken, checkAdminAuth, hashPassword, generateId } from "@/lib/au
 import { db } from "@/servers/db"
 import { sql } from "drizzle-orm"
 import { getUsers } from "@/features/admin-dashboard/actions/get-users"
-import { logAuditEvent } from "@/lib/audit-logger"
 
 const ADMIN_DOMAIN = "@bentahub.com"
 
@@ -104,21 +103,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await db.execute(
       sql`INSERT INTO users (id, email, password, full_name, role, branch, is_active, is_email_verified, created_at, updated_at) VALUES (${userId}, ${email}, ${hashedPassword}, ${fullName}, ${role}, ${branch || null}, true, true, NOW(), NOW())`
     )
-
-    void logAuditEvent({
-      userId: auth.userId,
-      userRole: "admin",
-      action: "USER_ACCOUNT_CREATED",
-      category: "user_mgmt",
-      severity: role === "admin" ? "critical" : "warning",
-      details: {
-        createdUserId: userId,
-        targetEmail: email,
-        targetName: fullName,
-        assignedRole: role,
-        branch: branch || null,
-      },
-    })
 
     return NextResponse.json({
       success: true,
