@@ -104,6 +104,7 @@ export default function InventoryPage() {
           p.id === productId ? { ...p, stock: newStock, reorderLevel: newReorderLevel } : p
         )
       )
+      await fetchProducts(token)
     } catch (err) {
       const msg = err instanceof Error ? err.message : "An error occurred"
       setSaveError(msg)
