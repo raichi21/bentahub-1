@@ -89,3 +89,29 @@ export interface Payment {
   date: string
   customerName?: string
 }
+
+// ── Cash Drawer ──────────────────────────────────────────────────────
+
+export type CashDrawerStatus = "open" | "closed"
+
+export interface CashDrawerSession {
+  id: string
+  branchId: string
+  cashierId: string | null
+  openedAt: string
+  closedAt: string | null
+  closedBy: string | null
+  startingCash: string
+  expectedEndingCash: string | null
+  actualEndingCash: string | null
+  notes: string | null
+  status: CashDrawerStatus
+  verifiedByAdminId: string | null
+  verifiedAt: string | null
+}
+
+export function formatPeso(value: string | number | null | undefined): string {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return "₱0.00"
+  return `₱${num.toFixed(2)}`
+}

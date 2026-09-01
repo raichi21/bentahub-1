@@ -1,5 +1,5 @@
 import { db } from "@/servers/db"
-import { transactions, transactionItems, users, notifications, branches } from "@/servers/schemas"
+import { transactions, transactionItems, users, notifications, branches, cashDrawerSessions } from "@/servers/schemas"
 import { eq, max, and } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 import { deductStock } from "./finalize-transaction"
@@ -11,11 +11,45 @@ export interface CreateTransactionInput {
   items: CartItem[]
   totalAmount: number
   paymentMethod: "cash" | "gcash"
+  amountPaid?: number
+  change?: number
+}
+
+export class NoOpenCashDrawerError extends Error {
+  constructor() {
+    super("Please open a cash drawer session first.")
+    this.name = "NoOpenCashDrawerError"
+  }
 }
 
 export async function createTransaction(input: CreateTransactionInput) {
   const { branchId, cashierId, items, totalAmount, paymentMethod } = input
   const transactionId = generateId()
+
+  let sessionId: string | null = null
+  let amountPaid: string | null = null
+  let change: string | null = null
+
+  if (paymentMethod === "cash") {
+    const openSession = await db.query.cashDrawerSessions.findFirst({
+      where: and(
+        eq(cashDrawerSessions.cashierId, cashierId),
+        eq(cashDrawerSessions.branchId, branchId),
+        eq(cashDrawerSessions.status, "open")
+      ),
+    })
+
+    if (!openSession) {
+      throw new NoOpenCashDrawerError()
+    }
+
+    sessionId = openSession.id
+    amountPaid = (input.amountPaid ?? totalAmount).toFixed(2)
+    change = (input.change ?? 0).toFixed(2)
+  } else {
+    amountPaid = totalAmount.toFixed(2)
+    change = null
+  }
 
   // Get the next sequential receipt number for this branch
   const maxResult = await db
@@ -43,6 +77,9 @@ export async function createTransaction(input: CreateTransactionInput) {
     totalAmount: totalAmount.toString(),
     paymentMethod,
     status: "completed",
+    sessionId,
+    amountPaid,
+    change,
   })
 
   if (transactionItemsData.length > 0) {

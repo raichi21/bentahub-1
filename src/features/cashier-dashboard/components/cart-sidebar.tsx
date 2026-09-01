@@ -14,9 +14,10 @@ interface CartSidebarProps {
   cart: UseCartReturn
   onClose?: () => void
   onSaleComplete?: () => void
+  canAcceptCash?: boolean
 }
 
-export function CartSidebar({ cart, onClose, onSaleComplete }: CartSidebarProps) {
+export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = true }: CartSidebarProps) {
   const { token, user } = useAuth()
   const {
     items,
@@ -48,8 +49,22 @@ export function CartSidebar({ cart, onClose, onSaleComplete }: CartSidebarProps)
     transactionId: string
   } | null>(null)
 
+  // If cash drawer is not open, never leave the payment method on cash.
+  useEffect(() => {
+    if (!canAcceptCash && paymentMethod === "cash") {
+      setPaymentMethod("gcash")
+      setAmountPaid("")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canAcceptCash, paymentMethod])
+
   const completeSale = useCallback(async () => {
     if (items.length === 0) return
+
+    if (paymentMethod === "cash" && !canAcceptCash) {
+      alert("Please open a cash drawer session first.")
+      return
+    }
 
     if (paymentMethod === "gcash") {
       setSubmitting(true)
@@ -151,7 +166,7 @@ export function CartSidebar({ cart, onClose, onSaleComplete }: CartSidebarProps)
     } finally {
       setSubmitting(false)
     }
-  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart, onSaleComplete, user])
+  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart, onSaleComplete, user, canAcceptCash])
 
   // Keyboard action shortcuts
   useEffect(() => {
@@ -324,17 +339,25 @@ export function CartSidebar({ cart, onClose, onSaleComplete }: CartSidebarProps)
         </div>
 
         {/* Payment Options */}
+        {!canAcceptCash && (
+          <p className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            Cash payment needs an open cash drawer session. Open one from the top bar, or use GCash.
+          </p>
+        )}
         <div className="grid grid-cols-2 p-1 bg-muted rounded-2xl border border-border gap-2">
           <button
             onClick={() => {
               setPaymentMethod("cash")
               setAmountPaid("")
             }}
+            disabled={!canAcceptCash}
+            title={!canAcceptCash ? "Open a cash drawer session first" : undefined}
             className={cn(
               "flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all duration-200",
               paymentMethod === "cash"
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                : "bg-card text-muted-foreground hover:bg-muted"
+                : "bg-card text-muted-foreground hover:bg-muted",
+              !canAcceptCash && "opacity-40 cursor-not-allowed hover:bg-card"
             )}
           >
             <Coins className="w-6 h-6" />

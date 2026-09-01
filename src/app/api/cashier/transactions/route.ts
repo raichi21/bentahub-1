@@ -3,7 +3,7 @@ import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { createTransaction } from "@/features/cashier-dashboard/actions/create-transaction"
+import { createTransaction, NoOpenCashDrawerError } from "@/features/cashier-dashboard/actions/create-transaction"
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { items, totalAmount, paymentMethod } = body
+    const { items, totalAmount, paymentMethod, amountPaid, changeDue } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -67,6 +67,8 @@ export async function POST(request: NextRequest) {
       items,
       totalAmount,
       paymentMethod,
+      amountPaid: amountPaid !== undefined ? Number(amountPaid) : undefined,
+      change: changeDue !== undefined ? Number(changeDue) : undefined,
     })
 
     return NextResponse.json(
@@ -78,6 +80,12 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
+    if (error instanceof NoOpenCashDrawerError) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 },
+      )
+    }
     console.error("Cashier transaction error:", error)
     return NextResponse.json(
       { success: false, message: "An error occurred while processing the transaction" },

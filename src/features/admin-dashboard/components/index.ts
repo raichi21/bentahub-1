@@ -13,6 +13,7 @@ export { TransactionDetailsModal } from "./transaction-details-modal"
 export { UserTable } from "./user-table"
 
 export { PaymentTable } from "./payment-table"
+export { CashDrawerTable } from "./cash-drawer-table"
 
 export { HistoryTable } from "./history-table"
 

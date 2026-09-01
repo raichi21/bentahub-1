@@ -336,6 +336,11 @@ export const transactions = pgTable("transactions", {
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
   status: transactionStatusEnum("status").default("completed").notNull(),
   gcashRef: varchar("gcash_ref", { length: 255 }),
+  amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }),
+  change: numeric("change", { precision: 10, scale: 2 }),
+  sessionId: varchar("session_id", { length: 36 }).references(() => cashDrawerSessions.id, {
+    onDelete: "set null",
+  }),
   createdAt,
 })
 
@@ -361,6 +366,10 @@ export const transactionRelations = relations(transactions, ({ one, many }) => (
     fields: [transactions.cashierId],
     references: [users.id],
   }),
+  session: one(cashDrawerSessions, {
+    fields: [transactions.sessionId],
+    references: [cashDrawerSessions.id],
+  }),
   items: many(transactionItems),
 }))
 
@@ -380,6 +389,60 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({ i
 export const selectTransactionSchema = createSelectSchema(transactions)
 export type Transaction = typeof transactions.$inferSelect
 export type InsertTransaction = typeof transactions.$inferInsert
+
+// ── Cash Drawer Sessions ──
+export const cashDrawerSessions = pgTable(
+  "cash_drawer_sessions",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    branchId: varchar("branch_id", { length: 36 })
+      .notNull()
+      .references(() => branches.id, { onDelete: "cascade" }),
+    cashierId: varchar("cashier_id", { length: 36 }).references(() => users.id, {
+      onDelete: "set null",
+    }),
+    openedAt: timestamp("opened_at", { withTimezone: true }).defaultNow().notNull(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    closedBy: varchar("closed_by", { length: 36 }).references(() => users.id, {
+      onDelete: "set null",
+    }),
+    startingCash: numeric("starting_cash", { precision: 10, scale: 2 }).default("0").notNull(),
+    expectedEndingCash: numeric("expected_ending_cash", { precision: 10, scale: 2 }),
+    actualEndingCash: numeric("actual_ending_cash", { precision: 10, scale: 2 }),
+    notes: text("notes"),
+    status: text("status", { enum: ["open", "closed"] }).default("open").notNull(),
+    verifiedByAdminId: varchar("verified_by_admin_id", { length: 36 }).references(() => users.id, {
+      onDelete: "set null",
+    }),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    cashierIdx: index("idx_cash_drawer_cashier").on(table.cashierId),
+    branchIdx: index("idx_cash_drawer_branch").on(table.branchId),
+  })
+)
+
+export const cashDrawerSessionsRelations = relations(cashDrawerSessions, ({ one, many }) => ({
+  branch: one(branches, {
+    fields: [cashDrawerSessions.branchId],
+    references: [branches.id],
+  }),
+  cashier: one(users, {
+    fields: [cashDrawerSessions.cashierId],
+    references: [users.id],
+  }),
+  transactions: many(transactions),
+}))
+
+export const insertCashDrawerSessionSchema = createInsertSchema(cashDrawerSessions).omit({
+  id: true,
+  openedAt: true,
+  createdAt: true,
+})
+export const selectCashDrawerSessionSchema = createSelectSchema(cashDrawerSessions)
+export type CashDrawerSession = typeof cashDrawerSessions.$inferSelect
+export type InsertCashDrawerSession = typeof cashDrawerSessions.$inferInsert
 
 // ── Notifications ──
 export const notifications = pgTable("notifications", {
