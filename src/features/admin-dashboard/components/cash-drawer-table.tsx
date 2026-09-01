@@ -238,11 +238,10 @@ export function CashDrawerTable({
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => setSelectedSession(s)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-foreground transition-colors"
+                      className="p-1.5 hover:bg-muted rounded-lg text-primary transition-colors inline-flex items-center justify-center"
                       title="View Details"
                     >
-                      <Eye className="h-3.5 w-3.5 text-primary" />
-                      Details
+                      <Eye className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
