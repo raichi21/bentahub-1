@@ -3,6 +3,7 @@ import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches, products, branchInventory, inventoryBatches, notifications } from "@/servers/schemas"
 import { eq, and } from "drizzle-orm"
+import { logAuditEvent } from "@/lib/audit-logger"
 
 const CATEGORY_SKU_PREFIX: Record<string, string> = {
   groceries: "GRC",
@@ -98,6 +99,26 @@ export async function PATCH(request: NextRequest) {
         supplier: supplier || null,
       })
     }
+
+    void logAuditEvent({
+      userId: user.id,
+      userEmail: user.email,
+      userName: user.fullName,
+      userRole: user.role,
+      action: delta > 0 ? "STOCK_RESTOCKED" : "STOCK_UPDATED",
+      category: "inventory",
+      severity: "info",
+      branchId: branchRecord.id,
+      details: {
+        productId,
+        oldQuantity: currentQty,
+        newQuantity: stockQty,
+        restockDelta: delta,
+        reorderLevel,
+        batchNumber: batchNumber || null,
+        expiryDate: expiryDate || null,
+      },
+    })
 
     return NextResponse.json({ success: true, message: "Stock updated successfully" })
   } catch (error) {
@@ -203,6 +224,26 @@ export async function POST(request: NextRequest) {
         }))
       )
     }
+
+    void logAuditEvent({
+      userId: user.id,
+      userEmail: user.email,
+      userName: user.fullName,
+      userRole: user.role,
+      action: "PRODUCT_CREATED",
+      category: "inventory",
+      severity: "info",
+      branchId: branchRecord.id,
+      details: {
+        productId,
+        name,
+        sku,
+        category,
+        stock: stockQty,
+        price,
+        reorderLevel: threshold,
+      },
+    })
 
     return NextResponse.json({ success: true, message: "Product added successfully", data: { id: productId, sku } })
   } catch (error) {

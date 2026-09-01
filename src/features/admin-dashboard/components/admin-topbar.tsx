@@ -44,6 +44,9 @@ export function AdminTopbar({ pathname = "/admin", onToggleSidebar }: AdminTopba
   } else if (pathname.includes("/admin/history")) {
     title = "Transaction History"
     subtitle = "Review all past transactions from every branch, ensuring accurate record tracking and verification of sales."
+  } else if (pathname.includes("/admin/audit-logs")) {
+    title = "Audit Trail & Activity Logs"
+    subtitle = "Track security events, inventory updates, and system activities across all branches."
   } else if (pathname.includes("/admin/pickups")) {
     title = "Pickup Management"
     subtitle = "Monitor and confirm pickups across all branches in real-time."

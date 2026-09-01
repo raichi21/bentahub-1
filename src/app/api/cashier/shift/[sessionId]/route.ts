@@ -3,6 +3,7 @@ import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { cashDrawerSessions, transactions, branches, users } from "@/servers/schemas"
 import { eq, and, sql } from "drizzle-orm"
+import { logAuditEvent } from "@/lib/audit-logger"
 
 export async function PATCH(
   request: NextRequest,
@@ -95,6 +96,28 @@ export async function PATCH(
 
     const updated = await db.query.cashDrawerSessions.findFirst({
       where: eq(cashDrawerSessions.id, sessionId),
+    })
+
+    const diff = parsedActual - expectedEndingCash
+
+    void logAuditEvent({
+      userId: user.id,
+      userEmail: user.email,
+      userName: user.fullName,
+      userRole: user.role,
+      action: "CASH_DRAWER_CLOSED",
+      category: "cash_drawer",
+      severity: Math.abs(diff) > 0 ? "warning" : "info",
+      branchId: branchRecord.id,
+      details: {
+        sessionId,
+        startingCash: starting.toFixed(2),
+        totalNetCash: totalNetCash.toFixed(2),
+        expectedEndingCash: expectedEndingCash.toFixed(2),
+        actualEndingCash: parsedActual.toFixed(2),
+        difference: diff.toFixed(2),
+        notes,
+      },
     })
 
     return NextResponse.json({

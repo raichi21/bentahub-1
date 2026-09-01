@@ -25,6 +25,12 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "order-status", "order-ready", "order-completed", "payment-received",
   "low-stock", "new-product", "promotion", "system",
 ])
+export const auditCategoryEnum = pgEnum("audit_category", [
+  "auth", "inventory", "cash_drawer", "orders", "user_mgmt", "settings",
+])
+export const auditSeverityEnum = pgEnum("audit_severity", [
+  "info", "warning", "critical",
+])
 
 // ─────────────────────── SHARED TIMESTAMPS ────────────────────
 
@@ -540,3 +546,44 @@ export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit(
 export const selectStoreSettingsSchema = createSelectSchema(storeSettings)
 export type StoreSettings = typeof storeSettings.$inferSelect
 export type InsertStoreSettings = typeof storeSettings.$inferInsert
+
+// ── Audit Logs ──
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 }).references(() => users.id, { onDelete: "set null" }),
+    userEmail: varchar("user_email", { length: 255 }),
+    userName: varchar("user_name", { length: 255 }),
+    userRole: varchar("user_role", { length: 50 }),
+    action: varchar("action", { length: 100 }).notNull(),
+    category: auditCategoryEnum("category").default("auth").notNull(),
+    severity: auditSeverityEnum("severity").default("info").notNull(),
+    details: text("details"),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    branchId: varchar("branch_id", { length: 36 }).references(() => branches.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index("idx_audit_logs_user").on(table.userId),
+    categoryIdx: index("idx_audit_logs_category").on(table.category),
+    actionIdx: index("idx_audit_logs_action").on(table.action),
+    createdAtIdx: index("idx_audit_logs_created_at").on(table.createdAt),
+  })
+)
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+  branch: one(branches, {
+    fields: [auditLogs.branchId],
+    references: [branches.id],
+  }),
+}))
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true })
+export const selectAuditLogSchema = createSelectSchema(auditLogs)
+export type AuditLog = typeof auditLogs.$inferSelect
+export type InsertAuditLog = typeof auditLogs.$inferInsert
