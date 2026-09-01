@@ -98,9 +98,6 @@ export function CashDrawerTable({
       <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
         <div>
           <h4 className="font-bold text-lg text-foreground">Cash Drawer Sessions</h4>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Opens, closings, expected vs. actual cash, and reconciliation differences.
-          </p>
         </div>
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
           <select
