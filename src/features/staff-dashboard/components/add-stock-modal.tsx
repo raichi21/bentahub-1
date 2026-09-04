@@ -14,7 +14,9 @@ interface ProductForm {
   price: number
   barcode: string
   image: string
+  batchNumber: string
   expiryDate: string
+  supplier: string
 }
 
 interface AddStockModalProps {
@@ -29,7 +31,7 @@ const NEW_CATEGORY = "__new__"
 export function AddStockModal({ isOpen, onClose, onSave, categories }: AddStockModalProps) {
   const [form, setForm] = useState<ProductForm>({
     name: "", category: categories[0] ?? NEW_CATEGORY, stock: 0, reorderLevel: 10, unit: "pcs", price: 0, barcode: "", image: "",
-    expiryDate: ""
+    batchNumber: "", expiryDate: "", supplier: ""
   })
   const [newCategory, setNewCategory] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -214,14 +216,38 @@ export function AddStockModal({ isOpen, onClose, onSave, categories }: AddStockM
                 className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Expiry Date</label>
-              <input
-                type="date"
-                value={form.expiryDate}
-                onChange={(e) => setForm((f) => ({ ...f, expiryDate: e.target.value }))}
-                className="w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              />
+
+            <div className="sm:col-span-2 space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <p className="text-xs font-bold text-primary uppercase tracking-wider">Delivery Info</p>
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Batch Number</label>
+                <input
+                  type="text"
+                  value={form.batchNumber}
+                  onChange={(e) => setForm((f) => ({ ...f, batchNumber: e.target.value }))}
+                  placeholder="Optional (e.g. DEL-0912)"
+                  className="mt-1 w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Expiry Date</label>
+                <input
+                  type="date"
+                  value={form.expiryDate}
+                  onChange={(e) => setForm((f) => ({ ...f, expiryDate: e.target.value }))}
+                  className="mt-1 w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Supplier</label>
+                <input
+                  type="text"
+                  value={form.supplier}
+                  onChange={(e) => setForm((f) => ({ ...f, supplier: e.target.value }))}
+                  placeholder="Optional"
+                  className="mt-1 w-full h-11 px-4 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                />
+              </div>
             </div>
 
           </div>

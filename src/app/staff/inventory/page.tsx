@@ -114,7 +114,7 @@ export default function InventoryPage() {
     }
   }
 
-  const handleAddProduct = async (data: { name: string; sku?: string; barcode?: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string; expiryDate?: string; supplier?: string }) => {
+  const handleAddProduct = async (data: { name: string; sku?: string; barcode?: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string; batchNumber?: string; expiryDate?: string; supplier?: string }) => {
     if (!token) return
 
     try {

@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate, barcode } = body
+    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate, supplier, barcode } = body
 
     if (!name || !category || price === undefined) {
       return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
         quantity: stockQty,
         originalQuantity: stockQty,
         expiryDate: expiryDate ? new Date(expiryDate) : null,
-        supplier: null,
+        supplier: typeof supplier === "string" && supplier.trim() ? supplier.trim() : null,
       })
     }
 

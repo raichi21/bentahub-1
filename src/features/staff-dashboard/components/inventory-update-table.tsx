@@ -22,6 +22,7 @@ interface AddProductData {
   unit: string
   price: number
   image?: string
+  batchNumber?: string
   expiryDate?: string
   supplier?: string
 }
