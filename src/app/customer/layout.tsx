@@ -24,8 +24,8 @@ export default function CustomerLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sidebar - Fixed on desktop */}
-      <DashboardSidebar activePath={pathname} />
+      {/* Sidebar - Fixed on desktop, drawer on mobile */}
+      <DashboardSidebar activePath={pathname} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content Area */}
       <div className="md:ml-[280px] flex flex-col min-h-screen">

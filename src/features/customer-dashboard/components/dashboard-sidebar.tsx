@@ -10,7 +10,8 @@ import {
   ShoppingCart,
   Calendar,
   User,
-  LogOut
+  LogOut,
+  X
 } from "lucide-react"
 import { StoreLogo } from "@/components/store-logo"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
@@ -18,9 +19,11 @@ import { cn } from "@/lib/utils"
 
 interface DashboardSidebarProps {
   activePath: string
+  isOpen?: boolean
+  onClose?: () => void
 }
 
-export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
+export function DashboardSidebar({ activePath, isOpen, onClose }: DashboardSidebarProps) {
   const router = useRouter()
   const { storeName } = useStoreSettings()
 
@@ -58,15 +61,25 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-[280px] bg-[#0c1221] text-white fixed inset-y-0 left-0 z-40">
-      {/* Header */}
-      <div className="px-6 py-8 flex items-center gap-3">
-        <StoreLogo />
-        <div className="flex flex-col min-w-0">
-          <span className="font-bold text-lg tracking-tight truncate">{storeName}</span>
-          <span className="text-[10px] text-slate-400 uppercase tracking-widest">Customer Portal</span>
+    <>
+      {isOpen && <div onClick={onClose} className="fixed inset-0 bg-black/50 z-30 md:hidden" />}
+
+      <aside className={cn(
+        "flex flex-col w-[280px] bg-[#0c1221] text-white fixed inset-y-0 left-0 z-40 border-r border-slate-900",
+        "transition-transform duration-300 ease-in-out md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        {/* Header */}
+        <div className="px-6 py-8 flex items-center gap-3">
+          <StoreLogo />
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="font-bold text-lg tracking-tight truncate">{storeName}</span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-widest">Customer Portal</span>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors md:hidden flex-shrink-0">
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      </div>
 
       {/* Navigation */}
       <div className="flex-1 px-4 overflow-y-auto custom-scrollbar">
@@ -124,7 +137,8 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
           </button>
         </nav>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 
