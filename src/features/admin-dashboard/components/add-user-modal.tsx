@@ -138,7 +138,7 @@ export function AddUserModal({ isOpen, onClose, token, onSuccess }: AddUserModal
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Role</label>
                   <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={role} onChange={(e) => handleRoleChange(e.target.value)}>
