@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Home, Store, User, ShoppingCart } from "lucide-react"
+import { Home, Store, User, ShoppingCart, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface DashboardMobileNavProps {
@@ -26,6 +26,11 @@ export function DashboardMobileNav({ activePath }: DashboardMobileNavProps) {
       path: "/customer/cart",
     },
     {
+      label: "Pickups",
+      icon: Calendar,
+      path: "/customer/reservations",
+    },
+    {
       label: "Profile",
       icon: User,
       path: "/customer/profile",
@@ -33,17 +38,17 @@ export function DashboardMobileNav({ activePath }: DashboardMobileNavProps) {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-background border-t border-border flex items-center justify-around z-50 md:hidden">
+    <nav className="fixed right-0 bottom-0 left-0 z-50 flex h-16 items-center justify-around border-t border-border bg-background md:hidden">
       {navItems.map((item) => {
         const isActive = activePath === item.path
         const Icon = item.icon
-        
+
         return (
           <Link
             key={item.path}
             href={item.path}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 w-full h-full text-[10px] font-medium transition-colors",
+              "flex h-full w-full flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors",
               isActive
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
@@ -57,4 +62,3 @@ export function DashboardMobileNav({ activePath }: DashboardMobileNavProps) {
     </nav>
   )
 }
-

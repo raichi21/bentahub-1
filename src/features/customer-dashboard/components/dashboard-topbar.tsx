@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation"
 import Image from "next/image"
-import { Bell, Menu, LogIn } from "lucide-react"
+import { Bell, LogIn } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/useAuth"
@@ -37,11 +37,7 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/customer/profile": "Manage your personal information",
 }
 
-interface DashboardTopbarProps {
-  onToggleSidebar?: () => void
-}
-
-export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
+export function DashboardTopbar() {
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useAuth()
@@ -53,19 +49,18 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
   const description = ROUTE_DESCRIPTIONS[pathname] || ""
 
   return (
-    <header className="bg-white dark:bg-[#090e1a] border-b border-slate-200 dark:border-slate-800 px-4 md:px-6 sticky top-0 z-30 flex justify-between items-center h-[80px] w-full">
+    <header className="sticky top-0 z-30 flex h-[80px] w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 dark:border-slate-800 dark:bg-[#090e1a]">
       {/* Left side */}
-      <div className="flex items-center gap-3 min-w-0">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors md:hidden flex-shrink-0"
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-        <div className="flex flex-col min-w-0">
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{title}</h1>
-          {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{description}</p>}
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 flex-col">
+          <h1 className="truncate text-xl leading-tight font-bold text-slate-800 dark:text-slate-100">
+            {title}
+          </h1>
+          {description && (
+            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+              {description}
+            </p>
+          )}
         </div>
       </div>
 
@@ -79,34 +74,47 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
             {/* Notifications */}
             <button
               onClick={() => router.push("/customer/notifications")}
-              className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-200 dark:border-slate-800 relative flex-shrink-0"
+              className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition-colors hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-blue-400"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className={cn(
-                  "absolute -top-1 -right-1 rounded-full bg-red-500 text-white text-[10px] font-bold ring-2 ring-white dark:ring-slate-900 flex items-center justify-center",
-                  unreadCount > 9 ? "min-w-[20px] h-5 px-1" : "w-5 h-5"
-                )}>
+                <span
+                  className={cn(
+                    "absolute -top-1 -right-1 flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900",
+                    unreadCount > 9 ? "h-5 min-w-[20px] px-1" : "h-5 w-5"
+                  )}
+                >
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </button>
 
             {/* Vertical Divider */}
-            <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+            <div className="hidden h-8 w-px bg-slate-200 sm:block dark:bg-slate-800" />
 
             {/* User Pill */}
             <div className="flex items-center gap-3 select-none">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 flex-shrink-0 overflow-hidden">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 font-bold text-white shadow-md shadow-blue-600/20">
                 {user?.image ? (
-                  <Image src={user.image} alt={displayName} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+                  <Image
+                    src={user.image}
+                    alt={displayName}
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-cover"
+                    unoptimized
+                  />
                 ) : (
                   initials
                 )}
               </div>
-              <div className="flex-col hidden sm:flex">
-                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">{displayName}</span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Customer</span>
+              <div className="hidden flex-col sm:flex">
+                <span className="text-sm leading-tight font-bold text-slate-800 dark:text-slate-200">
+                  {displayName}
+                </span>
+                <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">
+                  Customer
+                </span>
               </div>
             </div>
           </>
@@ -115,9 +123,9 @@ export function DashboardTopbar({ onToggleSidebar }: DashboardTopbarProps) {
           <Button
             size="sm"
             onClick={() => router.push("/login")}
-            className="gap-1.5 flex-shrink-0"
+            className="flex-shrink-0 gap-1.5"
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="h-4 w-4" />
             Sign In
           </Button>
         )}

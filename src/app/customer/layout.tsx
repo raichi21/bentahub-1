@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import { usePathname } from "next/navigation"
 import {
   DashboardSidebar,
   DashboardTopbar,
-  DashboardMobileNav
+  DashboardMobileNav,
 } from "@/features/customer-dashboard"
 
 /**
@@ -20,22 +19,19 @@ export default function CustomerLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sidebar - Fixed on desktop, drawer on mobile */}
-      <DashboardSidebar activePath={pathname} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      {/* Sidebar - Fixed on desktop */}
+      <DashboardSidebar activePath={pathname} />
 
       {/* Main Content Area */}
-      <div className="md:ml-[280px] flex flex-col min-h-screen">
+      <div className="flex min-h-screen flex-col md:ml-[280px]">
         {/* Topbar - Sticky */}
-        <DashboardTopbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <DashboardTopbar />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-6">
-          {children}
-        </main>
+        <main className="flex-1 p-4 pb-24 md:p-6 md:pb-6">{children}</main>
 
         {/* Mobile Bottom Nav */}
         <DashboardMobileNav activePath={pathname} />
