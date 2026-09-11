@@ -30,7 +30,7 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
 
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
-  const start = (currentPage - 1) * PAGE_SIZE + 1
+  const start = filteredTransactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
   const end = Math.min(currentPage * PAGE_SIZE, filteredTransactions.length)
   const paginatedTransactions = filteredTransactions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
@@ -263,32 +263,30 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
           </table>
         </div>
 
-        {filteredTransactions.length > PAGE_SIZE && (
-          <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/5">
-            <p className="text-xs text-muted-foreground font-medium">
-              Showing {start} to {end} of {filteredTransactions.length} entries
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage(currentPage - 1)}
-                disabled={currentPage <= 1}
-                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(currentPage + 1)}
-                disabled={currentPage >= totalPages}
-                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
+        <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/5">
+          <p className="text-xs text-muted-foreground font-medium">
+            Showing {start} to {end} of {filteredTransactions.length} entries
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </>
   )
