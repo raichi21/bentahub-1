@@ -75,20 +75,20 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
             <h3 className="text-sm font-bold text-foreground">All Branch Transactions</h3>
 
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative w-full md:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search ID, Branch..."
-                className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none w-64"
+                className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none w-full md:w-64"
                 onChange={handleSearchChange}
               />
             </div>
             <select
               value={branchId}
               onChange={(e) => onBranchChange(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+              className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none w-full md:w-auto"
             >
               <option value="">All Branches</option>
               {branches.map((b) => (
@@ -98,7 +98,7 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
             <div ref={exportRef} className="relative">
               <button
                 onClick={() => setExportOpen(!exportOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all w-full md:w-auto"
               >
                 <Download className="h-[18px] w-[18px]" />
                 Export

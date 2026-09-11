@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Download, FileSpreadsheet, FileText, FileX, Eye } from "lucide-react"
 import { CashDrawerDetailsModal } from "./cash-drawer-details-modal"
+import { DateRangeFilter } from "./date-range-filter"
 
 export interface CashDrawerRow {
   id: string
@@ -103,7 +104,7 @@ export function CashDrawerTable({
           <select
             value={branchId}
             onChange={(e) => onBranchChange(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none w-full md:w-auto"
           >
             <option value="">All Branches</option>
             {branches.map((b) => (
@@ -113,31 +114,29 @@ export function CashDrawerTable({
           <select
             value={cashierId}
             onChange={(e) => onCashierChange(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none w-full md:w-auto"
           >
             <option value="">All Cashiers</option>
             {cashiers.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
-          <input
-            type="date"
+          <DateRangeFilter
             value={dateFrom}
+            label="From"
             max={dateTo || undefined}
-            onChange={(e) => onDateChange(e.target.value, dateTo)}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            onChange={(v) => onDateChange(v, dateTo)}
           />
-          <input
-            type="date"
+          <DateRangeFilter
             value={dateTo}
+            label="To"
             min={dateFrom || undefined}
-            onChange={(e) => onDateChange(dateFrom, e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            onChange={(v) => onDateChange(dateFrom, v)}
           />
           {hasFilters && (
             <button
               onClick={() => { onBranchChange(""); onCashierChange(""); onDateChange("", "") }}
-              className="px-3 py-2 rounded-lg border border-border text-muted-foreground hover:bg-muted text-sm font-bold transition-colors"
+              className="px-3 py-2 rounded-lg border border-border text-muted-foreground hover:bg-muted text-sm font-bold transition-colors w-full md:w-auto"
             >
               Clear
             </button>

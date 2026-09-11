@@ -155,7 +155,7 @@ export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerD
                 Transactions{summary ? ` (${summary.transactionCount})` : ""}
               </h4>
               {summary && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-xs text-muted-foreground">
                   <span>{summary.cashCount} cash • {summary.cashTotalDisplay}</span>
                   <span className="text-border">|</span>
                   <span>{summary.gcashCount} gcash • {summary.gcashTotalDisplay}</span>
@@ -186,87 +186,91 @@ export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerD
 
             {!loading && !error && data && data.transactions.length > 0 && (
               <div className="border border-border rounded-lg overflow-hidden bg-card">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead className="bg-muted/10 border-b border-border">
-                    <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      <th className="px-4 py-3 w-8"></th>
-                      <th className="px-4 py-3">Transaction</th>
-                      <th className="px-4 py-3">Total</th>
-                      <th className="px-4 py-3">Method</th>
-                      <th className="px-4 py-3 text-right">Amount Paid</th>
-                      <th className="px-4 py-3 text-right">Change</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/30 text-foreground">
-                    {data.transactions.map((txn) => {
-                      const isOpenRow = expanded.has(txn.id)
-                      return (
-                        <Fragment key={txn.id}>
-                          <tr
-                            onClick={() => toggleExpand(txn.id)}
-                            className="hover:bg-muted/30 cursor-pointer transition-colors"
-                          >
-                            <td className="px-4 py-3">
-                              {isOpenRow
-                                ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className="font-mono font-medium text-foreground">{txn.displayId}</span>
-                              <span className="block text-xs text-muted-foreground">{txn.createdAtDisplay}</span>
-                            </td>
-                            <td className="px-4 py-3 font-medium">{txn.totalAmountDisplay}</td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                txn.paymentMethod === "gcash"
-                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              }`}>
-                                {txn.paymentMethodDisplay}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-right font-medium">{txn.amountPaidDisplay}</td>
-                            <td className="px-4 py-3 text-right font-medium">{txn.changeDisplay}</td>
-                          </tr>
-                          {isOpenRow && (
-                            <tr className="bg-muted/5">
-                              <td className="px-4 py-3" colSpan={6}>
-                                <table className="w-full text-left border-collapse text-sm">
-                                  <thead>
-                                    <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                      <th className="px-4 py-2">Product</th>
-                                      <th className="px-4 py-2 text-center">Qty</th>
-                                      <th className="px-4 py-2 text-right">Price</th>
-                                      <th className="px-4 py-2 text-right">Subtotal</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-border/30">
-                                    {txn.items.length === 0 ? (
-                                      <tr><td colSpan={4} className="px-4 py-3 text-muted-foreground">No items available.</td></tr>
-                                    ) : (
-                                      txn.items.map((item, idx) => (
-                                        <tr key={idx}>
-                                          <td className="px-4 py-2">{item.productName}</td>
-                                          <td className="px-4 py-2 text-center font-medium">{item.quantity}</td>
-                                          <td className="px-4 py-2 text-right font-medium">₱{item.price.toFixed(2)}</td>
-                                          <td className="px-4 py-2 text-right font-medium">₱{item.subtotal.toFixed(2)}</td>
-                                        </tr>
-                                      ))
-                                    )}
-                                    <tr className="font-bold text-foreground">
-                                      <td className="px-4 py-2 text-right" colSpan={3}>Total</td>
-                                      <td className="px-4 py-2 text-right text-primary">₱{txn.totalAmount.toFixed(2)}</td>
-                                    </tr>
-                                  </tbody>
-                                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-left border-collapse text-sm">
+                    <thead className="bg-muted/10 border-b border-border">
+                      <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <th className="px-3 sm:px-4 py-3 w-8"></th>
+                        <th className="px-3 sm:px-4 py-3">Transaction</th>
+                        <th className="px-3 sm:px-4 py-3">Total</th>
+                        <th className="px-3 sm:px-4 py-3">Method</th>
+                        <th className="px-3 sm:px-4 py-3 text-right">Amount Paid</th>
+                        <th className="px-3 sm:px-4 py-3 text-right">Change</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30 text-foreground">
+                      {data.transactions.map((txn) => {
+                        const isOpenRow = expanded.has(txn.id)
+                        return (
+                          <Fragment key={txn.id}>
+                            <tr
+                              onClick={() => toggleExpand(txn.id)}
+                              className="hover:bg-muted/30 cursor-pointer transition-colors"
+                            >
+                              <td className="px-3 sm:px-4 py-3">
+                                {isOpenRow
+                                  ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                               </td>
+                              <td className="px-3 sm:px-4 py-3">
+                                <span className="font-mono font-medium text-foreground">{txn.displayId}</span>
+                                <span className="block text-xs text-muted-foreground">{txn.createdAtDisplay}</span>
+                              </td>
+                              <td className="px-3 sm:px-4 py-3 font-medium whitespace-nowrap">{txn.totalAmountDisplay}</td>
+                              <td className="px-3 sm:px-4 py-3">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                  txn.paymentMethod === "gcash"
+                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                }`}>
+                                  {txn.paymentMethodDisplay}
+                                </span>
+                              </td>
+                              <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">{txn.amountPaidDisplay}</td>
+                              <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">{txn.changeDisplay}</td>
                             </tr>
-                          )}
-                        </Fragment>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                            {isOpenRow && (
+                              <tr className="bg-muted/5">
+                                <td className="px-3 sm:px-4 py-3" colSpan={6}>
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[360px] text-left border-collapse text-sm">
+                                      <thead>
+                                        <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                          <th className="px-2 sm:px-4 py-2">Product</th>
+                                          <th className="px-2 sm:px-4 py-2 text-center">Qty</th>
+                                          <th className="px-2 sm:px-4 py-2 text-right">Price</th>
+                                          <th className="px-2 sm:px-4 py-2 text-right">Subtotal</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-border/30">
+                                        {txn.items.length === 0 ? (
+                                          <tr><td colSpan={4} className="px-2 sm:px-4 py-3 text-muted-foreground">No items available.</td></tr>
+                                        ) : (
+                                          txn.items.map((item, idx) => (
+                                            <tr key={idx}>
+                                              <td className="px-2 sm:px-4 py-2 truncate max-w-[160px] sm:max-w-none" title={item.productName}>{item.productName}</td>
+                                              <td className="px-2 sm:px-4 py-2 text-center font-medium whitespace-nowrap">{item.quantity}</td>
+                                              <td className="px-2 sm:px-4 py-2 text-right font-medium whitespace-nowrap">₱{item.price.toFixed(2)}</td>
+                                              <td className="px-2 sm:px-4 py-2 text-right font-medium whitespace-nowrap">₱{item.subtotal.toFixed(2)}</td>
+                                            </tr>
+                                          ))
+                                        )}
+                                        <tr className="font-bold text-foreground">
+                                          <td className="px-2 sm:px-4 py-2 text-right" colSpan={3}>Total</td>
+                                          <td className="px-2 sm:px-4 py-2 text-right text-primary whitespace-nowrap">₱{txn.totalAmount.toFixed(2)}</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
