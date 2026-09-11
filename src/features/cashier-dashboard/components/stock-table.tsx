@@ -83,7 +83,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setCategoryFilter(e.target.value)
               setCurrentPage(1)
             }}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none"
+            className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none flex-1 min-w-0"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -99,7 +99,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setStatusFilter(e.target.value)
               setCurrentPage(1)
             }}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none"
+            className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none flex-1 min-w-0"
           >
             <option value="All">Status: All</option>
             <option value="In Stock">In Stock</option>
@@ -113,7 +113,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
 
       {/* Main Table Scrollport */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse min-w-[720px]">
           <thead>
             <tr className="bg-muted/10 border-b border-border">
               <th className="px-6 py-4 text-[11px] font-bold  uppercase tracking-wider">Product</th>
