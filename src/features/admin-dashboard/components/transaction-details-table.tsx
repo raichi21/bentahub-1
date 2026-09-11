@@ -59,7 +59,7 @@ export function TransactionDetailsTable({
           <select
             value={branchId}
             onChange={(e) => onBranchChange(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none w-full md:w-auto"
           >
             <option value="">All Branches</option>
             {branches.map((b) => (
