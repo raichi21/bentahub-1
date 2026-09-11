@@ -57,9 +57,9 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
   }, [filteredProducts, safePage])
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
       {/* Search & Filters Action Bar */}
-      <div className="p-6 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/20">
+      <div className="p-4 md:p-6 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/20">
         <div className="relative w-full md:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <input
@@ -112,7 +112,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
       </div>
 
       {/* Main Table Scrollport */}
-      <div className="overflow-x-auto">
+      <div className="flex-1 min-h-0 overflow-auto">
         <table className="w-full text-left border-collapse min-w-[720px]">
           <thead>
             <tr className="bg-muted/10 border-b border-border">
@@ -298,7 +298,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
       </div>
 
       {/* Pagination Controls */}
-      <div className="px-6 py-4 bg-muted/5 border-t border-border flex items-center justify-between mt-auto">
+      <div className="px-4 py-3 md:px-6 md:py-4 bg-muted/5 border-t border-border flex items-center justify-between mt-auto">
         <p className="text-xs text-muted-foreground font-medium font-mono">
           Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)} to {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} entries
         </p>
