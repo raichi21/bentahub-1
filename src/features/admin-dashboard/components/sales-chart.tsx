@@ -33,30 +33,30 @@ export function SalesChart({ data, weeklyData, dailyData }: SalesChartProps) {
   const isDaily = view === "daily"
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 flex flex-col gap-6 h-[400px]">
-      <div className="flex items-center justify-between">
+    <div className="bg-card border border-border rounded-xl p-6 flex flex-col gap-4 sm:gap-5 min-h-[400px]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-lg font-bold text-foreground">Sales Trend</h2>
           <p className="text-sm text-muted-foreground">
             {view === "monthly" ? "Monthly" : view === "weekly" ? "Weekly" : "Daily"} sales performance for current month
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto">
           <button
             onClick={() => setView("monthly")}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${view === "monthly" ? "text-foreground bg-accent" : "text-muted-foreground hover:bg-accent"}`}
+            className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${view === "monthly" ? "text-foreground bg-accent" : "text-muted-foreground hover:bg-accent"}`}
           >
             Monthly
           </button>
           <button
             onClick={() => setView("weekly")}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${view === "weekly" ? "text-foreground bg-accent" : "text-muted-foreground hover:bg-accent"}`}
+            className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${view === "weekly" ? "text-foreground bg-accent" : "text-muted-foreground hover:bg-accent"}`}
           >
             Weekly
           </button>
           <button
             onClick={() => setView("daily")}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${view === "daily" ? "text-foreground bg-accent" : "text-muted-foreground hover:bg-accent"}`}
+            className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${view === "daily" ? "text-foreground bg-accent" : "text-muted-foreground hover:bg-accent"}`}
           >
             Daily
           </button>
@@ -66,7 +66,7 @@ export function SalesChart({ data, weeklyData, dailyData }: SalesChartProps) {
       <div className="flex-1 flex flex-col relative" style={{ minHeight: 0 }}>
         {/* Bars area */}
         <div
-          className={`flex items-end justify-between gap-2 px-4 ${isDaily ? "overflow-x-auto pt-10 pb-1" : ""}`}
+          className={`flex items-end gap-1 sm:gap-2 px-1 sm:px-4 overflow-x-auto pt-10 pb-1`}
           style={{ minHeight: 0 }}
         >
           {labels.map((label, index) => {
@@ -77,7 +77,7 @@ export function SalesChart({ data, weeklyData, dailyData }: SalesChartProps) {
             return (
               <div
                 key={label}
-                className={`relative flex flex-col items-center h-full justify-end group z-10 ${isDaily ? "min-w-[32px] flex-1" : "flex-1"}`}
+                className={`relative flex flex-col items-center h-full justify-end group z-10 flex-1 ${isDaily ? "min-w-[24px] sm:min-w-[32px]" : "min-w-[36px]"}`}
               >
                 <div
                   className={`w-full bg-primary/20 hover:bg-primary rounded-t-sm transition-all cursor-pointer relative flex-shrink-0 ${isDaily ? "max-w-[24px]" : "max-w-[48px]"}`}
@@ -87,7 +87,7 @@ export function SalesChart({ data, weeklyData, dailyData }: SalesChartProps) {
                     {value.toLocaleString("en-PH", { style: "currency", currency: "PHP", notation: "compact" })}
                   </div>
                 </div>
-                <span className="text-xs text-muted-foreground pt-1 whitespace-nowrap">{label}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground pt-1 truncate w-full text-center">{label}</span>
               </div>
             )
           })}
