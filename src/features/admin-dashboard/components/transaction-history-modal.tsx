@@ -66,24 +66,26 @@ export function TransactionHistoryModal({ isOpen, onClose, transaction }: Transa
               <p className="text-sm text-muted-foreground">No item details available.</p>
             ) : (
               <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead className="bg-muted/10 border-b border-border">
-                    <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      <th className="px-4 py-3 w-[50%]">Item</th>
-                      <th className="px-4 py-3 text-center w-[15%]">Qty</th>
-                      <th className="px-4 py-3 text-right w-[30%]">Price</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/30 text-foreground">
-                    {transaction.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="px-4 py-3">{item.productName}</td>
-                        <td className="px-4 py-3 text-center font-medium">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right font-medium">{formatPrice(item.price)}</td>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[360px] text-left border-collapse text-sm">
+                    <thead className="bg-muted/10 border-b border-border">
+                      <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <th className="px-3 sm:px-4 py-3 w-[50%]">Item</th>
+                        <th className="px-3 sm:px-4 py-3 text-center w-[15%]">Qty</th>
+                        <th className="px-3 sm:px-4 py-3 text-right w-[30%]">Price</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border/30 text-foreground">
+                      {transaction.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 sm:px-4 py-3 truncate max-w-[200px] sm:max-w-none" title={item.productName}>{item.productName}</td>
+                          <td className="px-3 sm:px-4 py-3 text-center font-medium whitespace-nowrap">{item.quantity}</td>
+                          <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">{formatPrice(item.price)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

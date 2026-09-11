@@ -68,32 +68,34 @@ export function ConfirmPickupModal({ isOpen, onClose, order, onConfirm }: Confir
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">Order Summary</h3>
             <div className="border border-border rounded-lg overflow-hidden bg-card">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-muted/10 text-[11px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
-                    <th className="px-4 py-3">Item</th>
-                    <th className="px-4 py-3 text-center">Qty</th>
-                    <th className="px-4 py-3 text-right">Price</th>
-                    <th className="px-4 py-3 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/30">
-                  {order.items.map((item, idx) => (
-                    <tr key={idx} className="text-sm text-foreground">
-                      <td className="px-4 py-3">{item.productName}</td>
-                      <td className="px-4 py-3 text-center font-medium">{item.quantity}</td>
-                      <td className="px-4 py-3 text-right font-medium">₱{item.price.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right font-medium">₱{item.subtotal.toFixed(2)}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[360px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-muted/10 text-[11px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
+                      <th className="px-3 sm:px-4 py-3">Item</th>
+                      <th className="px-3 sm:px-4 py-3 text-center">Qty</th>
+                      <th className="px-3 sm:px-4 py-3 text-right">Price</th>
+                      <th className="px-3 sm:px-4 py-3 text-right">Subtotal</th>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-muted/10 font-bold text-foreground border-t border-border">
-                    <td className="px-4 py-3" colSpan={3}>Total Amount</td>
-                    <td className="px-4 py-3 text-right text-primary">₱{total.toFixed(2)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {order.items.map((item, idx) => (
+                      <tr key={idx} className="text-sm text-foreground">
+                        <td className="px-3 sm:px-4 py-3 truncate max-w-[160px] sm:max-w-none" title={item.productName}>{item.productName}</td>
+                        <td className="px-3 sm:px-4 py-3 text-center font-medium whitespace-nowrap">{item.quantity}</td>
+                        <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">₱{item.price.toFixed(2)}</td>
+                        <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">₱{item.subtotal.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-muted/10 font-bold text-foreground border-t border-border">
+                      <td className="px-3 sm:px-4 py-3" colSpan={3}>Total Amount</td>
+                      <td className="px-3 sm:px-4 py-3 text-right text-primary whitespace-nowrap">₱{total.toFixed(2)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
 

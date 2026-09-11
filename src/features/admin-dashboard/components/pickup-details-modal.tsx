@@ -67,36 +67,38 @@ export function PickupDetailsModal({ isOpen, onClose, order }: PickupDetailsModa
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Items</h4>
             <div className="border border-border rounded-lg overflow-hidden bg-card">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead className="bg-muted/10 border-b border-border">
-                  <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    <th className="px-4 py-3">Product</th>
-                    <th className="px-4 py-3 text-center">Qty</th>
-                    <th className="px-4 py-3 text-right">Price</th>
-                    <th className="px-4 py-3 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/30 text-foreground">
-                  {order.items.length === 0 ? (
-                    <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">No items available.</td></tr>
-                  ) : (
-                    order.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="px-4 py-3">{item.productName}</td>
-                        <td className="px-4 py-3 text-center font-medium">{item.quantity}</td>
-                        <td className="px-4 py-3 text-right font-medium">₱{item.price.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right font-medium">₱{item.subtotal.toFixed(2)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-muted/10 font-bold text-foreground border-t border-border">
-                    <td className="px-4 py-3 text-right" colSpan={3}>Total Amount</td>
-                    <td className="px-4 py-3 text-right text-primary">₱{total.toFixed(2)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[360px] text-left border-collapse text-sm">
+                  <thead className="bg-muted/10 border-b border-border">
+                    <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      <th className="px-3 sm:px-4 py-3">Product</th>
+                      <th className="px-3 sm:px-4 py-3 text-center">Qty</th>
+                      <th className="px-3 sm:px-4 py-3 text-right">Price</th>
+                      <th className="px-3 sm:px-4 py-3 text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30 text-foreground">
+                    {order.items.length === 0 ? (
+                      <tr><td colSpan={4} className="px-3 sm:px-4 py-6 text-center text-muted-foreground">No items available.</td></tr>
+                    ) : (
+                      order.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 sm:px-4 py-3 truncate max-w-[160px] sm:max-w-none" title={item.productName}>{item.productName}</td>
+                          <td className="px-3 sm:px-4 py-3 text-center font-medium whitespace-nowrap">{item.quantity}</td>
+                          <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">₱{item.price.toFixed(2)}</td>
+                          <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">₱{item.subtotal.toFixed(2)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-muted/10 font-bold text-foreground border-t border-border">
+                      <td className="px-3 sm:px-4 py-3 text-right" colSpan={3}>Total Amount</td>
+                      <td className="px-3 sm:px-4 py-3 text-right text-primary whitespace-nowrap">₱{total.toFixed(2)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
 
