@@ -32,17 +32,6 @@ export function ProductManagement() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">
-            Product Management
-          </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Manage the master catalog, unit types, and categories.
-          </p>
-        </div>
-      </div>
-
       <div className="flex flex-wrap gap-2 border-b border-border pb-px">
         {tabs.map((t) => {
           const Icon = t.icon
