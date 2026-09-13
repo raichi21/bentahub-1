@@ -44,9 +44,9 @@ export function useCashierProducts(): UseCashierProductsResult {
           stock: p.stock,
           reorderLevel: p.reorderLevel,
           image: p.image || "",
-          unit: "pcs",
+          unit: p.unit || "pcs",
           nearestExpiry: p.nearestExpiry,
-        }),
+        })
       )
       setProducts(mapped)
       setError(null)

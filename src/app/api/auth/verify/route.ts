@@ -60,6 +60,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<AuthRespon
           branch: user.branch,
           role: user.role,
           isEmailVerified: user.isEmailVerified,
+          canManageUnits: user.canManageUnits,
+          canManageCategories: user.canManageCategories,
+          canManageProducts: user.canManageProducts,
         },
       },
       { status: 200 }

@@ -1,25 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, branches, products, branchInventory, inventoryBatches, notifications } from "@/servers/schemas"
-import { eq, and } from "drizzle-orm"
+import { users, branches, products, branchInventory, inventoryBatches, notifications, categories, unitTypes } from "@/servers/schemas"
+import { eq, and, sql } from "drizzle-orm"
 
-const CATEGORY_SKU_PREFIX: Record<string, string> = {
-  groceries: "GRC",
-  beverages: "BVG",
-  household: "HOU",
-  pharmacy: "PHA",
-  snacks: "SNK",
-  bakery: "BAK",
-}
+const SKU_SUFFIX_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
-function generateSku(category: string): string {
-  const prefix = CATEGORY_SKU_PREFIX[category.toLowerCase()] || "GEN"
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+/** Build a random 4-char suffix and prefix it with the category code. */
+function generateSku(code: string): string {
   let suffix = ""
   for (let i = 0; i < 4; i++) {
-    suffix += chars[Math.floor(Math.random() * chars.length)]
+    suffix += SKU_SUFFIX_CHARS[Math.floor(Math.random() * SKU_SUFFIX_CHARS.length)]
   }
+  const prefix = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3) || "GEN"
   return `${prefix}-${suffix}`
 }
 
@@ -46,13 +39,26 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { productId, stock, reorderLevel, batchNumber, expiryDate, supplier } = body
+    const { productId, stock, reorderLevel, batchNumber, expiryDate, supplier, unit } = body
 
     if (!productId || stock === undefined) {
       return NextResponse.json({ success: false, message: "productId and stock are required" }, { status: 400 })
     }
 
     const stockQty = Math.max(0, stock)
+
+    // Optional unit change — must exist in the master unit types table.
+    if (unit !== undefined && typeof unit === "string" && unit.trim()) {
+      const unitType = await db.query.unitTypes.findFirst({
+        where: sql`lower(${unitTypes.name}) = lower(${unit.trim()})`,
+      })
+      if (!unitType) {
+        return NextResponse.json({ success: false, message: "Unit not recognized. Please select an existing unit." }, { status: 400 })
+      }
+      await db.update(products)
+        .set({ unit: unitType.name })
+        .where(eq(products.id, productId))
+    }
 
     // Fetch the current inventory row to compute the restock delta and to
     // ensure the product is registered in this branch.
@@ -132,14 +138,32 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate, supplier, barcode } = body
+    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate, supplier, barcode, unit } = body
 
     if (!name || !category || price === undefined) {
       return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })
     }
 
+    // Category must exist in the master categories table (staff can pick from
+    // existing categories but can no longer invent free-text ones).
+    const categoryRecord = await db.query.categories.findFirst({
+      where: sql`lower(${categories.name}) = lower(${category})`,
+    })
+    if (!categoryRecord) {
+      return NextResponse.json({ success: false, message: "Category not recognized. Please select an existing category." }, { status: 400 })
+    }
+
+    // Unit must exist in the master unit types table.
+    const unitValue = typeof unit === "string" && unit.trim() ? unit.trim() : "pcs"
+    const unitRecord = await db.query.unitTypes.findFirst({
+      where: sql`lower(${unitTypes.name}) = lower(${unitValue})`,
+    })
+    if (!unitRecord) {
+      return NextResponse.json({ success: false, message: "Unit not recognized. Please select an existing unit." }, { status: 400 })
+    }
+
     const productId = generateId()
-    const sku = generateSku(category)
+    const sku = generateSku(categoryRecord.code)
     const barcodeValue = barcode && typeof barcode === "string" && barcode.trim() ? barcode.trim() : null
     const stockQty = Math.max(0, stock || 0)
     const threshold = reorderLevel !== undefined ? Math.max(0, reorderLevel) : 10
@@ -153,8 +177,9 @@ export async function POST(request: NextRequest) {
       description: null,
       sku,
       barcode: barcodeValue,
-      category,
+      category: categoryRecord.name,
       price: price.toString(),
+      unit: unitRecord.name,
       image: productImage,
       quantity: stockQty,
       stockStatus,

@@ -17,11 +17,20 @@ interface EditUserModalProps {
   onSuccess: () => void
 }
 
-export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditUserModalProps) {
+export function EditUserModal({
+  isOpen,
+  onClose,
+  user,
+  token,
+  onSuccess,
+}: EditUserModalProps) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [role, setRole] = useState("cashier")
   const [branch, setBranch] = useState("")
+  const [canManageUnits, setCanManageUnits] = useState(false)
+  const [canManageCategories, setCanManageCategories] = useState(false)
+  const [canManageProducts, setCanManageProducts] = useState(false)
   const [branches, setBranches] = useState<BranchOption[]>([])
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -37,6 +46,11 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
       setEmail(user.email)
       setRole(user.role)
       setBranch(user.branch || "")
+      setCanManageUnits(user.role === "admin" || !!user.canManageUnits)
+      setCanManageCategories(
+        user.role === "admin" || !!user.canManageCategories
+      )
+      setCanManageProducts(user.role === "admin" || !!user.canManageProducts)
       setNewPassword("")
       setConfirmPassword("")
       setShowPassword(false)
@@ -53,7 +67,7 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
         if (Array.isArray(d)) setBranches(d)
         else if (d.data && Array.isArray(d.data)) setBranches(d.data)
       })
-      .catch(() => { })
+      .catch(() => {})
   }, [isOpen, token])
 
   if (!isOpen || !user) return null
@@ -64,8 +78,16 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
     setRole(newRole)
     if (newRole === "admin") {
       setBranch("")
-    } else if ((newRole === "cashier" || newRole === "staff") && !branch) {
-      setBranch(branches[0]?.name || "")
+      setCanManageUnits(true)
+      setCanManageCategories(true)
+      setCanManageProducts(true)
+    } else if (newRole !== "staff") {
+      if (!branch) setBranch(branches[0]?.name || "")
+      setCanManageUnits(false)
+      setCanManageCategories(false)
+      setCanManageProducts(false)
+    } else {
+      if (!branch) setBranch(branches[0]?.name || "")
     }
   }
 
@@ -81,13 +103,19 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
     try {
       const res = await fetch(`/api/admin/users/${user.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           fullName: name,
           email,
           role,
           branch: branch || null,
           password: newPassword || undefined,
+          canManageUnits,
+          canManageCategories,
+          canManageProducts,
         }),
       })
       const data = await res.json()
@@ -104,40 +132,67 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-border animate-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/20">
+    <div className="fixed inset-0 z-[100] flex animate-in items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="w-full max-w-lg animate-in overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <User className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-bold text-foreground">Edit User</h2>
           </div>
-          <button className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" onClick={onClose}>
+          <button
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={onClose}
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-6">
             {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>
+              <div className="rounded-lg bg-destructive/10 p-3 text-sm font-medium text-destructive">
+                {error}
+              </div>
             )}
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Full Name</label>
-                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Full Name
+                </label>
+                <input
+                  className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</label>
-                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Email Address
+                </label>
+                <input
+                  className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Role</label>
-                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={role} onChange={(e) => handleRoleChange(e.target.value)}>
+                  <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                    Role
+                  </label>
+                  <select
+                    className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                    value={role}
+                    onChange={(e) => handleRoleChange(e.target.value)}
+                  >
                     <option value="admin">Admin</option>
                     <option value="cashier">Cashier</option>
                     <option value="staff">Staff</option>
@@ -145,52 +200,165 @@ export function EditUserModal({ isOpen, onClose, user, token, onSuccess }: EditU
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch Assignment</label>
-                  <select className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={branch} onChange={(e) => setBranch(e.target.value)}>
+                  <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                    Branch Assignment
+                  </label>
+                  <select
+                    className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                    value={branch}
+                    onChange={(e) => setBranch(e.target.value)}
+                  >
                     <option value="">All Branches</option>
                     {branches.map((b) => (
-                      <option key={b.id} value={b.name}>{b.name}</option>
+                      <option key={b.id} value={b.name}>
+                        {b.name}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
             </div>
 
+            {/* Role Permissions */}
+            <div className="border-t border-border pt-5">
+              <h3 className="text-sm font-bold text-foreground">
+                Role Permissions
+              </h3>
+              <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
+                {role === "admin"
+                  ? "Admins always have full management access."
+                  : role === "cashier"
+                    ? "Cashier accounts cannot manage product data."
+                    : "Grant management access to the product management center."}
+              </p>
+              <div className="space-y-3">
+                {[
+                  {
+                    key: "units",
+                    label: "Manage Units",
+                    desc: "Create and edit unit types",
+                    value: canManageUnits,
+                    set: setCanManageUnits,
+                  },
+                  {
+                    key: "categories",
+                    label: "Manage Categories",
+                    desc: "Create and edit product categories",
+                    value: canManageCategories,
+                    set: setCanManageCategories,
+                  },
+                  {
+                    key: "products",
+                    label: "Manage Products",
+                    desc: "Create and edit the product catalog",
+                    value: canManageProducts,
+                    set: setCanManageProducts,
+                  },
+                ].map((perm) => (
+                  <div
+                    key={perm.key}
+                    className="flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {perm.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {perm.desc}
+                      </p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={perm.value}
+                        onChange={(e) => perm.set(e.target.checked)}
+                        disabled={role === "admin" || role === "cashier"}
+                      />
+                      <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary peer-disabled:opacity-60 after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Change Password (optional) */}
-            <div className="pt-5 border-t border-border space-y-4">
+            <div className="space-y-4 border-t border-border pt-5">
               <div>
-                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
                   Change Password
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground"></p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">New Password</label>
+                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  New Password
+                </label>
                 <div className="relative">
-                  <input className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="••••••••" type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  <input
+                    className="h-11 w-full rounded-lg border border-border bg-background pr-12 pl-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                    placeholder="••••••••"
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Confirm Password</label>
+                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Confirm Password
+                </label>
                 <div className="relative">
-                  <input className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="••••••••" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  <input
+                    className="h-11 w-full rounded-lg border border-border bg-background pr-12 pl-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                    placeholder="••••••••"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="px-6 py-4 bg-muted/20 flex items-center justify-end gap-3 border-t border-border">
-            <button type="button" className="h-11 px-6 rounded-lg text-sm font-bold text-muted-foreground hover:bg-muted transition-all" onClick={onClose} disabled={submitting}>Cancel</button>
-            <button type="submit" className="h-11 px-8 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all flex items-center gap-2" disabled={submitting}>
+          <div className="flex items-center justify-end gap-3 border-t border-border bg-muted/20 px-6 py-4">
+            <button
+              type="button"
+              className="h-11 rounded-lg px-6 text-sm font-bold text-muted-foreground transition-all hover:bg-muted"
+              onClick={onClose}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex h-11 items-center gap-2 rounded-lg bg-primary px-8 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:opacity-95 active:scale-[0.98]"
+              disabled={submitting}
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Save Changes
             </button>

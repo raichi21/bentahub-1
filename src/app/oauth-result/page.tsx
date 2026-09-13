@@ -76,6 +76,9 @@ function OAuthResultInner() {
         branch: null,
         role: payload.role ?? "customer",
         isEmailVerified: true,
+        canManageUnits: false,
+        canManageCategories: false,
+        canManageProducts: false,
       }
 
       setToken(token)

@@ -19,6 +19,8 @@ function authHeaders(token: string): HeadersInit {
 export default function InventoryPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
+  const [units, setUnits] = useState<string[]>([])
+  const [masterCategories, setMasterCategories] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
   const [savingId, setSavingId] = useState<string | null>(null)
@@ -45,11 +47,11 @@ export default function InventoryPage() {
           stock: p.stock,
           reorderLevel: p.reorderLevel,
           image: p.image || "",
-          unit: "pcs",
+          unit: p.unit || "pcs",
           nearestExpiry: p.nearestExpiry,
           activeBatchCount: p.activeBatchCount ?? 0,
           batches: p.batches ?? [],
-        }),
+        })
       )
       setProducts(mapped)
     } catch (err) {
@@ -59,12 +61,45 @@ export default function InventoryPage() {
     }
   }, [])
 
+  const fetchMasterData = useCallback(async (tok: string) => {
+    try {
+      const [unitsRes, catsRes] = await Promise.all([
+        fetch("/api/admin/units", { headers: authHeaders(tok) }),
+        fetch("/api/admin/categories", { headers: authHeaders(tok) }),
+      ])
+      const [unitsJson, catsJson] = await Promise.all([
+        unitsRes.json(),
+        catsRes.json(),
+      ])
+
+      if (unitsJson.success && Array.isArray(unitsJson.data)) {
+        setUnits(
+          unitsJson.data
+            .filter((u: { isActive: boolean }) => u.isActive)
+            .map((u: { name: string }) => u.name)
+        )
+      }
+      if (catsJson.success && Array.isArray(catsJson.data)) {
+        setMasterCategories(
+          catsJson.data
+            .filter((c: { isActive: boolean }) => c.isActive)
+            .map((c: { name: string }) => c.name)
+        )
+      }
+    } catch {
+      // no-op
+    }
+  }, [])
+
   useEffect(() => {
     if (authLoading) return
     if (!token) return
-    const timer = setTimeout(() => fetchProducts(token), 0)
+    const timer = setTimeout(() => {
+      fetchProducts(token)
+      fetchMasterData(token)
+    }, 0)
     return () => clearTimeout(timer)
-  }, [token, authLoading, fetchProducts])
+  }, [token, authLoading, fetchProducts, fetchMasterData])
 
   const isLoading = authLoading || (token !== null && !fetched && !error)
 
@@ -101,7 +136,9 @@ export default function InventoryPage() {
 
       setProducts((prev) =>
         prev.map((p) =>
-          p.id === productId ? { ...p, stock: newStock, reorderLevel: newReorderLevel } : p
+          p.id === productId
+            ? { ...p, stock: newStock, reorderLevel: newReorderLevel }
+            : p
         )
       )
       await fetchProducts(token)
@@ -114,7 +151,20 @@ export default function InventoryPage() {
     }
   }
 
-  const handleAddProduct = async (data: { name: string; sku?: string; barcode?: string; category: string; stock: number; reorderLevel: number; unit: string; price: number; image?: string; batchNumber?: string; expiryDate?: string; supplier?: string }) => {
+  const handleAddProduct = async (data: {
+    name: string
+    sku?: string
+    barcode?: string
+    category: string
+    stock: number
+    reorderLevel: number
+    unit: string
+    price: number
+    image?: string
+    batchNumber?: string
+    expiryDate?: string
+    supplier?: string
+  }) => {
     if (!token) return
 
     try {
@@ -139,59 +189,69 @@ export default function InventoryPage() {
   }
 
   const stockSummary = useMemo(() => {
-    const inStock = products.filter((p) => getStockStatus(p) === "in-stock").length
-    const lowStock = products.filter((p) => getStockStatus(p) === "low-stock").length
-    const outOfStock = products.filter((p) => getStockStatus(p) === "out-of-stock").length
+    const inStock = products.filter(
+      (p) => getStockStatus(p) === "in-stock"
+    ).length
+    const lowStock = products.filter(
+      (p) => getStockStatus(p) === "low-stock"
+    ).length
+    const outOfStock = products.filter(
+      (p) => getStockStatus(p) === "out-of-stock"
+    ).length
     return { inStock, lowStock, outOfStock, total: products.length }
   }, [products])
 
   return (
     <div className="space-y-6">
       {saveError && (
-        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
           {saveError}
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        {isLoading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
-                <div className="h-4 w-24 bg-muted rounded mb-4" />
-                <div className="h-8 w-32 bg-muted rounded" />
-              </div>
-            ))
-          : <>
-              <KPICard
-                title="Total Products"
-                value={String(stockSummary.total)}
-                trend="All SKUs"
-                trendType="up"
-                icon={Package}
-              />
-              <KPICard
-                title="In Stock"
-                value={String(stockSummary.inStock)}
-                trend="Healthy stock levels"
-                trendType="up"
-                icon={CheckCircle2}
-              />
-              <KPICard
-                title="Low Stock"
-                value={String(stockSummary.lowStock)}
-                trend="Needs restocking"
-                trendType="warning"
-                icon={AlertTriangle}
-              />
-              <KPICard
-                title="Out of Stock"
-                value={String(stockSummary.outOfStock)}
-                trend="Critical"
-                trendType="down"
-                icon={XCircle}
-              />
-            </>
-        }
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-6"
+            >
+              <div className="mb-4 h-4 w-24 rounded bg-muted" />
+              <div className="h-8 w-32 rounded bg-muted" />
+            </div>
+          ))
+        ) : (
+          <>
+            <KPICard
+              title="Total Products"
+              value={String(stockSummary.total)}
+              trend="All SKUs"
+              trendType="up"
+              icon={Package}
+            />
+            <KPICard
+              title="In Stock"
+              value={String(stockSummary.inStock)}
+              trend="Healthy stock levels"
+              trendType="up"
+              icon={CheckCircle2}
+            />
+            <KPICard
+              title="Low Stock"
+              value={String(stockSummary.lowStock)}
+              trend="Needs restocking"
+              trendType="warning"
+              icon={AlertTriangle}
+            />
+            <KPICard
+              title="Out of Stock"
+              value={String(stockSummary.outOfStock)}
+              trend="Critical"
+              trendType="down"
+              icon={XCircle}
+            />
+          </>
+        )}
       </div>
 
       {!isLoading && (
@@ -200,6 +260,8 @@ export default function InventoryPage() {
           onStockUpdate={handleStockUpdate}
           onAddProduct={handleAddProduct}
           savingId={savingId}
+          units={units}
+          categories={masterCategories}
         />
       )}
     </div>

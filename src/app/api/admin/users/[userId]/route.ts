@@ -11,6 +11,9 @@ const updateUserSchema = z.object({
   role: z.enum(["admin", "cashier", "staff", "customer"]).optional(),
   branch: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
+  canManageUnits: z.boolean().optional(),
+  canManageCategories: z.boolean().optional(),
+  canManageProducts: z.boolean().optional(),
   // Optional — when present, the admin resets the user's password.
   password: z.string().min(8, "Password must be at least 8 characters").optional(),
 })
@@ -72,8 +75,20 @@ export async function PATCH(
       )
     }
 
+    // Resolve per-user management permissions by role. Admins always get full
+    // access; cashier/customer accounts are always restricted; staff accounts
+    // keep explicit grants (or fall back to their current flags).
+    const isAdminRole = effectiveRole === "admin"
+    const isStaffRole = effectiveRole === "staff"
+    const resolvedPermissions = {
+      canManageUnits: isAdminRole ? true : !isStaffRole ? false : rest.canManageUnits ?? existing.canManageUnits,
+      canManageCategories: isAdminRole ? true : !isStaffRole ? false : rest.canManageCategories ?? existing.canManageCategories,
+      canManageProducts: isAdminRole ? true : !isStaffRole ? false : rest.canManageProducts ?? existing.canManageProducts,
+    }
+
     const updateData = {
       ...rest,
+      ...resolvedPermissions,
       ...(password ? { password: await hashPassword(password) } : {}),
       updatedAt: new Date(),
     }

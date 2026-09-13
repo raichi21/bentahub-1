@@ -33,7 +33,9 @@ export function UserTable({
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserRowData | null>(null)
   const [deletingUser, setDeletingUser] = useState<UserRowData | null>(null)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const start = (page - 1) * pageSize + 1
@@ -46,10 +48,18 @@ export function UserTable({
 
   const roleStyles: Record<string, string> = {
     admin: "bg-primary/10 text-primary border border-primary/20",
-    cashier: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+    cashier:
+      "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
     staff: "bg-muted/80 text-muted-foreground border border-border",
-    customer: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20",
+    customer:
+      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20",
   }
+
+  const getPermissions = (u: UserRowData) => [
+    { label: "Units", has: u.role === "admin" || u.canManageUnits },
+    { label: "Categories", has: u.role === "admin" || u.canManageCategories },
+    { label: "Products", has: u.role === "admin" || u.canManageProducts },
+  ]
 
   const getInitials = (name: string) =>
     name
@@ -60,25 +70,29 @@ export function UserTable({
       .toUpperCase() || "UN"
 
   const formatDate = (d: Date) =>
-    new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+    new Date(d).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
 
   return (
-    <section className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
-        <h4 className="font-bold text-lg text-foreground">User Management</h4>
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+    <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
+        <h4 className="text-lg font-bold text-foreground">User Management</h4>
+        <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search by name or email..."
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+              className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
             />
           </div>
           <button
             onClick={() => setIsAddOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-xs shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all w-full md:w-auto"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:opacity-95 active:scale-[0.98] md:w-auto"
           >
             <Plus className="h-[18px] w-[18px]" />
             Add User
@@ -87,12 +101,13 @@ export function UserTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-muted/40 border-b border-border">
-            <tr className="text-[11px] font-bold uppercase tracking-widest">
+        <table className="w-full border-collapse text-left">
+          <thead className="border-b border-border bg-muted/40">
+            <tr className="text-[11px] font-bold tracking-widest uppercase">
               <th className="px-6 py-4">Name</th>
               <th className="px-6 py-4">Email</th>
               <th className="px-6 py-4 text-center">Role</th>
+              <th className="px-6 py-4">Permissions</th>
               <th className="px-6 py-4">Branch</th>
               <th className="px-6 py-4 text-center">Status</th>
               <th className="px-6 py-4 text-center">Join Date</th>
@@ -102,73 +117,116 @@ export function UserTable({
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td className="px-6 py-20 text-center" colSpan={7}>
-                  <div className="flex flex-col items-center gap-4 animate-pulse">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                <td className="px-6 py-20 text-center" colSpan={8}>
+                  <div className="flex animate-pulse flex-col items-center gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
                       <Users className="h-8 w-8" />
                     </div>
-                    <p className="font-bold text-foreground">Loading users...</p>
+                    <p className="font-bold text-foreground">
+                      Loading users...
+                    </p>
                   </div>
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td className="px-6 py-20 text-center" colSpan={7}>
+                <td className="px-6 py-20 text-center" colSpan={8}>
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
                       <Users className="h-8 w-8" />
                     </div>
                     <div>
-                      <p className="font-bold text-foreground">No users found.</p>
-                      <p className="text-sm text-muted-foreground mt-1">Try adjusting your search.</p>
+                      <p className="font-bold text-foreground">
+                        No users found.
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Try adjusting your search.
+                      </p>
                     </div>
                   </div>
                 </td>
               </tr>
             ) : (
               users.map((u) => (
-                <tr key={u.id} className="hover:bg-primary/5 transition-colors group">
+                <tr
+                  key={u.id}
+                  className="group transition-colors hover:bg-primary/5"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                         {getInitials(u.fullName)}
                       </div>
-                      <span className="text-sm font-medium text-foreground">{u.fullName}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {u.fullName}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">{u.email}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">
+                    {u.email}
+                  </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${roleStyles[u.role] || "bg-muted text-muted-foreground"}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-black tracking-widest uppercase ${roleStyles[u.role] || "bg-muted text-muted-foreground"}`}
+                    >
                       {u.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-sm text-foreground">
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap items-center gap-1">
+                      {getPermissions(u)
+                        .filter((p) => p.has)
+                        .map((p) => (
+                          <span
+                            key={p.label}
+                            className="inline-flex items-center rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-wide text-primary uppercase"
+                          >
+                            {p.label}
+                          </span>
+                        ))}
+                      {getPermissions(u).filter((p) => p.has).length === 0 && (
+                        <span className="text-[10px] text-muted-foreground italic">
+                          No permissions
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">
                     {u.branch || "—"}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${u.isActive
-                        ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
-                        : "bg-destructive/10 text-destructive border border-destructive/20"
-                      }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-green-500" : "bg-destructive"}`} />
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-black tracking-widest uppercase ${
+                        u.isActive
+                          ? "border border-green-500/20 bg-green-500/10 text-green-700 dark:text-green-400"
+                          : "border border-destructive/20 bg-destructive/10 text-destructive"
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${u.isActive ? "bg-green-500" : "bg-destructive"}`}
+                      />
                       {u.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center font-mono font-medium text-sm text-foreground">{formatDate(u.createdAt)}</td>
+                  <td className="px-6 py-4 text-center font-mono text-sm font-medium text-foreground">
+                    {formatDate(u.createdAt)}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     {u.role === "customer" ? (
-                      <span className="text-[10px] text-muted-foreground italic">—</span>
+                      <span className="text-[10px] text-muted-foreground italic">
+                        —
+                      </span>
                     ) : (
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => setEditingUser(u)}
-                          className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => setDeletingUser(u)}
-                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -183,25 +241,26 @@ export function UserTable({
       </div>
 
       {totalCount > 0 && (
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-muted/20">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-            Showing {users.length > 0 ? start : 0} to {end} of {totalCount} results
+        <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
+          <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
+            Showing {users.length > 0 ? start : 0} to {end} of {totalCount}{" "}
+            results
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
-              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
             </button>
-            <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+            <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
-              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
             </button>
@@ -213,7 +272,10 @@ export function UserTable({
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         token={token}
-        onSuccess={() => { setIsAddOpen(false); onRefresh() }}
+        onSuccess={() => {
+          setIsAddOpen(false)
+          onRefresh()
+        }}
       />
       <EditUserModal
         key={editingUser?.id || "none"}
@@ -221,7 +283,10 @@ export function UserTable({
         onClose={() => setEditingUser(null)}
         user={editingUser}
         token={token}
-        onSuccess={() => { setEditingUser(null); onRefresh() }}
+        onSuccess={() => {
+          setEditingUser(null)
+          onRefresh()
+        }}
       />
       <DeleteUserModal
         isOpen={deletingUser !== null}
@@ -229,7 +294,10 @@ export function UserTable({
         userId={deletingUser?.id || ""}
         userName={deletingUser?.fullName || ""}
         token={token}
-        onSuccess={() => { setDeletingUser(null); onRefresh() }}
+        onSuccess={() => {
+          setDeletingUser(null)
+          onRefresh()
+        }}
       />
     </section>
   )

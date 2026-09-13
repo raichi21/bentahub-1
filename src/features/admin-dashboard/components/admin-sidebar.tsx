@@ -15,6 +15,7 @@ import {
   LogOut,
   X,
   Banknote,
+  Package,
 } from "lucide-react"
 import { StoreLogo } from "@/components/store-logo"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
@@ -50,6 +51,7 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
       title: "Management",
       items: [
         { label: "Monitoring", icon: Activity, path: "/admin/monitoring" },
+        { label: "Products", icon: Package, path: "/admin/products" },
         { label: "Notifications", icon: Bell, path: "/admin/notifications" },
         { label: "Sales", icon: Tag, path: "/admin/sales" },
         { label: "User Management", icon: Users, path: "/admin/users" },

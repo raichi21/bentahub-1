@@ -17,6 +17,7 @@ interface InventoryWithProduct {
     category: string
     price: string
     bulkPrice: string | null
+    unit: string
     weight: string | null
     image: string | null
     stockStatus: string
@@ -139,6 +140,8 @@ export async function getStaffProducts(branchName: string): Promise<StaffProduct
       barcode: inv.product.barcode ?? "",
       name: inv.product.name,
       price: parseFloat(inv.product.price),
+      bulkPrice: inv.product.bulkPrice !== null ? parseFloat(inv.product.bulkPrice) : null,
+      unit: inv.product.unit || "pcs",
       category: inv.product.category,
       image: inv.product.image,
       stock: inv.quantity,

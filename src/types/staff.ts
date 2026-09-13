@@ -29,6 +29,8 @@ export interface StaffProductItem {
   barcode: string
   name: string
   price: number
+  bulkPrice: number | null
+  unit: string
   category: string
   image: string | null
   stock: number

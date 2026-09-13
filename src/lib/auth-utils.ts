@@ -2,6 +2,9 @@ import crypto from "crypto"
 import bcryptjs from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server"
+import { db } from "@/servers/db"
+import { users } from "@/servers/schemas"
+import { eq } from "drizzle-orm"
 
 /**
  * Known insecure values that must never be used as a real JWT secret.
@@ -187,6 +190,64 @@ export function checkRoleAuth(
     return {
       error: NextResponse.json(
         { success: false, message: `${label ?? "This area"} requires a ${allowedRoles.join(" or ")} account` },
+        { status: 403 }
+      ),
+    }
+  }
+  return { userId: payload.userId }
+}
+
+// ---------------------------------------------------------------------------
+// Per-user management permissions
+// ---------------------------------------------------------------------------
+
+/**
+ * The management permissions that can be granted per user. The admin role is
+ * always treated as full access; these flags only extend what a staff account
+ * may do beyond its default read-only inventory duties.
+ */
+export type PermissionKey = "canManageUnits" | "canManageCategories" | "canManageProducts"
+
+/** Map a permission key to the column it lives on (kept for clarity/safety). */
+export const PERMISSION_COLUMNS: Record<PermissionKey, PermissionKey> = {
+  canManageUnits: "canManageUnits",
+  canManageCategories: "canManageCategories",
+  canManageProducts: "canManageProducts",
+}
+
+/**
+ * Verify that the request comes from an admin (always allowed) or from a
+ * staff account that has been explicitly granted the given permission.
+ * Returns `{ userId, error }` — if `error` is set, return it immediately.
+ */
+export async function requirePermission(
+  request: { headers: { get: (name: string) => string | null } },
+  permission: PermissionKey
+): Promise<{ userId: string; error?: never } | { userId?: never; error: NextResponse }> {
+  const token = extractToken(request)
+  if (!token) {
+    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
+  }
+  const payload = verifyToken(token)
+  if (!payload) {
+    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
+  }
+  if (payload.role === "admin") {
+    return { userId: payload.userId }
+  }
+  if (payload.role !== "staff") {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "This area requires an admin or staff account" },
+        { status: 403 }
+      ),
+    }
+  }
+  const user = await db.query.users.findFirst({ where: eq(users.id, payload.userId) })
+  if (!user || user.isActive === false || !user[PERMISSION_COLUMNS[permission]]) {
+    return {
+      error: NextResponse.json(
+        { success: false, message: "You do not have permission to perform this action" },
         { status: 403 }
       ),
     }

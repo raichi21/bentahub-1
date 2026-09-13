@@ -2,20 +2,33 @@
 
 import { useState, useMemo } from "react"
 import { Search, Package, Bell, Clock } from "lucide-react"
-import { getStockStatus, getExpiryDays, formatExpiryDate, isExpiringSoon } from "@/lib/staff-utils"
+import {
+  getStockStatus,
+  getExpiryDays,
+  formatExpiryDate,
+  isExpiringSoon,
+} from "@/lib/staff-utils"
 import { useAuth } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils"
 import type { Product } from "@/types/cashier"
 
 const ITEMS_PER_PAGE = 10
 
-export function StockTable({ products, isLoading }: { products: Product[]; isLoading?: boolean }) {
+export function StockTable({
+  products,
+  isLoading,
+}: {
+  products: Product[]
+  isLoading?: boolean
+}) {
   const { token } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All")
   const [statusFilter, setStatusFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
-  const [notifyingMap, setNotifyingMap] = useState<Record<string, "idle" | "sending" | "sent" | "error">>({})
+  const [notifyingMap, setNotifyingMap] = useState<
+    Record<string, "idle" | "sending" | "sent" | "error">
+  >({})
 
   // Unique categories for the dropdown filter
   const categories = useMemo(() => {
@@ -31,16 +44,21 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
         p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.barcode.toLowerCase().includes(searchQuery.toLowerCase())
 
-      const matchesCat = categoryFilter === "All" || p.category === categoryFilter
+      const matchesCat =
+        categoryFilter === "All" || p.category === categoryFilter
 
       const status = getStockStatus(p)
       const expiringSoon = isExpiringSoon(p.nearestExpiry)
       let matchesStatus = false
       if (statusFilter === "All") matchesStatus = true
-      else if (statusFilter === "In Stock" && status === "in-stock") matchesStatus = true
-      else if (statusFilter === "Low Stock" && status === "low-stock") matchesStatus = true
-      else if (statusFilter === "Out of Stock" && status === "out-of-stock") matchesStatus = true
-      else if (statusFilter === "Expiring Soon" && expiringSoon) matchesStatus = true
+      else if (statusFilter === "In Stock" && status === "in-stock")
+        matchesStatus = true
+      else if (statusFilter === "Low Stock" && status === "low-stock")
+        matchesStatus = true
+      else if (statusFilter === "Out of Stock" && status === "out-of-stock")
+        matchesStatus = true
+      else if (statusFilter === "Expiring Soon" && expiringSoon)
+        matchesStatus = true
 
       return matchesSearch && matchesCat && matchesStatus
     })
@@ -57,11 +75,11 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
   }, [filteredProducts, safePage])
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       {/* Search & Filters Action Bar */}
-      <div className="p-4 md:p-6 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/20">
+      <div className="flex flex-col items-center justify-between gap-4 border-b border-border bg-muted/20 p-4 md:flex-row md:p-6">
         <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search by product name, SKU, or barcode..."
@@ -70,12 +88,12 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setSearchQuery(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none"
+            className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
           />
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex w-full items-center gap-3 md:w-auto">
           {/* Category Dropdown */}
           <select
             value={categoryFilter}
@@ -83,7 +101,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setCategoryFilter(e.target.value)
               setCurrentPage(1)
             }}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none flex-1 min-w-0"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -99,7 +117,7 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
               setStatusFilter(e.target.value)
               setCurrentPage(1)
             }}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-primary focus:border-primary outline-none flex-1 min-w-0"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
           >
             <option value="All">Status: All</option>
             <option value="In Stock">In Stock</option>
@@ -107,22 +125,35 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
             <option value="Out of Stock">Out of Stock</option>
             <option value="Expiring Soon">Expiring Soon (30d)</option>
           </select>
-
         </div>
       </div>
 
       {/* Main Table Scrollport */}
-      <div className="flex-1 min-h-0 overflow-auto">
-        <table className="w-full text-left border-collapse min-w-[720px]">
+      <div className="min-h-0 flex-1 overflow-auto">
+        <table className="w-full min-w-[720px] border-collapse text-left">
           <thead>
-            <tr className="bg-muted/10 border-b border-border">
-              <th className="px-6 py-4 text-[11px] font-bold  uppercase tracking-wider">Product</th>
-              <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider">Category</th>
-              <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider">Quantity</th>
-              <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider">Expiry</th>
-              <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider">Reorder Level</th>
-              <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-right">Actions</th>
+            <tr className="border-b border-border bg-muted/10">
+              <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                Product
+              </th>
+              <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                Category
+              </th>
+              <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                Quantity
+              </th>
+              <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                Expiry
+              </th>
+              <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                Status
+              </th>
+              <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                Reorder Level
+              </th>
+              <th className="px-6 py-4 text-right text-[11px] font-bold tracking-wider uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/30">
@@ -131,125 +162,195 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                 <tr key={i}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded bg-muted animate-pulse" />
+                      <div className="h-12 w-12 animate-pulse rounded bg-muted" />
                       <div className="space-y-2">
-                        <div className="h-4 w-40 bg-muted rounded animate-pulse" />
-                        <div className="h-3 w-24 bg-muted/50 rounded animate-pulse" />
+                        <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+                        <div className="h-3 w-24 animate-pulse rounded bg-muted/50" />
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4"><div className="h-4 w-20 bg-muted rounded animate-pulse" /></td>
-                  <td className="px-6 py-4"><div className="h-4 w-16 bg-muted rounded animate-pulse" /></td>
-                  <td className="px-6 py-4"><div className="h-5 w-20 bg-muted rounded-full animate-pulse" /></td>
-                  <td className="px-6 py-4"><div className="h-4 w-12 bg-muted rounded animate-pulse" /></td>
-                  <td className="px-6 py-4"><div className="h-4 w-16 bg-muted rounded animate-pulse ml-auto" /></td>
-                </tr>
-              ))
-            ) : (
-              paginatedProducts.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-muted-foreground">
-                    No stock records matched your query
+                  <td className="px-6 py-4">
+                    <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 w-12 animate-pulse rounded bg-muted" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="ml-auto h-4 w-16 animate-pulse rounded bg-muted" />
                   </td>
                 </tr>
-              ) : (
-                paginatedProducts.map((p) => {
-                  const status = getStockStatus(p)
-                  const isOut = status === "out-of-stock"
-                  const isLow = status === "low-stock"
+              ))
+            ) : paginatedProducts.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-6 py-8 text-center text-sm text-muted-foreground"
+                >
+                  No stock records matched your query
+                </td>
+              </tr>
+            ) : (
+              paginatedProducts.map((p) => {
+                const status = getStockStatus(p)
+                const isOut = status === "out-of-stock"
+                const isLow = status === "low-stock"
 
-                  return (
-                    <tr
-                      key={p.id}
-                      className={cn(
-                        "hover:bg-muted/10 transition-colors",
-                        isOut && "bg-red-50/20",
-                        isLow && "bg-amber-50/10"
-                      )}
-                    >
-                      {/* Product visual pill */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded bg-muted flex-shrink-0 overflow-hidden border border-border/50 flex items-center justify-center">
-                            {p.image ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <Package className="w-6 h-6 text-muted-foreground opacity-40" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-foreground">{p.name}</p>
-                            <p className="text-[10px] font-mono text-muted-foreground">SKU: {p.sku}</p>
-                            {p.barcode && <p className="text-[10px] font-mono text-muted-foreground">Barcode: {p.barcode}</p>}
-                          </div>
+                return (
+                  <tr
+                    key={p.id}
+                    className={cn(
+                      "transition-colors hover:bg-muted/10",
+                      isOut && "bg-red-50/20",
+                      isLow && "bg-amber-50/10"
+                    )}
+                  >
+                    {/* Product visual pill */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded border border-border/50 bg-muted">
+                          {p.image ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={p.image}
+                              alt={p.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <Package className="h-6 w-6 text-muted-foreground opacity-40" />
+                          )}
                         </div>
-                      </td>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">
+                            {p.name}
+                          </p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            SKU: {p.sku}
+                          </p>
+                          {p.barcode && (
+                            <p className="font-mono text-[10px] text-muted-foreground">
+                              Barcode: {p.barcode}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
 
-                      {/* Category */}
-                      <td className="px-6 py-4 text-sm text-foreground">{p.category}</td>
+                    {/* Category */}
+                    <td className="px-6 py-4 text-sm text-foreground">
+                      {p.category}
+                    </td>
 
-                      {/* Quantity */}
-                      <td className="px-6 py-4 text-sm font-mono font-bold text-foreground">
-                        {p.stock} {p.unit}s
-                      </td>
+                    {/* Quantity */}
+                    <td className="px-6 py-4 font-mono text-sm font-bold text-foreground">
+                      {p.stock} {p.unit}
+                    </td>
 
-                      {/* Expiry Date */}
-                      <td className="px-6 py-4">
-                        {(() => {
-                          const days = getExpiryDays(p.nearestExpiry)
-                          const formatted = formatExpiryDate(p.nearestExpiry)
-                          if (!days || !formatted) return <span className="text-xs text-muted-foreground">—</span>
-                          const isUrgent = days <= 7
-                          const isWarning = days <= 30
+                    {/* Expiry Date */}
+                    <td className="px-6 py-4">
+                      {(() => {
+                        const days = getExpiryDays(p.nearestExpiry)
+                        const formatted = formatExpiryDate(p.nearestExpiry)
+                        if (!days || !formatted)
                           return (
-                            <div className="flex items-center gap-1.5">
-                              <Clock className={cn("w-3.5 h-3.5", isUrgent ? "text-red-500" : isWarning ? "text-amber-500" : "text-muted-foreground")} />
-                              <span className={cn("text-xs font-mono", isUrgent ? "text-red-600 font-bold" : isWarning ? "text-amber-600 font-bold" : "text-muted-foreground")}>
-                                {formatted}
-                                {isUrgent ? ` (${days}d)` : isWarning ? ` (${days}d)` : ""}
-                              </span>
-                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
                           )
-                        })()}
-                      </td>
+                        const isUrgent = days <= 7
+                        const isWarning = days <= 30
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <Clock
+                              className={cn(
+                                "h-3.5 w-3.5",
+                                isUrgent
+                                  ? "text-red-500"
+                                  : isWarning
+                                    ? "text-amber-500"
+                                    : "text-muted-foreground"
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                "font-mono text-xs",
+                                isUrgent
+                                  ? "font-bold text-red-600"
+                                  : isWarning
+                                    ? "font-bold text-amber-600"
+                                    : "text-muted-foreground"
+                              )}
+                            >
+                              {formatted}
+                              {isUrgent
+                                ? ` (${days}d)`
+                                : isWarning
+                                  ? ` (${days}d)`
+                                  : ""}
+                            </span>
+                          </div>
+                        )
+                      })()}
+                    </td>
 
-                      {/* Status Badge */}
-                      <td className="px-6 py-4">
+                    {/* Status Badge */}
+                    <td className="px-6 py-4">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-bold uppercase",
+                          isOut
+                            ? "border-red-200 bg-red-50 text-red-700"
+                            : isLow
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        )}
+                      >
                         <span
                           className={cn(
-                            "inline-flex items-center gap-2 px-3 py-1 rounded-full font-bold text-[10px] uppercase border",
+                            "h-1.5 w-1.5 rounded-full",
                             isOut
-                              ? "bg-red-50 text-red-700 border-red-200"
+                              ? "bg-red-500"
                               : isLow
-                                ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                ? "bg-amber-500"
+                                : "bg-emerald-500"
                           )}
-                        >
-                          <span
-                            className={cn(
-                              "w-1.5 h-1.5 rounded-full",
-                              isOut ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-emerald-500"
-                            )}
-                          />
-                          {isOut ? "Out of Stock" : isLow ? "Low Stock" : "In Stock"}
-                        </span>
-                      </td>
+                        />
+                        {isOut
+                          ? "Out of Stock"
+                          : isLow
+                            ? "Low Stock"
+                            : "In Stock"}
+                      </span>
+                    </td>
 
-                      {/* Reorder Threshold */}
-                      <td className="px-6 py-4 text-sm font-mono text-muted-foreground">
-                        {p.reorderLevel} {p.unit}s
-                      </td>
+                    {/* Reorder Threshold */}
+                    <td className="px-6 py-4 font-mono text-sm text-muted-foreground">
+                      {p.reorderLevel} {p.unit}
+                    </td>
 
-                      {/* Quick action buttons */}
-                      <td className="px-6 py-4 text-right">
-                        {isOut || isLow ? (
-                          <button
-                            onClick={async () => {
-                              if (notifyingMap[p.id] === "sent" || notifyingMap[p.id] === "sending") return
-                              setNotifyingMap((prev) => ({ ...prev, [p.id]: "sending" }))
-                              try {
-                                const res = await fetch("/api/cashier/notify-low-stock", {
+                    {/* Quick action buttons */}
+                    <td className="px-6 py-4 text-right">
+                      {isOut || isLow ? (
+                        <button
+                          onClick={async () => {
+                            if (
+                              notifyingMap[p.id] === "sent" ||
+                              notifyingMap[p.id] === "sending"
+                            )
+                              return
+                            setNotifyingMap((prev) => ({
+                              ...prev,
+                              [p.id]: "sending",
+                            }))
+                            try {
+                              const res = await fetch(
+                                "/api/cashier/notify-low-stock",
+                                {
                                   method: "POST",
                                   headers: {
                                     "Content-Type": "application/json",
@@ -260,66 +361,78 @@ export function StockTable({ products, isLoading }: { products: Product[]; isLoa
                                     productName: p.name,
                                     sku: p.sku,
                                   }),
-                                })
-                                const json = await res.json()
-                                if (json.success) {
-                                  setNotifyingMap((prev) => ({ ...prev, [p.id]: "sent" }))
-                                } else {
-                                  setNotifyingMap((prev) => ({ ...prev, [p.id]: "error" }))
                                 }
-                              } catch {
-                                setNotifyingMap((prev) => ({ ...prev, [p.id]: "error" }))
+                              )
+                              const json = await res.json()
+                              if (json.success) {
+                                setNotifyingMap((prev) => ({
+                                  ...prev,
+                                  [p.id]: "sent",
+                                }))
+                              } else {
+                                setNotifyingMap((prev) => ({
+                                  ...prev,
+                                  [p.id]: "error",
+                                }))
                               }
-                            }}
-                            className={cn(
-                              "px-3 py-1 rounded text-[10px] font-bold transition-colors shadow-2xs inline-flex items-center gap-1",
-                              notifyingMap[p.id] === "sent"
-                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-default"
-                                : "bg-blue-600 text-white hover:bg-blue-700",
-                            )}
-                          >
-                            <Bell className="w-3 h-3" />
-                            {notifyingMap[p.id] === "sending"
-                              ? "Notifying..."
-                              : notifyingMap[p.id] === "sent"
-                                ? "Notified"
-                                : notifyingMap[p.id] === "error"
-                                  ? "Retry"
-                                  : "Notify Staff"}
-                          </button>
-                        ) : null}
-                      </td>
-                    </tr>
-                  )
-                })
-              ))}
+                            } catch {
+                              setNotifyingMap((prev) => ({
+                                ...prev,
+                                [p.id]: "error",
+                              }))
+                            }
+                          }}
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded px-3 py-1 text-[10px] font-bold shadow-2xs transition-colors",
+                            notifyingMap[p.id] === "sent"
+                              ? "cursor-default border border-emerald-200 bg-emerald-100 text-emerald-700"
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          )}
+                        >
+                          <Bell className="h-3 w-3" />
+                          {notifyingMap[p.id] === "sending"
+                            ? "Notifying..."
+                            : notifyingMap[p.id] === "sent"
+                              ? "Notified"
+                              : notifyingMap[p.id] === "error"
+                                ? "Retry"
+                                : "Notify Staff"}
+                        </button>
+                      ) : null}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination Controls */}
-      <div className="px-4 py-3 md:px-6 md:py-4 bg-muted/5 border-t border-border flex items-center justify-between mt-auto">
-        <p className="text-xs text-muted-foreground font-medium font-mono">
-          Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)} to {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems} entries
+      <div className="mt-auto flex items-center justify-between border-t border-border bg-muted/5 px-4 py-3 md:px-6 md:py-4">
+        <p className="font-mono text-xs font-medium text-muted-foreground">
+          Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)} to{" "}
+          {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems}{" "}
+          entries
         </p>
 
         <div className="flex items-center gap-2">
           <button
             disabled={safePage === 1}
             onClick={() => setCurrentPage((c) => c - 1)}
-            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             Previous
           </button>
 
-          <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+          <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
             Page {safePage} of {totalPages}
           </span>
 
           <button
             disabled={safePage === totalPages}
             onClick={() => setCurrentPage((c) => c + 1)}
-            className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
           </button>

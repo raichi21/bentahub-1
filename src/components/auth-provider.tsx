@@ -13,6 +13,9 @@ export interface AuthUser {
   branch: string | null
   role: string
   isEmailVerified: boolean
+  canManageUnits?: boolean
+  canManageCategories?: boolean
+  canManageProducts?: boolean
 }
 
 interface AuthContextValue {

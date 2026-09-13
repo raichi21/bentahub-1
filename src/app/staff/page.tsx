@@ -46,20 +46,20 @@ export default function StaffPage() {
 
         setDashboard(dashboardJson.data)
 
-        const mappedProducts: Product[] = (productsJson.data?.products || []).map(
-          (p: StaffProductItem) => ({
-            id: p.id,
-            sku: p.sku,
-            barcode: p.barcode,
-            name: p.name,
-            price: p.price,
-            category: p.category as Product["category"],
-            stock: p.stock,
-            reorderLevel: p.reorderLevel,
-            image: p.image || "",
-            unit: "pcs",
-          }),
-        )
+        const mappedProducts: Product[] = (
+          productsJson.data?.products || []
+        ).map((p: StaffProductItem) => ({
+          id: p.id,
+          sku: p.sku,
+          barcode: p.barcode,
+          name: p.name,
+          price: p.price,
+          category: p.category as Product["category"],
+          stock: p.stock,
+          reorderLevel: p.reorderLevel,
+          image: p.image || "",
+          unit: p.unit || "pcs",
+        }))
         setProducts(mappedProducts)
       } catch (err) {
         if (!cancelled) {
@@ -83,29 +83,47 @@ export default function StaffPage() {
 
   const inStock = useMemo(
     () => products.filter((p) => getStockStatus(p) === "in-stock").length,
-    [products],
+    [products]
   )
 
   const lowStockCount = useMemo(
-    () => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").length,
-    [products],
+    () =>
+      products.filter(
+        (p) =>
+          getStockStatus(p) === "low-stock" ||
+          getStockStatus(p) === "out-of-stock"
+      ).length,
+    [products]
   )
 
   const lowStockItems = useMemo(
-    () => products.filter((p) => getStockStatus(p) === "low-stock" || getStockStatus(p) === "out-of-stock").slice(0, 5),
-    [products],
+    () =>
+      products
+        .filter(
+          (p) =>
+            getStockStatus(p) === "low-stock" ||
+            getStockStatus(p) === "out-of-stock"
+        )
+        .slice(0, 5),
+    [products]
   )
 
-  const recentChanges = useMemo(() => products.filter((p) => p.stock < 10).slice(0, 5), [products])
+  const recentChanges = useMemo(
+    () => products.filter((p) => p.stock < 10).slice(0, 5),
+    [products]
+  )
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
-              <div className="h-4 w-24 bg-muted rounded mb-4" />
-              <div className="h-8 w-32 bg-muted rounded" />
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-6"
+            >
+              <div className="mb-4 h-4 w-24 rounded bg-muted" />
+              <div className="h-8 w-32 rounded bg-muted" />
             </div>
           ))}
         </div>
@@ -115,7 +133,7 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Total Products Managed"
           value={String(products.length)}
@@ -126,8 +144,16 @@ export default function StaffPage() {
         <KPICard
           title="Low Stock Warnings"
           value={String(dashboard?.kpis.lowStockCount ?? lowStockCount)}
-          trend={(dashboard?.kpis.lowStockCount ?? lowStockCount) > 0 ? "Needs attention" : "All good"}
-          trendType={(dashboard?.kpis.lowStockCount ?? lowStockCount) > 0 ? "warning" : "up"}
+          trend={
+            (dashboard?.kpis.lowStockCount ?? lowStockCount) > 0
+              ? "Needs attention"
+              : "All good"
+          }
+          trendType={
+            (dashboard?.kpis.lowStockCount ?? lowStockCount) > 0
+              ? "warning"
+              : "up"
+          }
           icon={AlertTriangle}
         />
         <KPICard
@@ -146,31 +172,55 @@ export default function StaffPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              <h2 className="text-base font-bold text-foreground">Low Stock Alerts</h2>
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <h2 className="text-base font-bold text-foreground">
+                Low Stock Alerts
+              </h2>
             </div>
-            <span className="text-xs text-muted-foreground font-medium">{lowStockCount} items</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {lowStockCount} items
+            </span>
           </div>
           {lowStockItems.length === 0 ? (
-            <p className="text-xs text-muted-foreground">All products are well stocked.</p>
+            <p className="text-xs text-muted-foreground">
+              All products are well stocked.
+            </p>
           ) : (
             <div className="space-y-3">
               {lowStockItems.map((p) => (
-                <div key={p.id} className="flex items-center justify-between p-3 bg-red-50/50 border border-red-100 rounded-lg">
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 p-3"
+                >
                   <div>
-                    <p className="text-sm font-bold text-foreground">{p.name}</p>
-                    <p className="text-[10px] font-mono text-muted-foreground">Product Code: {p.sku}</p>
-                    {p.barcode && <p className="text-[10px] font-mono text-muted-foreground">Barcode: {p.barcode}</p>}
+                    <p className="text-sm font-bold text-foreground">
+                      {p.name}
+                    </p>
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                      Product Code: {p.sku}
+                    </p>
+                    {p.barcode && (
+                      <p className="font-mono text-[10px] text-muted-foreground">
+                        Barcode: {p.barcode}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <p className={cn("text-sm font-mono font-bold", p.stock === 0 ? "text-red-600" : "text-amber-600")}>
-                      {p.stock} {p.unit}s
+                    <p
+                      className={cn(
+                        "font-mono text-sm font-bold",
+                        p.stock === 0 ? "text-red-600" : "text-amber-600"
+                      )}
+                    >
+                      {p.stock} {p.unit}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">Min: {p.reorderLevel}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Min: {p.reorderLevel}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -178,36 +228,61 @@ export default function StaffPage() {
           )}
         </div>
 
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-
-              <h2 className="text-base font-bold text-foreground">Recent Stock Activity</h2>
+              <h2 className="text-base font-bold text-foreground">
+                Recent Stock Activity
+              </h2>
             </div>
-            <span className="text-xs text-muted-foreground font-medium">Today</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Today
+            </span>
           </div>
           {recentChanges.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No recent stock changes.</p>
+            <p className="text-xs text-muted-foreground">
+              No recent stock changes.
+            </p>
           ) : (
             <div className="space-y-3">
               {recentChanges.map((p) => (
-                <div key={p.id} className="flex items-center justify-between p-3 bg-muted/20 border border-border rounded-lg">
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-3"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-muted overflow-hidden border border-border/50 flex-shrink-0 flex items-center justify-center">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded border border-border/50 bg-muted">
                       {p.image ? (
-                        <Image src={p.image} alt={p.name} width={32} height={32} className="w-full h-full object-cover" unoptimized />
+                        <Image
+                          src={p.image}
+                          alt={p.name}
+                          width={32}
+                          height={32}
+                          className="h-full w-full object-cover"
+                          unoptimized
+                        />
                       ) : (
-                        <Package className="w-4 h-4 text-muted-foreground opacity-50" />
+                        <Package className="h-4 w-4 text-muted-foreground opacity-50" />
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground">{p.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{p.category}</p>
+                      <p className="text-sm font-bold text-foreground">
+                        {p.name}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {p.category}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-mono font-bold text-foreground">{p.stock} {p.unit}s</p>
-                    <p className="text-[10px] text-muted-foreground">{getStockStatus(p) === "low-stock" ? "Low Stock" : "Running Low"}</p>
+                    <p className="font-mono text-sm font-bold text-foreground">
+                      {p.stock} {p.unit}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {getStockStatus(p) === "low-stock"
+                        ? "Low Stock"
+                        : "Running Low"}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -215,7 +290,6 @@ export default function StaffPage() {
           )}
         </div>
       </div>
-
     </div>
   )
 }

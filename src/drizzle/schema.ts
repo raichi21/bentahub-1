@@ -48,6 +48,11 @@ export const users = pgTable(
     image: text("image"),
     role: userRoleEnum("role").default("customer").notNull(),
     branch: varchar("branch", { length: 50 }),
+    // Per-user management permissions — assigned in User Management.
+    // Admin role is always treated as full access regardless of these flags.
+    canManageUnits: boolean("can_manage_units").default(false).notNull(),
+    canManageCategories: boolean("can_manage_categories").default(false).notNull(),
+    canManageProducts: boolean("can_manage_products").default(false).notNull(),
     isEmailVerified: boolean("is_email_verified").default(false).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt,
@@ -184,6 +189,7 @@ export const products = pgTable("products", {
   category: varchar("category", { length: 100 }).notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   bulkPrice: numeric("bulk_price", { precision: 10, scale: 2 }),
+  unit: varchar("unit", { length: 50 }).default("pcs").notNull(),
   weight: varchar("weight", { length: 50 }),
   image: text("image"),
   // Legacy denormalized columns — authoritative stock lives in branch_inventory.
@@ -203,6 +209,37 @@ export const insertProductSchema = createInsertSchema(products).omit({ id: true,
 export const selectProductSchema = createSelectSchema(products)
 export type Product = typeof products.$inferSelect
 export type InsertProduct = typeof products.$inferInsert
+
+// ── Master: Unit Types ──
+export const unitTypes = pgTable("unit_types", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt,
+  updatedAt,
+})
+
+export const insertUnitTypeSchema = createInsertSchema(unitTypes).omit({ id: true, createdAt: true, updatedAt: true })
+export const selectUnitTypeSchema = createSelectSchema(unitTypes)
+export type UnitType = typeof unitTypes.$inferSelect
+export type InsertUnitType = typeof unitTypes.$inferInsert
+
+// ── Master: Categories ──
+export const categories = pgTable("categories", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  code: varchar("code", { length: 10 }).notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt,
+  updatedAt,
+})
+
+export const insertCategorySchema = createInsertSchema(categories).omit({ id: true, createdAt: true, updatedAt: true })
+export const selectCategorySchema = createSelectSchema(categories)
+export type Category = typeof categories.$inferSelect
+export type InsertCategory = typeof categories.$inferInsert
 
 // ── Branch Inventory ──
 export const branchInventory = pgTable("branch_inventory", {

@@ -19,6 +19,7 @@
     "db:migrate": "drizzle-kit up:pg",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx scripts/seed-admin-data.ts",
+    "db:seed-master": "npx tsx scripts/seed-master-data.ts",
     "print-server": "node server/print-server.cjs"
   },
   "dependencies": {

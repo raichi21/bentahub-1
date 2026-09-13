@@ -16,27 +16,40 @@ export interface UsersPageData {
   totalCount: number
 }
 
-export async function getUsers(filters: UserFilterOptions = { page: 1, pageSize: 15 }): Promise<UsersPageData> {
+export async function getUsers(
+  filters: UserFilterOptions = { page: 1, pageSize: 15 }
+): Promise<UsersPageData> {
   const baseConditions = [eq(users.isActive, true)]
   if (filters.role) {
-    baseConditions.push(eq(users.role, filters.role as "admin" | "cashier" | "staff" | "customer"))
+    baseConditions.push(
+      eq(users.role, filters.role as "admin" | "cashier" | "staff" | "customer")
+    )
   }
   const where = and(...baseConditions)
 
-  const allUsers = await db.query.users.findMany({
+  const allUsers = (await db.query.users.findMany({
     where,
     orderBy: [desc(users.createdAt)],
-  }) as Array<{
-    id: string; fullName: string; email: string; role: string
-    branch: string | null; isActive: boolean; createdAt: Date
+  })) as Array<{
+    id: string
+    fullName: string
+    email: string
+    role: string
+    branch: string | null
+    isActive: boolean
+    createdAt: Date
+    canManageUnits: boolean
+    canManageCategories: boolean
+    canManageProducts: boolean
   }>
 
   let filtered = allUsers
   if (filters.search) {
     const q = filters.search.toLowerCase()
-    filtered = allUsers.filter((u) =>
-      u.fullName.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
+    filtered = allUsers.filter(
+      (u) =>
+        u.fullName.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
     )
   }
 
@@ -61,6 +74,9 @@ export async function getUsers(filters: UserFilterOptions = { page: 1, pageSize:
     role: u.role,
     branch: u.branch,
     isActive: u.isActive,
+    canManageUnits: u.canManageUnits,
+    canManageCategories: u.canManageCategories,
+    canManageProducts: u.canManageProducts,
     createdAt: u.createdAt,
   }))
 

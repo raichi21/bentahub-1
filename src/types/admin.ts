@@ -199,6 +199,9 @@ export interface UserRowData {
   role: string
   branch: string | null
   isActive: boolean
+  canManageUnits: boolean
+  canManageCategories: boolean
+  canManageProducts: boolean
   createdAt: Date
 }
 

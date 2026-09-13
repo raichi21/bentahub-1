@@ -14,12 +14,18 @@ interface ProductBatchesModalProps {
 
 function formatDate(d: string | null): string {
   if (!d) return "—"
-  return formatPHDate(new Date(d), { month: "short", day: "numeric", year: "numeric" })
+  return formatPHDate(new Date(d), {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
 function getRemainingDays(expiry: string | null): number | null {
   if (!expiry) return null
-  return Math.ceil((new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  return Math.ceil(
+    (new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  )
 }
 
 const STATUS_LABEL: Record<InventoryBatchItem["status"], string> = {
@@ -29,40 +35,64 @@ const STATUS_LABEL: Record<InventoryBatchItem["status"], string> = {
   out: "Out",
 }
 
-export function ProductBatchesModal({ isOpen, onClose, product }: ProductBatchesModalProps) {
+export function ProductBatchesModal({
+  isOpen,
+  onClose,
+  product,
+}: ProductBatchesModalProps) {
   if (!isOpen || !product) return null
 
   const batches = product.batches ?? []
   const activeBatches = batches.filter((b) => b.quantity > 0)
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
+    <div className="fixed inset-0 z-[100] flex animate-in items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="flex max-h-[90vh] w-full max-w-2xl animate-in flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
           <h2 className="text-lg font-bold text-foreground">Product Batches</h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={onClose}
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
-          <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-lg border border-border">
-            <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden border border-border/50 flex-shrink-0 flex items-center justify-center">
+        <div className="custom-scrollbar space-y-5 overflow-y-auto p-6">
+          <div className="flex items-center gap-4 rounded-lg border border-border bg-muted/20 p-4">
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/50 bg-muted">
               {product.image ? (
-                <Image src={product.image} alt={product.name} width={56} height={56} className="w-full h-full object-cover" unoptimized />
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  width={56}
+                  height={56}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
               ) : (
-                <Package className="w-6 h-6 text-muted-foreground opacity-50" />
+                <Package className="h-6 w-6 text-muted-foreground opacity-50" />
               )}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-foreground">{product.name}</p>
-              <p className="text-[10px] font-mono text-muted-foreground">SKU: {product.sku}</p>
+              <p className="text-sm font-bold text-foreground">
+                {product.name}
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                SKU: {product.sku}
+              </p>
               <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-muted-foreground">
                 <span>
-                  Total stock: <span className="font-bold font-mono text-foreground">{product.stock} {product.unit}s</span>
+                  Total stock:{" "}
+                  <span className="font-mono font-bold text-foreground">
+                    {product.stock} {product.unit}
+                  </span>
                 </span>
                 <span>
-                  Active batches: <span className="font-bold font-mono text-foreground">{activeBatches.length}</span>
+                  Active batches:{" "}
+                  <span className="font-mono font-bold text-foreground">
+                    {activeBatches.length}
+                  </span>
                 </span>
               </div>
             </div>
@@ -70,21 +100,35 @@ export function ProductBatchesModal({ isOpen, onClose, product }: ProductBatches
 
           {activeBatches.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Layers className="w-10 h-10 text-muted-foreground opacity-40 mb-3" />
-              <p className="text-sm font-semibold text-foreground">No active batches</p>
-              <p className="text-xs text-muted-foreground mt-1">Restock this product to create an inventory batch.</p>
+              <Layers className="mb-3 h-10 w-10 text-muted-foreground opacity-40" />
+              <p className="text-sm font-semibold text-foreground">
+                No active batches
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Restock this product to create an inventory batch.
+              </p>
             </div>
           ) : (
             <>
               <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full border-collapse text-left">
                   <thead>
-                    <tr className="bg-muted/10 border-b border-border">
-                      <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold">Batch No.</th>
-                      <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold">Received</th>
-                      <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold">Expiry</th>
-                      <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-right">Remaining</th>
-                      <th className="px-4 py-3 text-[10px] uppercase tracking-wider font-bold text-right">Status</th>
+                    <tr className="border-b border-border bg-muted/10">
+                      <th className="px-4 py-3 text-[10px] font-bold tracking-wider uppercase">
+                        Batch No.
+                      </th>
+                      <th className="px-4 py-3 text-[10px] font-bold tracking-wider uppercase">
+                        Received
+                      </th>
+                      <th className="px-4 py-3 text-[10px] font-bold tracking-wider uppercase">
+                        Expiry
+                      </th>
+                      <th className="px-4 py-3 text-right text-[10px] font-bold tracking-wider uppercase">
+                        Remaining
+                      </th>
+                      <th className="px-4 py-3 text-right text-[10px] font-bold tracking-wider uppercase">
+                        Status
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
@@ -94,33 +138,59 @@ export function ProductBatchesModal({ isOpen, onClose, product }: ProductBatches
                       const out = b.status === "out"
                       const days = getRemainingDays(b.expiryDate)
                       return (
-                        <tr key={b.id} className={cn("hover:bg-muted/10 transition-colors", isHead && "bg-primary/5", out && "opacity-50")}>
+                        <tr
+                          key={b.id}
+                          className={cn(
+                            "transition-colors hover:bg-muted/10",
+                            isHead && "bg-primary/5",
+                            out && "opacity-50"
+                          )}
+                        >
                           <td className="px-4 py-3">
-                            <span className="text-sm font-mono font-bold text-foreground">{b.batchNumber || "—"}</span>
-                            {b.supplier && <span className="block text-[10px] text-muted-foreground">{b.supplier}</span>}
+                            <span className="font-mono text-sm font-bold text-foreground">
+                              {b.batchNumber || "—"}
+                            </span>
+                            {b.supplier && (
+                              <span className="block text-[10px] text-muted-foreground">
+                                {b.supplier}
+                              </span>
+                            )}
                           </td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(b.receivedDate)}</td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">
+                            {formatDate(b.receivedDate)}
+                          </td>
                           <td className="px-4 py-3">
-                            <span className={cn("text-xs font-mono", expiring ? "text-amber-600 font-bold" : isHead && b.expiryDate ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                            <span
+                              className={cn(
+                                "font-mono text-xs",
+                                expiring
+                                  ? "font-bold text-amber-600"
+                                  : isHead && b.expiryDate
+                                    ? "font-semibold text-foreground"
+                                    : "text-muted-foreground"
+                              )}
+                            >
                               {formatDate(b.expiryDate)}
                               {expiring && days !== null ? ` (${days}d)` : ""}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm font-mono font-bold text-right text-foreground">
+                          <td className="px-4 py-3 text-right font-mono text-sm font-bold text-foreground">
                             {b.quantity}/{b.originalQuantity}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className={cn(
-                              "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap",
-                              isHead
-                                ? "bg-primary/10 text-primary border-primary/30"
-                                : expiring
-                                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                                  : out
-                                    ? "bg-muted text-muted-foreground border-border"
-                                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            )}>
-                              {isHead && <Flame className="w-3 h-3" />}
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold whitespace-nowrap",
+                                isHead
+                                  ? "border-primary/30 bg-primary/10 text-primary"
+                                  : expiring
+                                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                                    : out
+                                      ? "border-border bg-muted text-muted-foreground"
+                                      : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              )}
+                            >
+                              {isHead && <Flame className="h-3 w-3" />}
                               {STATUS_LABEL[b.status]}
                             </span>
                           </td>
@@ -132,21 +202,35 @@ export function ProductBatchesModal({ isOpen, onClose, product }: ProductBatches
               </div>
 
               <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Next to Sell</span>
-                <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Normal</span>
-                <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Expiring ≤30d</span>
-                <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-muted-foreground/40" /> Out</span>
-                <span className="text-muted-foreground/70">Batches are consumed oldest-expiry / oldest-received first.</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-primary" /> Next to
+                  Sell
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />{" "}
+                  Normal
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />{" "}
+                  Expiring ≤30d
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />{" "}
+                  Out
+                </span>
+                <span className="text-muted-foreground/70">
+                  Batches are consumed oldest-expiry / oldest-received first.
+                </span>
               </div>
             </>
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end gap-3">
+        <div className="flex justify-end gap-3 border-t border-border bg-muted/20 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="h-11 px-6 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all"
+            className="h-11 rounded-lg bg-primary px-6 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/95"
           >
             Close
           </button>
