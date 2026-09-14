@@ -97,9 +97,9 @@ export function ManageProducts({ canManage }: ManageProductsProps) {
     return `₱${Number(value).toFixed(2)}`
   }
 
-  const distinctCategories = Array.from(
-    new Set(items.map((p) => p.category))
-  ).sort()
+  const distinctCategories = categories
+    .map((c) => c.name)
+    .sort((a, b) => a.localeCompare(b))
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">

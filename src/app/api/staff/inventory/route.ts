@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, branches, products, branchInventory, inventoryBatches, notifications, categories, unitTypes } from "@/servers/schemas"
+import {
+  users,
+  branches,
+  products,
+  branchInventory,
+  inventoryBatches,
+  notifications,
+  categories,
+  unitTypes,
+} from "@/servers/schemas"
 import { eq, and, sql } from "drizzle-orm"
 
 const SKU_SUFFIX_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -10,9 +19,14 @@ const SKU_SUFFIX_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 function generateSku(code: string): string {
   let suffix = ""
   for (let i = 0; i < 4; i++) {
-    suffix += SKU_SUFFIX_CHARS[Math.floor(Math.random() * SKU_SUFFIX_CHARS.length)]
+    suffix +=
+      SKU_SUFFIX_CHARS[Math.floor(Math.random() * SKU_SUFFIX_CHARS.length)]
   }
-  const prefix = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3) || "GEN"
+  const prefix =
+    code
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 3) || "GEN"
   return `${prefix}-${suffix}`
 }
 
@@ -27,7 +41,10 @@ export async function PATCH(request: NextRequest) {
       where: eq(users.id, auth.userId),
     })
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const branchName = user.branch || "Lourdes Main Branch"
@@ -35,14 +52,28 @@ export async function PATCH(request: NextRequest) {
       where: eq(branches.name, branchName),
     })
     if (!branchRecord) {
-      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Branch not found" },
+        { status: 404 }
+      )
     }
 
     const body = await request.json()
-    const { productId, stock, reorderLevel, batchNumber, expiryDate, supplier, unit } = body
+    const {
+      productId,
+      stock,
+      reorderLevel,
+      batchNumber,
+      expiryDate,
+      supplier,
+      unit,
+    } = body
 
     if (!productId || stock === undefined) {
-      return NextResponse.json({ success: false, message: "productId and stock are required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "productId and stock are required" },
+        { status: 400 }
+      )
     }
 
     const stockQty = Math.max(0, stock)
@@ -53,9 +84,16 @@ export async function PATCH(request: NextRequest) {
         where: sql`lower(${unitTypes.name}) = lower(${unit.trim()})`,
       })
       if (!unitType) {
-        return NextResponse.json({ success: false, message: "Unit not recognized. Please select an existing unit." }, { status: 400 })
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Unit not recognized. Please select an existing unit.",
+          },
+          { status: 400 }
+        )
       }
-      await db.update(products)
+      await db
+        .update(products)
         .set({ unit: unitType.name })
         .where(eq(products.id, productId))
     }
@@ -65,12 +103,15 @@ export async function PATCH(request: NextRequest) {
     const existing = await db.query.branchInventory.findFirst({
       where: and(
         eq(branchInventory.branchId, branchRecord.id),
-        eq(branchInventory.productId, productId),
+        eq(branchInventory.productId, productId)
       ),
     })
 
     if (!existing) {
-      return NextResponse.json({ success: false, message: "Product inventory not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Product inventory not found" },
+        { status: 404 }
+      )
     }
 
     const currentQty = existing.quantity
@@ -80,12 +121,13 @@ export async function PATCH(request: NextRequest) {
       .update(branchInventory)
       .set({
         quantity: stockQty,
-        lowStockThreshold: reorderLevel !== undefined ? Math.max(0, reorderLevel) : undefined,
+        lowStockThreshold:
+          reorderLevel !== undefined ? Math.max(0, reorderLevel) : undefined,
       })
       .where(
         and(
           eq(branchInventory.branchId, branchRecord.id),
-          eq(branchInventory.productId, productId),
+          eq(branchInventory.productId, productId)
         )
       )
 
@@ -105,12 +147,15 @@ export async function PATCH(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({ success: true, message: "Stock updated successfully" })
+    return NextResponse.json({
+      success: true,
+      message: "Stock updated successfully",
+    })
   } catch (error) {
     console.error("Staff inventory PATCH error:", error)
     return NextResponse.json(
       { success: false, message: "An error occurred while updating stock" },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
@@ -126,7 +171,10 @@ export async function POST(request: NextRequest) {
       where: eq(users.id, auth.userId),
     })
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const branchName = user.branch || "Lourdes Main Branch"
@@ -134,14 +182,32 @@ export async function POST(request: NextRequest) {
       where: eq(branches.name, branchName),
     })
     if (!branchRecord) {
-      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Branch not found" },
+        { status: 404 }
+      )
     }
 
     const body = await request.json()
-    const { name, category, stock, reorderLevel, price, image, batchNumber, expiryDate, supplier, barcode, unit } = body
+    const {
+      name,
+      category,
+      stock,
+      reorderLevel,
+      price,
+      image,
+      batchNumber,
+      expiryDate,
+      supplier,
+      barcode,
+      unit,
+    } = body
 
     if (!name || !category || price === undefined) {
-      return NextResponse.json({ success: false, message: "name, category, and price are required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "name, category, and price are required" },
+        { status: 400 }
+      )
     }
 
     // Category must exist in the master categories table (staff can pick from
@@ -150,24 +216,65 @@ export async function POST(request: NextRequest) {
       where: sql`lower(${categories.name}) = lower(${category})`,
     })
     if (!categoryRecord) {
-      return NextResponse.json({ success: false, message: "Category not recognized. Please select an existing category." }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Category not recognized. Please select an existing category.",
+        },
+        { status: 400 }
+      )
+    }
+    if (!categoryRecord.isActive) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Category is inactive. Please select an active category.",
+        },
+        { status: 400 }
+      )
     }
 
     // Unit must exist in the master unit types table.
-    const unitValue = typeof unit === "string" && unit.trim() ? unit.trim() : "pcs"
+    const unitValue =
+      typeof unit === "string" && unit.trim() ? unit.trim() : "pcs"
     const unitRecord = await db.query.unitTypes.findFirst({
       where: sql`lower(${unitTypes.name}) = lower(${unitValue})`,
     })
     if (!unitRecord) {
-      return NextResponse.json({ success: false, message: "Unit not recognized. Please select an existing unit." }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unit not recognized. Please select an existing unit.",
+        },
+        { status: 400 }
+      )
+    }
+    if (!unitRecord.isActive) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unit is inactive. Please select an active unit.",
+        },
+        { status: 400 }
+      )
     }
 
     const productId = generateId()
     const sku = generateSku(categoryRecord.code)
-    const barcodeValue = barcode && typeof barcode === "string" && barcode.trim() ? barcode.trim() : null
+    const barcodeValue =
+      barcode && typeof barcode === "string" && barcode.trim()
+        ? barcode.trim()
+        : null
     const stockQty = Math.max(0, stock || 0)
-    const threshold = reorderLevel !== undefined ? Math.max(0, reorderLevel) : 10
-    const stockStatus = stockQty === 0 ? "out-of-stock" : stockQty <= threshold ? "low-stock" : "in-stock"
+    const threshold =
+      reorderLevel !== undefined ? Math.max(0, reorderLevel) : 10
+    const stockStatus =
+      stockQty === 0
+        ? "out-of-stock"
+        : stockQty <= threshold
+          ? "low-stock"
+          : "in-stock"
 
     const productImage = image && typeof image === "string" ? image : null
 
@@ -204,7 +311,10 @@ export async function POST(request: NextRequest) {
         quantity: stockQty,
         originalQuantity: stockQty,
         expiryDate: expiryDate ? new Date(expiryDate) : null,
-        supplier: typeof supplier === "string" && supplier.trim() ? supplier.trim() : null,
+        supplier:
+          typeof supplier === "string" && supplier.trim()
+            ? supplier.trim()
+            : null,
       })
     }
 
@@ -229,13 +339,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true, message: "Product added successfully", data: { id: productId, sku } })
+    return NextResponse.json({
+      success: true,
+      message: "Product added successfully",
+      data: { id: productId, sku },
+    })
   } catch (error) {
     console.error("Staff inventory POST error:", error)
-    const message = error instanceof Error ? error.message : "An error occurred while adding product"
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 },
-    )
+    const message =
+      error instanceof Error
+        ? error.message
+        : "An error occurred while adding product"
+    return NextResponse.json({ success: false, message }, { status: 500 })
   }
 }
