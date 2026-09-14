@@ -12,7 +12,14 @@ interface DeleteUserModalProps {
   onSuccess: () => void
 }
 
-export function DeleteUserModal({ isOpen, onClose, userId, userName, token, onSuccess }: DeleteUserModalProps) {
+export function DeleteUserModal({
+  isOpen,
+  onClose,
+  userId,
+  userName,
+  token,
+  onSuccess,
+}: DeleteUserModalProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -40,28 +47,44 @@ export function DeleteUserModal({ isOpen, onClose, userId, userName, token, onSu
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-border animate-in zoom-in duration-200">
-        <div className="p-6 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mb-6">
+    <div className="fixed inset-0 z-[100] flex animate-in items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="my-auto w-full max-w-md animate-in overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex flex-col items-center p-6 text-center">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <Trash2 className="h-8 w-8" />
           </div>
 
-          <h2 className="text-xl font-bold text-foreground mb-2">Delete User</h2>
+          <h2 className="mb-2 text-xl font-bold text-foreground">
+            Delete User
+          </h2>
 
           {error && (
-            <div className="w-full p-3 mb-4 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>
+            <div className="mb-4 w-full rounded-lg bg-destructive/10 p-3 text-sm font-medium text-destructive">
+              {error}
+            </div>
           )}
 
-          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-            Are you sure you want to delete <strong className="text-foreground">{userName}</strong>? This will deactivate their account.
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
+            Are you sure you want to delete{" "}
+            <strong className="text-foreground">{userName}</strong>? This will
+            deactivate their account.
           </p>
 
-          <div className="flex items-center gap-3 w-full">
-            <button type="button" className="flex-1 h-12 px-4 rounded-lg border border-border text-foreground font-bold text-sm hover:bg-muted transition-all" onClick={onClose} disabled={submitting}>
+          <div className="flex w-full items-center gap-3">
+            <button
+              type="button"
+              className="h-12 flex-1 rounded-lg border border-border px-4 text-sm font-bold text-foreground transition-all hover:bg-muted"
+              onClick={onClose}
+              disabled={submitting}
+            >
               Cancel
             </button>
-            <button type="button" className="flex-1 h-12 px-4 rounded-lg bg-destructive text-destructive-foreground font-bold text-sm shadow-lg shadow-destructive/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2" onClick={handleDelete} disabled={submitting}>
+            <button
+              type="button"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-destructive px-4 text-sm font-bold text-destructive-foreground shadow-lg shadow-destructive/20 transition-all hover:opacity-90 active:scale-[0.98]"
+              onClick={handleDelete}
+              disabled={submitting}
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Delete
             </button>

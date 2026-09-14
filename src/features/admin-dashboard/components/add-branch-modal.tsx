@@ -10,7 +10,12 @@ interface AddBranchModalProps {
   onSuccess: () => void
 }
 
-export function AddBranchModal({ isOpen, onClose, token, onSuccess }: AddBranchModalProps) {
+export function AddBranchModal({
+  isOpen,
+  onClose,
+  token,
+  onSuccess,
+}: AddBranchModalProps) {
   const [name, setName] = useState("")
   const [location, setLocation] = useState("")
   const [capacity, setCapacity] = useState("500")
@@ -30,7 +35,10 @@ export function AddBranchModal({ isOpen, onClose, token, onSuccess }: AddBranchM
     try {
       const res = await fetch("/api/admin/branches", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: name.trim(),
           location: location.trim() || null,
@@ -39,7 +47,9 @@ export function AddBranchModal({ isOpen, onClose, token, onSuccess }: AddBranchM
       })
       const data = await res.json()
       if (data.success) {
-        setName(""); setLocation(""); setCapacity("500")
+        setName("")
+        setLocation("")
+        setCapacity("500")
         onSuccess()
       } else {
         setError(data.message || "Failed to create branch")
@@ -52,46 +62,90 @@ export function AddBranchModal({ isOpen, onClose, token, onSuccess }: AddBranchM
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-border animate-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/20">
+    <div className="fixed inset-0 z-[100] flex animate-in items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="my-auto w-full max-w-lg animate-in overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Store className="h-5 w-5" />
             </div>
-            <h2 className="text-lg font-bold text-foreground">Add New Branch</h2>
+            <h2 className="text-lg font-bold text-foreground">
+              Add New Branch
+            </h2>
           </div>
-          <button className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" onClick={onClose}>
+          <button
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={onClose}
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-6">
             {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>
+              <div className="rounded-lg bg-destructive/10 p-3 text-sm font-medium text-destructive">
+                {error}
+              </div>
             )}
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch Name</label>
-                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="e.g. Lourdes Branch" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Branch Name
+                </label>
+                <input
+                  className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                  placeholder="e.g. Lourdes Branch"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Location</label>
-                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="e.g. Lourdes, Cagayan de Oro City" type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
+                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Location
+                </label>
+                <input
+                  className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                  placeholder="e.g. Lourdes, Cagayan de Oro City"
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Capacity</label>
-                <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" placeholder="500" type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} />
+                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Capacity
+                </label>
+                <input
+                  className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                  placeholder="500"
+                  type="number"
+                  min={1}
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                />
               </div>
             </div>
           </div>
 
-          <div className="px-6 py-4 bg-muted/20 flex items-center justify-end gap-3 border-t border-border">
-            <button type="button" className="h-11 px-6 rounded-lg text-sm font-bold text-muted-foreground hover:bg-muted transition-all" onClick={onClose} disabled={submitting}>Cancel</button>
-            <button type="submit" className="h-11 px-8 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all flex items-center gap-2" disabled={submitting}>
+          <div className="flex items-center justify-end gap-3 border-t border-border bg-muted/20 px-6 py-4">
+            <button
+              type="button"
+              className="h-11 rounded-lg px-6 text-sm font-bold text-muted-foreground transition-all hover:bg-muted"
+              onClick={onClose}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex h-11 items-center gap-2 rounded-lg bg-primary px-8 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:opacity-95 active:scale-[0.98]"
+              disabled={submitting}
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Add Branch
             </button>

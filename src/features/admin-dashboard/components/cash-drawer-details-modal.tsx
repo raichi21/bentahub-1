@@ -51,7 +51,11 @@ function formatTime(display: string | null | undefined): string {
   return display ?? "—"
 }
 
-export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerDetailsModalProps) {
+export function CashDrawerDetailsModal({
+  isOpen,
+  onClose,
+  session,
+}: CashDrawerDetailsModalProps) {
   const { token } = useAuth()
   const [data, setData] = useState<CashDrawerTransactionsData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -100,65 +104,136 @@ export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerD
   const summary = data?.summary
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 print:hidden">
-      <div className="bg-card w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
+    <div className="fixed inset-0 z-[100] flex animate-in items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in print:hidden">
+      <div className="my-auto flex max-h-[90vh] w-full max-w-3xl animate-in flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-foreground">Cash Drawer Session - {session.displayId}</h2>
-            <span className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-xs border ${
-              session.status === "open"
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                : "bg-muted text-muted-foreground border-border"
-            }`}>
+            <h2 className="text-lg font-bold text-foreground">
+              Cash Drawer Session - {session.displayId}
+            </h2>
+            <span
+              className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${
+                session.status === "open"
+                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "border-border bg-muted text-muted-foreground"
+              }`}
+            >
               {session.statusDisplay}
             </span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={onClose}
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg border border-border">
+        <div className="custom-scrollbar space-y-6 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 gap-6 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
             <div className="space-y-1.5 text-sm">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Session Info</h4>
-              <p className="text-muted-foreground">Status: <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                session.status === "open"
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  : "bg-muted text-muted-foreground"
-              }`}>{session.statusDisplay}</span></p>
-              <p className="text-muted-foreground">Branch: <span className="font-semibold text-foreground">{session.branchName}</span></p>
-              <p className="text-muted-foreground">Cashier: <span className="font-semibold text-foreground">{session.cashierName}</span></p>
-              <p className="text-muted-foreground">Opened: <span className="font-semibold text-foreground">{formatTime(session.openedAtDisplay)}</span></p>
-              <p className="text-muted-foreground">Closed: <span className="font-semibold text-foreground">{formatTime(session.closedAtDisplay)}</span></p>
+              <h4 className="mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Session Info
+              </h4>
+              <p className="text-muted-foreground">
+                Status:{" "}
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${
+                    session.status === "open"
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {session.statusDisplay}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Branch:{" "}
+                <span className="font-semibold text-foreground">
+                  {session.branchName}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Cashier:{" "}
+                <span className="font-semibold text-foreground">
+                  {session.cashierName}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Opened:{" "}
+                <span className="font-semibold text-foreground">
+                  {formatTime(session.openedAtDisplay)}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Closed:{" "}
+                <span className="font-semibold text-foreground">
+                  {formatTime(session.closedAtDisplay)}
+                </span>
+              </p>
             </div>
             <div className="space-y-1.5 text-sm">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Cash Reconciliation</h4>
-              <p className="text-muted-foreground">Starting: <span className="font-semibold text-foreground">{session.startingCashDisplay}</span></p>
-              <p className="text-muted-foreground">Expected Ending: <span className="font-semibold text-foreground">{session.expectedEndingCashDisplay}</span></p>
-              <p className="text-muted-foreground">Actual Ending: <span className="font-semibold text-foreground">{session.actualEndingCashDisplay}</span></p>
-              <p className="text-muted-foreground">Net Impact: <span className="font-semibold text-foreground">{session.netCashImpactDisplay}</span></p>
-              <p className="text-muted-foreground">Difference: <span className="font-semibold text-foreground">{session.diffDisplay}</span></p>
+              <h4 className="mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Cash Reconciliation
+              </h4>
+              <p className="text-muted-foreground">
+                Starting:{" "}
+                <span className="font-semibold text-foreground">
+                  {session.startingCashDisplay}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Expected Ending:{" "}
+                <span className="font-semibold text-foreground">
+                  {session.expectedEndingCashDisplay}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Actual Ending:{" "}
+                <span className="font-semibold text-foreground">
+                  {session.actualEndingCashDisplay}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Net Impact:{" "}
+                <span className="font-semibold text-foreground">
+                  {session.netCashImpactDisplay}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                Difference:{" "}
+                <span className="font-semibold text-foreground">
+                  {session.diffDisplay}
+                </span>
+              </p>
             </div>
           </div>
 
           {session.notes && (
-            <div className="p-4 bg-muted/10 rounded-lg border border-border">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Notes</h4>
-              <p className="text-sm text-foreground whitespace-pre-wrap">{session.notes}</p>
+            <div className="rounded-lg border border-border bg-muted/10 p-4">
+              <h4 className="mb-1 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Notes
+              </h4>
+              <p className="text-sm whitespace-pre-wrap text-foreground">
+                {session.notes}
+              </p>
             </div>
           )}
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <h4 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
                 Transactions{summary ? ` (${summary.transactionCount})` : ""}
               </h4>
               {summary && (
                 <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                  <span>{summary.cashCount} cash • {summary.cashTotalDisplay}</span>
+                  <span>
+                    {summary.cashCount} cash • {summary.cashTotalDisplay}
+                  </span>
                   <span className="text-border">|</span>
-                  <span>{summary.gcashCount} gcash • {summary.gcashTotalDisplay}</span>
+                  <span>
+                    {summary.gcashCount} gcash • {summary.gcashTotalDisplay}
+                  </span>
                 </div>
               )}
             </div>
@@ -171,31 +246,39 @@ export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerD
             )}
 
             {!loading && error && (
-              <div className="p-6 text-center text-sm text-red-500">Error: {error}</div>
+              <div className="p-6 text-center text-sm text-red-500">
+                Error: {error}
+              </div>
             )}
 
             {!loading && !error && data && data.transactions.length === 0 && (
               <div className="flex flex-col items-center gap-3 py-10">
-                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
                   <FileX className="h-7 w-7" />
                 </div>
-                <p className="font-semibold text-foreground">No transactions in this session.</p>
-                <p className="text-sm text-muted-foreground">Cash and GCash transactions will appear here.</p>
+                <p className="font-semibold text-foreground">
+                  No transactions in this session.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Cash and GCash transactions will appear here.
+                </p>
               </div>
             )}
 
             {!loading && !error && data && data.transactions.length > 0 && (
-              <div className="border border-border rounded-lg overflow-hidden bg-card">
+              <div className="overflow-hidden rounded-lg border border-border bg-card">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] text-left border-collapse text-sm">
-                    <thead className="bg-muted/10 border-b border-border">
-                      <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        <th className="px-3 sm:px-4 py-3 w-8"></th>
-                        <th className="px-3 sm:px-4 py-3">Transaction</th>
-                        <th className="px-3 sm:px-4 py-3">Total</th>
-                        <th className="px-3 sm:px-4 py-3">Method</th>
-                        <th className="px-3 sm:px-4 py-3 text-right">Amount Paid</th>
-                        <th className="px-3 sm:px-4 py-3 text-right">Change</th>
+                  <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                    <thead className="border-b border-border bg-muted/10">
+                      <tr className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                        <th className="w-8 px-3 py-3 sm:px-4"></th>
+                        <th className="px-3 py-3 sm:px-4">Transaction</th>
+                        <th className="px-3 py-3 sm:px-4">Total</th>
+                        <th className="px-3 py-3 sm:px-4">Method</th>
+                        <th className="px-3 py-3 text-right sm:px-4">
+                          Amount Paid
+                        </th>
+                        <th className="px-3 py-3 text-right sm:px-4">Change</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30 text-foreground">
@@ -205,59 +288,106 @@ export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerD
                           <Fragment key={txn.id}>
                             <tr
                               onClick={() => toggleExpand(txn.id)}
-                              className="hover:bg-muted/30 cursor-pointer transition-colors"
+                              className="cursor-pointer transition-colors hover:bg-muted/30"
                             >
-                              <td className="px-3 sm:px-4 py-3">
-                                {isOpenRow
-                                  ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                  : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                              <td className="px-3 py-3 sm:px-4">
+                                {isOpenRow ? (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                )}
                               </td>
-                              <td className="px-3 sm:px-4 py-3">
-                                <span className="font-mono font-medium text-foreground">{txn.displayId}</span>
-                                <span className="block text-xs text-muted-foreground">{txn.createdAtDisplay}</span>
+                              <td className="px-3 py-3 sm:px-4">
+                                <span className="font-mono font-medium text-foreground">
+                                  {txn.displayId}
+                                </span>
+                                <span className="block text-xs text-muted-foreground">
+                                  {txn.createdAtDisplay}
+                                </span>
                               </td>
-                              <td className="px-3 sm:px-4 py-3 font-medium whitespace-nowrap">{txn.totalAmountDisplay}</td>
-                              <td className="px-3 sm:px-4 py-3">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                  txn.paymentMethod === "gcash"
-                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                }`}>
+                              <td className="px-3 py-3 font-medium whitespace-nowrap sm:px-4">
+                                {txn.totalAmountDisplay}
+                              </td>
+                              <td className="px-3 py-3 sm:px-4">
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black tracking-widest uppercase ${
+                                    txn.paymentMethod === "gcash"
+                                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  }`}
+                                >
                                   {txn.paymentMethodDisplay}
                                 </span>
                               </td>
-                              <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">{txn.amountPaidDisplay}</td>
-                              <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">{txn.changeDisplay}</td>
+                              <td className="px-3 py-3 text-right font-medium whitespace-nowrap sm:px-4">
+                                {txn.amountPaidDisplay}
+                              </td>
+                              <td className="px-3 py-3 text-right font-medium whitespace-nowrap sm:px-4">
+                                {txn.changeDisplay}
+                              </td>
                             </tr>
                             {isOpenRow && (
                               <tr className="bg-muted/5">
-                                <td className="px-3 sm:px-4 py-3" colSpan={6}>
+                                <td className="px-3 py-3 sm:px-4" colSpan={6}>
                                   <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[360px] text-left border-collapse text-sm">
+                                    <table className="w-full min-w-[360px] border-collapse text-left text-sm">
                                       <thead>
-                                        <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                          <th className="px-2 sm:px-4 py-2">Product</th>
-                                          <th className="px-2 sm:px-4 py-2 text-center">Qty</th>
-                                          <th className="px-2 sm:px-4 py-2 text-right">Price</th>
-                                          <th className="px-2 sm:px-4 py-2 text-right">Subtotal</th>
+                                        <tr className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                                          <th className="px-2 py-2 sm:px-4">
+                                            Product
+                                          </th>
+                                          <th className="px-2 py-2 text-center sm:px-4">
+                                            Qty
+                                          </th>
+                                          <th className="px-2 py-2 text-right sm:px-4">
+                                            Price
+                                          </th>
+                                          <th className="px-2 py-2 text-right sm:px-4">
+                                            Subtotal
+                                          </th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-border/30">
                                         {txn.items.length === 0 ? (
-                                          <tr><td colSpan={4} className="px-2 sm:px-4 py-3 text-muted-foreground">No items available.</td></tr>
+                                          <tr>
+                                            <td
+                                              colSpan={4}
+                                              className="px-2 py-3 text-muted-foreground sm:px-4"
+                                            >
+                                              No items available.
+                                            </td>
+                                          </tr>
                                         ) : (
                                           txn.items.map((item, idx) => (
                                             <tr key={idx}>
-                                              <td className="px-2 sm:px-4 py-2 truncate max-w-[160px] sm:max-w-none" title={item.productName}>{item.productName}</td>
-                                              <td className="px-2 sm:px-4 py-2 text-center font-medium whitespace-nowrap">{item.quantity}</td>
-                                              <td className="px-2 sm:px-4 py-2 text-right font-medium whitespace-nowrap">₱{item.price.toFixed(2)}</td>
-                                              <td className="px-2 sm:px-4 py-2 text-right font-medium whitespace-nowrap">₱{item.subtotal.toFixed(2)}</td>
+                                              <td
+                                                className="max-w-[160px] truncate px-2 py-2 sm:max-w-none sm:px-4"
+                                                title={item.productName}
+                                              >
+                                                {item.productName}
+                                              </td>
+                                              <td className="px-2 py-2 text-center font-medium whitespace-nowrap sm:px-4">
+                                                {item.quantity}
+                                              </td>
+                                              <td className="px-2 py-2 text-right font-medium whitespace-nowrap sm:px-4">
+                                                ₱{item.price.toFixed(2)}
+                                              </td>
+                                              <td className="px-2 py-2 text-right font-medium whitespace-nowrap sm:px-4">
+                                                ₱{item.subtotal.toFixed(2)}
+                                              </td>
                                             </tr>
                                           ))
                                         )}
                                         <tr className="font-bold text-foreground">
-                                          <td className="px-2 sm:px-4 py-2 text-right" colSpan={3}>Total</td>
-                                          <td className="px-2 sm:px-4 py-2 text-right text-primary whitespace-nowrap">₱{txn.totalAmount.toFixed(2)}</td>
+                                          <td
+                                            className="px-2 py-2 text-right sm:px-4"
+                                            colSpan={3}
+                                          >
+                                            Total
+                                          </td>
+                                          <td className="px-2 py-2 text-right whitespace-nowrap text-primary sm:px-4">
+                                            ₱{txn.totalAmount.toFixed(2)}
+                                          </td>
                                         </tr>
                                       </tbody>
                                     </table>
@@ -276,8 +406,13 @@ export function CashDrawerDetailsModal({ isOpen, onClose, session }: CashDrawerD
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
-          <button onClick={onClose} className="h-11 px-6 border border-border text-foreground hover:bg-muted rounded-lg text-sm font-bold transition-all">Close</button>
+        <div className="flex justify-end border-t border-border bg-muted/20 px-6 py-4">
+          <button
+            onClick={onClose}
+            className="h-11 rounded-lg border border-border px-6 text-sm font-bold text-foreground transition-all hover:bg-muted"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

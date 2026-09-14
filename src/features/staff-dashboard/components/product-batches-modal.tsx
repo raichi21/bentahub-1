@@ -46,8 +46,8 @@ export function ProductBatchesModal({
   const activeBatches = batches.filter((b) => b.quantity > 0)
 
   return (
-    <div className="fixed inset-0 z-[100] flex animate-in items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
-      <div className="flex max-h-[90vh] w-full max-w-2xl animate-in flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+    <div className="fixed inset-0 z-[100] flex animate-in items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="my-auto flex max-h-[90vh] w-full max-w-2xl animate-in flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
         <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
           <h2 className="text-lg font-bold text-foreground">Product Batches</h2>
           <button

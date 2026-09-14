@@ -57,8 +57,8 @@ export function DeleteCatalogItemModal({
   const label = itemKind === "category" ? "category" : "unit"
 
   return (
-    <div className="fixed inset-0 z-[100] flex animate-in items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
-      <div className="w-full max-w-md animate-in overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+    <div className="fixed inset-0 z-[100] flex animate-in items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="my-auto w-full max-w-md animate-in overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
         <div className="flex flex-col items-center p-6 text-center">
           <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <Trash2 className="h-8 w-8" />

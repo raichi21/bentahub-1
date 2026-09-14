@@ -9,78 +9,131 @@ interface TransactionHistoryModalProps {
   transaction: HistoryTransactionRowData | null
 }
 
-export function TransactionHistoryModal({ isOpen, onClose, transaction }: TransactionHistoryModalProps) {
+export function TransactionHistoryModal({
+  isOpen,
+  onClose,
+  transaction,
+}: TransactionHistoryModalProps) {
   if (!isOpen || !transaction) return null
 
   const formatPrice = (value: number) => `₱${value.toFixed(2)}`
 
   const STATUS_STYLES: Record<string, string> = {
-    completed: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
+    completed:
+      "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
     pending: "bg-amber-500/10 text-amber-600 border border-amber-500/20",
-    cancelled: "bg-destructive/10 text-destructive border border-destructive/20",
+    cancelled:
+      "bg-destructive/10 text-destructive border border-destructive/20",
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
-          <h2 className="text-lg font-bold text-foreground">Transaction Details - {transaction.displayId}</h2>
+    <div className="fixed inset-0 z-[100] flex animate-in items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="my-auto flex max-h-[90vh] w-full max-w-2xl animate-in flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
+          <h2 className="text-lg font-bold text-foreground">
+            Transaction Details - {transaction.displayId}
+          </h2>
           <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-xs border ${STATUS_STYLES[transaction.status] || ""}`}>
+            <span
+              className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${STATUS_STYLES[transaction.status] || ""}`}
+            >
               {transaction.statusDisplay}
             </span>
-            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              onClick={onClose}
+              className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg border border-border">
+        <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 gap-6 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Transaction Info</h4>
+              <h4 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Transaction Info
+              </h4>
               <div className="space-y-1 text-sm">
-                <p className="text-muted-foreground">Date &amp; Time: <span className="font-semibold text-foreground">{transaction.dateDisplay}</span></p>
-                <p className="text-muted-foreground">Branch: <span className="font-semibold text-foreground">{transaction.branchName}</span></p>
+                <p className="text-muted-foreground">
+                  Date &amp; Time:{" "}
+                  <span className="font-semibold text-foreground">
+                    {transaction.dateDisplay}
+                  </span>
+                </p>
+                <p className="text-muted-foreground">
+                  Branch:{" "}
+                  <span className="font-semibold text-foreground">
+                    {transaction.branchName}
+                  </span>
+                </p>
                 <div className="flex items-center gap-2">
                   <p className="text-muted-foreground">Payment Method:</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${transaction.paymentMethod === "cash" ? "bg-muted text-muted-foreground" : "bg-accent text-primary"}`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${transaction.paymentMethod === "cash" ? "bg-muted text-muted-foreground" : "bg-accent text-primary"}`}
+                  >
                     {transaction.paymentMethodDisplay}
                   </span>
                 </div>
               </div>
             </div>
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment Info</h4>
+              <h4 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Payment Info
+              </h4>
               <div className="space-y-1 text-sm">
-                <p className="text-muted-foreground">Status: <span className="font-semibold text-foreground">{transaction.statusDisplay}</span></p>
-                <p className="text-muted-foreground">Total Amount: <span className="text-base font-bold text-primary">{transaction.totalAmountDisplay}</span></p>
+                <p className="text-muted-foreground">
+                  Status:{" "}
+                  <span className="font-semibold text-foreground">
+                    {transaction.statusDisplay}
+                  </span>
+                </p>
+                <p className="text-muted-foreground">
+                  Total Amount:{" "}
+                  <span className="text-base font-bold text-primary">
+                    {transaction.totalAmountDisplay}
+                  </span>
+                </p>
               </div>
             </div>
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-foreground mb-3">Items</h3>
+            <h3 className="mb-3 text-sm font-bold text-foreground">Items</h3>
             {transaction.items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No item details available.</p>
+              <p className="text-sm text-muted-foreground">
+                No item details available.
+              </p>
             ) : (
-              <div className="border border-border rounded-lg overflow-hidden">
+              <div className="overflow-hidden rounded-lg border border-border">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[360px] text-left border-collapse text-sm">
-                    <thead className="bg-muted/10 border-b border-border">
-                      <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        <th className="px-3 sm:px-4 py-3 w-[50%]">Item</th>
-                        <th className="px-3 sm:px-4 py-3 text-center w-[15%]">Qty</th>
-                        <th className="px-3 sm:px-4 py-3 text-right w-[30%]">Price</th>
+                  <table className="w-full min-w-[360px] border-collapse text-left text-sm">
+                    <thead className="border-b border-border bg-muted/10">
+                      <tr className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                        <th className="w-[50%] px-3 py-3 sm:px-4">Item</th>
+                        <th className="w-[15%] px-3 py-3 text-center sm:px-4">
+                          Qty
+                        </th>
+                        <th className="w-[30%] px-3 py-3 text-right sm:px-4">
+                          Price
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30 text-foreground">
                       {transaction.items.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="px-3 sm:px-4 py-3 truncate max-w-[200px] sm:max-w-none" title={item.productName}>{item.productName}</td>
-                          <td className="px-3 sm:px-4 py-3 text-center font-medium whitespace-nowrap">{item.quantity}</td>
-                          <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">{formatPrice(item.price)}</td>
+                          <td
+                            className="max-w-[200px] truncate px-3 py-3 sm:max-w-none sm:px-4"
+                            title={item.productName}
+                          >
+                            {item.productName}
+                          </td>
+                          <td className="px-3 py-3 text-center font-medium whitespace-nowrap sm:px-4">
+                            {item.quantity}
+                          </td>
+                          <td className="px-3 py-3 text-right font-medium whitespace-nowrap sm:px-4">
+                            {formatPrice(item.price)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -91,8 +144,11 @@ export function TransactionHistoryModal({ isOpen, onClose, transaction }: Transa
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
-          <button onClick={onClose} className="h-11 px-6 border border-border text-foreground hover:bg-muted rounded-lg text-sm font-bold transition-all">
+        <div className="flex justify-end border-t border-border bg-muted/20 px-6 py-4">
+          <button
+            onClick={onClose}
+            className="h-11 rounded-lg border border-border px-6 text-sm font-bold text-foreground transition-all hover:bg-muted"
+          >
             Close
           </button>
         </div>

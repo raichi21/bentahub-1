@@ -11,7 +11,12 @@ interface ConfirmPickupModalProps {
   onConfirm: (orderId: string) => Promise<boolean>
 }
 
-export function ConfirmPickupModal({ isOpen, onClose, order, onConfirm }: ConfirmPickupModalProps) {
+export function ConfirmPickupModal({
+  isOpen,
+  onClose,
+  order,
+  onConfirm,
+}: ConfirmPickupModalProps) {
   const [idVerified, setIdVerified] = useState(false)
   const [itemsChecked, setItemsChecked] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -43,55 +48,87 @@ export function ConfirmPickupModal({ isOpen, onClose, order, onConfirm }: Confir
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
-          <h2 className="text-lg font-bold text-foreground">Confirm Order Pickup - {order.displayId}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+    <div className="fixed inset-0 z-[100] flex animate-in items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="my-auto flex max-h-[90vh] w-full max-w-2xl animate-in flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
+          <h2 className="text-lg font-bold text-foreground">
+            Confirm Order Pickup - {order.displayId}
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg border border-border">
+        <div className="custom-scrollbar space-y-6 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Customer</p>
-              <p className="text-sm font-bold text-foreground">{order.customerName}</p>
-              <p className="text-xs text-muted-foreground">{order.customerEmail}</p>
+              <p className="mb-1 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                Customer
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {order.customerName}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {order.customerEmail}
+              </p>
             </div>
             <div>
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Branch</p>
-              <p className="text-sm font-bold text-foreground">{order.branch}</p>
+              <p className="mb-1 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                Branch
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {order.branch}
+              </p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">Order Summary</h3>
-            <div className="border border-border rounded-lg overflow-hidden bg-card">
+            <h3 className="text-xs font-bold tracking-widest text-foreground uppercase">
+              Order Summary
+            </h3>
+            <div className="overflow-hidden rounded-lg border border-border bg-card">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[360px] text-left border-collapse">
+                <table className="w-full min-w-[360px] border-collapse text-left">
                   <thead>
-                    <tr className="bg-muted/10 text-[11px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
-                      <th className="px-3 sm:px-4 py-3">Item</th>
-                      <th className="px-3 sm:px-4 py-3 text-center">Qty</th>
-                      <th className="px-3 sm:px-4 py-3 text-right">Price</th>
-                      <th className="px-3 sm:px-4 py-3 text-right">Subtotal</th>
+                    <tr className="border-b border-border bg-muted/10 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                      <th className="px-3 py-3 sm:px-4">Item</th>
+                      <th className="px-3 py-3 text-center sm:px-4">Qty</th>
+                      <th className="px-3 py-3 text-right sm:px-4">Price</th>
+                      <th className="px-3 py-3 text-right sm:px-4">Subtotal</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
                     {order.items.map((item, idx) => (
                       <tr key={idx} className="text-sm text-foreground">
-                        <td className="px-3 sm:px-4 py-3 truncate max-w-[160px] sm:max-w-none" title={item.productName}>{item.productName}</td>
-                        <td className="px-3 sm:px-4 py-3 text-center font-medium whitespace-nowrap">{item.quantity}</td>
-                        <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">₱{item.price.toFixed(2)}</td>
-                        <td className="px-3 sm:px-4 py-3 text-right font-medium whitespace-nowrap">₱{item.subtotal.toFixed(2)}</td>
+                        <td
+                          className="max-w-[160px] truncate px-3 py-3 sm:max-w-none sm:px-4"
+                          title={item.productName}
+                        >
+                          {item.productName}
+                        </td>
+                        <td className="px-3 py-3 text-center font-medium whitespace-nowrap sm:px-4">
+                          {item.quantity}
+                        </td>
+                        <td className="px-3 py-3 text-right font-medium whitespace-nowrap sm:px-4">
+                          ₱{item.price.toFixed(2)}
+                        </td>
+                        <td className="px-3 py-3 text-right font-medium whitespace-nowrap sm:px-4">
+                          ₱{item.subtotal.toFixed(2)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-muted/10 font-bold text-foreground border-t border-border">
-                      <td className="px-3 sm:px-4 py-3" colSpan={3}>Total Amount</td>
-                      <td className="px-3 sm:px-4 py-3 text-right text-primary whitespace-nowrap">₱{total.toFixed(2)}</td>
+                    <tr className="border-t border-border bg-muted/10 font-bold text-foreground">
+                      <td className="px-3 py-3 sm:px-4" colSpan={3}>
+                        Total Amount
+                      </td>
+                      <td className="px-3 py-3 text-right whitespace-nowrap text-primary sm:px-4">
+                        ₱{total.toFixed(2)}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -100,42 +137,55 @@ export function ConfirmPickupModal({ isOpen, onClose, order, onConfirm }: Confir
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">Verification Checklist</h3>
+            <h3 className="text-xs font-bold tracking-widest text-foreground uppercase">
+              Verification Checklist
+            </h3>
             {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>
+              <div className="rounded-lg bg-destructive/10 p-3 text-sm font-medium text-destructive">
+                {error}
+              </div>
             )}
             <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-3 p-4 border border-border rounded-lg hover:bg-muted/20 transition-colors cursor-pointer select-none">
+              <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-4 transition-colors select-none hover:bg-muted/20">
                 <input
                   type="checkbox"
                   checked={idVerified}
                   onChange={(e) => setIdVerified(e.target.checked)}
-                  className="w-5 h-5 rounded border-border text-primary focus:ring-primary/20"
+                  className="h-5 w-5 rounded border-border text-primary focus:ring-primary/20"
                 />
-                <span className="text-sm text-foreground font-medium">Identity Verified (Customer ID Checked)</span>
+                <span className="text-sm font-medium text-foreground">
+                  Identity Verified (Customer ID Checked)
+                </span>
               </label>
-              <label className="flex items-center gap-3 p-4 border border-border rounded-lg hover:bg-muted/20 transition-colors cursor-pointer select-none">
+              <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-4 transition-colors select-none hover:bg-muted/20">
                 <input
                   type="checkbox"
                   checked={itemsChecked}
                   onChange={(e) => setItemsChecked(e.target.checked)}
-                  className="w-5 h-5 rounded border-border text-primary focus:ring-primary/20"
+                  className="h-5 w-5 rounded border-border text-primary focus:ring-primary/20"
                 />
-                <span className="text-sm text-foreground font-medium">Items Checked (Order contents match summary)</span>
+                <span className="text-sm font-medium text-foreground">
+                  Items Checked (Order contents match summary)
+                </span>
               </label>
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="h-11 px-6 border border-border text-muted-foreground hover:bg-muted rounded-lg text-sm font-bold transition-all" disabled={submitting}>
+        <div className="flex justify-end gap-3 border-t border-border bg-muted/20 px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-11 rounded-lg border border-border px-6 text-sm font-bold text-muted-foreground transition-all hover:bg-muted"
+            disabled={submitting}
+          >
             Cancel
           </button>
           <button
             type="button"
             disabled={!isFormValid || submitting}
             onClick={handleConfirm}
-            className="h-11 px-6 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/95 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center gap-2"
+            className="flex h-11 items-center gap-2 rounded-lg bg-primary px-6 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/95 disabled:pointer-events-none disabled:opacity-40"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Confirm &amp; Complete Pickup
