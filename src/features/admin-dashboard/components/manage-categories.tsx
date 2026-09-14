@@ -1,8 +1,18 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Pencil, Search, Loader2, Tags, X } from "lucide-react"
+import {
+  Plus,
+  Pencil,
+  Search,
+  Loader2,
+  Tags,
+  X,
+  RotateCcw,
+  Trash2,
+} from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { DeleteCatalogItemModal } from "./delete-catalog-item-modal"
 
 interface CategoryRow {
   id: string
@@ -10,6 +20,7 @@ interface CategoryRow {
   code: string
   description: string | null
   isActive: boolean
+  productCount?: number
 }
 
 interface ManageCategoriesProps {
@@ -23,9 +34,11 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
   const [search, setSearch] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<CategoryRow | null>(null)
+  const [deleting, setDeleting] = useState<CategoryRow | null>(null)
   const [name, setName] = useState("")
   const [code, setCode] = useState("")
   const [description, setDescription] = useState("")
+  const [isActive, setIsActive] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -62,6 +75,7 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
     setName("")
     setCode("")
     setDescription("")
+    setIsActive(true)
     setError("")
     setShowForm(true)
   }
@@ -71,6 +85,7 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
     setName(item.name)
     setCode(item.code)
     setDescription(item.description || "")
+    setIsActive(item.isActive)
     setError("")
     setShowForm(true)
   }
@@ -91,7 +106,12 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ name, code, description }),
+          body: JSON.stringify({
+            name,
+            code,
+            description,
+            ...(editing ? { isActive } : {}),
+          }),
         }
       )
       const data = await res.json()
@@ -108,24 +128,31 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
     }
   }
 
-  const handleDeactivate = async (item: CategoryRow) => {
+  const setActive = async (item: CategoryRow, active: boolean) => {
     if (!token) return
     setError("")
     try {
       const res = await fetch(`/api/admin/categories?id=${item.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isActive: active }),
       })
       const data = await res.json()
       if (data.success) {
         fetchItems()
       } else {
-        setError(data.message || "Failed to deactivate category")
+        setError(data.message || "Failed to update category")
       }
     } catch {
       setError("An error occurred")
     }
   }
+
+  const handleDeactivate = (item: CategoryRow) => setActive(item, false)
+  const handleActivate = (item: CategoryRow) => setActive(item, true)
 
   const filtered = items.filter(
     (c) =>
@@ -255,7 +282,7 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
-                        {c.isActive && (
+                        {c.isActive ? (
                           <button
                             onClick={() => handleDeactivate(c)}
                             className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
@@ -263,7 +290,22 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
                           >
                             <X className="h-4 w-4" />
                           </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivate(c)}
+                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400"
+                            aria-label="Reactivate category"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
                         )}
+                        <button
+                          onClick={() => setDeleting(c)}
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          aria-label="Delete category"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   )}
@@ -335,6 +377,29 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
+                {editing && (
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Category Status
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {isActive
+                          ? "Visible for staff when adding products"
+                          : "Hidden from staff product selection"}
+                      </p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={isActive}
+                        onChange={(e) => setIsActive(e.target.checked)}
+                      />
+                      <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
+                    </label>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-end gap-3 border-t border-border bg-muted/20 px-6 py-4">
                 <button
@@ -358,6 +423,20 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
           </div>
         </div>
       )}
+
+      <DeleteCatalogItemModal
+        isOpen={deleting !== null}
+        onClose={() => setDeleting(null)}
+        itemId={deleting?.id || ""}
+        itemName={deleting?.name || ""}
+        itemKind="category"
+        productCount={deleting?.productCount ?? 0}
+        token={token}
+        onSuccess={() => {
+          setDeleting(null)
+          fetchItems()
+        }}
+      />
     </section>
   )
 }

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { extractToken, checkRoleAuth, requirePermission, generateId } from "@/lib/auth-utils"
+import {
+  extractToken,
+  checkRoleAuth,
+  requirePermission,
+  generateId,
+} from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { unitTypes } from "@/servers/schemas"
 import { eq, desc, sql } from "drizzle-orm"
@@ -26,11 +31,28 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       orderBy: desc(unitTypes.createdAt),
     })
 
-    return NextResponse.json({ success: true, data: list }, { status: 200 })
+    const usageRows = await db.execute(
+      sql`SELECT unit, COUNT(*)::int AS count FROM products GROUP BY unit`
+    )
+    const countMap = new Map(
+      Array.isArray(usageRows)
+        ? usageRows.map((r) => [r.unit, Number(r.count)])
+        : []
+    )
+
+    const data = list.map((u) => ({
+      ...u,
+      productCount: countMap.get(u.name) ?? 0,
+    }))
+
+    return NextResponse.json({ success: true, data }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Get units error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -44,7 +66,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
     const { name, description } = parsed.data
@@ -54,10 +79,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       where: sql`lower(${unitTypes.name}) = lower(${normalizedName})`,
     })
     if (nameClash) {
-      return NextResponse.json({ success: false, message: "A unit with this name already exists" }, { status: 409 })
+      return NextResponse.json(
+        { success: false, message: "A unit with this name already exists" },
+        { status: 409 }
+      )
     }
 
-    const [created] = await db.insert(unitTypes)
+    const [created] = await db
+      .insert(unitTypes)
       .values({
         id: generateId(),
         name: normalizedName,
@@ -66,11 +95,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning()
 
-    return NextResponse.json({ success: true, message: "Unit created successfully", data: created }, { status: 201 })
+    return NextResponse.json(
+      { success: true, message: "Unit created successfully", data: created },
+      { status: 201 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Create unit error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -82,7 +117,10 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url)
     const id = url.searchParams.get("id")
     if (!id) {
-      return NextResponse.json({ success: false, message: "Unit id is required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Unit id is required" },
+        { status: 400 }
+      )
     }
 
     const body = await request.json()
@@ -90,12 +128,20 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
-    const existing = await db.query.unitTypes.findFirst({ where: eq(unitTypes.id, id) })
+    const existing = await db.query.unitTypes.findFirst({
+      where: eq(unitTypes.id, id),
+    })
     if (!existing) {
-      return NextResponse.json({ success: false, message: "Unit not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Unit not found" },
+        { status: 404 }
+      )
     }
 
     const updateData: Partial<typeof unitTypes.$inferInsert> = {}
@@ -105,23 +151,35 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         where: sql`lower(${unitTypes.name}) = lower(${normalizedName})`,
       })
       if (nameClash && nameClash.id !== id) {
-        return NextResponse.json({ success: false, message: "A unit with this name already exists" }, { status: 409 })
+        return NextResponse.json(
+          { success: false, message: "A unit with this name already exists" },
+          { status: 409 }
+        )
       }
       updateData.name = normalizedName
     }
-    if (parsed.data.description !== undefined) updateData.description = parsed.data.description
-    if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive
+    if (parsed.data.description !== undefined)
+      updateData.description = parsed.data.description
+    if (parsed.data.isActive !== undefined)
+      updateData.isActive = parsed.data.isActive
 
-    const [updated] = await db.update(unitTypes)
+    const [updated] = await db
+      .update(unitTypes)
       .set(updateData)
       .where(eq(unitTypes.id, id))
       .returning()
 
-    return NextResponse.json({ success: true, message: "Unit updated successfully", data: updated }, { status: 200 })
+    return NextResponse.json(
+      { success: true, message: "Unit updated successfully", data: updated },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Update unit error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -133,23 +191,36 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url)
     const id = url.searchParams.get("id")
     if (!id) {
-      return NextResponse.json({ success: false, message: "Unit id is required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Unit id is required" },
+        { status: 400 }
+      )
     }
 
-    const existing = await db.query.unitTypes.findFirst({ where: eq(unitTypes.id, id) })
+    const existing = await db.query.unitTypes.findFirst({
+      where: eq(unitTypes.id, id),
+    })
     if (!existing) {
-      return NextResponse.json({ success: false, message: "Unit not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Unit not found" },
+        { status: 404 }
+      )
     }
 
-    // Soft delete — units may still be referenced by existing products.
-    await db.update(unitTypes)
-      .set({ isActive: false })
-      .where(eq(unitTypes.id, id))
+    // Permanent delete. Soft-hide/unhide (deactivate/reactivate) is done via
+    // PUT { isActive }.
+    await db.delete(unitTypes).where(eq(unitTypes.id, id))
 
-    return NextResponse.json({ success: true, message: "Unit deactivated successfully" })
+    return NextResponse.json({
+      success: true,
+      message: "Unit deleted successfully",
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Delete unit error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

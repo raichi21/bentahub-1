@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { extractToken, checkRoleAuth, requirePermission, generateId } from "@/lib/auth-utils"
+import {
+  extractToken,
+  checkRoleAuth,
+  requirePermission,
+  generateId,
+} from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { categories } from "@/servers/schemas"
 import { eq, desc, sql } from "drizzle-orm"
@@ -37,11 +42,28 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       orderBy: desc(categories.createdAt),
     })
 
-    return NextResponse.json({ success: true, data: list }, { status: 200 })
+    const usageRows = await db.execute(
+      sql`SELECT category, COUNT(*)::int AS count FROM products GROUP BY category`
+    )
+    const countMap = new Map(
+      Array.isArray(usageRows)
+        ? usageRows.map((r) => [r.category, Number(r.count)])
+        : []
+    )
+
+    const data = list.map((c) => ({
+      ...c,
+      productCount: countMap.get(c.name) ?? 0,
+    }))
+
+    return NextResponse.json({ success: true, data }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Get categories error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -55,7 +77,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
     const { name, code, description } = parsed.data
@@ -66,17 +91,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       where: sql`lower(${categories.name}) = lower(${normalizedName})`,
     })
     if (nameClash) {
-      return NextResponse.json({ success: false, message: "A category with this name already exists" }, { status: 409 })
+      return NextResponse.json(
+        { success: false, message: "A category with this name already exists" },
+        { status: 409 }
+      )
     }
 
     const codeClash = await db.query.categories.findFirst({
       where: sql`lower(${categories.code}) = lower(${normalizedCode})`,
     })
     if (codeClash) {
-      return NextResponse.json({ success: false, message: "A category with this code already exists" }, { status: 409 })
+      return NextResponse.json(
+        { success: false, message: "A category with this code already exists" },
+        { status: 409 }
+      )
     }
 
-    const [created] = await db.insert(categories)
+    const [created] = await db
+      .insert(categories)
       .values({
         id: generateId(),
         name: normalizedName,
@@ -86,11 +118,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning()
 
-    return NextResponse.json({ success: true, message: "Category created successfully", data: created }, { status: 201 })
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Category created successfully",
+        data: created,
+      },
+      { status: 201 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Create category error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -102,7 +144,10 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url)
     const id = url.searchParams.get("id")
     if (!id) {
-      return NextResponse.json({ success: false, message: "Category id is required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Category id is required" },
+        { status: 400 }
+      )
     }
 
     const body = await request.json()
@@ -110,12 +155,20 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
-    const existing = await db.query.categories.findFirst({ where: eq(categories.id, id) })
+    const existing = await db.query.categories.findFirst({
+      where: eq(categories.id, id),
+    })
     if (!existing) {
-      return NextResponse.json({ success: false, message: "Category not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Category not found" },
+        { status: 404 }
+      )
     }
 
     const updateData: Partial<typeof categories.$inferInsert> = {}
@@ -125,7 +178,13 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         where: sql`lower(${categories.name}) = lower(${normalizedName})`,
       })
       if (nameClash && nameClash.id !== id) {
-        return NextResponse.json({ success: false, message: "A category with this name already exists" }, { status: 409 })
+        return NextResponse.json(
+          {
+            success: false,
+            message: "A category with this name already exists",
+          },
+          { status: 409 }
+        )
       }
       updateData.name = normalizedName
     }
@@ -135,23 +194,42 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         where: sql`lower(${categories.code}) = lower(${normalizedCode})`,
       })
       if (codeClash && codeClash.id !== id) {
-        return NextResponse.json({ success: false, message: "A category with this code already exists" }, { status: 409 })
+        return NextResponse.json(
+          {
+            success: false,
+            message: "A category with this code already exists",
+          },
+          { status: 409 }
+        )
       }
       updateData.code = normalizedCode
     }
-    if (parsed.data.description !== undefined) updateData.description = parsed.data.description
-    if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive
+    if (parsed.data.description !== undefined)
+      updateData.description = parsed.data.description
+    if (parsed.data.isActive !== undefined)
+      updateData.isActive = parsed.data.isActive
 
-    const [updated] = await db.update(categories)
+    const [updated] = await db
+      .update(categories)
       .set(updateData)
       .where(eq(categories.id, id))
       .returning()
 
-    return NextResponse.json({ success: true, message: "Category updated successfully", data: updated }, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Category updated successfully",
+        data: updated,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Update category error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -163,23 +241,36 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url)
     const id = url.searchParams.get("id")
     if (!id) {
-      return NextResponse.json({ success: false, message: "Category id is required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Category id is required" },
+        { status: 400 }
+      )
     }
 
-    const existing = await db.query.categories.findFirst({ where: eq(categories.id, id) })
+    const existing = await db.query.categories.findFirst({
+      where: eq(categories.id, id),
+    })
     if (!existing) {
-      return NextResponse.json({ success: false, message: "Category not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Category not found" },
+        { status: 404 }
+      )
     }
 
-    // Soft delete — categories may still be referenced by existing products.
-    await db.update(categories)
-      .set({ isActive: false })
-      .where(eq(categories.id, id))
+    // Permanent delete. Soft-hide/unhide (deactivate/reactivate) is done via
+    // PUT { isActive }.
+    await db.delete(categories).where(eq(categories.id, id))
 
-    return NextResponse.json({ success: true, message: "Category deactivated successfully" })
+    return NextResponse.json({
+      success: true,
+      message: "Category deleted successfully",
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Delete category error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

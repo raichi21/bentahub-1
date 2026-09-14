@@ -1,14 +1,25 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Pencil, Search, Loader2, Ruler, X } from "lucide-react"
+import {
+  Plus,
+  Pencil,
+  Search,
+  Loader2,
+  Ruler,
+  X,
+  RotateCcw,
+  Trash2,
+} from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { DeleteCatalogItemModal } from "./delete-catalog-item-modal"
 
 interface UnitRow {
   id: string
   name: string
   description: string | null
   isActive: boolean
+  productCount?: number
 }
 
 interface ManageUnitsProps {
@@ -22,8 +33,10 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
   const [search, setSearch] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<UnitRow | null>(null)
+  const [deleting, setDeleting] = useState<UnitRow | null>(null)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
+  const [isActive, setIsActive] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -59,6 +72,7 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
     setEditing(null)
     setName("")
     setDescription("")
+    setIsActive(true)
     setError("")
     setShowForm(true)
   }
@@ -67,6 +81,7 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
     setEditing(item)
     setName(item.name)
     setDescription(item.description || "")
+    setIsActive(item.isActive)
     setError("")
     setShowForm(true)
   }
@@ -85,7 +100,11 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ name, description }),
+          body: JSON.stringify({
+            name,
+            description,
+            ...(editing ? { isActive } : {}),
+          }),
         }
       )
       const data = await res.json()
@@ -102,24 +121,31 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
     }
   }
 
-  const handleDeactivate = async (item: UnitRow) => {
+  const setActive = async (item: UnitRow, active: boolean) => {
     if (!token) return
     setError("")
     try {
       const res = await fetch(`/api/admin/units?id=${item.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isActive: active }),
       })
       const data = await res.json()
       if (data.success) {
         fetchItems()
       } else {
-        setError(data.message || "Failed to deactivate unit")
+        setError(data.message || "Failed to update unit")
       }
     } catch {
       setError("An error occurred")
     }
   }
+
+  const handleDeactivate = (item: UnitRow) => setActive(item, false)
+  const handleActivate = (item: UnitRow) => setActive(item, true)
 
   const filtered = items.filter((u) =>
     u.name.toLowerCase().includes(search.toLowerCase())
@@ -241,7 +267,7 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
-                        {u.isActive && (
+                        {u.isActive ? (
                           <button
                             onClick={() => handleDeactivate(u)}
                             className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
@@ -249,7 +275,22 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
                           >
                             <X className="h-4 w-4" />
                           </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivate(u)}
+                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400"
+                            aria-label="Reactivate unit"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
                         )}
+                        <button
+                          onClick={() => setDeleting(u)}
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          aria-label="Delete unit"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   )}
@@ -305,6 +346,29 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
+                {editing && (
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Unit Status
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {isActive
+                          ? "Visible for staff when adding products"
+                          : "Hidden from staff product selection"}
+                      </p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={isActive}
+                        onChange={(e) => setIsActive(e.target.checked)}
+                      />
+                      <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
+                    </label>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-end gap-3 border-t border-border bg-muted/20 px-6 py-4">
                 <button
@@ -328,6 +392,20 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
           </div>
         </div>
       )}
+
+      <DeleteCatalogItemModal
+        isOpen={deleting !== null}
+        onClose={() => setDeleting(null)}
+        itemId={deleting?.id || ""}
+        itemName={deleting?.name || ""}
+        itemKind="unit"
+        productCount={deleting?.productCount ?? 0}
+        token={token}
+        onSuccess={() => {
+          setDeleting(null)
+          fetchItems()
+        }}
+      />
     </section>
   )
 }
