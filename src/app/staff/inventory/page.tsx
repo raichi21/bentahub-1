@@ -17,7 +17,7 @@ function authHeaders(token: string): HeadersInit {
 }
 
 export default function InventoryPage() {
-  const { token, isLoading: authLoading } = useAuth()
+  const { token, isLoading: authLoading, user } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [units, setUnits] = useState<string[]>([])
   const [masterCategories, setMasterCategories] = useState<string[]>([])
@@ -25,6 +25,7 @@ export default function InventoryPage() {
   const [fetched, setFetched] = useState(false)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const canEdit = user?.role === "admin" || !!user?.canManageProducts
 
   const fetchProducts = useCallback(async (tok: string) => {
     try {
@@ -262,6 +263,7 @@ export default function InventoryPage() {
           savingId={savingId}
           units={units}
           categories={masterCategories}
+          canEdit={canEdit}
         />
       )}
     </div>

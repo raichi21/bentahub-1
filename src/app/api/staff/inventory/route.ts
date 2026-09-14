@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
+import { requirePermission, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import {
   users,
@@ -32,7 +32,7 @@ function generateSku(code: string): string {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    const auth = await requirePermission(request, "canManageProducts")
     if (auth.error) {
       return auth.error
     }
@@ -162,7 +162,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    const auth = await requirePermission(request, "canManageProducts")
     if (auth.error) {
       return auth.error
     }

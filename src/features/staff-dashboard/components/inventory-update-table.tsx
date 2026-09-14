@@ -58,6 +58,7 @@ interface InventoryUpdateTableProps {
   savingId?: string | null
   categories?: string[]
   units?: string[]
+  canEdit?: boolean
 }
 
 export function InventoryUpdateTable({
@@ -67,6 +68,7 @@ export function InventoryUpdateTable({
   savingId,
   categories: masterCategories,
   units,
+  canEdit = true,
 }: InventoryUpdateTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All")
@@ -78,6 +80,16 @@ export function InventoryUpdateTable({
   const [highlightedSku, setHighlightedSku] = useState<string | null>(null)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [showPermNotice, setShowPermNotice] = useState(false)
+  const permNoticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
+
+  const showPermissionNotice = () => {
+    setShowPermNotice(true)
+    if (permNoticeTimer.current) clearTimeout(permNoticeTimer.current)
+    permNoticeTimer.current = setTimeout(() => setShowPermNotice(false), 4000)
+  }
 
   const categories = useMemo(() => {
     const set = new Set<string>(initialProducts.map((p) => p.category))
@@ -168,6 +180,12 @@ export function InventoryUpdateTable({
         />
       )}
 
+      {showPermNotice && (
+        <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm font-medium text-amber-700">
+          Requires permission from admin to edit stock.
+        </div>
+      )}
+
       <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
         <h4 className="text-lg font-bold text-foreground">Inventory Stock</h4>
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
@@ -216,7 +234,13 @@ export function InventoryUpdateTable({
             <option value="Expiring Soon">Expiring Soon (30d)</option>
           </select>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              if (canEdit) {
+                setShowAddModal(true)
+              } else {
+                showPermissionNotice()
+              }
+            }}
             className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs transition-colors hover:bg-primary/95"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -415,7 +439,11 @@ export function InventoryUpdateTable({
                             <button
                               role="menuitem"
                               onClick={() => {
-                                setEditingProduct(p)
+                                if (canEdit) {
+                                  setEditingProduct(p)
+                                } else {
+                                  showPermissionNotice()
+                                }
                                 setOpenMenuId(null)
                               }}
                               disabled={savingId === p.id}
