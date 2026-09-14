@@ -219,68 +219,64 @@ export function EditUserModal({
               </div>
             </div>
 
-            {/* Role Permissions */}
-            <div className="border-t border-border pt-5">
-              <h3 className="text-sm font-bold text-foreground">
-                Role Permissions
-              </h3>
-              <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
-                {role === "admin"
-                  ? "Admins always have full management access."
-                  : role === "cashier"
-                    ? "Cashier accounts cannot manage product data."
-                    : "Grant management access to the product management center."}
-              </p>
-              <div className="space-y-3">
-                {[
-                  {
-                    key: "units",
-                    label: "Manage Units",
-                    desc: "Create and edit unit types",
-                    value: canManageUnits,
-                    set: setCanManageUnits,
-                  },
-                  {
-                    key: "categories",
-                    label: "Manage Categories",
-                    desc: "Create and edit product categories",
-                    value: canManageCategories,
-                    set: setCanManageCategories,
-                  },
-                  {
-                    key: "products",
-                    label: "Manage Products",
-                    desc: "Create and edit the product catalog",
-                    value: canManageProducts,
-                    set: setCanManageProducts,
-                  },
-                ].map((perm) => (
-                  <div
-                    key={perm.key}
-                    className="flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {perm.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {perm.desc}
-                      </p>
+            {role === "staff" && (
+              <div className="border-t border-border pt-5">
+                <h3 className="text-sm font-bold text-foreground">
+                  Role Permissions
+                </h3>
+                <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
+                  Grant management access to the product management center.
+                </p>
+                <div className="space-y-3">
+                  {[
+                    {
+                      key: "units",
+                      label: "Manage Units",
+                      desc: "Create and edit unit types",
+                      value: canManageUnits,
+                      set: setCanManageUnits,
+                    },
+                    {
+                      key: "categories",
+                      label: "Manage Categories",
+                      desc: "Create and edit product categories",
+                      value: canManageCategories,
+                      set: setCanManageCategories,
+                    },
+                    {
+                      key: "products",
+                      label: "Manage Products",
+                      desc: "Create and edit the product catalog",
+                      value: canManageProducts,
+                      set: setCanManageProducts,
+                    },
+                  ].map((perm) => (
+                    <div
+                      key={perm.key}
+                      className="flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {perm.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {perm.desc}
+                        </p>
+                      </div>
+                      <label className="relative inline-flex cursor-pointer items-center">
+                        <input
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={perm.value}
+                          onChange={(e) => perm.set(e.target.checked)}
+                        />
+                        <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary peer-disabled:opacity-60 after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
+                      </label>
                     </div>
-                    <label className="relative inline-flex cursor-pointer items-center">
-                      <input
-                        type="checkbox"
-                        className="peer sr-only"
-                        checked={perm.value}
-                        onChange={(e) => perm.set(e.target.checked)}
-                        disabled={role === "admin" || role === "cashier"}
-                      />
-                      <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary peer-disabled:opacity-60 after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
-                    </label>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Change Password (optional) */}
             <div className="space-y-4 border-t border-border pt-5">

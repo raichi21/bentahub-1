@@ -272,15 +272,13 @@ export function AddUserModal({
                 </div>
               </div>
 
-              {role !== "cashier" && (
+              {role === "staff" && (
                 <div className="border-t border-border pt-5">
                   <h3 className="text-sm font-bold text-foreground">
                     Role Permissions
                   </h3>
                   <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
-                    {role === "admin"
-                      ? "Admins always have full management access."
-                      : "Grant management access to the product management center."}
+                    Grant management access to the product management center.
                   </p>
                   <div className="space-y-3">
                     {[
@@ -324,7 +322,6 @@ export function AddUserModal({
                             className="peer sr-only"
                             checked={perm.value}
                             onChange={(e) => perm.set(e.target.checked)}
-                            disabled={role === "admin"}
                           />
                           <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary peer-disabled:opacity-60 after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
                         </label>
