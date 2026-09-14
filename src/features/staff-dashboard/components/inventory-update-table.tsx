@@ -190,13 +190,16 @@ export function InventoryUpdateTable({
               setCategoryFilter(e.target.value)
               setCurrentPage(1)
             }}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
+            className="h-10 rounded-lg border border-border bg-background px-4 text-sm outline-none focus:border-primary focus:ring-primary"
           >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                Category: {cat}
-              </option>
-            ))}
+            <option value="All">All Categories</option>
+            {categories
+              .filter((cat) => cat !== "All")
+              .map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
           </select>
           <select
             value={statusFilter}
