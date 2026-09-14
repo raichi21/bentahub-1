@@ -80,9 +80,10 @@ export function InventoryUpdateTable({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const categories = useMemo(() => {
-    const set = new Set(initialProducts.map((p) => p.category))
-    return ["All", ...Array.from(set)]
-  }, [initialProducts])
+    const set = new Set<string>(initialProducts.map((p) => p.category))
+    ;(masterCategories ?? []).forEach((c) => set.add(c))
+    return ["All", ...Array.from(set)].sort()
+  }, [initialProducts, masterCategories])
 
   const productCategories = useMemo(() => {
     return Array.from(new Set(initialProducts.map((p) => p.category)))
