@@ -1,10 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import {
-  AlertTriangle, Package, Bell, RefreshCw, Filter,
-} from "lucide-react"
+import { AlertTriangle, Package, Bell, RefreshCw, Filter } from "lucide-react"
 import { useStaffNotifications } from "@/hooks/useStaffNotifications"
+import { KPICard } from "@/features/admin-dashboard"
 
 interface StaffNotificationItem {
   id: string
@@ -20,36 +19,32 @@ interface StaffNotificationItem {
 }
 
 const iconElements: Record<string, React.ReactNode> = {
-  AlertTriangle: <AlertTriangle className="w-8 h-8" />,
-  Package: <Package className="w-8 h-8" />,
-  Bell: <Bell className="w-8 h-8" />,
-  RefreshCw: <RefreshCw className="w-8 h-8" />,
+  AlertTriangle: <AlertTriangle className="h-5 w-5" />,
+  Package: <Package className="h-5 w-5" />,
+  Bell: <Bell className="h-5 w-5" />,
+  RefreshCw: <RefreshCw className="h-5 w-5" />,
 }
 
-const iconColors: Record<string, string> = {
-  critical: "text-red-500",
-  warning: "text-amber-500",
-  info: "text-primary",
-  success: "text-green-600",
-}
-
-const iconBgColors: Record<string, string> = {
-  critical: "bg-red-100 dark:bg-red-900/20",
-  warning: "bg-amber-100 dark:bg-amber-900/20",
-  info: "bg-primary/10",
-  success: "bg-green-100 dark:bg-green-900/20",
-}
-
-const borderColors: Record<string, string> = {
+const borderColorMap: Record<string, string> = {
   critical: "border-l-red-500",
   warning: "border-l-amber-500",
   info: "border-l-primary",
   success: "border-l-green-600",
 }
 
-const titleColors: Record<string, string> = {
-  critical: "text-red-600",
-  warning: "text-amber-600",
+const badgeColorMap: Record<string, string> = {
+  Inventory: "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400",
+  Orders: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
+  Payment:
+    "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400",
+  Promotions:
+    "bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400",
+  System: "bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400",
+}
+
+const iconColorMap: Record<string, string> = {
+  critical: "text-red-500",
+  warning: "text-amber-500",
   info: "text-primary",
   success: "text-green-600",
 }
@@ -70,23 +65,41 @@ export function StaffNotificationsFeed() {
   const [showFilter, setShowFilter] = useState(false)
 
   const types = Array.from(new Set(notifications.map((n) => n.type)))
-  const filtered = typeFilter === "all"
-    ? notifications
-    : notifications.filter((n) => n.type === typeFilter)
+  const filtered =
+    typeFilter === "all"
+      ? notifications
+      : notifications.filter((n) => n.type === typeFilter)
+
+  const criticalCount = notifications.filter(
+    (n) => n.severity === "critical" && !n.isRead
+  ).length
+  const inventoryCount = notifications.filter(
+    (n) => n.category === "Inventory"
+  ).length
+  const activeNotifications = notifications.filter((n) => !n.isRead).length
 
   if (isLoading) {
     return (
       <div className="space-y-6">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-6"
+            >
+              <div className="mb-4 h-4 w-24 rounded bg-muted" />
+              <div className="h-8 w-32 rounded bg-muted" />
+            </div>
+          ))}
+        </section>
         <section className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card rounded-xl border border-border p-5 animate-pulse">
-              <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-muted rounded-lg flex-shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 bg-muted rounded" />
-                  <div className="h-3 w-1/2 bg-muted rounded" />
-                </div>
-              </div>
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-5"
+            >
+              <div className="mb-2 h-4 w-3/4 rounded bg-muted" />
+              <div className="h-3 w-1/2 rounded bg-muted" />
             </div>
           ))}
         </section>
@@ -97,11 +110,11 @@ export function StaffNotificationsFeed() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="bg-card rounded-xl border border-border p-8 text-center">
-          <p className="text-sm text-red-500 mb-4">{error}</p>
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <p className="mb-4 text-sm text-red-500">{error}</p>
           <button
             onClick={() => fetchNotifications()}
-            className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:brightness-110 transition-all"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-all hover:brightness-110"
           >
             Retry
           </button>
@@ -112,31 +125,64 @@ export function StaffNotificationsFeed() {
 
   return (
     <div className="space-y-6">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <KPICard
+          title="Critical Alerts"
+          value={String(criticalCount)}
+          trend={`${criticalCount} unread`}
+          trendType={criticalCount > 0 ? "warning" : "up"}
+          icon={AlertTriangle}
+        />
+        <KPICard
+          title="Inventory Updates"
+          value={String(inventoryCount)}
+          trend={`${inventoryCount} total`}
+          trendType="up"
+          icon={Package}
+        />
+        <KPICard
+          title="Active Notifications"
+          value={String(activeNotifications)}
+          trend={`${activeNotifications} unread`}
+          trendType={activeNotifications > 0 ? "warning" : "up"}
+          icon={Bell}
+        />
+      </section>
+
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <h3 className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">
+            Recent Activity
+          </h3>
+          <div className="flex items-center gap-3">
             <div className="relative">
               <button
                 onClick={() => setShowFilter(!showFilter)}
-                className="bg-surface-container px-3 py-1.5 rounded-lg text-[11px] font-bold text-muted-foreground flex items-center gap-1.5 hover:bg-surface-container-higher transition-colors"
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted"
                 aria-label="Filter notifications"
               >
-                <Filter className="w-4 h-4" />
-                {typeFilter === "all" ? "All" : typeFilter}
+                <Filter className="h-3.5 w-3.5" />
+                {typeFilter === "all" ? "All" : typeFilter.replace(/-/g, " ")}
               </button>
               {showFilter && (
-                <div className="absolute right-0 top-full mt-1 z-10 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[140px]">
+                <div className="absolute top-full right-0 z-10 mt-1 min-w-[140px] rounded-lg border border-border bg-card py-1 shadow-xl">
                   <button
-                    onClick={() => { setTypeFilter("all"); setShowFilter(false) }}
-                    className={`block w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors ${typeFilter === "all" ? "text-primary" : "text-foreground"}`}
+                    onClick={() => {
+                      setTypeFilter("all")
+                      setShowFilter(false)
+                    }}
+                    className={`block w-full px-3 py-1.5 text-left text-xs font-medium capitalize transition-colors hover:bg-muted ${typeFilter === "all" ? "text-primary" : "text-foreground"}`}
                   >
                     All
                   </button>
                   {types.map((t) => (
                     <button
                       key={t}
-                      onClick={() => { setTypeFilter(t); setShowFilter(false) }}
-                      className={`block w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors capitalize ${typeFilter === t ? "text-primary" : "text-foreground"}`}
+                      onClick={() => {
+                        setTypeFilter(t)
+                        setShowFilter(false)
+                      }}
+                      className={`block w-full px-3 py-1.5 text-left text-xs font-medium capitalize transition-colors hover:bg-muted ${typeFilter === t ? "text-primary" : "text-foreground"}`}
                     >
                       {t.replace(/-/g, " ")}
                     </button>
@@ -147,7 +193,7 @@ export function StaffNotificationsFeed() {
             {notifications.length > 0 && (
               <button
                 onClick={clearAll}
-                className="bg-surface-container px-3 py-1.5 rounded-lg text-[11px] font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                className="text-xs font-bold text-red-500 transition-all hover:underline"
               >
                 Clear all
               </button>
@@ -155,7 +201,7 @@ export function StaffNotificationsFeed() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="bg-surface-container px-3 py-1.5 rounded-lg text-[11px] font-bold text-muted-foreground hover:bg-surface-container-higher transition-colors"
+                className="text-xs font-bold text-primary transition-all hover:underline"
               >
                 Mark all as read
               </button>
@@ -164,57 +210,63 @@ export function StaffNotificationsFeed() {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="bg-card rounded-xl border border-border p-8 text-center">
-            <Bell className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No notifications yet</p>
+          <div className="rounded-xl border border-border bg-card p-8 text-center">
+            <Bell className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">
+              No notifications yet
+            </p>
           </div>
         ) : (
           filtered.map((n: StaffNotificationItem) => {
-            const iconEl = iconElements[n.icon] || <Bell className="w-8 h-8" />
-            const iconColor = iconColors[n.severity] || "text-muted-foreground"
-            const iconBg = iconBgColors[n.severity] || "bg-surface-variant"
-            const borderColor = borderColors[n.severity] || "border-l-border"
-            const titleColor = titleColors[n.severity] || "text-foreground"
+            const borderClass = borderColorMap[n.severity] || "border-l-border"
+            const badgeClass =
+              badgeColorMap[n.category] || "bg-gray-100 text-gray-700"
+            const iconClass =
+              iconColorMap[n.severity] || "text-muted-foreground"
+            const iconEl = iconElements[n.icon] || <Bell className="h-5 w-5" />
 
             return (
               <div
                 key={n.id}
-                className={`bg-card border-l-4 ${borderColor} border-y border-r border-border rounded-r-xl p-5 flex flex-col md:flex-row gap-4 items-start shadow-sm hover:shadow-md transition-shadow relative overflow-hidden ${!n.isRead ? "ring-1 ring-primary/5" : ""}`}
+                className={`group flex items-start gap-4 border-l-4 bg-card p-5 ${borderClass} rounded-r-lg border-y border-r border-border shadow-sm transition-all hover:bg-muted/30 ${!n.isRead ? "ring-1 ring-primary/5" : ""}`}
               >
-                <div className="absolute top-2 right-3">
-                  <span className="text-[11px] text-muted-foreground/60 font-mono">{n.timestamp}</span>
-                </div>
-
-                <div className={`${iconBg} ${iconColor} p-3 rounded-lg flex-shrink-0`}>
+                <div className={`mt-0.5 flex-shrink-0 ${iconClass}`}>
                   {iconEl}
                 </div>
-
-                <div className="flex-1 space-y-2 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className={`text-sm font-bold ${titleColor}`}>{n.title}</h4>
-                    {!n.isRead && (
-                      <span className="bg-accent text-primary px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-tighter">
-                        New
-                      </span>
-                    )}
-                  </div>
-
-                  {n.message && (
-                    <p className="text-xs text-muted-foreground leading-relaxed">{n.message}</p>
-                  )}
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-surface-variant text-muted-foreground">
-                      {n.category}
-                    </span>
-                    {!n.isRead && (
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <h4
+                        className={`text-sm ${n.isRead ? "font-medium" : "font-bold"} text-foreground`}
+                      >
+                        {n.title}
+                      </h4>
+                      {n.message && (
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                          {n.message}
+                        </p>
+                      )}
+                      <div className="mt-2 flex items-center gap-2">
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${badgeClass}`}
+                        >
+                          {n.category}
+                        </span>
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          {n.timestamp}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
                       <button
                         onClick={() => markAsRead(n.id)}
-                        className="px-3 py-1 text-[11px] font-bold text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        className={`rounded-lg p-1.5 transition-colors ${!n.isRead ? "text-primary hover:bg-primary/10" : "cursor-default text-muted-foreground/30"}`}
+                        disabled={n.isRead}
+                        title="Mark as read"
                       >
-                        Mark as read
+                        <Bell className="h-[18px] w-[18px]" />
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
