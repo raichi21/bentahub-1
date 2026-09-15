@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import { Calendar, X } from "lucide-react"
 
 interface DateRangeFilterProps {
@@ -30,6 +31,7 @@ export function DateRangeFilter({
   min,
   max,
 }: DateRangeFilterProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
   const display = value
     ? new Date(`${value}T00:00:00`).toLocaleDateString("en-PH", {
         month: "short",
@@ -38,13 +40,34 @@ export function DateRangeFilter({
       })
     : placeholder
 
+  const openPicker = () => {
+    const el = inputRef.current
+    if (!el) return
+    try {
+      el.showPicker()
+    } catch {
+      el.focus()
+    }
+  }
+
   return (
-    <div className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background text-sm cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:border-primary outline-none w-full md:w-auto">
-      <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+    <div
+      onClick={openPicker}
+      className="relative flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus-within:border-primary focus-within:ring-2 focus-within:ring-primary md:w-auto"
+    >
+      <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
       {label && (
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider shrink-0">{label}</span>
+        <span className="shrink-0 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+          {label}
+        </span>
       )}
-      <span className={value ? "text-foreground font-medium" : "text-muted-foreground"}>{display}</span>
+      <span
+        className={
+          value ? "font-medium text-foreground" : "text-muted-foreground"
+        }
+      >
+        {display}
+      </span>
       {value && (
         <button
           type="button"
@@ -53,19 +76,20 @@ export function DateRangeFilter({
             e.preventDefault()
             onChange("")
           }}
-          className="relative z-10 text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-auto"
+          className="relative z-10 ml-auto shrink-0 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Clear date filter"
         >
           <X className="h-4 w-4" />
         </button>
       )}
       <input
+        ref={inputRef}
         type="date"
         value={value}
         min={min}
         max={max}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 opacity-0 cursor-pointer"
+        className="absolute inset-0 cursor-pointer opacity-0"
         aria-label={placeholder}
       />
     </div>
