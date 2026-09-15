@@ -54,7 +54,9 @@ interface InventoryUpdateTableProps {
     newReorderLevel: number,
     batchInfo?: BatchInfo
   ) => void
-  onAddProduct?: (product: AddProductData) => void
+  onAddProduct?: (
+    product: AddProductData
+  ) => string | null | undefined | Promise<string | null | undefined>
   savingId?: string | null
   categories?: string[]
   units?: string[]
@@ -78,6 +80,7 @@ export function InventoryUpdateTable({
   const [batchProduct, setBatchProduct] = useState<Product | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [highlightedSku, setHighlightedSku] = useState<string | null>(null)
+  const [pendingSku, setPendingSku] = useState<string | null>(null)
   const highlightRef = useRef<HTMLTableRowElement | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showPermNotice, setShowPermNotice] = useState(false)
@@ -89,6 +92,16 @@ export function InventoryUpdateTable({
     setShowPermNotice(true)
     if (permNoticeTimer.current) clearTimeout(permNoticeTimer.current)
     permNoticeTimer.current = setTimeout(() => setShowPermNotice(false), 4000)
+  }
+
+  const handleAddProductSave = async (p: AddProductData) => {
+    const sku = await onAddProduct?.(p)
+    if (sku) {
+      setSearchQuery("")
+      setCategoryFilter("All")
+      setStatusFilter("All")
+      setPendingSku(sku)
+    }
   }
 
   const categories = useMemo(() => {
@@ -145,6 +158,19 @@ export function InventoryUpdateTable({
   }, [highlightedSku, paginatedProducts])
 
   useEffect(() => {
+    if (!pendingSku) return
+    const timer = setTimeout(() => {
+      const idx = initialProducts.findIndex((p) => p.sku === pendingSku)
+      if (idx >= 0) {
+        setCurrentPage(Math.floor(idx / ITEMS_PER_PAGE) + 1)
+        setHighlightedSku(pendingSku)
+      }
+      setPendingSku(null)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [pendingSku, initialProducts])
+
+  useEffect(() => {
     if (!openMenuId) return
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null
@@ -174,7 +200,7 @@ export function InventoryUpdateTable({
         <AddStockModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          onSave={(p) => onAddProduct?.(p)}
+          onSave={handleAddProductSave}
           categories={masterCategories ?? productCategories}
           units={units ?? ["pcs"]}
         />

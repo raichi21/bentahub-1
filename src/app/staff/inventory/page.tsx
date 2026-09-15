@@ -165,8 +165,8 @@ export default function InventoryPage() {
     batchNumber?: string
     expiryDate?: string
     supplier?: string
-  }) => {
-    if (!token) return
+  }): Promise<string | null> => {
+    if (!token) return null
 
     try {
       const res = await fetch("/api/staff/inventory", {
@@ -182,10 +182,12 @@ export default function InventoryPage() {
       }
 
       await fetchProducts(token)
+      return json.data?.sku ?? null
     } catch (err) {
       const msg = err instanceof Error ? err.message : "An error occurred"
       setSaveError(msg)
       setTimeout(() => setSaveError(null), 4000)
+      return null
     }
   }
 
