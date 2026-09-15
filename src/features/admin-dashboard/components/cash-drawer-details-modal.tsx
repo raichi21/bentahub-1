@@ -268,17 +268,25 @@ export function CashDrawerDetailsModal({
             {!loading && !error && data && data.transactions.length > 0 && (
               <div className="overflow-hidden rounded-lg border border-border bg-card">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                  <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                     <thead className="border-b border-border bg-muted/10">
-                      <tr className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                        <th className="w-8 px-3 py-3 sm:px-4"></th>
-                        <th className="px-3 py-3 sm:px-4">Transaction</th>
-                        <th className="px-3 py-3 sm:px-4">Total</th>
-                        <th className="px-3 py-3 sm:px-4">Method</th>
-                        <th className="px-3 py-3 text-right sm:px-4">
+                      <tr className="divide-x divide-border/40 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                        <th className="w-8 px-4 py-3.5 sm:px-5"></th>
+                        <th className="px-4 py-3.5 whitespace-nowrap sm:px-5">
+                          Transaction
+                        </th>
+                        <th className="px-4 py-3.5 text-right whitespace-nowrap sm:px-5">
+                          Total
+                        </th>
+                        <th className="px-4 py-3.5 whitespace-nowrap sm:px-5">
+                          Method
+                        </th>
+                        <th className="px-4 py-3.5 text-right whitespace-nowrap sm:px-5">
                           Amount Paid
                         </th>
-                        <th className="px-3 py-3 text-right sm:px-4">Change</th>
+                        <th className="px-4 py-3.5 text-right whitespace-nowrap sm:px-5">
+                          Change
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30 text-foreground">
@@ -288,16 +296,16 @@ export function CashDrawerDetailsModal({
                           <Fragment key={txn.id}>
                             <tr
                               onClick={() => toggleExpand(txn.id)}
-                              className="cursor-pointer transition-colors hover:bg-muted/30"
+                              className="cursor-pointer divide-x divide-border/40 transition-colors hover:bg-muted/30"
                             >
-                              <td className="px-3 py-3 sm:px-4">
+                              <td className="px-4 py-3.5 align-middle sm:px-5">
                                 {isOpenRow ? (
                                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                 ) : (
                                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 )}
                               </td>
-                              <td className="px-3 py-3 sm:px-4">
+                              <td className="px-4 py-3.5 sm:px-5">
                                 <span className="font-mono font-medium text-foreground">
                                   {txn.displayId}
                                 </span>
@@ -305,12 +313,12 @@ export function CashDrawerDetailsModal({
                                   {txn.createdAtDisplay}
                                 </span>
                               </td>
-                              <td className="px-3 py-3 font-medium whitespace-nowrap sm:px-4">
+                              <td className="px-4 py-3.5 text-right font-medium whitespace-nowrap sm:px-5">
                                 {txn.totalAmountDisplay}
                               </td>
-                              <td className="px-3 py-3 sm:px-4">
+                              <td className="px-4 py-3.5 align-middle whitespace-nowrap sm:px-5">
                                 <span
-                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black tracking-widest uppercase ${
+                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] leading-none font-bold tracking-widest uppercase ${
                                     txn.paymentMethod === "gcash"
                                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
                                       : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -319,78 +327,83 @@ export function CashDrawerDetailsModal({
                                   {txn.paymentMethodDisplay}
                                 </span>
                               </td>
-                              <td className="px-3 py-3 text-right font-medium whitespace-nowrap sm:px-4">
+                              <td className="px-4 py-3.5 text-right font-medium whitespace-nowrap sm:px-5">
                                 {txn.amountPaidDisplay}
                               </td>
-                              <td className="px-3 py-3 text-right font-medium whitespace-nowrap sm:px-4">
+                              <td className="px-4 py-3.5 text-right font-medium whitespace-nowrap sm:px-5">
                                 {txn.changeDisplay}
                               </td>
                             </tr>
                             {isOpenRow && (
                               <tr className="bg-muted/5">
-                                <td className="px-3 py-3 sm:px-4" colSpan={6}>
-                                  <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[360px] border-collapse text-left text-sm">
-                                      <thead>
-                                        <tr className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                                          <th className="px-2 py-2 sm:px-4">
-                                            Product
-                                          </th>
-                                          <th className="px-2 py-2 text-center sm:px-4">
-                                            Qty
-                                          </th>
-                                          <th className="px-2 py-2 text-right sm:px-4">
-                                            Price
-                                          </th>
-                                          <th className="px-2 py-2 text-right sm:px-4">
-                                            Subtotal
-                                          </th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-border/30">
-                                        {txn.items.length === 0 ? (
-                                          <tr>
-                                            <td
-                                              colSpan={4}
-                                              className="px-2 py-3 text-muted-foreground sm:px-4"
-                                            >
-                                              No items available.
-                                            </td>
+                                <td
+                                  className="px-4 py-3 align-top sm:px-5"
+                                  colSpan={6}
+                                >
+                                  <div className="overflow-hidden rounded-lg border border-border bg-card">
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full min-w-[360px] border-collapse text-left text-sm">
+                                        <thead className="border-b border-border bg-muted/10">
+                                          <tr className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                                            <th className="px-3 py-2.5 sm:px-4">
+                                              Product
+                                            </th>
+                                            <th className="px-3 py-2.5 text-center sm:px-4">
+                                              Qty
+                                            </th>
+                                            <th className="px-3 py-2.5 text-right sm:px-4">
+                                              Price
+                                            </th>
+                                            <th className="px-3 py-2.5 text-right sm:px-4">
+                                              Subtotal
+                                            </th>
                                           </tr>
-                                        ) : (
-                                          txn.items.map((item, idx) => (
-                                            <tr key={idx}>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/30">
+                                          {txn.items.length === 0 ? (
+                                            <tr>
                                               <td
-                                                className="max-w-[160px] truncate px-2 py-2 sm:max-w-none sm:px-4"
-                                                title={item.productName}
+                                                colSpan={4}
+                                                className="px-3 py-3 text-muted-foreground sm:px-4"
                                               >
-                                                {item.productName}
-                                              </td>
-                                              <td className="px-2 py-2 text-center font-medium whitespace-nowrap sm:px-4">
-                                                {item.quantity}
-                                              </td>
-                                              <td className="px-2 py-2 text-right font-medium whitespace-nowrap sm:px-4">
-                                                ₱{item.price.toFixed(2)}
-                                              </td>
-                                              <td className="px-2 py-2 text-right font-medium whitespace-nowrap sm:px-4">
-                                                ₱{item.subtotal.toFixed(2)}
+                                                No items available.
                                               </td>
                                             </tr>
-                                          ))
-                                        )}
-                                        <tr className="font-bold text-foreground">
-                                          <td
-                                            className="px-2 py-2 text-right sm:px-4"
-                                            colSpan={3}
-                                          >
-                                            Total
-                                          </td>
-                                          <td className="px-2 py-2 text-right whitespace-nowrap text-primary sm:px-4">
-                                            ₱{txn.totalAmount.toFixed(2)}
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
+                                          ) : (
+                                            txn.items.map((item, idx) => (
+                                              <tr key={idx}>
+                                                <td
+                                                  className="max-w-[160px] truncate px-3 py-2.5 sm:max-w-none sm:px-4"
+                                                  title={item.productName}
+                                                >
+                                                  {item.productName}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-center font-medium whitespace-nowrap sm:px-4">
+                                                  {item.quantity}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right font-medium whitespace-nowrap sm:px-4">
+                                                  ₱{item.price.toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right font-medium whitespace-nowrap sm:px-4">
+                                                  ₱{item.subtotal.toFixed(2)}
+                                                </td>
+                                              </tr>
+                                            ))
+                                          )}
+                                          <tr className="border-t-2 border-primary/30 bg-muted/20 font-bold text-foreground">
+                                            <td
+                                              className="px-3 py-3 text-right sm:px-4"
+                                              colSpan={3}
+                                            >
+                                              Total Amount
+                                            </td>
+                                            <td className="px-3 py-3 text-right font-black whitespace-nowrap text-primary sm:px-4">
+                                              ₱{txn.totalAmount.toFixed(2)}
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
                                   </div>
                                 </td>
                               </tr>
