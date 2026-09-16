@@ -60,7 +60,7 @@ export function CatalogToolbar({
             onChange={(e) => onCategoryChange(e.target.value)}
             className="h-10 cursor-pointer rounded-lg border border-border bg-background px-4 text-sm text-foreground transition-colors outline-none focus:border-primary focus:ring-primary"
           >
-            <option value="">All Categories</option>
+            <option value="">All Products</option>
             {categories.map((c) => (
               <option key={c.name} value={c.name}>
                 {c.name}

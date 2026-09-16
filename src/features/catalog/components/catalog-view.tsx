@@ -61,7 +61,8 @@ export function CatalogView({ basePath }: CatalogViewProps) {
   const queryString = useCallback(
     (category: string, branch: string, page: number) => {
       const params = new URLSearchParams()
-      if (category !== DEFAULT_CATEGORY) params.set("category", category)
+      if (category && category !== DEFAULT_CATEGORY)
+        params.set("category", category)
       if (branch !== DEFAULT_BRANCH) params.set("branch", branch)
       if (page > 1) params.set("page", String(page))
       const query = params.toString()
@@ -133,7 +134,7 @@ export function CatalogView({ basePath }: CatalogViewProps) {
     const source = fetchedProducts.length > 0 ? fetchedProducts : []
 
     const byCategory =
-      currentCategory === DEFAULT_CATEGORY
+      !currentCategory || currentCategory === DEFAULT_CATEGORY
         ? source
         : source.filter((p) => p.category === currentCategory)
 
