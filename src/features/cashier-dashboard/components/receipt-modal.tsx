@@ -1,32 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import {
-  X,
-  Printer,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  Bluetooth,
-  Usb,
-  Unplug,
-  Settings2,
-} from "lucide-react"
+import { useState } from "react"
+import { X, Printer, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { jsPDF } from "jspdf"
 import { useAuth } from "@/hooks/useAuth"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
 import {
   autoConnectThermal,
   buildThermalReceipt,
-  connectBluetooth,
-  connectUsb,
-  disconnectThermal,
   getConnection,
-  isBluetoothSupported,
-  isSerialSupported,
   printThermal,
-  subscribeThermal,
-  type ThermalConnection,
 } from "@/lib/thermal-print"
 import type { Transaction } from "@/types/cashier"
 import { cn } from "@/lib/utils"
@@ -146,18 +129,6 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     "idle"
   )
   const [printMessage, setPrintMessage] = useState("")
-  const [connecting, setConnecting] = useState(false)
-  const [showPrinterSettings, setShowPrinterSettings] = useState(false)
-  const [connection, setConnection] = useState<ThermalConnection | null>(() =>
-    getConnection()
-  )
-  const canBluetooth = isBluetoothSupported()
-  const canSerial = isSerialSupported()
-  const hasAnyThermalSupport = canBluetooth || canSerial
-
-  useEffect(() => {
-    return subscribeThermal(() => setConnection(getConnection()))
-  }, [])
 
   if (!transaction) return null
 
@@ -172,81 +143,22 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
   const isCancelled = transaction.status === "cancelled"
 
-  const handleConnect = async (type: "bluetooth" | "usb") => {
-    setConnecting(true)
-    setPrintStatus("idle")
-    setPrintMessage("")
-    try {
-      if (type === "bluetooth") {
-        await connectBluetooth()
-      } else {
-        await connectUsb()
-      }
-      setPrintStatus("success")
-      setPrintMessage("Thermal printer connected")
-    } catch (err) {
-      // User cancelled the picker — not an error.
-      if (err instanceof Error && err.name === "NotFoundError") {
-        setPrintStatus("idle")
-      } else {
-        setPrintStatus("error")
-        setPrintMessage(
-          err instanceof Error ? err.message : "Printer connection failed"
-        )
-      }
-    } finally {
-      setConnecting(false)
-    }
-  }
-
-  const handleDisconnect = async () => {
-    setConnecting(true)
-    try {
-      await disconnectThermal()
-    } finally {
-      setConnecting(false)
-    }
-  }
-
   const handlePrint = async () => {
     setPrinting(true)
     setPrintStatus("idle")
     setPrintMessage("")
 
     try {
-      // 1) Thermal: auto-connect to a granted/picked printer, then print.
-      let thermal = getConnection()
-      if (!thermal) {
-        try {
-          thermal = await autoConnectThermal()
-        } catch {
-          // No printer granted/picked yet → server / PDF fallback below.
-        }
-      }
-      if (thermal) {
-        try {
-          await printThermal(
-            buildThermalReceipt(
-              transaction,
-              storeName,
-              user?.branch ?? "",
-              formattedDate
-            )
-          )
-          setPrintStatus("success")
-          setPrintMessage(`Receipt printed to: ${thermal.name}`)
-          return
-        } catch {
-          // Fall through to the print server / PDF below.
-        }
-      }
-
-      // 2) Windows print server configured → try it.
+      // 1) Print server (silent, primary). Works from localhost and the
+      // deployed site reaching the cashier PC local server.
       if (PRINT_SERVER_URL) {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 8000)
         try {
           const res = await fetch(`${PRINT_SERVER_URL}/print`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
               receiptNumber: transaction.receiptNumber,
               date: formattedDate,
@@ -267,34 +179,52 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
           const json = await res.json()
 
-          if (json.success && json.printed) {
-            setPrintStatus("success")
-            setPrintMessage(json.message || "Receipt printed successfully")
-            return
-          }
           if (json.success) {
             setPrintStatus("success")
-            setPrintMessage(json.message || "Receipt saved to file")
+            setPrintMessage(json.message || "Receipt printed successfully")
             return
           }
           setPrintStatus("error")
           setPrintMessage(json.message || "Print failed")
           return
         } catch {
-          // Print server unreachable → fall back to PDF.
+          // Server unreachable → continue to thermal / PDF below.
+        } finally {
+          clearTimeout(timer)
         }
       }
 
-      // 3) PDF fallback.
+      // 2) Thermal: auto-connect to a granted/picked printer, then print.
+      let thermal = getConnection()
+      if (!thermal) {
+        try {
+          thermal = await autoConnectThermal()
+        } catch {
+          // Nothing granted/available yet → PDF fallback below.
+        }
+      }
+      if (thermal) {
+        try {
+          await printThermal(
+            buildThermalReceipt(
+              transaction,
+              storeName,
+              user?.branch ?? "",
+              formattedDate
+            )
+          )
+          setPrintStatus("success")
+          setPrintMessage(`Receipt printed to: ${thermal.name}`)
+          return
+        } catch {
+          // Fall through to the PDF fallback below.
+        }
+      }
+
+      // 3) PDF fallback (last resort).
       buildReceiptPdf(transaction, storeName, formattedDate)
       setPrintStatus("success")
-      setPrintMessage(
-        PRINT_SERVER_URL
-          ? "Print server unavailable — receipt saved as PDF"
-          : thermal
-            ? "Thermal print failed — receipt saved as PDF"
-            : "I-connect muna ang thermal printer, o i-save bilang PDF"
-      )
+      setPrintMessage("Receipt saved as PDF")
     } catch {
       setPrintStatus("error")
       setPrintMessage("Failed to generate receipt PDF")
@@ -476,112 +406,6 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
         {/* Action Panel */}
         <div className="space-y-3 border-t border-border bg-muted p-4">
-          {/* Thermal printer status + settings toggle */}
-          {hasAnyThermalSupport ? (
-            <>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  {connection ? (
-                    connection.kind === "bluetooth" ? (
-                      <Bluetooth className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    ) : (
-                      <Usb className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    )
-                  ) : (
-                    <Printer className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  )}
-                  <span className="truncate text-[10px] font-medium text-muted-foreground">
-                    {connection
-                      ? connection.name
-                      : "Auto-print gamit ang thermal printer"}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowPrinterSettings(!showPrinterSettings)}
-                  className={cn(
-                    "inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold transition-colors",
-                    showPrinterSettings
-                      ? "bg-accent text-card-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-card-foreground"
-                  )}
-                  title="Printer settings"
-                >
-                  <Settings2 className="h-3 w-3" />
-                  <span>Printer settings</span>
-                </button>
-              </div>
-
-              {/* Printer settings (collapsible) */}
-              {showPrinterSettings && (
-                <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card/60 p-2">
-                  {connection ? (
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      {connection.kind === "bluetooth" ? (
-                        <Bluetooth className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      ) : (
-                        <Usb className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      )}
-                      <span className="truncate text-[10px] font-bold text-card-foreground">
-                        {connection.name}
-                      </span>
-                      <button
-                        onClick={handleDisconnect}
-                        disabled={connecting}
-                        className="ml-1 rounded-lg border border-border p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
-                        title="Disconnect printer"
-                      >
-                        <Unplug className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="truncate text-[10px] font-medium text-muted-foreground">
-                      Pumili ng printer (isang beses lang; pagkatapos ay
-                      auto-connect na ito)
-                    </span>
-                  )}
-
-                  {!connection && (
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      {canBluetooth && (
-                        <button
-                          onClick={() => handleConnect("bluetooth")}
-                          disabled={connecting}
-                          className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
-                        >
-                          {connecting ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Bluetooth className="h-3 w-3" />
-                          )}
-                          <span>Bluetooth</span>
-                        </button>
-                      )}
-                      {canSerial && (
-                        <button
-                          onClick={() => handleConnect("usb")}
-                          disabled={connecting}
-                          className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
-                        >
-                          {connecting ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Usb className="h-3 w-3" />
-                          )}
-                          <span>USB</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-center text-[10px] font-medium text-muted-foreground">
-              Hindi suportado ang direct thermal printing sa browser na ito
-              (iOS/Safari). Gumamit ng Print via Server o Save as PDF.
-            </p>
-          )}
-
           <div className="flex gap-2">
             <button
               onClick={handlePrint}
