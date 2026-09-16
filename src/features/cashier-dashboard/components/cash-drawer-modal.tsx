@@ -259,20 +259,18 @@ export function CashDrawerModal({
                     </span>
                   </div>
                 </div>
-                {total > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStartingCash(
-                        String(total + (parseFloat(startingCash) || 0))
-                      )
-                      setCounts([0, 0, 0, 0, 0])
-                    }}
-                    className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
-                  >
-                    ✓ Use This Total
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartingCash(
+                      String(total + (parseFloat(startingCash) || 0))
+                    )
+                    setCounts([0, 0, 0, 0, 0])
+                  }}
+                  className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
+                >
+                  ✓ Use This Total
+                </button>
               </div>
 
               {error && (
@@ -384,20 +382,18 @@ export function CashDrawerModal({
                           </span>
                         </div>
                       </div>
-                      {total > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActualCash(
-                              String(total + (parseFloat(actualCash) || 0))
-                            )
-                            setCounts([0, 0, 0, 0, 0])
-                          }}
-                          className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
-                        >
-                          ✓ Use This Total
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActualCash(
+                            String(total + (parseFloat(actualCash) || 0))
+                          )
+                          setCounts([0, 0, 0, 0, 0])
+                        }}
+                        className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
+                      >
+                        ✓ Use This Total
+                      </button>
                     </div>
                   </div>
 
