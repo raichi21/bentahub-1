@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   CatalogToolbar,
-  CategorySidebar,
-  CategoryChips,
+  type CategoryChip,
 } from "@/features/customer-dashboard"
 import { Pagination } from "@/features/customer-dashboard/components/pagination"
 import { CatalogProductCard } from "@/features/landing/components/catalog-product-card"
@@ -105,9 +104,9 @@ export function CatalogView({ basePath }: CatalogViewProps) {
     [currentBranch, queryString, router]
   )
 
-  // Pre-computed category list — shared by the desktop sidebar and the
-  // horizontal chips row so both stay in sync and only compute once.
-  const categories = useMemo(() => {
+  // Pre-computed category list — shared with the admin-style category
+  // dropdown in the toolbar.
+  const categories: CategoryChip[] = useMemo(() => {
     const counts = new Map<string, number>()
     let allCount = 0
     for (const p of fetchedProducts) {
@@ -198,6 +197,11 @@ export function CatalogView({ basePath }: CatalogViewProps) {
         ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
         : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
 
+  // The admin-style dropdown uses "" for "All Categories"; the catalog URL
+  // scheme keeps "All Products" as its internal default.
+  const categoryValue =
+    currentCategory === DEFAULT_CATEGORY ? "" : currentCategory
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Toolbar */}
@@ -207,55 +211,44 @@ export function CatalogView({ basePath }: CatalogViewProps) {
         totalProducts={totalProducts}
         activeBranch={currentBranch}
         onBranchChange={branchChanged}
+        categories={categories}
+        activeCategory={categoryValue}
+        onCategoryChange={categoryChanged}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         branches={branches}
       />
 
-      {/* Main Content Area with Sidebar */}
+      {/* Main Content Area */}
       <div className="w-full px-4 py-6 sm:px-6 md:py-8 lg:px-8">
-        <div className="flex flex-1">
-          {/* Sidebar - Hidden on mobile */}
-          <CategorySidebar
-            activeCategory={currentCategory}
-            onSelectCategory={categoryChanged}
-            categories={categories}
-          />
-
-          {/* Product Grid Area */}
-          <div className="flex-1 overflow-hidden">
-            <CategoryChips
-              categories={categories}
-              activeCategory={currentCategory}
-              onSelectCategory={categoryChanged}
-            />
-            {isLoading && !displayProducts.length && (
-              <div className="flex h-64 items-center justify-center">
-                <p className="text-muted-foreground">Loading products...</p>
-              </div>
-            )}
-            {error && (
-              <div className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                {error}
-              </div>
-            )}
-            <div className={`grid max-w-3xl ${gridCols} gap-4 md:gap-6`}>
-              {paginatedProducts.map((product) => (
-                <CatalogProductCard
-                  key={product.id}
-                  {...product}
-                  basePath={basePath}
-                />
-              ))}
+        {/* Product Grid */}
+        <div className="flex-1 overflow-hidden">
+          {isLoading && !displayProducts.length && (
+            <div className="flex h-64 items-center justify-center">
+              <p className="text-muted-foreground">Loading products...</p>
             </div>
-
-            {/* Pagination */}
-            <Pagination
-              currentPage={safePage}
-              totalPages={totalPages}
-              onPageChange={pageChanged}
-            />
+          )}
+          {error && (
+            <div className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+              {error}
+            </div>
+          )}
+          <div className={`grid max-w-3xl ${gridCols} gap-4 md:gap-6`}>
+            {paginatedProducts.map((product) => (
+              <CatalogProductCard
+                key={product.id}
+                {...product}
+                basePath={basePath}
+              />
+            ))}
           </div>
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={pageChanged}
+          />
         </div>
       </div>
 
