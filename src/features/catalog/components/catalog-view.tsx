@@ -105,22 +105,18 @@ export function CatalogView({ basePath }: CatalogViewProps) {
     [currentBranch, queryString, router]
   )
 
-  // Pre-computed category list — shared with the admin-style category
-  // dropdown in the toolbar.
+  // Pre-computed category list — feeds the admin-style category dropdown in
+  // the toolbar. "All Products" lives only as the hard-coded value="" option,
+  // so it must NOT be included here (that would create a duplicate entry).
   const categories: CategoryChip[] = useMemo(() => {
     const counts = new Map<string, number>()
-    let allCount = 0
     for (const p of fetchedProducts) {
       if (p.isActive === false) continue
-      allCount++
       counts.set(p.category, (counts.get(p.category) || 0) + 1)
     }
-    return [
-      { name: "All Products", count: allCount },
-      ...Array.from(counts, ([name, count]) => ({ name, count })).sort(
-        (a, b) => b.count - a.count
-      ),
-    ]
+    return Array.from(counts, ([name, count]) => ({ name, count })).sort(
+      (a, b) => b.count - a.count
+    )
   }, [fetchedProducts])
 
   const branchChanged = useCallback(
