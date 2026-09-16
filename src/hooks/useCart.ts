@@ -75,13 +75,15 @@ export function useCartActions() {
       if (!response.ok) throw new Error("Failed to fetch cart")
 
       const data = await response.json()
-      const items: CartItem[] = data.data.items.map((item: Record<string, unknown>) => ({
-        ...item,
-        price: Number(item.price),
-        subtotal: Number(item.subtotal),
-        addedAt: new Date(item.addedAt as string),
-        updatedAt: new Date(item.updatedAt as string),
-      })) as CartItem[]
+      const items: CartItem[] = data.data.items.map(
+        (item: Record<string, unknown>) => ({
+          ...item,
+          price: Number(item.price),
+          subtotal: Number(item.subtotal),
+          addedAt: new Date(item.addedAt as string),
+          updatedAt: new Date(item.updatedAt as string),
+        })
+      ) as CartItem[]
 
       // Merge instead of replacing wholesale: a row the server hasn't
       // confirmed yet (an add still in flight, or one that landed after this
@@ -95,7 +97,9 @@ export function useCartActions() {
         return (pendingAddsRef.current.get(i.productId) ?? 0) > 0
       })
       const preservedProducts = new Set(preserved.map((i) => i.productId))
-      const serverItems = items.filter((i) => !preservedProducts.has(i.productId))
+      const serverItems = items.filter(
+        (i) => !preservedProducts.has(i.productId)
+      )
       useCartStore.getState().setItems([...preserved, ...serverItems])
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error"
@@ -114,11 +118,18 @@ export function useCartActions() {
    * optimistic change is rolled back.
    */
   const addToCart = useCallback(
-    async (productId: string, quantity: number, branch: string, snapshot?: CartItemSnapshot) => {
+    async (
+      productId: string,
+      quantity: number,
+      branch: string,
+      snapshot?: CartItemSnapshot
+    ) => {
       if (!user || !token) {
         // Reject loudly instead of silently no-oping: a tap during session
         // hydration would otherwise flash "Added" while adding nothing.
-        throw new Error("Your session is still loading — please try again in a moment")
+        throw new Error(
+          "Your session is still loading — please try again in a moment"
+        )
       }
 
       // ── Optimistic update ──
@@ -161,7 +172,10 @@ export function useCartActions() {
 
       // Track the in-flight add so fetchCart won't wipe the optimistic row
       // and a remove during the round-trip is honored.
-      pendingAddsRef.current.set(productId, (pendingAddsRef.current.get(productId) ?? 0) + 1)
+      pendingAddsRef.current.set(
+        productId,
+        (pendingAddsRef.current.get(productId) ?? 0) + 1
+      )
 
       try {
         const response = await fetch("/api/customer/cart", {
@@ -204,7 +218,9 @@ export function useCartActions() {
           current.addItem({
             ...serverItem,
             quantity: existing.quantity,
-            subtotal: Number((existing.quantity * Number(serverItem.price)).toFixed(2)),
+            subtotal: Number(
+              (existing.quantity * Number(serverItem.price)).toFixed(2)
+            ),
           })
         } else {
           current.addItem(serverItem)
@@ -234,7 +250,7 @@ export function useCartActions() {
         else pendingAddsRef.current.set(productId, remaining)
         pendingRemovesRef.current.delete(productId)
       }
-  },
+    },
     [user, token]
   )
 
@@ -306,7 +322,8 @@ export function useCartActions() {
             current.lastGoodSubtotal = Number(data.data.subtotal)
           }
         } catch (error) {
-          const message = error instanceof Error ? error.message : "Unknown error"
+          const message =
+            error instanceof Error ? error.message : "Unknown error"
           // The row may not exist on the server yet — the item id was an
           // optimistic temp id used while the add-to-cart POST was still in
           // flight. Re-sync so the store adopts the authoritative id instead
@@ -370,7 +387,21 @@ export function useCartActions() {
           headers: authHeaders(token),
         })
 
-        if (!response.ok) throw new Error("Failed to remove item from cart")
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          const message =
+            errorData?.message || "Failed to remove item from cart"
+          // The row is already gone server-side (e.g. stale/optimistic id, an
+          // earlier checkout, or another tab removed it). Treat that as a
+          // successful remove instead of restoring the item and trapping the
+          // user in a forever failing delete/restore loop. Re-sync so the UI
+          // converges on the authoritative server state.
+          if (response.status === 404 || message === "Cart item not found") {
+            void fetchCart()
+            return
+          }
+          throw new Error(message)
+        }
       } catch (error) {
         // Restore the item on failure
         const current = useCartStore.getState()
@@ -382,7 +413,7 @@ export function useCartActions() {
         console.error("Failed to remove from cart:", error)
       }
     },
-    [user, token]
+    [user, token, fetchCart]
   )
 
   const clearCart = useCallback(() => {
