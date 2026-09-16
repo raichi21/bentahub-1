@@ -13,7 +13,6 @@ import {
 } from "lucide-react"
 import type { CashDrawerSession, LastClosedSessionInfo } from "@/types/cashier"
 import { formatPeso } from "@/types/cashier"
-import { cn } from "@/lib/utils"
 
 const DENOMINATIONS = [
   { value: 1000, label: "₱1,000" },
@@ -195,7 +194,7 @@ export function CashDrawerModal({
 
               <div className="space-y-3">
                 <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                  Starting Cash
+                  Additional Cash
                 </label>
                 <div className="relative">
                   <span className="absolute top-1/2 left-4 -translate-y-1/2 font-bold text-muted-foreground">
@@ -213,6 +212,9 @@ export function CashDrawerModal({
                     className="w-full rounded-lg border border-border bg-background py-3 pr-4 pl-9 font-mono text-lg font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  (= mga bills mula sa counter + karagdagang halaga)
+                </p>
               </div>
 
               {/* Bill Counter */}
@@ -250,20 +252,25 @@ export function CashDrawerModal({
                   ))}
                   <div className="flex justify-between border-t border-border pt-2">
                     <span className="text-xs font-bold text-muted-foreground">
-                      TOTAL
+                      GRAND TOTAL
                     </span>
                     <span className="font-mono font-extrabold">
-                      {formatPeso(total)}
+                      {formatPeso(total + (parseFloat(startingCash) || 0))}
                     </span>
                   </div>
                 </div>
                 {total > 0 && (
                   <button
                     type="button"
-                    onClick={() => setStartingCash(String(total))}
+                    onClick={() => {
+                      setStartingCash(
+                        String(total + (parseFloat(startingCash) || 0))
+                      )
+                      setCounts([0, 0, 0, 0, 0])
+                    }}
                     className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
                   >
-                    ✓ Gamitin ang Total na ito
+                    ✓ Use This Total
                   </button>
                 )}
               </div>
@@ -370,44 +377,28 @@ export function CashDrawerModal({
                         ))}
                         <div className="flex justify-between border-t border-border pt-2">
                           <span className="text-xs font-bold text-muted-foreground">
-                            TOTAL
+                            GRAND TOTAL
                           </span>
                           <span className="font-mono font-extrabold">
-                            {formatPeso(total)}
+                            {formatPeso(total + (parseFloat(actualCash) || 0))}
                           </span>
                         </div>
                       </div>
                       {total > 0 && (
                         <button
                           type="button"
-                          onClick={() => setActualCash(String(total))}
+                          onClick={() => {
+                            setActualCash(
+                              String(total + (parseFloat(actualCash) || 0))
+                            )
+                            setCounts([0, 0, 0, 0, 0])
+                          }}
                           className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
                         >
-                          ✓ Gamitin ang Total na ito
+                          ✓ Use This Total
                         </button>
                       )}
                     </div>
-                    {difference !== null && (
-                      <p
-                        className={cn(
-                          "flex items-center gap-1 text-xs font-semibold",
-                          Math.abs(difference) < 0.005
-                            ? "text-emerald-600"
-                            : "text-red-600"
-                        )}
-                      >
-                        {Math.abs(difference) < 0.005 ? (
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        ) : (
-                          <AlertTriangle className="h-3.5 w-3.5" />
-                        )}
-                        {Math.abs(difference) < 0.005
-                          ? "Tama ang bilang — walang kulang o sobra."
-                          : difference > 0
-                            ? `Sobra ng ${formatPeso(difference)} sa drawer.`
-                            : `Kulang ng ${formatPeso(Math.abs(difference))} sa drawer.`}
-                      </p>
-                    )}
                   </div>
 
                   <div className="space-y-1.5">
