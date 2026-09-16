@@ -233,7 +233,7 @@ export function CatalogView({ basePath }: CatalogViewProps) {
               {error}
             </div>
           )}
-          <div className={`grid max-w-3xl ${gridCols} gap-4 md:gap-6`}>
+          <div className={`mx-auto grid max-w-7xl ${gridCols} gap-4 md:gap-6`}>
             {paginatedProducts.map((product) => (
               <CatalogProductCard
                 key={product.id}
