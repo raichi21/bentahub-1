@@ -10,11 +10,13 @@ import {
   Bluetooth,
   Usb,
   Unplug,
+  Settings2,
 } from "lucide-react"
 import { jsPDF } from "jspdf"
 import { useAuth } from "@/hooks/useAuth"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
 import {
+  autoConnectThermal,
   buildThermalReceipt,
   connectBluetooth,
   connectUsb,
@@ -145,6 +147,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
   )
   const [printMessage, setPrintMessage] = useState("")
   const [connecting, setConnecting] = useState(false)
+  const [showPrinterSettings, setShowPrinterSettings] = useState(false)
   const [connection, setConnection] = useState<ThermalConnection | null>(() =>
     getConnection()
   )
@@ -211,8 +214,15 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     setPrintMessage("")
 
     try {
-      // 1) Thermal printer connected (Web Bluetooth / Web Serial) → ESC/POS.
-      const thermal = getConnection()
+      // 1) Thermal: auto-connect to a granted/picked printer, then print.
+      let thermal = getConnection()
+      if (!thermal) {
+        try {
+          thermal = await autoConnectThermal()
+        } catch {
+          // No printer granted/picked yet → server / PDF fallback below.
+        }
+      }
       if (thermal) {
         try {
           await printThermal(
@@ -466,67 +476,105 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
         {/* Action Panel */}
         <div className="space-y-3 border-t border-border bg-muted p-4">
-          {/* Thermal printer connection */}
+          {/* Thermal printer status + settings toggle */}
           {hasAnyThermalSupport ? (
-            <div className="flex items-center justify-between gap-2">
-              {connection ? (
+            <>
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-1.5">
-                  {connection.kind === "bluetooth" ? (
-                    <Bluetooth className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  {connection ? (
+                    connection.kind === "bluetooth" ? (
+                      <Bluetooth className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    ) : (
+                      <Usb className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    )
                   ) : (
-                    <Usb className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <Printer className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   )}
-                  <span className="truncate text-[10px] font-bold text-card-foreground">
-                    {connection.name}
+                  <span className="truncate text-[10px] font-medium text-muted-foreground">
+                    {connection
+                      ? connection.name
+                      : "Auto-print gamit ang thermal printer"}
                   </span>
-                  <button
-                    onClick={handleDisconnect}
-                    disabled={connecting}
-                    className="ml-1 rounded-lg border border-border p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
-                    title="Disconnect printer"
-                  >
-                    <Unplug className="h-3.5 w-3.5" />
-                  </button>
                 </div>
-              ) : (
-                <span className="truncate text-[10px] font-medium text-muted-foreground">
-                  Thermal printer: hindi konektado
-                </span>
-              )}
+                <button
+                  onClick={() => setShowPrinterSettings(!showPrinterSettings)}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold transition-colors",
+                    showPrinterSettings
+                      ? "bg-accent text-card-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-card-foreground"
+                  )}
+                  title="Printer settings"
+                >
+                  <Settings2 className="h-3 w-3" />
+                  <span>Printer settings</span>
+                </button>
+              </div>
 
-              {!connection && (
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {canBluetooth && (
-                    <button
-                      onClick={() => handleConnect("bluetooth")}
-                      disabled={connecting}
-                      className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
-                    >
-                      {connecting ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
+              {/* Printer settings (collapsible) */}
+              {showPrinterSettings && (
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card/60 p-2">
+                  {connection ? (
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      {connection.kind === "bluetooth" ? (
+                        <Bluetooth className="h-3.5 w-3.5 shrink-0 text-primary" />
                       ) : (
-                        <Bluetooth className="h-3 w-3" />
+                        <Usb className="h-3.5 w-3.5 shrink-0 text-primary" />
                       )}
-                      <span>Bluetooth</span>
-                    </button>
+                      <span className="truncate text-[10px] font-bold text-card-foreground">
+                        {connection.name}
+                      </span>
+                      <button
+                        onClick={handleDisconnect}
+                        disabled={connecting}
+                        className="ml-1 rounded-lg border border-border p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
+                        title="Disconnect printer"
+                      >
+                        <Unplug className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="truncate text-[10px] font-medium text-muted-foreground">
+                      Pumili ng printer (isang beses lang; pagkatapos ay
+                      auto-connect na ito)
+                    </span>
                   )}
-                  {canSerial && (
-                    <button
-                      onClick={() => handleConnect("usb")}
-                      disabled={connecting}
-                      className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
-                    >
-                      {connecting ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Usb className="h-3 w-3" />
+
+                  {!connection && (
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {canBluetooth && (
+                        <button
+                          onClick={() => handleConnect("bluetooth")}
+                          disabled={connecting}
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
+                        >
+                          {connecting ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Bluetooth className="h-3 w-3" />
+                          )}
+                          <span>Bluetooth</span>
+                        </button>
                       )}
-                      <span>USB</span>
-                    </button>
+                      {canSerial && (
+                        <button
+                          onClick={() => handleConnect("usb")}
+                          disabled={connecting}
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-[10px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground disabled:opacity-60"
+                        >
+                          {connecting ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Usb className="h-3 w-3" />
+                          )}
+                          <span>USB</span>
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
-            </div>
+            </>
           ) : (
             <p className="text-center text-[10px] font-medium text-muted-foreground">
               Hindi suportado ang direct thermal printing sa browser na ito

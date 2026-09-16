@@ -73,6 +73,12 @@ export async function connectUsb() {
   if (!isSerialSupported())
     throw new Error("Web Serial is not supported in this browser")
   const port = await navigator.serial.requestPort()
+  await openSerialPort(port)
+  emit()
+  return connection
+}
+
+async function openSerialPort(port: SerialPort) {
   await port.open({ baudRate: BAUD_RATE })
   const writer = port.writable?.getWriter()
   connection = {
@@ -85,8 +91,6 @@ export async function connectUsb() {
     connection = null
     emit()
   })
-  emit()
-  return connection
 }
 
 export async function connectBluetooth() {
@@ -96,14 +100,16 @@ export async function connectBluetooth() {
     acceptAllDevices: true,
     optionalServices: THERMAL_SERVICES,
   })
+  return await adoptBluetoothDevice(device)
+}
 
+async function adoptBluetoothDevice(device: BluetoothDevice) {
   const characteristic = await findWritableCharacteristic(device)
   if (!characteristic) {
     throw new Error(
       "Hindi mahanap ang printable service ng printer (classic BT?). Use USB o ang PC print server."
     )
   }
-
   connection = {
     kind: "bluetooth",
     name: device.name || "Bluetooth thermal printer",
@@ -135,6 +141,51 @@ async function findWritableCharacteristic(device: BluetoothDevice) {
     }
   }
   return null
+}
+
+/**
+ * One-tap printing: reuses a previously granted printer (no chooser), falls
+ * back to the Bluetooth device chooser only the very first time per origin.
+ * Throws when nothing is available (caller falls back to server/PDF).
+ */
+export async function autoConnectThermal(): Promise<ThermalConnection> {
+  if (connection) return connection
+
+  if (isBluetoothSupported()) {
+    // Reconnect silently to an already-permitted device.
+    if (typeof navigator.bluetooth.getDevices === "function") {
+      try {
+        const granted = await navigator.bluetooth.getDevices()
+        for (const device of granted) {
+          try {
+            return await adoptBluetoothDevice(device)
+          } catch {
+            // Device powered off/unreachable → try the next one
+          }
+        }
+      } catch {
+        // Fall through to the one-time chooser
+      }
+    }
+
+    // One-time picker (browser security requires it before any device can be used)
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: THERMAL_SERVICES,
+    })
+    return await adoptBluetoothDevice(device)
+  }
+
+  // Reuse an already-permitted USB port without the chooser.
+  if (isSerialSupported() && typeof navigator.serial.getPorts === "function") {
+    const granted = await navigator.serial.getPorts()
+    if (granted.length > 0) {
+      await openSerialPort(granted[0])
+      return connection!
+    }
+  }
+
+  throw new Error("Walang nakitang thermal printer")
 }
 
 export async function disconnectThermal() {
