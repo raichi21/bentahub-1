@@ -30,7 +30,8 @@ const PRINTER_NAME = process.env.PRINTER_NAME || "" // Empty = use default print
 // Builds a plain-text receipt that prints correctly on ANY printer
 function buildReceiptText(data) {
   const lines = []
-  const w = 42 // max line width
+  // 58mm thermal paper fits ~32 monospace chars, regular paper ~42.
+  const w = data.paperWidth === "58mm" ? 32 : 42 // max line width
 
   function padCenter(text) {
     const pad = Math.max(0, Math.floor((w - text.length) / 2))
@@ -47,8 +48,8 @@ function buildReceiptText(data) {
 
   // ── Header ──
   line("")
-  line(padCenter("BENTAHUB RETAIL"))
-  line(padCenter("Main Branch, Metro Manila"))
+  line(padCenter(data.storeName || "BENTAHUB RETAIL"))
+  line(padCenter(data.branch || "Main Branch, Metro Manila"))
   line(padCenter("--- Official Receipt ---"))
   line("")
 
@@ -57,44 +58,108 @@ function buildReceiptText(data) {
   line("  Receipt No: BH-" + String(data.receiptNumber || "").padStart(6, "0"))
   line("  Date:       " + (data.date || ""))
   line("  Cashier:    " + (data.cashier || "N/A"))
-  line("  Status:     " + ((data.status || "completed").toUpperCase()))
+  line("  Status:     " + (data.status || "completed").toUpperCase())
   divider("-")
 
   // ── Items Header ──
-  line("  ITEM                  QTY    PRICE   TOTAL")
+  if (w >= 42) {
+    line("  ITEM                  QTY    PRICE   TOTAL")
+  } else {
+    line("  ITEM              QTY   PRICE   TOTAL")
+  }
   divider("-")
 
   // ── Items ──
   if (data.items && data.items.length > 0) {
     for (const item of data.items) {
-      const name = (item.name || "").padEnd(20).slice(0, 20)
-      const qty = String(item.qty || 0).padStart(4)
+      const name = (item.name || "").padEnd(14).slice(0, 14)
+      const qty = String(item.qty || 0).padStart(3)
       const price = "P" + (item.price || 0).toFixed(2)
       const total = "P" + ((item.qty || 0) * (item.price || 0)).toFixed(2)
-      line("  " + name + " " + qty + "  " + price.padStart(7) + " " + total.padStart(7))
+      if (w >= 42) {
+        line(
+          "  " +
+            name.padEnd(20).slice(0, 20) +
+            " " +
+            qty +
+            "  " +
+            price.padStart(7) +
+            " " +
+            total.padStart(7)
+        )
+      } else {
+        line(
+          "  " +
+            name +
+            " " +
+            qty +
+            "  " +
+            price.padStart(6) +
+            " " +
+            total.padStart(6)
+        )
+      }
     }
   }
 
   divider("-")
 
   // ── Totals ──
-  line("  Subtotal:                     P" + (data.subtotal || 0).toFixed(2))
-  if (data.discount && data.discount > 0) {
-    line("  Discount:                    -P" + (data.discount || 0).toFixed(2))
-  }
-  divider("-")
-  line("  TOTAL:                        P" + (data.total || 0).toFixed(2))
-  divider("-")
+  if (w >= 42) {
+    line("  Subtotal:                     P" + (data.subtotal || 0).toFixed(2))
+    if (data.discount && data.discount > 0) {
+      line(
+        "  Discount:                    -P" + (data.discount || 0).toFixed(2)
+      )
+    }
+    divider("-")
+    line("  TOTAL:                        P" + (data.total || 0).toFixed(2))
+    divider("-")
 
-  // ── Payment ──
-  line("  Payment:       " + ((data.paymentMethod || "cash").toUpperCase()))
-  line("  Amount Paid:                  P" + (data.amountPaid || 0).toFixed(2))
-  line("  Change:                       P" + (data.change || 0).toFixed(2))
+    // ── Payment ──
+    line("  Payment:       " + (data.paymentMethod || "cash").toUpperCase())
+    line(
+      "  Amount Paid:                  P" + (data.amountPaid || 0).toFixed(2)
+    )
+    line("  Change:                       P" + (data.change || 0).toFixed(2))
+  } else {
+    line(
+      "  SUB-TOTAL                 " +
+        "P" +
+        (data.subtotal || 0).toFixed(2).padStart(6)
+    )
+    if (data.discount && data.discount > 0) {
+      line(
+        "  Discount                  -P" +
+          (data.discount || 0).toFixed(2).padStart(5)
+      )
+    }
+    divider("-")
+    line(
+      "  TOTAL                    " +
+        "P" +
+        (data.total || 0).toFixed(2).padStart(6)
+    )
+    divider("-")
+
+    // ── Payment ──
+    line("  PAYMENT:   " + (data.paymentMethod || "cash").toUpperCase())
+    line(
+      "  AMOUNT PAID:        " +
+        "P" +
+        (data.amountPaid || 0).toFixed(2).padStart(6)
+    )
+    line(
+      "  CHANGE:             " + "P" + (data.change || 0).toFixed(2).padStart(6)
+    )
+  }
   line("")
 
   // ── Footer ──
-  line(padCenter("Thank you for shopping with BentaHub!"))
-  line(padCenter("Please keep this receipt for return/refund requests."))
+  const storeFooter =
+    "Thank you for shopping with " + (data.storeName || "BentaHub") + "!"
+  line(padCenter(storeFooter.slice(0, w)))
+  line(padCenter("Please keep this receipt for refunds.".slice(0, w)))
   line("")
   line("")
   line("")
@@ -121,8 +186,14 @@ function saveToFile(content, ext) {
  */
 function tryPrint(text) {
   return new Promise((resolve) => {
-    const tmpFile = path.join(os.tmpdir(), "bentahub_receipt_" + Date.now() + ".txt")
-    const ps1File = path.join(os.tmpdir(), "bentahub_print_" + Date.now() + ".ps1")
+    const tmpFile = path.join(
+      os.tmpdir(),
+      "bentahub_receipt_" + Date.now() + ".txt"
+    )
+    const ps1File = path.join(
+      os.tmpdir(),
+      "bentahub_print_" + Date.now() + ".ps1"
+    )
     try {
       fs.writeFileSync(tmpFile, text, "utf8")
 
@@ -135,7 +206,7 @@ function tryPrint(text) {
         'try { $ErrorActionPreference = "Stop" } catch {}',
         "",
         "# Step 1: Find printer",
-        "$printerName = " + (name ? ("'" + name + "'") : "$null"),
+        "$printerName = " + (name ? "'" + name + "'" : "$null"),
         "if (-not $printerName) {",
         "  $printer = Get-CimInstance -Class Win32_Printer -Filter 'Default=true' -ErrorAction SilentlyContinue",
         "  if ($printer) { $printerName = $printer.Name }",
@@ -147,7 +218,9 @@ function tryPrint(text) {
         "Write-Output ('PRINTER:' + $printerName)",
         "",
         "# Step 2: Read the text content",
-        "$content = Get-Content -Path '" + textFilePath + "' -Raw -ErrorAction SilentlyContinue",
+        "$content = Get-Content -Path '" +
+          textFilePath +
+          "' -Raw -ErrorAction SilentlyContinue",
         "if (-not $content) { Write-Output 'ERR: Cannot read receipt file'; exit 1 }",
         "",
         "# Step 3: Try printing with Out-Printer",
@@ -170,7 +243,9 @@ function tryPrint(text) {
         "",
         "# Step 5: Last resort - Notepad print",
         "try {",
-        "  $p = Start-Process -FilePath notepad.exe -ArgumentList '/P', '" + textFilePath + "' -Wait -NoNewWindow -PassThru",
+        "  $p = Start-Process -FilePath notepad.exe -ArgumentList '/P', '" +
+          textFilePath +
+          "' -Wait -NoNewWindow -PassThru",
         "  if ($p.ExitCode -eq 0) { Write-Output 'PRINT_OK'; exit 0 }",
         "} catch {}",
         "",
@@ -184,11 +259,23 @@ function tryPrint(text) {
         'powershell -NoProfile -ExecutionPolicy Bypass -File "' + ps1File + '"',
         { timeout: 30000, windowsHide: true },
         (error, stdout) => {
-          try { fs.unlinkSync(tmpFile) } catch { /* ignore */ }
-          try { fs.unlinkSync(ps1File) } catch { /* ignore */ }
+          try {
+            fs.unlinkSync(tmpFile)
+          } catch {
+            /* ignore */
+          }
+          try {
+            fs.unlinkSync(ps1File)
+          } catch {
+            /* ignore */
+          }
           const output = (stdout || "").trim()
-          const printerLine = output.split("\n").find(l => l.startsWith("PRINTER:"))
-          const printerNameOut = printerLine ? printerLine.replace("PRINTER:", "").trim() : ""
+          const printerLine = output
+            .split("\n")
+            .find((l) => l.startsWith("PRINTER:"))
+          const printerNameOut = printerLine
+            ? printerLine.replace("PRINTER:", "").trim()
+            : ""
 
           if (output.includes("PRINT_OK")) {
             resolve(printerNameOut + "|SUCCESS")
@@ -198,11 +285,19 @@ function tryPrint(text) {
             const errMsg = error ? error.message : output || "Unknown error"
             resolve("|ERROR:" + errMsg)
           }
-        },
+        }
       )
     } catch (err) {
-      try { fs.unlinkSync(tmpFile) } catch { /* ignore */ }
-      try { fs.unlinkSync(ps1File) } catch { /* ignore */ }
+      try {
+        fs.unlinkSync(tmpFile)
+      } catch {
+        /* ignore */
+      }
+      try {
+        fs.unlinkSync(ps1File)
+      } catch {
+        /* ignore */
+      }
       resolve("|ERROR:" + err.message)
     }
   })
@@ -239,7 +334,9 @@ const server = http.createServer((req, res) => {
   // ── GET /status ──
   if (req.method === "GET" && url.pathname === "/status") {
     res.writeHead(200)
-    res.end(JSON.stringify({ status: "ok", printerName: PRINTER_NAME || "(default)" }))
+    res.end(
+      JSON.stringify({ status: "ok", printerName: PRINTER_NAME || "(default)" })
+    )
     return
   }
 
@@ -261,7 +358,9 @@ const server = http.createServer((req, res) => {
         const data = JSON.parse(body)
         if (!data.items || data.items.length === 0) {
           res.writeHead(400)
-          res.end(JSON.stringify({ success: false, message: "No items provided" }))
+          res.end(
+            JSON.stringify({ success: false, message: "No items provided" })
+          )
           return
         }
 
@@ -282,19 +381,21 @@ const server = http.createServer((req, res) => {
           : ""
 
         res.writeHead(200)
-        res.end(JSON.stringify({
-          success: true,
-          printed,
-          printerName: printerName_,
-          message: printed
-            ? "Receipt sent to: " + printerName_
-            : printStatus === "NO_PRINTER"
-              ? "No printer found. Receipt saved to file."
-              : errorDetail
-                ? "Print error: " + errorDetail + ". Saving to file."
-                : "Could not print. Receipt saved to file.",
-          filePath: filePath.replace(__dirname, "."),
-        }))
+        res.end(
+          JSON.stringify({
+            success: true,
+            printed,
+            printerName: printerName_,
+            message: printed
+              ? "Receipt sent to: " + printerName_
+              : printStatus === "NO_PRINTER"
+                ? "No printer found. Receipt saved to file."
+                : errorDetail
+                  ? "Print error: " + errorDetail + ". Saving to file."
+                  : "Could not print. Receipt saved to file.",
+            filePath: filePath.replace(__dirname, "."),
+          })
+        )
       } catch (err) {
         res.writeHead(400)
         res.end(JSON.stringify({ success: false, message: err.message }))
@@ -323,7 +424,11 @@ server.listen(PORT, () => {
 
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
-    console.error("Port " + PORT + " is already in use. Set PRINT_SERVER_PORT env var to use a different port.")
+    console.error(
+      "Port " +
+        PORT +
+        " is already in use. Set PRINT_SERVER_PORT env var to use a different port."
+    )
   } else {
     console.error("Server error:", err)
   }
