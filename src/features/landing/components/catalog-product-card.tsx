@@ -200,31 +200,26 @@ export function CatalogProductCard({
             </Button>
           ) : !isPublic && inCartQty > 0 ? (
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleDecrement}
-                  title={
-                    inCartQty <= 1 ? "Remove from cart" : "Decrease quantity"
-                  }
-                  aria-label={
-                    inCartQty <= 1 ? "Remove from cart" : "Decrease quantity"
-                  }
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600"
-                >
-                  <Minus className="size-4" />
-                </button>
-                <span className="text-xs font-medium text-muted-foreground">
-                  {atMax ? "Max Reached" : `In Cart · ${inCartQty}`}
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={handleDecrement}
+                title={
+                  inCartQty <= 1 ? "Remove from cart" : "Decrease quantity"
+                }
+                aria-label={
+                  inCartQty <= 1 ? "Remove from cart" : "Decrease quantity"
+                }
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600"
+              >
+                <Minus className="size-4" />
+              </button>
               <button
                 type="button"
                 onClick={handleAddToCart}
                 disabled={atMax}
                 title={atMax ? "Maximum stock reached" : "Add one more"}
                 aria-label="Add one more"
-                className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600"
+                className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600"
               >
                 <Plus className="size-4" />
                 <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border border-blue-600 bg-white text-[10px] font-bold text-blue-600 shadow-sm">

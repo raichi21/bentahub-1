@@ -305,27 +305,23 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
                   aria-label={
                     inCartQty <= 1 ? "Remove from cart" : "Decrease quantity"
                   }
-                  className="flex w-14 shrink-0 items-center justify-center rounded-xl bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600"
                 >
                   <Minus className="h-5 w-5" />
                 </button>
-                <Button
-                  size="lg"
-                  className="flex-1 gap-2 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                <button
+                  type="button"
                   onClick={handleAddToCart}
                   disabled={atMax}
-                  title={atMax ? "Maximum stock reached" : undefined}
+                  title={atMax ? "Maximum stock reached" : "Add one more"}
+                  aria-label="Add one more"
+                  className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600"
                 >
-                  <div className="relative">
-                    <Plus className="h-5 w-5" />
-                    {inCartQty > 0 && (
-                      <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full border border-blue-600 bg-white text-[10px] font-bold text-blue-600 shadow-sm">
-                        {inCartQty}
-                      </span>
-                    )}
-                  </div>
-                  {atMax ? "Max Stock Reached" : `In Cart · ${inCartQty}`}
-                </Button>
+                  <Plus className="h-5 w-5" />
+                  <span className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full border border-blue-600 bg-white text-[10px] font-bold text-blue-600 shadow-sm">
+                    {inCartQty}
+                  </span>
+                </button>
               </div>
             ) : (
               <Button
