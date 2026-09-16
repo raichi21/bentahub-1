@@ -1,6 +1,6 @@
 /**
  * Customer Dashboard Components
- * 
+ *
  * All components used in the customer dashboard are exported from here.
  */
 
@@ -11,6 +11,7 @@ export * from "./recent-orders-table"
 export * from "./nearby-branches"
 export * from "./catalog-toolbar"
 export * from "./category-sidebar"
+export * from "./category-chips"
 export * from "./product-card"
 export * from "./pagination"
 export * from "./transaction-filters"

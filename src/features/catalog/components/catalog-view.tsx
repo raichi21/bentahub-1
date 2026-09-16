@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   CatalogToolbar,
-  CategorySidebar
+  CategorySidebar,
+  CategoryChips,
 } from "@/features/customer-dashboard"
 import { Pagination } from "@/features/customer-dashboard/components/pagination"
 import { CatalogProductCard } from "@/features/landing/components/catalog-product-card"
@@ -24,7 +25,12 @@ interface CatalogViewProps {
 }
 
 export function CatalogView({ basePath }: CatalogViewProps) {
-  const { products: fetchedProducts, fetchProducts, isLoading, error } = useProducts()
+  const {
+    products: fetchedProducts,
+    fetchProducts,
+    isLoading,
+    error,
+  } = useProducts()
   const { itemCount, fetchCart } = useCart()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -71,20 +77,24 @@ export function CatalogView({ basePath }: CatalogViewProps) {
   const lastBranchRef = useRef("")
   const fetchControllerRef = useRef<AbortController | null>(null)
   useEffect(() => {
-    if (lastBranchRef.current === currentBranch && fetchedProducts.length > 0) return
+    if (lastBranchRef.current === currentBranch && fetchedProducts.length > 0)
+      return
     lastBranchRef.current = currentBranch
     fetchControllerRef.current?.abort()
     const controller = new AbortController()
     fetchControllerRef.current = controller
-    fetchProducts({ branch: currentBranch, signal: controller.signal }).catch((error: unknown) => {
-      // Aborted requests are handled (and ignored) inside the hook
-      if (error instanceof Error && error.name !== "AbortError") {
-        console.error("Failed to fetch products:", error)
+    fetchProducts({ branch: currentBranch, signal: controller.signal }).catch(
+      (error: unknown) => {
+        // Aborted requests are handled (and ignored) inside the hook
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Failed to fetch products:", error)
+        }
       }
-    })
+    )
     return () => {
       controller.abort()
-      if (fetchControllerRef.current === controller) fetchControllerRef.current = null
+      if (fetchControllerRef.current === controller)
+        fetchControllerRef.current = null
     }
   }, [fetchProducts, currentBranch, fetchedProducts.length])
 
@@ -95,6 +105,24 @@ export function CatalogView({ basePath }: CatalogViewProps) {
     [currentBranch, queryString, router]
   )
 
+  // Pre-computed category list — shared by the desktop sidebar and the
+  // horizontal chips row so both stay in sync and only compute once.
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>()
+    let allCount = 0
+    for (const p of fetchedProducts) {
+      if (p.isActive === false) continue
+      allCount++
+      counts.set(p.category, (counts.get(p.category) || 0) + 1)
+    }
+    return [
+      { name: "All Products", count: allCount },
+      ...Array.from(counts, ([name, count]) => ({ name, count })).sort(
+        (a, b) => b.count - a.count
+      ),
+    ]
+  }, [fetchedProducts])
+
   const branchChanged = useCallback(
     (branch: string) => {
       router.push(queryString(currentCategory, branch, 1))
@@ -102,13 +130,13 @@ export function CatalogView({ basePath }: CatalogViewProps) {
     [currentCategory, queryString, router]
   )
 
-  // Filter products client-side based on selected category, branch & search
   const displayProducts: CatalogProductCardProps[] = useMemo(() => {
     const source = fetchedProducts.length > 0 ? fetchedProducts : []
 
-    const byCategory = currentCategory === DEFAULT_CATEGORY
-      ? source
-      : source.filter((p) => p.category === currentCategory)
+    const byCategory =
+      currentCategory === DEFAULT_CATEGORY
+        ? source
+        : source.filter((p) => p.category === currentCategory)
 
     // Products already filtered by branch from API
     const query = searchQuery.toLowerCase().trim()
@@ -132,14 +160,22 @@ export function CatalogView({ basePath }: CatalogViewProps) {
   const totalProducts = displayProducts.length
   const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE))
   const safePage = Math.min(currentPage, totalPages)
-  const showingFrom = totalProducts === 0 ? 0 : (safePage - 1) * ITEMS_PER_PAGE + 1
+  const showingFrom =
+    totalProducts === 0 ? 0 : (safePage - 1) * ITEMS_PER_PAGE + 1
   const showingTo = Math.min(totalProducts, safePage * ITEMS_PER_PAGE)
 
   useEffect(() => {
     if (currentPage !== safePage) {
       router.replace(queryString(currentCategory, currentBranch, safePage))
     }
-  }, [currentBranch, currentCategory, currentPage, queryString, router, safePage])
+  }, [
+    currentBranch,
+    currentCategory,
+    currentPage,
+    queryString,
+    router,
+    safePage,
+  ])
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (safePage - 1) * ITEMS_PER_PAGE
@@ -163,7 +199,7 @@ export function CatalogView({ basePath }: CatalogViewProps) {
         : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex min-h-screen flex-col">
       {/* Toolbar */}
       <CatalogToolbar
         showingFrom={showingFrom}
@@ -177,30 +213,39 @@ export function CatalogView({ basePath }: CatalogViewProps) {
       />
 
       {/* Main Content Area with Sidebar */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+      <div className="w-full px-4 py-6 sm:px-6 md:py-8 lg:px-8">
         <div className="flex flex-1">
           {/* Sidebar - Hidden on mobile */}
           <CategorySidebar
             activeCategory={currentCategory}
             onSelectCategory={categoryChanged}
-            products={fetchedProducts}
+            categories={categories}
           />
 
           {/* Product Grid Area */}
           <div className="flex-1 overflow-hidden">
+            <CategoryChips
+              categories={categories}
+              activeCategory={currentCategory}
+              onSelectCategory={categoryChanged}
+            />
             {isLoading && !displayProducts.length && (
-              <div className="flex items-center justify-center h-64">
+              <div className="flex h-64 items-center justify-center">
                 <p className="text-muted-foreground">Loading products...</p>
               </div>
             )}
             {error && (
-              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200">
+              <div className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
                 {error}
               </div>
             )}
-            <div className={`max-w-3xl grid ${gridCols} gap-4 md:gap-6`}>
+            <div className={`grid max-w-3xl ${gridCols} gap-4 md:gap-6`}>
               {paginatedProducts.map((product) => (
-                <CatalogProductCard key={product.id} {...product} basePath={basePath} />
+                <CatalogProductCard
+                  key={product.id}
+                  {...product}
+                  basePath={basePath}
+                />
               ))}
             </div>
 
@@ -218,11 +263,11 @@ export function CatalogView({ basePath }: CatalogViewProps) {
       {basePath !== "/catalog" && (
         <Link
           href="/customer/cart"
-          className="fixed bottom-20 right-6 md:bottom-6 md:right-6 size-14 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors z-40"
+          className="fixed right-6 bottom-20 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-colors hover:bg-primary/90 md:right-6 md:bottom-6"
         >
           <ShoppingCart className="h-6 w-6" />
           {itemCount > 0 && (
-            <span className="absolute -top-1 -right-1 size-5 bg-destructive rounded-full flex items-center justify-center text-xs font-bold text-destructive-foreground">
+            <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
               {itemCount > 9 ? "9+" : itemCount}
             </span>
           )}
