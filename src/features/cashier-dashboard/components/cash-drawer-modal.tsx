@@ -1,12 +1,27 @@
 "use client"
 
-import { useState } from "react"
-import { X, Wallet, Coins, AlertTriangle, CheckCircle2, Loader2, History, ArrowRight } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import {
+  X,
+  Wallet,
+  Coins,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  History,
+  ArrowRight,
+} from "lucide-react"
 import type { CashDrawerSession, LastClosedSessionInfo } from "@/types/cashier"
 import { formatPeso } from "@/types/cashier"
 import { cn } from "@/lib/utils"
 
-const PRESET_AMOUNTS = [500, 1000, 1500, 2000]
+const DENOMINATIONS = [
+  { value: 1000, label: "₱1,000" },
+  { value: 500, label: "₱500" },
+  { value: 100, label: "₱100" },
+  { value: 50, label: "₱50" },
+  { value: 20, label: "₱20" },
+]
 
 interface CashDrawerModalProps {
   mode: "open" | "close"
@@ -33,6 +48,22 @@ export function CashDrawerModal({
   const [confirming, setConfirming] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [counts, setCounts] = useState([0, 0, 0, 0, 0])
+
+  const updateCount = (index: number, delta: number) =>
+    setCounts((prev) =>
+      prev.map((c, i) => (i === index ? Math.max(0, c + delta) : c))
+    )
+
+  const total = useMemo(
+    () => DENOMINATIONS.reduce((sum, d, i) => sum + d.value * counts[i], 0),
+    [counts]
+  )
+
+  useEffect(() => {
+    const t = setTimeout(() => setCounts([0, 0, 0, 0, 0]), 0)
+    return () => clearTimeout(t)
+  }, [mode])
 
   const handleOpen = async () => {
     const val = parseFloat(startingCash)
@@ -69,46 +100,56 @@ export function CashDrawerModal({
   const difference = Number.isFinite(actualVal) ? actualVal - expected : null
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
+    <div className="fixed inset-0 z-[120] flex animate-in items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm duration-200 fade-in">
+      <div className="flex max-h-[90vh] w-full max-w-md animate-in flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 zoom-in">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
           <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-primary" />
+            <Wallet className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold text-card-foreground">
               {mode === "open" ? "Open Cash Drawer" : "Close Cash Drawer"}
             </h2>
           </div>
           {mode === "open" && (
-            <button onClick={onDismiss} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              onClick={onDismiss}
+              className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
               <X className="h-5 w-5" />
             </button>
           )}
         </div>
 
-        <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
+        <div className="custom-scrollbar space-y-5 overflow-y-auto p-6">
           {mode === "open" ? (
             <>
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg text-sm text-muted-foreground">
-                <p className="font-semibold text-card-foreground mb-1">Starting Float</p>
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+                <p className="mb-1 font-semibold text-card-foreground">
+                  Starting Float
+                </p>
                 <p className="text-xs">
-                  Ilagay muna ang perang naiwan sa cash drawer mula sa nakaraang shift (hal. ₱500 na panukli) bago magsimula sa pagbebenta.
+                  Ilagay muna ang perang naiwan sa cash drawer mula sa nakaraang
+                  shift (hal. ₱500 na panukli) bago magsimula sa pagbebenta.
                 </p>
               </div>
 
               {lastClosedSession && (
-                <div className="p-3.5 bg-muted/40 border border-border rounded-lg space-y-2">
+                <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
-                      <History className="w-3.5 h-3.5 text-primary" />
+                    <span className="flex items-center gap-1.5 font-semibold text-muted-foreground">
+                      <History className="h-3.5 w-3.5 text-primary" />
                       Huling Naiwang Benta / Turnover
                     </span>
                     {lastClosedSession.closedAt && (
-                      <span className="text-[11px] text-muted-foreground font-mono">
-                        {new Date(lastClosedSession.closedAt).toLocaleDateString([], {
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        {new Date(
+                          lastClosedSession.closedAt
+                        ).toLocaleDateString([], {
                           month: "short",
                           day: "numeric",
                         })}{" "}
-                        {new Date(lastClosedSession.closedAt).toLocaleTimeString([], {
+                        {new Date(
+                          lastClosedSession.closedAt
+                        ).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
@@ -118,74 +159,130 @@ export function CashDrawerModal({
 
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-base font-extrabold font-mono text-foreground">
-                        {formatPeso(lastClosedSession.actualEndingCash ?? lastClosedSession.expectedEndingCash)}
+                      <p className="font-mono text-base font-extrabold text-foreground">
+                        {formatPeso(
+                          lastClosedSession.actualEndingCash ??
+                            lastClosedSession.expectedEndingCash
+                        )}
                       </p>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {lastClosedSession.cashierName ? `Isinara ni ${lastClosedSession.cashierName}` : "Mula sa nakaraang shift"}
-                        {lastClosedSession.notes ? ` • "${lastClosedSession.notes}"` : ""}
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {lastClosedSession.cashierName
+                          ? `Isinara ni ${lastClosedSession.cashierName}`
+                          : "Mula sa nakaraang shift"}
+                        {lastClosedSession.notes
+                          ? ` • "${lastClosedSession.notes}"`
+                          : ""}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        const val = lastClosedSession.actualEndingCash ?? lastClosedSession.expectedEndingCash
+                        const val =
+                          lastClosedSession.actualEndingCash ??
+                          lastClosedSession.expectedEndingCash
                         if (val !== null && val !== undefined) {
                           setStartingCash(String(Number(val)))
                         }
                       }}
-                      className="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 transition-colors flex items-center gap-1"
+                      className="flex shrink-0 items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
                     >
                       Gamitin Ito
-                      <ArrowRight className="w-3 h-3" />
+                      <ArrowRight className="h-3 w-3" />
                     </button>
                   </div>
                 </div>
               )}
 
               <div className="space-y-3">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Starting Cash</label>
+                <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Starting Cash
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₱</span>
+                  <span className="absolute top-1/2 left-4 -translate-y-1/2 font-bold text-muted-foreground">
+                    ₱
+                  </span>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={startingCash}
-                    onChange={(e) => setStartingCash(e.target.value.replace(/[^\d.]/g, ""))}
+                    onChange={(e) =>
+                      setStartingCash(e.target.value.replace(/[^\d.]/g, ""))
+                    }
                     placeholder="0.00"
                     autoFocus
-                    className="w-full pl-9 pr-4 py-3 text-lg font-bold font-mono bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    className="w-full rounded-lg border border-border bg-background py-3 pr-4 pl-9 font-mono text-lg font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {PRESET_AMOUNTS.map((amt) => (
+              {/* Bill Counter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Bill Counter
+                </label>
+                <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+                  {DENOMINATIONS.map((denom, i) => (
+                    <div key={denom.value} className="flex items-center gap-2">
+                      <span className="w-14 text-xs font-semibold text-muted-foreground">
+                        {denom.label}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateCount(i, -1)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted/30 text-muted-foreground transition-all hover:bg-red-500 hover:text-white"
+                      >
+                        −
+                      </button>
+                      <span className="w-12 text-center font-mono text-sm font-bold">
+                        {counts[i]}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateCount(i, 1)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted/30 text-muted-foreground transition-all hover:bg-blue-600 hover:text-white"
+                      >
+                        +
+                      </button>
+                      <span className="flex-1 text-right font-mono text-xs text-muted-foreground">
+                        {formatPeso(denom.value * counts[i])}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between border-t border-border pt-2">
+                    <span className="text-xs font-bold text-muted-foreground">
+                      TOTAL
+                    </span>
+                    <span className="font-mono font-extrabold">
+                      {formatPeso(total)}
+                    </span>
+                  </div>
+                </div>
+                {total > 0 && (
                   <button
-                    key={amt}
                     type="button"
-                    onClick={() => setStartingCash(String(amt))}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors",
-                      startingCash === String(amt)
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/60"
-                    )}
+                    onClick={() => setStartingCash(String(total))}
+                    className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
                   >
-                    ₱{amt.toLocaleString()}
+                    ✓ Gamitin ang Total na ito
                   </button>
-                ))}
+                )}
               </div>
 
-              {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
+              {error && (
+                <p className="text-xs font-medium text-red-600">{error}</p>
+              )}
 
               <button
                 type="button"
                 onClick={handleOpen}
                 disabled={submitting || isLoading}
-                className="w-full h-12 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/95 disabled:opacity-50"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Coins className="w-4 h-4" />}
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Coins className="h-4 w-4" />
+                )}
                 {submitting ? "Opening..." : "Open Shift"}
               </button>
             </>
@@ -194,45 +291,115 @@ export function CashDrawerModal({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Opened</span>
-                  <span className="font-mono font-semibold">{new Date(session.openedAt).toLocaleTimeString()}</span>
+                  <span className="font-mono font-semibold">
+                    {new Date(session.openedAt).toLocaleTimeString()}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Starting Float</span>
-                  <span className="font-mono font-semibold">{formatPeso(session.startingCash)}</span>
+                  <span className="font-mono font-semibold">
+                    {formatPeso(session.startingCash)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Expected Ending Cash</span>
-                  <span className="font-mono font-semibold">{formatPeso(session.expectedEndingCash)}</span>
+                  <span className="text-muted-foreground">
+                    Expected Ending Cash
+                  </span>
+                  <span className="font-mono font-semibold">
+                    {formatPeso(session.expectedEndingCash)}
+                  </span>
                 </div>
               </div>
 
               {!confirming ? (
                 <>
                   <div className="space-y-3">
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Actual Ending Cash</label>
+                    <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                      Actual Ending Cash
+                    </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₱</span>
+                      <span className="absolute top-1/2 left-4 -translate-y-1/2 font-bold text-muted-foreground">
+                        ₱
+                      </span>
                       <input
                         type="text"
                         inputMode="numeric"
                         value={actualCash}
-                        onChange={(e) => setActualCash(e.target.value.replace(/[^\d.]/g, ""))}
+                        onChange={(e) =>
+                          setActualCash(e.target.value.replace(/[^\d.]/g, ""))
+                        }
                         placeholder="0.00"
                         autoFocus
-                        className="w-full pl-9 pr-4 py-3 text-lg font-bold font-mono bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        className="w-full rounded-lg border border-border bg-background py-3 pr-4 pl-9 font-mono text-lg font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                        Bill Counter
+                      </label>
+                      <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+                        {DENOMINATIONS.map((denom, i) => (
+                          <div
+                            key={denom.value}
+                            className="flex items-center gap-2"
+                          >
+                            <span className="w-14 text-xs font-semibold text-muted-foreground">
+                              {denom.label}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateCount(i, -1)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted/30 text-muted-foreground transition-all hover:bg-red-500 hover:text-white"
+                            >
+                              −
+                            </button>
+                            <span className="w-12 text-center font-mono text-sm font-bold">
+                              {counts[i]}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateCount(i, 1)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted/30 text-muted-foreground transition-all hover:bg-blue-600 hover:text-white"
+                            >
+                              +
+                            </button>
+                            <span className="flex-1 text-right font-mono text-xs text-muted-foreground">
+                              {formatPeso(denom.value * counts[i])}
+                            </span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between border-t border-border pt-2">
+                          <span className="text-xs font-bold text-muted-foreground">
+                            TOTAL
+                          </span>
+                          <span className="font-mono font-extrabold">
+                            {formatPeso(total)}
+                          </span>
+                        </div>
+                      </div>
+                      {total > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setActualCash(String(total))}
+                          className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
+                        >
+                          ✓ Gamitin ang Total na ito
+                        </button>
+                      )}
                     </div>
                     {difference !== null && (
                       <p
                         className={cn(
-                          "text-xs font-semibold flex items-center gap-1",
-                          Math.abs(difference) < 0.005 ? "text-emerald-600" : "text-red-600"
+                          "flex items-center gap-1 text-xs font-semibold",
+                          Math.abs(difference) < 0.005
+                            ? "text-emerald-600"
+                            : "text-red-600"
                         )}
                       >
                         {Math.abs(difference) < 0.005 ? (
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="h-3.5 w-3.5" />
                         ) : (
-                          <AlertTriangle className="w-3.5 h-3.5" />
+                          <AlertTriangle className="h-3.5 w-3.5" />
                         )}
                         {Math.abs(difference) < 0.005
                           ? "Tama ang bilang — walang kulang o sobra."
@@ -244,17 +411,21 @@ export function CashDrawerModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Notes (optional)</label>
+                    <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                      Notes (optional)
+                    </label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Hal. may kulang na ₱20 sa panukli"
                       rows={2}
-                      className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none resize-none"
+                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
                     />
                   </div>
 
-                  {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
+                  {error && (
+                    <p className="text-xs font-medium text-red-600">{error}</p>
+                  )}
 
                   <button
                     type="button"
@@ -266,44 +437,56 @@ export function CashDrawerModal({
                       setError(null)
                       setConfirming(true)
                     }}
-                    className="w-full h-12 bg-card border-2 border-red-200 text-red-600 rounded-lg font-bold text-sm hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border-2 border-red-200 bg-card text-sm font-bold text-red-600 transition-all hover:bg-red-50"
                   >
-                    <AlertTriangle className="w-4 h-4" />
+                    <AlertTriangle className="h-4 w-4" />
                     Count Actual & Close Shift
                   </button>
                 </>
               ) : (
                 <>
-                  <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-800">
-                    <p className="font-bold text-sm mb-1 flex items-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4" /> Ikumpirma ang pagsasara
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                    <p className="mb-1 flex items-center gap-1.5 text-sm font-bold">
+                      <AlertTriangle className="h-4 w-4" /> Ikumpirma ang
+                      pagsasara
                     </p>
-                    <div className="space-y-1 text-xs mt-2">
+                    <div className="mt-2 space-y-1 text-xs">
                       <div className="flex justify-between">
                         <span>Expected Ending Cash</span>
-                        <span className="font-mono font-bold">{formatPeso(session.expectedEndingCash)}</span>
+                        <span className="font-mono font-bold">
+                          {formatPeso(session.expectedEndingCash)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Actual Ending Cash</span>
-                        <span className="font-mono font-bold">{formatPeso(actualVal)}</span>
+                        <span className="font-mono font-bold">
+                          {formatPeso(actualVal)}
+                        </span>
                       </div>
                       {difference !== null && Math.abs(difference) >= 0.005 && (
                         <div className="flex justify-between font-bold">
                           <span>{difference > 0 ? "Sobra" : "Kulang"}</span>
-                          <span className="font-mono">{formatPeso(Math.abs(difference))}</span>
+                          <span className="font-mono">
+                            {formatPeso(Math.abs(difference))}
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
+                  {error && (
+                    <p className="text-xs font-medium text-red-600">{error}</p>
+                  )}
 
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => { setConfirming(false); setError(null) }}
+                      onClick={() => {
+                        setConfirming(false)
+                        setError(null)
+                      }}
                       disabled={submitting}
-                      className="flex-1 h-12 border border-border text-muted-foreground rounded-lg text-sm font-bold hover:bg-muted transition-all disabled:opacity-50"
+                      className="h-12 flex-1 rounded-lg border border-border text-sm font-bold text-muted-foreground transition-all hover:bg-muted disabled:opacity-50"
                     >
                       Back
                     </button>
@@ -311,9 +494,13 @@ export function CashDrawerModal({
                       type="button"
                       onClick={handleCloseConfirm}
                       disabled={submitting || isLoading}
-                      className="flex-1 h-12 bg-primary text-primary-foreground rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/95 disabled:opacity-50"
                     >
-                      {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                      {submitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4" />
+                      )}
                       {submitting ? "Closing..." : "Confirm Close"}
                     </button>
                   </div>
@@ -321,7 +508,9 @@ export function CashDrawerModal({
               )}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">No open cash drawer session.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No open cash drawer session.
+            </p>
           )}
         </div>
       </div>
