@@ -4,6 +4,9 @@
  *
  * Prints receipts to any Windows printer (inkjet, laser, thermal).
  * For thermal POS printers: uses ESC/POS raw data.
+ * Direct USB path talks to USB printer-class devices through the built-in
+ * usbprint.sys interface (no extra driver required). Falls back to the print
+ * queue, then to plain text on regular printers.
  * For regular printers: prints as plain text via Notepad/Out-Printer.
  *
  * This is a CommonJS server file. `require` is intentional here.
@@ -25,6 +28,15 @@ const os = require("os")
 const PORT = parseInt(process.env.PRINT_SERVER_PORT || "3001", 10)
 const RECEIPTS_DIR = path.join(__dirname, "receipts")
 const PRINTER_NAME = process.env.PRINTER_NAME || "" // Empty = use default printer
+// Transport strategy: "auto" (direct USB -> print queue -> text), "usb" (direct
+// USB only) or "queue" (print queue only, no direct USB).
+const PRINT_TRANSPORT = ["auto", "usb", "queue"].includes(
+  (process.env.PRINT_TRANSPORT || "").toLowerCase()
+)
+  ? (process.env.PRINT_TRANSPORT || "").toLowerCase()
+  : "auto"
+// USB vendor/product of the POS printer (for the direct USB path).
+const USB_PRINTER_VID_PID = process.env.USB_PRINTER_VID_PID || "0FE6:811E"
 
 // ─── RECEIPT TEXT BUILDER ─────────────────────────────────────────────
 // Builds a plain-text receipt that prints correctly on ANY printer
@@ -420,6 +432,217 @@ function tryPrintRaw(escPosBase64, printerName) {
   })
 }
 
+/**
+ * Direct raw USB printing through the Windows USBPRINT device interface.
+ * Uses the generic usbprint.sys driver that is already bound to USB
+ * printer-class devices, so NO extra printer driver is required. Bypasses
+ * the print queue entirely.
+ */
+const USBPRINT_HELPER_CS = `using System;
+using System.Runtime.InteropServices;
+using System.Collections.Generic;
+
+public static class UsbPrint {
+  [StructLayout(LayoutKind.Sequential)]
+  public struct SP_DEVINFO_DATA {
+    public int cbSize;
+    public Guid ClassGuid;
+    public int DevInst;
+    public IntPtr Reserved;
+  }
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct SP_DEVICE_INTERFACE_DATA {
+    public int cbSize;
+    public Guid InterfaceClassGuid;
+    public int Flags;
+    public IntPtr Reserved;
+  }
+
+  [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
+  public static extern IntPtr SetupDiGetClassDevs(ref Guid ClassGuid, IntPtr Enumerator, IntPtr hwndParent, int Flags);
+
+  [DllImport("setupapi.dll", SetLastError = true)]
+  public static extern bool SetupDiEnumDeviceInterfaces(IntPtr hDevInfo, IntPtr devInfo, ref Guid interfaceClassGuid, int memberIndex, ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData);
+
+  [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
+  public static extern bool SetupDiGetDeviceInterfaceDetail(IntPtr hDevInfo, ref SP_DEVICE_INTERFACE_DATA deviceInterfaceData, IntPtr deviceInterfaceDetailData, int deviceInterfaceDetailDataSize, out int requiredSize, IntPtr deviceInfoData);
+
+  [DllImport("setupapi.dll", SetLastError = true)]
+  public static extern bool SetupDiDestroyDeviceInfoList(IntPtr hDevInfo);
+
+  [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+  public static extern IntPtr CreateFile(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+
+  [DllImport("kernel32.dll", SetLastError = true)]
+  public static extern bool WriteFile(IntPtr hFile, byte[] lpBuffer, int nNumberOfBytesToWrite, out int lpNumberOfBytesWritten, IntPtr lpOverlapped);
+
+  [DllImport("kernel32.dll", SetLastError = true)]
+  public static extern bool CloseHandle(IntPtr hObject);
+
+  public static string[] GetPaths() {
+    Guid g = new Guid("28d78fad-5a12-11d1-ae5b-0000f803a8c2");
+    IntPtr h = SetupDiGetClassDevs(ref g, IntPtr.Zero, IntPtr.Zero, 0x12);
+    if (h == IntPtr.Zero || h == new IntPtr(-1)) return new string[0];
+    List<string> list = new List<string>();
+    try {
+      int i = 0;
+      while (true) {
+        SP_DEVICE_INTERFACE_DATA did = new SP_DEVICE_INTERFACE_DATA();
+        did.cbSize = Marshal.SizeOf(typeof(SP_DEVICE_INTERFACE_DATA));
+        if (!SetupDiEnumDeviceInterfaces(h, IntPtr.Zero, ref g, i, ref did)) break;
+        int need = 0;
+        SetupDiGetDeviceInterfaceDetail(h, ref did, IntPtr.Zero, 0, out need, IntPtr.Zero);
+        if (need > 0) {
+          IntPtr buf = Marshal.AllocHGlobal(need);
+          try {
+            Marshal.WriteInt32(buf, IntPtr.Size == 8 ? 8 : 6);
+            if (SetupDiGetDeviceInterfaceDetail(h, ref did, buf, need, out need, IntPtr.Zero)) {
+              // DevicePath is a WCHAR[] placed right after the 4-byte cbSize.
+              string p = Marshal.PtrToStringAuto(new IntPtr(buf.ToInt64() + 4));
+              if (!string.IsNullOrEmpty(p)) list.Add(p);
+            }
+          } finally { Marshal.FreeHGlobal(buf); }
+        }
+        i++;
+      }
+    } finally { SetupDiDestroyDeviceInfoList(h); }
+    return list.ToArray();
+  }
+
+  public static bool WriteRaw(string path, byte[] data, out int written, out int err) {
+    IntPtr hFile = CreateFile(path, 0x40000000, 3, IntPtr.Zero, 3, 0, IntPtr.Zero);
+    if (hFile == new IntPtr(-1)) { written = 0; err = Marshal.GetLastWin32Error(); return false; }
+    try {
+      bool ok = WriteFile(hFile, data, data.Length, out written, IntPtr.Zero);
+      err = ok ? 0 : Marshal.GetLastWin32Error();
+      return ok;
+    } finally { CloseHandle(hFile); }
+  }
+}`
+
+function usbVidPidPattern() {
+  const raw = String(USB_PRINTER_VID_PID || "").trim()
+  if (raw.includes("VID_")) return raw
+  const [vid, pid] = raw.split(":")
+  return (
+    "VID_" +
+    (vid || "0FE6").toUpperCase() +
+    "&PID_" +
+    (pid || "811E").toUpperCase()
+  )
+}
+
+function buildUsbScript(mode, escPosBase64) {
+  const lines = [
+    "$ErrorActionPreference = 'Stop'",
+    'Add-Type -TypeDefinition @"',
+    USBPRINT_HELPER_CS,
+    '"@ -ErrorAction Stop',
+    "$pattern = '" + usbVidPidPattern().replace(/'/g, "''") + "'",
+    "$paths = [UsbPrint]::GetPaths()",
+    "if (-not $paths -or $paths.Count -eq 0) { Write-Output 'USB_NONE'; exit 0 }",
+    "$match = $paths | Where-Object { $_ -match $pattern } | Select-Object -First 1",
+    "if (-not $match) { Write-Output 'USB_NONE'; exit 0 }",
+  ]
+  if (mode === "detect") {
+    lines.push("Write-Output ('USB_FOUND:' + $match)")
+  } else {
+    lines.push('$bytes = [Convert]::FromBase64String("' + escPosBase64 + '")')
+    lines.push(
+      "if (-not $bytes -or $bytes.Length -eq 0) { Write-Output 'ERR: empty payload'; exit 1 }"
+    )
+    lines.push("$written = 0; $err = 0")
+    lines.push(
+      "$ok = [UsbPrint]::WriteRaw($match, $bytes, [ref]$written, [ref]$err)"
+    )
+    lines.push(
+      "if ($ok) { Write-Output ('USB_OK:' + $match) } else { Write-Output ('ERR: WriteFile failed code ' + $err); exit 1 }"
+    )
+  }
+  return lines.join("\n")
+}
+
+let usbCache = { at: 0, value: { available: false, path: "" } }
+
+function detectUsbPrinter({ useCache = true } = {}) {
+  if (useCache && Date.now() - usbCache.at < 5000) return usbCache.value
+  let value = { available: false, path: "" }
+  const ps1File = path.join(
+    os.tmpdir(),
+    "bentahub_usb_detect_" + Date.now() + ".ps1"
+  )
+  try {
+    fs.writeFileSync(ps1File, buildUsbScript("detect"), "utf8")
+    const output = execSync(
+      'powershell -NoProfile -ExecutionPolicy Bypass -File "' + ps1File + '"',
+      { timeout: 15000, windowsHide: true }
+    )
+      .toString()
+      .trim()
+    if (output.includes("USB_FOUND:")) {
+      value = {
+        available: true,
+        path: output.split("USB_FOUND:")[1].trim(),
+      }
+    }
+  } catch {
+    // No USB printer-class interface found / PowerShell failed.
+  } finally {
+    try {
+      fs.unlinkSync(ps1File)
+    } catch {
+      /* ignore */
+    }
+  }
+  usbCache = { at: Date.now(), value }
+  return value
+}
+
+function tryPrintRawUsb(escPosBase64) {
+  return new Promise((resolve) => {
+    const ps1File = path.join(
+      os.tmpdir(),
+      "bentahub_usb_" + Date.now() + ".ps1"
+    )
+    try {
+      fs.writeFileSync(ps1File, buildUsbScript("print", escPosBase64), "utf8")
+      exec(
+        'powershell -NoProfile -ExecutionPolicy Bypass -File "' + ps1File + '"',
+        { timeout: 30000, windowsHide: true },
+        (error, stdout) => {
+          try {
+            fs.unlinkSync(ps1File)
+          } catch {
+            /* ignore */
+          }
+          const output = (stdout || "").trim()
+          if (output.includes("USB_OK:")) {
+            resolve("USB Direct|SUCCESS")
+          } else {
+            const errLine = output.split("\n").find((l) => l.startsWith("ERR:"))
+            const msg = errLine
+              ? errLine.replace("ERR:", "").trim()
+              : output.includes("USB_NONE")
+                ? "USB printer not detected"
+                : error
+                  ? error.message
+                  : "USB print failed"
+            resolve("|ERROR:" + msg)
+          }
+        }
+      )
+    } catch (err) {
+      try {
+        fs.unlinkSync(ps1File)
+      } catch {
+        /* ignore */
+      }
+      resolve("|ERROR:" + err.message)
+    }
+  })
+}
+
 function getWindowsPrinters() {
   try {
     const output = execSync(
@@ -494,12 +717,15 @@ const server = http.createServer((req, res) => {
   // ── GET /status ──
   if (req.method === "GET" && url.pathname === "/status") {
     const resolved = resolvePrinterName()
+    const usb = detectUsbPrinter()
     res.writeHead(200)
     res.end(
       JSON.stringify({
         status: "ok",
         printerName: resolved.name || "(none)",
         thermal: resolved.thermal,
+        usb: usb.available,
+        transport: PRINT_TRANSPORT,
       })
     )
     return
@@ -544,23 +770,56 @@ const server = http.createServer((req, res) => {
         const printer = resolvePrinterName()
         data.paperWidth = printer.thermal ? "58mm" : "80mm"
 
-        // Build the receipt text
+        // Build the receipt text (used for the text path + saved file).
         const receiptText = buildReceiptText(data)
         const filePath = saveToFile(receiptText, "txt")
 
-        // Thermal + ESC/POS bytes supplied → raw print for exact 58mm layout.
+        // Auto transport: direct USB (no driver) → print queue raw → text.
+        const isOk = (r) =>
+          typeof r === "string" && r.split("|")[1] === "SUCCESS"
+        const hasBytes =
+          typeof data.escPosBase64 === "string" && data.escPosBase64.length > 0
+
         let result
         let mode = "text"
+        let transport = "queue"
+
+        if (hasBytes && PRINT_TRANSPORT !== "queue") {
+          const usbResult = await tryPrintRawUsb(data.escPosBase64)
+          if (isOk(usbResult)) {
+            result = usbResult
+            mode = "usb"
+            transport = "usb-direct"
+          } else if (PRINT_TRANSPORT === "usb") {
+            result = usbResult
+          }
+        }
+
         if (
+          !isOk(result) &&
+          PRINT_TRANSPORT !== "usb" &&
+          hasBytes &&
           printer.thermal &&
-          printer.name &&
-          typeof data.escPosBase64 === "string" &&
-          data.escPosBase64.length > 0
+          printer.name
         ) {
-          result = await tryPrintRaw(data.escPosBase64, printer.name)
-          mode = "raw"
-        } else {
+          const queueRaw = await tryPrintRaw(data.escPosBase64, printer.name)
+          if (isOk(queueRaw)) {
+            result = queueRaw
+            mode = "raw"
+          } else if (!result) {
+            result = queueRaw
+          }
+        }
+
+        if (!isOk(result) && PRINT_TRANSPORT !== "usb") {
           result = await tryPrint(receiptText, printer.name)
+          mode = "text"
+        }
+
+        if (!result) {
+          // DIRECT USB transport but no ESC/POS bytes → plain text printer.
+          result = await tryPrint(receiptText, printer.name)
+          mode = "text"
         }
 
         const parts = result.split("|")
@@ -580,10 +839,13 @@ const server = http.createServer((req, res) => {
             printed,
             printerName: printerName_,
             mode,
+            transport,
             message: printed
-              ? "Receipt sent to: " + printerName_
+              ? transport === "usb-direct"
+                ? "Receipt printed (USB direct)"
+                : "Receipt sent to: " + printerName_
               : printStatus === "NO_PRINTER"
-                ? "No printer found on this PC. Install the PT-210 driver, then start the print server."
+                ? "No printer found. Connect the PT-210 via USB (no driver needed) and start the print server."
                 : errorDetail
                   ? "Print error: " + errorDetail + ". Saving to file."
                   : "Could not print. Receipt saved to file.",
@@ -606,6 +868,12 @@ const server = http.createServer((req, res) => {
 // ─── START ────────────────────────────────────────────────────────────
 if (!fs.existsSync(RECEIPTS_DIR)) {
   fs.mkdirSync(RECEIPTS_DIR, { recursive: true })
+}
+
+// ─── CLI DEBUG ────────────────────────────────────────────────────────
+if (process.argv.includes("--detect-usb")) {
+  console.log(JSON.stringify(detectUsbPrinter({ useCache: false }), null, 2))
+  process.exit(0)
 }
 
 server.listen(PORT, () => {

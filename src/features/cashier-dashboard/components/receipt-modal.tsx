@@ -136,6 +136,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     PRINT_SERVER_URL ? "checking" : "disabled"
   )
   const [serverThermal, setServerThermal] = useState(false)
+  const [serverUsb, setServerUsb] = useState(false)
 
   // Ping the print server so the cashier can see whether USB printing is
   // actually available before clicking Print.
@@ -146,7 +147,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     }
     setServerStatus("checking")
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 3000)
+    const timer = setTimeout(() => controller.abort(), 6000)
     try {
       const res = await fetch(`${PRINT_SERVER_URL}/status`, {
         signal: controller.signal,
@@ -154,6 +155,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
       })
       const json = await res.json()
       setServerThermal(Boolean(json.thermal))
+      setServerUsb(Boolean(json.usb))
       setServerStatus(json.status === "ok" ? "online" : "offline")
     } catch {
       setServerStatus("offline")
@@ -472,16 +474,20 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
                     "h-2 w-2 shrink-0 rounded-full",
                     serverStatus === "checking" && "animate-pulse bg-amber-400",
                     serverStatus === "online" &&
-                      (serverThermal ? "bg-green-500" : "bg-amber-500"),
+                      (serverUsb || serverThermal
+                        ? "bg-green-500"
+                        : "bg-amber-500"),
                     serverStatus === "offline" && "bg-red-500"
                   )}
                 />
                 <span className="truncate">
                   {serverStatus === "checking" && "Checking print server..."}
                   {serverStatus === "online" &&
-                    (serverThermal
-                      ? "Thermal printer ready (USB)"
-                      : "Print server online — walang thermal printer")}
+                    (serverUsb
+                      ? "Thermal printer ready (USB direct)"
+                      : serverThermal
+                        ? "Thermal printer ready (print queue)"
+                        : "Print server online — walang thermal printer")}
                   {serverStatus === "offline" &&
                     "Print server offline — i-run ang server/start-print-server.bat"}
                 </span>
