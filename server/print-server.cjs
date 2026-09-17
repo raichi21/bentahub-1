@@ -184,7 +184,7 @@ function saveToFile(content, ext) {
  * Writes PowerShell to a temp .ps1 file to avoid quote-escaping issues.
  * Tries Out-Printer first, then falls back to Notepad /P.
  */
-function tryPrint(text) {
+function tryPrint(text, printerName) {
   return new Promise((resolve) => {
     const tmpFile = path.join(
       os.tmpdir(),
@@ -198,7 +198,7 @@ function tryPrint(text) {
       fs.writeFileSync(tmpFile, text, "utf8")
 
       // Build PowerShell script as a regular .ps1 file (NO quoting issues)
-      const name = PRINTER_NAME
+      const name = printerName
       const textFilePath = tmpFile
 
       const psScript = [
@@ -206,7 +206,8 @@ function tryPrint(text) {
         'try { $ErrorActionPreference = "Stop" } catch {}',
         "",
         "# Step 1: Find printer",
-        "$printerName = " + (name ? "'" + name + "'" : "$null"),
+        "$printerName = " +
+          (name ? "'" + name.replace(/'/g, "''") + "'" : "$null"),
         "if (-not $printerName) {",
         "  $printer = Get-CimInstance -Class Win32_Printer -Filter 'Default=true' -ErrorAction SilentlyContinue",
         "  if ($printer) { $printerName = $printer.Name }",
@@ -306,13 +307,53 @@ function tryPrint(text) {
 function getWindowsPrinters() {
   try {
     const output = execSync(
-      'powershell -NoProfile -Command "Get-CimInstance -Class Win32_Printer | Select-Object Name, Default, PrinterStatus | ConvertTo-Json"',
+      'powershell -NoProfile -Command "Get-CimInstance -Class Win32_Printer | Select-Object Name, DriverName, Default, PrinterStatus | ConvertTo-Json"',
       { timeout: 5000, windowsHide: true }
     )
     return JSON.parse(output.toString())
   } catch {
     return []
   }
+}
+
+const THERMAL_KEYWORDS = [
+  "goojprt",
+  "pt-210",
+  "thermal",
+  "58mm",
+  "80mm",
+  "tsp",
+  "escpos",
+  "esc",
+  "pos-58",
+  "xprinter",
+  "rongta",
+  "sam4s",
+  "bixolon",
+]
+
+function isThermalPrinter(name, driverName) {
+  const haystack = ((name || "") + " " + (driverName || "")).toLowerCase()
+  return THERMAL_KEYWORDS.some((keyword) => haystack.includes(keyword))
+}
+
+/**
+ * Pick the printer to use:
+ * 1. PRINTER_NAME env var (explicit override)
+ * 2. Any installed printer whose name/driver looks like a thermal POS printer
+ * 3. The Windows default printer
+ */
+function resolvePrinterName() {
+  if (PRINTER_NAME) {
+    return { name: PRINTER_NAME, thermal: isThermalPrinter(PRINTER_NAME, "") }
+  }
+  const printers = getWindowsPrinters()
+  const list = Array.isArray(printers) ? printers : [printers]
+  const thermal = list.find((p) => isThermalPrinter(p.Name, p.DriverName))
+  if (thermal) return { name: thermal.Name, thermal: true }
+  const def = list.find((p) => p.Default)
+  if (def) return { name: def.Name, thermal: false }
+  return { name: "", thermal: false }
 }
 
 // ─── HTTP SERVER ──────────────────────────────────────────────────────
@@ -333,9 +374,14 @@ const server = http.createServer((req, res) => {
 
   // ── GET /status ──
   if (req.method === "GET" && url.pathname === "/status") {
+    const resolved = resolvePrinterName()
     res.writeHead(200)
     res.end(
-      JSON.stringify({ status: "ok", printerName: PRINTER_NAME || "(default)" })
+      JSON.stringify({
+        status: "ok",
+        printerName: resolved.name || "(none)",
+        thermal: resolved.thermal,
+      })
     )
     return
   }
@@ -344,8 +390,18 @@ const server = http.createServer((req, res) => {
   if (req.method === "GET" && url.pathname === "/printers") {
     const printers = getWindowsPrinters()
     const list = Array.isArray(printers) ? printers : [printers]
+    const resolved = resolvePrinterName()
     res.writeHead(200)
-    res.end(JSON.stringify({ printers: list.filter(Boolean) }))
+    res.end(
+      JSON.stringify({
+        printers: list.filter(Boolean).map((printer) => ({
+          name: printer.Name,
+          default: Boolean(printer.Default),
+          thermal: isThermalPrinter(printer.Name, printer.DriverName),
+          preferred: printer.Name === resolved.name,
+        })),
+      })
+    )
     return
   }
 
@@ -364,12 +420,17 @@ const server = http.createServer((req, res) => {
           return
         }
 
+        // Pick the target printer (auto thermal preference) and adapt the
+        // layout: 32 cols for 58mm thermal paper, 42 for regular paper.
+        const printer = resolvePrinterName()
+        data.paperWidth = printer.thermal ? "58mm" : "80mm"
+
         // Build the receipt text
         const receiptText = buildReceiptText(data)
         const filePath = saveToFile(receiptText, "txt")
 
         // Try to print via Windows
-        const result = await tryPrint(receiptText)
+        const result = await tryPrint(receiptText, printer.name)
         const parts = result.split("|")
         const printerName_ = parts[0] || ""
         const printStatus = parts[1] || ""

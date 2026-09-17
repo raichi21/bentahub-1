@@ -149,8 +149,35 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     setPrintMessage("")
 
     try {
-      // 1) Print server (silent, primary). Works from localhost and the
-      // deployed site reaching the cashier PC local server.
+      // 1) Thermal printer (Web Bluetooth): real 58mm ESC/POS bytes. Silent
+      // when a printer was already granted; one-time browser picker otherwise.
+      let thermal = getConnection()
+      if (!thermal) {
+        try {
+          thermal = await autoConnectThermal()
+        } catch {
+          // Nothing granted/available yet → server / PDF below.
+        }
+      }
+      if (thermal) {
+        try {
+          await printThermal(
+            buildThermalReceipt(
+              transaction,
+              storeName,
+              user?.branch ?? "",
+              formattedDate
+            )
+          )
+          setPrintStatus("success")
+          setPrintMessage(`Receipt printed to: ${thermal.name}`)
+          return
+        } catch {
+          // Fall through to the print server / PDF below.
+        }
+      }
+
+      // 2) Print server fallback (Windows printer queue).
       if (PRINT_SERVER_URL) {
         const controller = new AbortController()
         const timer = setTimeout(() => controller.abort(), 8000)
@@ -188,36 +215,9 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
           setPrintMessage(json.message || "Print failed")
           return
         } catch {
-          // Server unreachable → continue to thermal / PDF below.
+          // Server unreachable → continue to PDF below.
         } finally {
           clearTimeout(timer)
-        }
-      }
-
-      // 2) Thermal: auto-connect to a granted/picked printer, then print.
-      let thermal = getConnection()
-      if (!thermal) {
-        try {
-          thermal = await autoConnectThermal()
-        } catch {
-          // Nothing granted/available yet → PDF fallback below.
-        }
-      }
-      if (thermal) {
-        try {
-          await printThermal(
-            buildThermalReceipt(
-              transaction,
-              storeName,
-              user?.branch ?? "",
-              formattedDate
-            )
-          )
-          setPrintStatus("success")
-          setPrintMessage(`Receipt printed to: ${thermal.name}`)
-          return
-        } catch {
-          // Fall through to the PDF fallback below.
         }
       }
 
