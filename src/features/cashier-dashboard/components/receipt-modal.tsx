@@ -295,9 +295,9 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
   return (
     <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-foreground/10 p-4 backdrop-blur-xs">
-      <div className="animate-scale-up relative flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-card shadow-xl">
+      <div className="animate-scale-up relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-card shadow-xl">
         {/* Header toolbar */}
-        <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-4 py-3">
           <span className="text-xs font-bold text-muted-foreground">
             Transaction Receipt
           </span>
@@ -310,7 +310,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
         </div>
 
         {/* Paper Receipt Panel */}
-        <div className="relative flex-1 space-y-4 overflow-y-auto p-6 font-sans">
+        <div className="relative min-h-0 flex-1 space-y-4 overflow-y-auto p-6 font-sans">
           {isCancelled && (
             <div className="backdrop-blur-2xs pointer-events-none absolute inset-0 flex items-center justify-center bg-red-500/5 select-none">
               <span className="-rotate-12 transform rounded-xl border-4 border-red-600/30 p-2 text-3xl font-black tracking-widest text-red-600/30 uppercase">
@@ -449,7 +449,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
         {printStatus !== "idle" && (
           <div
             className={cn(
-              "flex items-center gap-2 border-b px-4 py-2 text-xs font-bold",
+              "flex shrink-0 items-center gap-2 border-b px-4 py-2 text-xs font-bold",
               printStatus === "success"
                 ? "border-green-200 bg-green-50 text-green-700"
                 : "border-red-200 bg-red-50 text-red-700"
@@ -465,7 +465,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
         )}
 
         {/* Action Panel */}
-        <div className="space-y-3 border-t border-border bg-muted p-4">
+        <div className="shrink-0 space-y-3 border-t border-border bg-muted p-4">
           {PRINT_SERVER_URL && (
             <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background/60 px-3 py-1.5 text-[10px] font-medium">
               <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
