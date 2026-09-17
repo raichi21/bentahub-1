@@ -583,7 +583,7 @@ const server = http.createServer((req, res) => {
             message: printed
               ? "Receipt sent to: " + printerName_
               : printStatus === "NO_PRINTER"
-                ? "No printer found. Receipt saved to file."
+                ? "No printer found on this PC. Install the PT-210 driver, then start the print server."
                 : errorDetail
                   ? "Print error: " + errorDetail + ". Saving to file."
                   : "Could not print. Receipt saved to file.",

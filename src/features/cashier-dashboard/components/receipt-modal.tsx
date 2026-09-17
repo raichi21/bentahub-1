@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { X, Printer, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { jsPDF } from "jspdf"
 import { useAuth } from "@/hooks/useAuth"
@@ -21,6 +21,8 @@ interface ReceiptModalProps {
 }
 
 const PRINT_SERVER_URL = process.env.NEXT_PUBLIC_PRINT_SERVER_URL?.trim() || ""
+
+type ServerStatus = "checking" | "online" | "offline" | "disabled"
 
 function buildReceiptPdf(
   transaction: Transaction,
@@ -130,6 +132,41 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     "idle"
   )
   const [printMessage, setPrintMessage] = useState("")
+  const [serverStatus, setServerStatus] = useState<ServerStatus>(
+    PRINT_SERVER_URL ? "checking" : "disabled"
+  )
+  const [serverThermal, setServerThermal] = useState(false)
+
+  // Ping the print server so the cashier can see whether USB printing is
+  // actually available before clicking Print.
+  const checkServer = useCallback(async () => {
+    if (!PRINT_SERVER_URL) {
+      setServerStatus("disabled")
+      return
+    }
+    setServerStatus("checking")
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 3000)
+    try {
+      const res = await fetch(`${PRINT_SERVER_URL}/status`, {
+        signal: controller.signal,
+        cache: "no-store",
+      })
+      const json = await res.json()
+      setServerThermal(Boolean(json.thermal))
+      setServerStatus(json.status === "ok" ? "online" : "offline")
+    } catch {
+      setServerStatus("offline")
+    } finally {
+      clearTimeout(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Deferred so the effect body does not set state synchronously.
+    const timer = setTimeout(() => void checkServer(), 0)
+    return () => clearTimeout(timer)
+  }, [checkServer])
 
   if (!transaction) return null
 
@@ -237,12 +274,15 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
       // 3) PDF fallback (last resort).
       buildReceiptPdf(transaction, storeName, formattedDate)
-      setPrintStatus("success")
-      setPrintMessage(
-        serverUnreachable
-          ? "Print server unreachable — receipt saved as PDF"
-          : "Receipt saved as PDF"
-      )
+      if (serverUnreachable) {
+        setPrintStatus("error")
+        setPrintMessage(
+          "Hindi na-print — naka-save bilang PDF. Print server offline: i-run ang server/start-print-server.bat, tapos subukan muli."
+        )
+      } else {
+        setPrintStatus("success")
+        setPrintMessage("Receipt saved as PDF")
+      }
     } catch {
       setPrintStatus("error")
       setPrintMessage("Failed to generate receipt PDF")
@@ -424,6 +464,38 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
 
         {/* Action Panel */}
         <div className="space-y-3 border-t border-border bg-muted p-4">
+          {PRINT_SERVER_URL && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background/60 px-3 py-1.5 text-[10px] font-medium">
+              <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                <span
+                  className={cn(
+                    "h-2 w-2 shrink-0 rounded-full",
+                    serverStatus === "checking" && "animate-pulse bg-amber-400",
+                    serverStatus === "online" &&
+                      (serverThermal ? "bg-green-500" : "bg-amber-500"),
+                    serverStatus === "offline" && "bg-red-500"
+                  )}
+                />
+                <span className="truncate">
+                  {serverStatus === "checking" && "Checking print server..."}
+                  {serverStatus === "online" &&
+                    (serverThermal
+                      ? "Thermal printer ready (USB)"
+                      : "Print server online — walang thermal printer")}
+                  {serverStatus === "offline" &&
+                    "Print server offline — i-run ang server/start-print-server.bat"}
+                </span>
+              </span>
+              {serverStatus !== "checking" && (
+                <button
+                  onClick={() => void checkServer()}
+                  className="shrink-0 rounded-md border border-border px-2 py-0.5 text-[10px] font-bold text-muted-foreground transition-colors hover:bg-accent hover:text-card-foreground"
+                >
+                  Check
+                </button>
+              )}
+            </div>
+          )}
           <div className="flex gap-2">
             <button
               onClick={handlePrint}
