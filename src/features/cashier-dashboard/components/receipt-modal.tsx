@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
 import {
   autoConnectThermal,
+  buildEscPos,
   buildThermalReceipt,
   getConnection,
   printThermal,
@@ -148,8 +149,16 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
     setPrintStatus("idle")
     setPrintMessage("")
 
+    const thermalData = buildThermalReceipt(
+      transaction,
+      storeName,
+      user?.branch ?? "",
+      formattedDate
+    )
+    let serverUnreachable = false
+
     try {
-      // 1) Thermal printer (Web Bluetooth): real 58mm ESC/POS bytes. Silent
+      // 1) Thermal printer (Web Bluetooth): raw 58mm ESC/POS bytes. Silent
       // when a printer was already granted; one-time browser picker otherwise.
       let thermal = getConnection()
       if (!thermal) {
@@ -161,14 +170,7 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
       }
       if (thermal) {
         try {
-          await printThermal(
-            buildThermalReceipt(
-              transaction,
-              storeName,
-              user?.branch ?? "",
-              formattedDate
-            )
-          )
+          await printThermal(thermalData)
           setPrintStatus("success")
           setPrintMessage(`Receipt printed to: ${thermal.name}`)
           return
@@ -182,6 +184,10 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
         const controller = new AbortController()
         const timer = setTimeout(() => controller.abort(), 8000)
         try {
+          let binary = ""
+          const escBytes = buildEscPos(thermalData)
+          escBytes.forEach((byte) => (binary += String.fromCharCode(byte)))
+
           const res = await fetch(`${PRINT_SERVER_URL}/print`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -201,21 +207,29 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
               paymentMethod: transaction.paymentMethod,
               amountPaid: transaction.amountPaid,
               change: transaction.change,
+              escPosBase64: btoa(binary),
             }),
           })
 
           const json = await res.json()
 
-          if (json.success) {
+          if (json.success && json.printed) {
             setPrintStatus("success")
             setPrintMessage(json.message || "Receipt printed successfully")
+            return
+          }
+          if (json.success) {
+            setPrintStatus("error")
+            setPrintMessage(
+              json.message || "No printer available — receipt saved to file"
+            )
             return
           }
           setPrintStatus("error")
           setPrintMessage(json.message || "Print failed")
           return
         } catch {
-          // Server unreachable → continue to PDF below.
+          serverUnreachable = true
         } finally {
           clearTimeout(timer)
         }
@@ -224,7 +238,11 @@ export function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
       // 3) PDF fallback (last resort).
       buildReceiptPdf(transaction, storeName, formattedDate)
       setPrintStatus("success")
-      setPrintMessage("Receipt saved as PDF")
+      setPrintMessage(
+        serverUnreachable
+          ? "Print server unreachable — receipt saved as PDF"
+          : "Receipt saved as PDF"
+      )
     } catch {
       setPrintStatus("error")
       setPrintMessage("Failed to generate receipt PDF")

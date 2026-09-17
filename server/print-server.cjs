@@ -304,6 +304,122 @@ function tryPrint(text, printerName) {
   })
 }
 
+/**
+ * Print raw ESC/POS bytes to a Windows printer (thermal printers only).
+ * Uses Winspool.drv through P/Invoke with a RAW datatype so the exact
+ * 58mm layout bytes reach the device unmodified.
+ */
+function tryPrintRaw(escPosBase64, printerName) {
+  return new Promise((resolve) => {
+    const ps1File = path.join(
+      os.tmpdir(),
+      "bentahub_raw_" + Date.now() + ".ps1"
+    )
+    try {
+      const name = printerName.replace(/'/g, "''")
+      const psScript = [
+        "# BentaHub raw ESC/POS receipt printer",
+        'Add-Type -TypeDefinition @"',
+        "using System;",
+        "using System.Runtime.InteropServices;",
+        "public static class RawPrinter {",
+        "  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]",
+        "  public struct DOC_INFO_1 {",
+        "    public string pDocName;",
+        "    public string pOutputFile;",
+        "    public string pDatatype;",
+        "  }",
+        '  [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)]',
+        "  public static extern bool OpenPrinter(string pPrinterName, out IntPtr phPrinter, IntPtr pDefault);",
+        '  [DllImport("winspool.drv", SetLastError = true)]',
+        "  public static extern bool StartDocPrinter(IntPtr hPrinter, int level, IntPtr pDocInfo);",
+        '  [DllImport("winspool.drv", SetLastError = true)]',
+        "  public static extern bool StartPagePrinter(IntPtr hPrinter);",
+        '  [DllImport("winspool.drv", SetLastError = true)]',
+        "  public static extern bool WritePrinter(IntPtr hPrinter, byte[] pBytes, int dwCount, out int dwWritten);",
+        '  [DllImport("winspool.drv", SetLastError = true)]',
+        "  public static extern bool EndPagePrinter(IntPtr hPrinter);",
+        '  [DllImport("winspool.drv", SetLastError = true)]',
+        "  public static extern bool EndDocPrinter(IntPtr hPrinter);",
+        '  [DllImport("winspool.drv", SetLastError = true)]',
+        "  public static extern bool ClosePrinter(IntPtr hPrinter);",
+        "}",
+        '"@ -ErrorAction Stop',
+        "",
+        "$printerName = '" + name + "'",
+        '$bytes = [Convert]::FromBase64String("' + escPosBase64 + '")',
+        "if (-not $bytes -or $bytes.Length -eq 0) { Write-Output 'ERR: empty ESC/POS payload'; exit 1 }",
+        "",
+        "$hPrinter = [IntPtr]::Zero",
+        "if (-not [RawPrinter]::OpenPrinter($printerName, [ref]$hPrinter, [IntPtr]::Zero)) {",
+        "  Write-Output ('ERR: OpenPrinter failed (code ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error() + ')'); exit 1",
+        "}",
+        "try {",
+        "  $docInfo = New-Object 'RawPrinter+DOC_INFO_1'",
+        "  $docInfo.pDocName = 'BentaHub Receipt'",
+        "  $docInfo.pOutputFile = $null",
+        "  $docInfo.pDatatype = 'RAW'",
+        "  $ptr = [Runtime.InteropServices.Marshal]::AllocHGlobal([Runtime.InteropServices.Marshal]::SizeOf($docInfo))",
+        "  [Runtime.InteropServices.Marshal]::StructureToPtr($docInfo, $ptr, $false)",
+        "  if (-not [RawPrinter]::StartDocPrinter($hPrinter, 1, $ptr)) {",
+        "    Write-Output ('ERR: StartDoc failed (code ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error() + ')'); exit 1",
+        "  }",
+        "  try {",
+        "    [RawPrinter]::StartPagePrinter($hPrinter) | Out-Null",
+        "    $written = 0",
+        "    if (-not [RawPrinter]::WritePrinter($hPrinter, $bytes, $bytes.Length, [ref]$written)) {",
+        "      Write-Output ('ERR: WritePrinter failed (code ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error() + ')'); exit 1",
+        "    }",
+        "    [RawPrinter]::EndPagePrinter($hPrinter) | Out-Null",
+        "  } finally {",
+        "    [RawPrinter]::EndDocPrinter($hPrinter) | Out-Null",
+        "  }",
+        "  Write-Output ('PRINTER:' + $printerName)",
+        "  Write-Output 'PRINT_OK'",
+        "} finally {",
+        "  [RawPrinter]::ClosePrinter($hPrinter) | Out-Null",
+        "  if ($ptr) { [Runtime.InteropServices.Marshal]::FreeHGlobal($ptr) }",
+        "}",
+      ].join("\n")
+
+      fs.writeFileSync(ps1File, psScript, "utf8")
+
+      exec(
+        'powershell -NoProfile -ExecutionPolicy Bypass -File "' + ps1File + '"',
+        { timeout: 30000, windowsHide: true },
+        (error, stdout) => {
+          try {
+            fs.unlinkSync(ps1File)
+          } catch {
+            /* ignore */
+          }
+          const output = (stdout || "").trim()
+          if (output.includes("PRINT_OK")) {
+            const printerLine = output
+              .split("\n")
+              .find((l) => l.startsWith("PRINTER:"))
+            resolve(
+              (printerLine
+                ? printerLine.replace("PRINTER:", "").trim()
+                : printerName || "") + "|SUCCESS"
+            )
+          } else {
+            const errMsg = error ? error.message : output || "Unknown error"
+            resolve("|ERROR:" + errMsg)
+          }
+        }
+      )
+    } catch (err) {
+      try {
+        fs.unlinkSync(ps1File)
+      } catch {
+        /* ignore */
+      }
+      resolve("|ERROR:" + err.message)
+    }
+  })
+}
+
 function getWindowsPrinters() {
   try {
     const output = execSync(
@@ -319,13 +435,16 @@ function getWindowsPrinters() {
 const THERMAL_KEYWORDS = [
   "goojprt",
   "pt-210",
+  "yichip",
+  "pos58",
+  "pos-58",
+  "110v",
   "thermal",
   "58mm",
   "80mm",
   "tsp",
   "escpos",
   "esc",
-  "pos-58",
   "xprinter",
   "rongta",
   "sam4s",
@@ -429,8 +548,21 @@ const server = http.createServer((req, res) => {
         const receiptText = buildReceiptText(data)
         const filePath = saveToFile(receiptText, "txt")
 
-        // Try to print via Windows
-        const result = await tryPrint(receiptText, printer.name)
+        // Thermal + ESC/POS bytes supplied → raw print for exact 58mm layout.
+        let result
+        let mode = "text"
+        if (
+          printer.thermal &&
+          printer.name &&
+          typeof data.escPosBase64 === "string" &&
+          data.escPosBase64.length > 0
+        ) {
+          result = await tryPrintRaw(data.escPosBase64, printer.name)
+          mode = "raw"
+        } else {
+          result = await tryPrint(receiptText, printer.name)
+        }
+
         const parts = result.split("|")
         const printerName_ = parts[0] || ""
         const printStatus = parts[1] || ""
@@ -447,6 +579,7 @@ const server = http.createServer((req, res) => {
             success: true,
             printed,
             printerName: printerName_,
+            mode,
             message: printed
               ? "Receipt sent to: " + printerName_
               : printStatus === "NO_PRINTER"
