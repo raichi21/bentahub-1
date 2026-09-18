@@ -6,6 +6,8 @@ import {
   issueTokenForUser,
 } from "@/lib/oauth"
 import type { OAuthProvider } from "@/lib/oauth"
+import { generateMfaToken } from "@/lib/auth-utils"
+import { isMfaEnforced } from "@/lib/mfa"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -35,7 +37,9 @@ function clearOAuthCookies(response: NextResponse): NextResponse {
 function redirectWithError(message: string): NextResponse {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   return clearOAuthCookies(
-    NextResponse.redirect(`${appUrl}/login?oauth_error=${encodeURIComponent(message)}`)
+    NextResponse.redirect(
+      `${appUrl}/login?oauth_error=${encodeURIComponent(message)}`
+    )
   )
 }
 
@@ -68,21 +72,44 @@ export async function GET(
   }
 
   try {
-    const codeVerifier = request.cookies.get("oauth_code_verifier")?.value ?? undefined
+    const codeVerifier =
+      request.cookies.get("oauth_code_verifier")?.value ?? undefined
 
-    const tokenResult = await exchangeCodeForToken(oauthProvider, code, codeVerifier)
+    const tokenResult = await exchangeCodeForToken(
+      oauthProvider,
+      code,
+      codeVerifier
+    )
     const profile = await fetchProviderProfile(oauthProvider, tokenResult)
     const user = await findOrCreateUserFromOAuth(profile)
-    const jwt = issueTokenForUser(user)
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
+    // MFA gate: users with MFA enabled (any env) or who must enroll (production)
+    // are redirected to the challenge/setup screen carrying an mfa-scoped token.
+    if (user.mfaEnabled || isMfaEnforced()) {
+      const mode = user.mfaEnabled ? "verify" : "setup"
+      const mfaToken = generateMfaToken(user.id)
+      const result = clearOAuthCookies(
+        NextResponse.redirect(
+          `${appUrl}/oauth-result?mfa=${mode}&mfaToken=${encodeURIComponent(mfaToken)}`
+        )
+      )
+      return result
+    }
+
+    const jwt = issueTokenForUser(user)
+
     const result = clearOAuthCookies(
-      NextResponse.redirect(`${appUrl}/oauth-result?token=${encodeURIComponent(jwt)}`)
+      NextResponse.redirect(
+        `${appUrl}/oauth-result?token=${encodeURIComponent(jwt)}`
+      )
     )
 
     return result
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Social sign-in failed"
+    const message =
+      error instanceof Error ? error.message : "Social sign-in failed"
     console.error("OAuth callback error:", message)
     return redirectWithError(message)
   }

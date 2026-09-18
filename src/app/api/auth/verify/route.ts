@@ -12,7 +12,9 @@ import type { AuthResponse } from "@/types/auth"
  * the current user's data. Used by the frontend AuthProvider to
  * hydrate session state on page load.
  */
-export async function GET(request: NextRequest): Promise<NextResponse<AuthResponse>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse>> {
   try {
     const token = extractToken(request)
 
@@ -30,6 +32,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<AuthRespon
     if (!decoded) {
       return NextResponse.json(
         { success: false, message: "Invalid or expired token" },
+        { status: 401 }
+      )
+    }
+
+    // MFA-pending tokens are not full sessions — they must never hydrate one.
+    if (decoded.tokenType === "mfa") {
+      return NextResponse.json(
+        { success: false, message: "MFA verification required" },
         { status: 401 }
       )
     }
@@ -72,9 +82,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<AuthRespon
     console.error("Token verification error:", message, error)
 
     // Distinguish DB connection errors from other failures
-    if (message.includes("connect") || message.includes("ECONNREFUSED") || message.includes("getaddrinfo")) {
+    if (
+      message.includes("connect") ||
+      message.includes("ECONNREFUSED") ||
+      message.includes("getaddrinfo")
+    ) {
       return NextResponse.json(
-        { success: false, message: "Database connection failed. Please ensure PostgreSQL is running." },
+        {
+          success: false,
+          message:
+            "Database connection failed. Please ensure PostgreSQL is running.",
+        },
         { status: 503 }
       )
     }

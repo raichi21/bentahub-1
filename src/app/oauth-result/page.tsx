@@ -23,9 +23,9 @@ export default function OAuthResultPage() {
 
 function OAuthResultLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-3">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="space-y-3 text-center">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary" />
         <p className="text-muted-foreground">Completing your sign-in...</p>
       </div>
     </div>
@@ -44,12 +44,22 @@ function OAuthResultInner() {
 
     const token = searchParams.get("token")
     const error = searchParams.get("oauth_error")
+    const mfaToken = searchParams.get("mfaToken")
+    const mfa = searchParams.get("mfa")
 
     // Scrub token/error from the URL as soon as we read them.
     router.replace("/oauth-result", { scroll: false })
 
     if (error) {
       router.replace(`/login?oauth_error=${encodeURIComponent(error)}`)
+      return
+    }
+
+    // MFA challenge: stash the short-lived token and continue on the
+    // dedicated verify/setup screens.
+    if (mfaToken) {
+      sessionStorage.setItem("pendingMfaToken", mfaToken)
+      router.replace(mfa === "setup" ? "/mfa-setup" : "/mfa-verify")
       return
     }
 
@@ -96,9 +106,9 @@ function OAuthResultInner() {
   }, [router, searchParams, setToken, setUser])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-3">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="space-y-3 text-center">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary" />
         <p className="text-muted-foreground">Completing your sign-in...</p>
       </div>
     </div>

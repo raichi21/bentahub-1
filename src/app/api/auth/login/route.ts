@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { verifyPassword, generateToken } from "@/lib/auth-utils"
-import type { AuthResponse, LoginResponseData } from "@/types/auth"
+import {
+  verifyPassword,
+  generateToken,
+  generateMfaToken,
+} from "@/lib/auth-utils"
+import { isMfaEnforced } from "@/lib/mfa"
+import type {
+  AuthResponse,
+  LoginResponseData,
+  LoginChallengeData,
+} from "@/types/auth"
 
 /**
  * POST /api/auth/login
@@ -11,7 +20,9 @@ import type { AuthResponse, LoginResponseData } from "@/types/auth"
  * Authenticates a user with email + password.
  * On success, returns the JWT token and user data in the response body.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<AuthResponse<LoginResponseData>>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse<LoginResponseData | LoginChallengeData>>> {
   try {
     const body = await request.json()
     const { email, password } = body
@@ -42,7 +53,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
 
     if (!user.isActive) {
       return NextResponse.json(
-        { success: false, message: "Your account has been deactivated. Please contact the administrator." },
+        {
+          success: false,
+          message:
+            "Your account has been deactivated. Please contact the administrator.",
+        },
         { status: 403 }
       )
     }
@@ -62,7 +77,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     // with their OAuth provider instead of email + password.
     if (!user.password) {
       return NextResponse.json(
-        { success: false, message: "This account uses a social sign-in. Please use the Google or Facebook button to log in." },
+        {
+          success: false,
+          message:
+            "This account uses a social sign-in. Please use the Google or Facebook button to log in.",
+        },
         { status: 401 }
       )
     }
@@ -73,6 +92,37 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
       return NextResponse.json(
         { success: false, message: "Invalid email or password" },
         { status: 401 }
+      )
+    }
+
+    // --- MFA gate ----------------------------------------------------------
+
+    // Users who already enrolled MFA are always challenged with a code.
+    // Users who have not enrolled are forced to enroll in production; in
+    // development the challenge is skipped so seeded accounts aren't locked.
+    if (user.mfaEnabled) {
+      const mfaToken = generateMfaToken(user.id)
+      const data: LoginChallengeData = {
+        requiresMfa: true,
+        requiresMfaSetup: false,
+        mfaToken,
+      }
+      return NextResponse.json(
+        { success: true, message: "MFA code required", data },
+        { status: 200 }
+      )
+    }
+
+    if (isMfaEnforced()) {
+      const mfaToken = generateMfaToken(user.id)
+      const data: LoginChallengeData = {
+        requiresMfa: true,
+        requiresMfaSetup: true,
+        mfaToken,
+      }
+      return NextResponse.json(
+        { success: true, message: "MFA setup required", data },
+        { status: 200 }
       )
     }
 

@@ -4,10 +4,22 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import { ContentCard } from "@/components/layouts"
 import { Button } from "@/components/ui/button"
-import { Loader2, Save, Store, Plus, Pencil, Power, PowerOff, Camera, X, Store as StoreIcon } from "lucide-react"
+import {
+  Loader2,
+  Save,
+  Store,
+  Plus,
+  Pencil,
+  Power,
+  PowerOff,
+  Camera,
+  X,
+  Store as StoreIcon,
+} from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { AddBranchModal } from "./add-branch-modal"
 import { EditBranchModal } from "./edit-branch-modal"
+import { MfaPanel } from "@/features/mfa"
 
 const MAX_LOGO_SIZE = 2_000_000
 
@@ -44,7 +56,10 @@ export function AdminSettings() {
   const [logo, setLogo] = useState<string | null>(null)
   const [logoError, setLogoError] = useState<string | null>(null)
   const [savingConfig, setSavingConfig] = useState(false)
-  const [configMessage, setConfigMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [configMessage, setConfigMessage] = useState<{
+    type: "success" | "error"
+    text: string
+  } | null>(null)
 
   const [branches, setBranches] = useState<Branch[]>([])
   const [branchesLoading, setBranchesLoading] = useState(true)
@@ -106,10 +121,13 @@ export function AdminSettings() {
     return () => clearTimeout(timer)
   }, [fetchSettings, fetchBranches])
 
-  const authHeaders = useCallback(() => ({
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  }), [token])
+  const authHeaders = useCallback(
+    () => ({
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }),
+    [token]
+  )
 
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -151,10 +169,16 @@ export function AdminSettings() {
       })
       const data = await res.json()
       if (data.success) {
-        setConfigMessage({ type: "success", text: "Settings saved successfully" })
+        setConfigMessage({
+          type: "success",
+          text: "Settings saved successfully",
+        })
         fetchSettings()
       } else {
-        setConfigMessage({ type: "error", text: data.message || "Failed to save settings" })
+        setConfigMessage({
+          type: "error",
+          text: data.message || "Failed to save settings",
+        })
       }
     } catch {
       setConfigMessage({ type: "error", text: "An error occurred" })
@@ -180,7 +204,9 @@ export function AdminSettings() {
       const data = await res.json()
       if (data.success) {
         setBranches((prev) =>
-          prev.map((b) => (b.id === branch.id ? { ...b, isActive: !branch.isActive } : b))
+          prev.map((b) =>
+            b.id === branch.id ? { ...b, isActive: !branch.isActive } : b
+          )
         )
       }
     } catch {
@@ -193,7 +219,7 @@ export function AdminSettings() {
   const activeCount = branches.filter((b) => b.isActive).length
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
       {/* ── BentaHub Configuration ── */}
       <ContentCard
         title="BentaHub Configuration"
@@ -202,9 +228,15 @@ export function AdminSettings() {
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             <div className="relative size-20 shrink-0">
-              <div className="relative size-20 rounded-full border border-border bg-muted overflow-hidden flex items-center justify-center">
+              <div className="relative flex size-20 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
                 {logo ? (
-                  <Image src={logo} alt="Store logo" fill className="object-contain p-2" sizes="80px" />
+                  <Image
+                    src={logo}
+                    alt="Store logo"
+                    fill
+                    className="object-contain p-2"
+                    sizes="80px"
+                  />
                 ) : (
                   <StoreIcon className="h-8 w-8 text-muted-foreground" />
                 )}
@@ -212,7 +244,7 @@ export function AdminSettings() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground border-2 border-background flex items-center justify-center shadow-md hover:opacity-95 transition-opacity"
+                className="absolute -right-1 -bottom-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-md transition-opacity hover:opacity-95"
                 aria-label="Upload logo"
               >
                 <Camera className="h-3.5 w-3.5" />
@@ -221,52 +253,118 @@ export function AdminSettings() {
                 <button
                   type="button"
                   onClick={() => setLogo(null)}
-                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-destructive text-white border-2 border-background flex items-center justify-center shadow-md hover:opacity-95 transition-opacity"
+                  className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-destructive text-white shadow-md transition-opacity hover:opacity-95"
                   aria-label="Remove logo"
                 >
                   <X className="h-3 w-3" />
                 </button>
               )}
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoSelect} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleLogoSelect}
+            />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">Store Logo</p>
-              <p className="text-xs text-muted-foreground">PNG, JPG, or GIF under 2MB.</p>
-              {logoError && <p className="text-xs font-medium text-destructive">{logoError}</p>}
+              <p className="text-sm font-semibold text-foreground">
+                Store Logo
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PNG, JPG, or GIF under 2MB.
+              </p>
+              {logoError && (
+                <p className="text-xs font-medium text-destructive">
+                  {logoError}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">System Name</label>
-              <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={settings.storeName} onChange={(e) => setSettings({ ...settings, storeName: e.target.value })} placeholder="BentaHub" />
+              <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                System Name
+              </label>
+              <input
+                className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                value={settings.storeName}
+                onChange={(e) =>
+                  setSettings({ ...settings, storeName: e.target.value })
+                }
+                placeholder="BentaHub"
+              />
             </div>
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Contact Number</label>
-              <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={settings.storeContact ?? ""} onChange={(e) => setSettings({ ...settings, storeContact: e.target.value })} placeholder="+63 900 000 0000" />
+              <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Contact Number
+              </label>
+              <input
+                className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                value={settings.storeContact ?? ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, storeContact: e.target.value })
+                }
+                placeholder="+63 900 000 0000"
+              />
             </div>
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Contact Email</label>
-              <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" type="email" value={settings.storeEmail ?? ""} onChange={(e) => setSettings({ ...settings, storeEmail: e.target.value })} placeholder="hello@bentahub.com" />
+              <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Contact Email
+              </label>
+              <input
+                className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                type="email"
+                value={settings.storeEmail ?? ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, storeEmail: e.target.value })
+                }
+                placeholder="hello@bentahub.com"
+              />
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Store Address</label>
-              <input className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm" value={settings.storeAddress ?? ""} onChange={(e) => setSettings({ ...settings, storeAddress: e.target.value })} placeholder="e.g. Lourdes, Cagayan de Oro City" />
+              <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                Store Address
+              </label>
+              <input
+                className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                value={settings.storeAddress ?? ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, storeAddress: e.target.value })
+                }
+                placeholder="e.g. Lourdes, Cagayan de Oro City"
+              />
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             {configMessage && (
-              <p className={`text-sm font-medium ${configMessage.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+              <p
+                className={`text-sm font-medium ${configMessage.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
+              >
                 {configMessage.text}
               </p>
             )}
-            <div className="flex items-center gap-3 ml-auto">
-              <Button type="button" variant="outline" onClick={() => fetchSettings()} disabled={savingConfig}>
+            <div className="ml-auto flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fetchSettings()}
+                disabled={savingConfig}
+              >
                 Reset
               </Button>
-              <Button type="button" onClick={handleSaveConfig} disabled={savingConfig || !token}>
-                {savingConfig ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              <Button
+                type="button"
+                onClick={handleSaveConfig}
+                disabled={savingConfig || !token}
+              >
+                {savingConfig ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 Save Changes
               </Button>
             </div>
@@ -287,7 +385,9 @@ export function AdminSettings() {
       >
         <div className="space-y-4">
           {branchesError && (
-            <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{branchesError}</div>
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm font-medium text-destructive">
+              {branchesError}
+            </div>
           )}
 
           {branchesLoading ? (
@@ -299,37 +399,64 @@ export function AdminSettings() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">
-                    <th className="pb-3 pr-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch</th>
-                    <th className="pb-3 pr-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Location</th>
-                    <th className="pb-3 pr-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Capacity</th>
-                    <th className="pb-3 pr-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                    <th className="pb-3 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
+                    <th className="pr-4 pb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                      Branch
+                    </th>
+                    <th className="pr-4 pb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                      Location
+                    </th>
+                    <th className="pr-4 pb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                      Capacity
+                    </th>
+                    <th className="pr-4 pb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                      Status
+                    </th>
+                    <th className="pb-3 text-right text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {branches.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-10 text-center text-muted-foreground">No branches yet. Click &quot;Add Branch&quot; to create one.</td>
+                      <td
+                        colSpan={5}
+                        className="py-10 text-center text-muted-foreground"
+                      >
+                        No branches yet. Click &quot;Add Branch&quot; to create
+                        one.
+                      </td>
                     </tr>
                   ) : (
                     branches.map((branch) => (
-                      <tr key={branch.id} className="border-b border-border last:border-0">
+                      <tr
+                        key={branch.id}
+                        className="border-b border-border last:border-0"
+                      >
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-3">
-                            <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                               <Store className="h-4 w-4" />
                             </div>
-                            <span className="font-semibold text-foreground">{branch.name}</span>
+                            <span className="font-semibold text-foreground">
+                              {branch.name}
+                            </span>
                           </div>
                         </td>
-                        <td className="py-3 pr-4 text-muted-foreground">{branch.location ?? "—"}</td>
-                        <td className="py-3 pr-4 text-muted-foreground">{branch.capacity ?? 500}</td>
+                        <td className="py-3 pr-4 text-muted-foreground">
+                          {branch.location ?? "—"}
+                        </td>
+                        <td className="py-3 pr-4 text-muted-foreground">
+                          {branch.capacity ?? 500}
+                        </td>
                         <td className="py-3 pr-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                            branch.isActive
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : "bg-muted text-muted-foreground"
-                          }`}>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                              branch.isActive
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
                             {branch.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
@@ -337,7 +464,7 @@ export function AdminSettings() {
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                               onClick={() => {
                                 setEditBranch(branch)
                                 setEditModalOpen(true)
@@ -348,14 +475,18 @@ export function AdminSettings() {
                             </button>
                             <button
                               type="button"
-                              className={`p-2 rounded-lg transition-colors ${
+                              className={`rounded-lg p-2 transition-colors ${
                                 branch.isActive
                                   ? "text-destructive hover:bg-destructive/10"
-                                  : "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                  : "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
                               }`}
                               onClick={() => handleToggleBranch(branch)}
                               disabled={togglingId === branch.id}
-                              aria-label={branch.isActive ? `Deactivate ${branch.name}` : `Activate ${branch.name}`}
+                              aria-label={
+                                branch.isActive
+                                  ? `Deactivate ${branch.name}`
+                                  : `Activate ${branch.name}`
+                              }
                             >
                               {togglingId === branch.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -375,6 +506,14 @@ export function AdminSettings() {
             </div>
           )}
         </div>
+      </ContentCard>
+
+      {/* ── Account Security ── */}
+      <ContentCard
+        title="Account Security"
+        subtitle="Protect your admin account with two-factor authentication."
+      >
+        <MfaPanel />
       </ContentCard>
 
       <AddBranchModal

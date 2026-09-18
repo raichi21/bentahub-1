@@ -20,12 +20,12 @@ import {
   type LegalModalKind,
 } from "@/features/legal/components/legal-modal"
 import { useSearchParams } from "next/navigation"
-import type { LoginResponseData } from "@/types/auth"
+import type { LoginResponseData, LoginChallengeData } from "@/types/auth"
 
 type LoginResponse = {
   success: boolean
   message?: string
-  data?: LoginResponseData
+  data?: LoginResponseData | LoginChallengeData
 }
 
 export default function LoginPage() {
@@ -97,9 +97,18 @@ function LoginPageInner() {
         return
       }
 
+      // MFA challenge: hold the short-lived token and continue on the
+      // dedicated verify/setup screens instead of opening a session.
+      if (data.data && "mfaToken" in data.data && data.data.mfaToken) {
+        sessionStorage.setItem("pendingMfaToken", data.data.mfaToken)
+        router.push(data.data.requiresMfaSetup ? "/mfa-setup" : "/mfa-verify")
+        return
+      }
+
       // Save JWT token and user to auth context
-      const token = data.data?.token
-      const user = data.data?.user
+      const token =
+        data.data && "token" in data.data ? data.data.token : undefined
+      const user = data.data && "user" in data.data ? data.data.user : undefined
 
       if (token) {
         setToken(token)

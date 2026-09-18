@@ -8,7 +8,17 @@ import { ContentCard } from "@/components/layouts"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, CheckCircle, XCircle, Camera, X, Mail, Phone, LogOut } from "lucide-react"
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Camera,
+  X,
+  Mail,
+  Phone,
+  LogOut,
+} from "lucide-react"
+import { MfaPanel } from "@/features/mfa"
 
 const MAX_IMAGE_SIZE = 2_000_000
 
@@ -23,7 +33,10 @@ export function CustomerProfile() {
   const [imageError, setImageError] = useState<string | null>(null)
 
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [message, setMessage] = useState<{
+    type: "success" | "error"
+    text: string
+  } | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -35,10 +48,13 @@ export function CustomerProfile() {
     return () => clearTimeout(timer)
   }, [user])
 
-  const authHeaders = useCallback(() => ({
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  }), [token])
+  const authHeaders = useCallback(
+    () => ({
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    }),
+    [token]
+  )
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -77,7 +93,10 @@ export function CustomerProfile() {
         setUser({ ...user, fullName, phone: phone || null, image })
         setMessage({ type: "success", text: "Profile updated successfully!" })
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to update profile" })
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to update profile",
+        })
       }
     } catch {
       setMessage({ type: "error", text: "Failed to update profile" })
@@ -100,113 +119,144 @@ export function CustomerProfile() {
   return (
     <>
       <ContentCard subtitle="Edit your personal information">
-      <div className="space-y-6 max-w-md">
-        {/* Avatar */}
-        <div className="flex items-center gap-5">
-          <div className="relative w-24 h-24 rounded-full bg-primary/10 border border-border shrink-0">
-            <div className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center">
-              {image ? (
-                <Image src={image} alt="Profile picture" width={96} height={96} className="w-full h-full object-cover" unoptimized />
-              ) : (
-                <span className="text-2xl font-bold text-primary">{initials}</span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md border-2 border-background hover:bg-primary/90 transition-colors"
-              title="Change profile picture"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="space-y-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-              Upload Photo
-            </Button>
-            {image && (
+        <div className="max-w-md space-y-6">
+          {/* Avatar */}
+          <div className="flex items-center gap-5">
+            <div className="relative h-24 w-24 shrink-0 rounded-full border border-border bg-primary/10">
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full">
+                {image ? (
+                  <Image
+                    src={image}
+                    alt="Profile picture"
+                    width={96}
+                    height={96}
+                    className="h-full w-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-primary">
+                    {initials}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => setImage(null)}
-                className="flex items-center gap-1 text-xs text-destructive hover:text-destructive/80 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -right-0.5 -bottom-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary text-white shadow-md transition-colors hover:bg-primary/90"
+                title="Change profile picture"
               >
-                <X className="w-3 h-3" />
-                Remove photo
+                <Camera className="h-4 w-4" />
               </button>
+            </div>
+            <div className="space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload Photo
+              </Button>
+              {image && (
+                <button
+                  type="button"
+                  onClick={() => setImage(null)}
+                  className="flex items-center gap-1 text-xs text-destructive transition-colors hover:text-destructive/80"
+                >
+                  <X className="h-3 w-3" />
+                  Remove photo
+                </button>
+              )}
+              {imageError && (
+                <p className="text-xs text-red-600">{imageError}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Full Name */}
+          <div className="space-y-2">
+            <Label htmlFor="profile-name">Full Name</Label>
+            <Input
+              id="profile-name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your full name"
+            />
+          </div>
+
+          {/* Email — read-only */}
+          <div className="space-y-2">
+            <Label htmlFor="profile-email">Email</Label>
+            <div className="relative">
+              <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="profile-email"
+                value={user?.email ?? ""}
+                disabled
+                className="pl-9"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your email is used for login and cannot be changed.
+            </p>
+          </div>
+
+          {/* Contact Number */}
+          <div className="space-y-2">
+            <Label htmlFor="profile-phone">Contact Number</Label>
+            <div className="relative">
+              <Phone className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="profile-phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. 09171234567"
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+            {message && (
+              <span
+                className={`text-sm ${message.type === "success" ? "text-green-600" : "text-red-600"}`}
+              >
+                {message.type === "success" ? (
+                  <CheckCircle className="mr-1 inline h-4 w-4" />
+                ) : (
+                  <XCircle className="mr-1 inline h-4 w-4" />
+                )}
+                {message.text}
+              </span>
             )}
-            {imageError && <p className="text-xs text-red-600">{imageError}</p>}
           </div>
         </div>
+      </ContentCard>
 
-        {/* Full Name */}
-        <div className="space-y-2">
-          <Label htmlFor="profile-name">Full Name</Label>
-          <Input
-            id="profile-name"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Your full name"
-          />
-        </div>
-
-        {/* Email — read-only */}
-        <div className="space-y-2">
-          <Label htmlFor="profile-email">Email</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              id="profile-email"
-              value={user?.email ?? ""}
-              disabled
-              className="pl-9"
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">Your email is used for login and cannot be changed.</p>
-        </div>
-
-        {/* Contact Number */}
-        <div className="space-y-2">
-          <Label htmlFor="profile-phone">Contact Number</Label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              id="profile-phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g. 09171234567"
-              className="pl-9"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Save Changes
-          </Button>
-          {message && (
-            <span className={`text-sm ${message.type === "success" ? "text-green-600" : "text-red-600"}`}>
-              {message.type === "success"
-                ? <CheckCircle className="w-4 h-4 inline mr-1" />
-                : <XCircle className="w-4 h-4 inline mr-1" />}
-              {message.text}
-            </span>
-          )}
-        </div>
-        </div>
+      <ContentCard subtitle="Two-factor authentication for your account">
+        <MfaPanel />
       </ContentCard>
 
       <ContentCard subtitle="Sign out of your account">
         <div className="max-w-md">
-          <Button type="button" variant="destructive" className="w-full flex items-center justify-center gap-2" onClick={handleLogout}>
-            <LogOut className="w-4 h-4" />
+          <Button
+            type="button"
+            variant="destructive"
+            className="flex w-full items-center justify-center gap-2"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
             Logout
           </Button>
         </div>

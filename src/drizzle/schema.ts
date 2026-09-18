@@ -15,20 +15,50 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod"
 
 // ─────────────────────────── ENUMS ───────────────────────────
 
-export const userRoleEnum = pgEnum("user_role", ["admin", "cashier", "staff", "customer"])
-export const oauthProviderEnum = pgEnum("oauth_provider", ["google", "facebook"])
-export const orderStatusEnum = pgEnum("order_status", ["pending", "processing", "ready", "completed", "cancelled"])
+export const userRoleEnum = pgEnum("user_role", [
+  "admin",
+  "cashier",
+  "staff",
+  "customer",
+])
+export const oauthProviderEnum = pgEnum("oauth_provider", [
+  "google",
+  "facebook",
+])
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "processing",
+  "ready",
+  "completed",
+  "cancelled",
+])
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "gcash"])
-export const productStockStatusEnum = pgEnum("product_stock_status", ["in-stock", "low-stock", "out-of-stock"])
-export const transactionStatusEnum = pgEnum("transaction_status", ["completed", "pending", "cancelled"])
+export const productStockStatusEnum = pgEnum("product_stock_status", [
+  "in-stock",
+  "low-stock",
+  "out-of-stock",
+])
+export const transactionStatusEnum = pgEnum("transaction_status", [
+  "completed",
+  "pending",
+  "cancelled",
+])
 export const notificationTypeEnum = pgEnum("notification_type", [
-  "order-status", "order-ready", "order-completed", "payment-received",
-  "low-stock", "new-product", "promotion", "system",
+  "order-status",
+  "order-ready",
+  "order-completed",
+  "payment-received",
+  "low-stock",
+  "new-product",
+  "promotion",
+  "system",
 ])
 
 // ─────────────────────── SHARED TIMESTAMPS ────────────────────
 
-const createdAt = timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+const createdAt = timestamp("created_at", { withTimezone: true })
+  .defaultNow()
+  .notNull()
 const updatedAt = timestamp("updated_at", { withTimezone: true })
   .defaultNow()
   .notNull()
@@ -51,9 +81,14 @@ export const users = pgTable(
     // Per-user management permissions — assigned in User Management.
     // Admin role is always treated as full access regardless of these flags.
     canManageUnits: boolean("can_manage_units").default(false).notNull(),
-    canManageCategories: boolean("can_manage_categories").default(false).notNull(),
+    canManageCategories: boolean("can_manage_categories")
+      .default(false)
+      .notNull(),
     canManageProducts: boolean("can_manage_products").default(false).notNull(),
     isEmailVerified: boolean("is_email_verified").default(false).notNull(),
+    mfaSecret: text("mfa_secret"),
+    mfaEnabled: boolean("mfa_enabled").default(false).notNull(),
+    mfaBackupCodes: text("mfa_backup_codes"),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt,
     updatedAt,
@@ -63,7 +98,11 @@ export const users = pgTable(
   })
 )
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
 export const selectUserSchema = createSelectSchema(users)
 export type User = typeof users.$inferSelect
 export type InsertUser = typeof users.$inferInsert
@@ -83,7 +122,10 @@ export const oauthAccounts = pgTable(
     updatedAt,
   },
   (table) => ({
-    providerUnique: uniqueIndex("oauth_provider_user_unique").on(table.provider, table.providerUserId),
+    providerUnique: uniqueIndex("oauth_provider_user_unique").on(
+      table.provider,
+      table.providerUserId
+    ),
     userIdIdx: index("oauth_accounts_user_id_idx").on(table.userId),
   })
 )
@@ -99,7 +141,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   oauthAccounts: many(oauthAccounts),
 }))
 
-export const insertOauthAccountSchema = createInsertSchema(oauthAccounts).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertOauthAccountSchema = createInsertSchema(oauthAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
 export const selectOauthAccountSchema = createSelectSchema(oauthAccounts)
 export type OauthAccount = typeof oauthAccounts.$inferSelect
 export type InsertOauthAccount = typeof oauthAccounts.$inferInsert
@@ -127,15 +173,21 @@ export const emailVerifications = pgTable(
 
 export const emailVerificationCodes = emailVerifications // alias
 
-export const emailVerificationRelations = relations(emailVerifications, ({ one }) => ({
-  user: one(users, {
-    fields: [emailVerifications.userId],
-    references: [users.id],
-  }),
-}))
+export const emailVerificationRelations = relations(
+  emailVerifications,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [emailVerifications.userId],
+      references: [users.id],
+    }),
+  })
+)
 
-export const insertEmailVerificationSchema = createInsertSchema(emailVerifications).omit({ id: true, createdAt: true, updatedAt: true })
-export const selectEmailVerificationSchema = createSelectSchema(emailVerifications)
+export const insertEmailVerificationSchema = createInsertSchema(
+  emailVerifications
+).omit({ id: true, createdAt: true, updatedAt: true })
+export const selectEmailVerificationSchema =
+  createSelectSchema(emailVerifications)
 export type EmailVerificationCode = typeof emailVerifications.$inferSelect
 export type InsertEmailVerificationCode = typeof emailVerifications.$inferInsert
 
@@ -153,14 +205,19 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt,
 })
 
-export const passwordResetRelations = relations(passwordResetTokens, ({ one }) => ({
-  user: one(users, {
-    fields: [passwordResetTokens.userId],
-    references: [users.id],
-  }),
-}))
+export const passwordResetRelations = relations(
+  passwordResetTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [passwordResetTokens.userId],
+      references: [users.id],
+    }),
+  })
+)
 
-export const insertPasswordResetSchema = createInsertSchema(passwordResetTokens).omit({ id: true, createdAt: true, usedAt: true, attempts: true })
+export const insertPasswordResetSchema = createInsertSchema(
+  passwordResetTokens
+).omit({ id: true, createdAt: true, usedAt: true, attempts: true })
 export const selectPasswordResetSchema = createSelectSchema(passwordResetTokens)
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert
@@ -176,7 +233,11 @@ export const branches = pgTable("branches", {
   updatedAt,
 })
 
-export const insertBranchSchema = createInsertSchema(branches).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertBranchSchema = createInsertSchema(branches).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
 export const selectBranchSchema = createSelectSchema(branches)
 export type Branch = typeof branches.$inferSelect
 export type InsertBranch = typeof branches.$inferInsert
@@ -195,7 +256,9 @@ export const products = pgTable("products", {
   // Legacy denormalized columns — authoritative stock lives in branch_inventory.
   // These go stale for multi-branch products; prefer branchInventory.quantity.
   // @deprecated kept for backward compatibility; remove in a future migration.
-  stockStatus: productStockStatusEnum("stock_status").default("in-stock").notNull(),
+  stockStatus: productStockStatusEnum("stock_status")
+    .default("in-stock")
+    .notNull(),
   quantity: integer("quantity").default(0).notNull(),
   branch: varchar("branch", { length: 100 }).notNull(),
   sku: varchar("sku", { length: 100 }).unique(),
@@ -205,7 +268,11 @@ export const products = pgTable("products", {
   updatedAt,
 })
 
-export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
 export const selectProductSchema = createSelectSchema(products)
 export type Product = typeof products.$inferSelect
 export type InsertProduct = typeof products.$inferInsert
@@ -220,7 +287,11 @@ export const unitTypes = pgTable("unit_types", {
   updatedAt,
 })
 
-export const insertUnitTypeSchema = createInsertSchema(unitTypes).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertUnitTypeSchema = createInsertSchema(unitTypes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
 export const selectUnitTypeSchema = createSelectSchema(unitTypes)
 export type UnitType = typeof unitTypes.$inferSelect
 export type InsertUnitType = typeof unitTypes.$inferInsert
@@ -236,7 +307,11 @@ export const categories = pgTable("categories", {
   updatedAt,
 })
 
-export const insertCategorySchema = createInsertSchema(categories).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
 export const selectCategorySchema = createSelectSchema(categories)
 export type Category = typeof categories.$inferSelect
 export type InsertCategory = typeof categories.$inferInsert
@@ -255,18 +330,23 @@ export const branchInventory = pgTable("branch_inventory", {
   updatedAt,
 })
 
-export const branchInventoryRelations = relations(branchInventory, ({ one }) => ({
-  branch: one(branches, {
-    fields: [branchInventory.branchId],
-    references: [branches.id],
-  }),
-  product: one(products, {
-    fields: [branchInventory.productId],
-    references: [products.id],
-  }),
-}))
+export const branchInventoryRelations = relations(
+  branchInventory,
+  ({ one }) => ({
+    branch: one(branches, {
+      fields: [branchInventory.branchId],
+      references: [branches.id],
+    }),
+    product: one(products, {
+      fields: [branchInventory.productId],
+      references: [products.id],
+    }),
+  })
+)
 
-export const insertBranchInventorySchema = createInsertSchema(branchInventory).omit({ id: true, updatedAt: true })
+export const insertBranchInventorySchema = createInsertSchema(
+  branchInventory
+).omit({ id: true, updatedAt: true })
 export const selectBranchInventorySchema = createSelectSchema(branchInventory)
 export type BranchInventory = typeof branchInventory.$inferSelect
 export type InsertBranchInventory = typeof branchInventory.$inferInsert
@@ -320,9 +400,16 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   }),
 }))
 
-export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
 export const selectOrderSchema = createSelectSchema(orders)
-export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true, createdAt: true })
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
+  id: true,
+  createdAt: true,
+})
 export const selectOrderItemSchema = createSelectSchema(orderItems)
 export type Order = typeof orders.$inferSelect
 export type InsertOrder = typeof orders.$inferInsert
@@ -354,7 +441,11 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   }),
 }))
 
-export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true, addedAt: true, updatedAt: true })
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({
+  id: true,
+  addedAt: true,
+  updatedAt: true,
+})
 export const selectCartItemSchema = createSelectSchema(cartItems)
 export type CartItem = typeof cartItems.$inferSelect
 export type InsertCartItem = typeof cartItems.$inferInsert
@@ -375,9 +466,12 @@ export const transactions = pgTable("transactions", {
   gcashRef: varchar("gcash_ref", { length: 255 }),
   amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }),
   change: numeric("change", { precision: 10, scale: 2 }),
-  sessionId: varchar("session_id", { length: 36 }).references(() => cashDrawerSessions.id, {
-    onDelete: "set null",
-  }),
+  sessionId: varchar("session_id", { length: 36 }).references(
+    () => cashDrawerSessions.id,
+    {
+      onDelete: "set null",
+    }
+  ),
   createdAt,
 })
 
@@ -394,35 +488,46 @@ export const transactionItems = pgTable("transaction_items", {
   createdAt,
 })
 
-export const transactionRelations = relations(transactions, ({ one, many }) => ({
-  branch: one(branches, {
-    fields: [transactions.branchId],
-    references: [branches.id],
-  }),
-  cashier: one(users, {
-    fields: [transactions.cashierId],
-    references: [users.id],
-  }),
-  session: one(cashDrawerSessions, {
-    fields: [transactions.sessionId],
-    references: [cashDrawerSessions.id],
-  }),
-  items: many(transactionItems),
-}))
+export const transactionRelations = relations(
+  transactions,
+  ({ one, many }) => ({
+    branch: one(branches, {
+      fields: [transactions.branchId],
+      references: [branches.id],
+    }),
+    cashier: one(users, {
+      fields: [transactions.cashierId],
+      references: [users.id],
+    }),
+    session: one(cashDrawerSessions, {
+      fields: [transactions.sessionId],
+      references: [cashDrawerSessions.id],
+    }),
+    items: many(transactionItems),
+  })
+)
 
-export const transactionItemsRelations = relations(transactionItems, ({ one }) => ({
-  transaction: one(transactions, {
-    fields: [transactionItems.transactionId],
-    references: [transactions.id],
-  }),
-}))
+export const transactionItemsRelations = relations(
+  transactionItems,
+  ({ one }) => ({
+    transaction: one(transactions, {
+      fields: [transactionItems.transactionId],
+      references: [transactions.id],
+    }),
+  })
+)
 
-export const insertTransactionItemSchema = createInsertSchema(transactionItems).omit({ id: true, createdAt: true })
+export const insertTransactionItemSchema = createInsertSchema(
+  transactionItems
+).omit({ id: true, createdAt: true })
 export const selectTransactionItemSchema = createSelectSchema(transactionItems)
 export type TransactionItem = typeof transactionItems.$inferSelect
 export type InsertTransactionItem = typeof transactionItems.$inferInsert
 
-export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true })
+export const insertTransactionSchema = createInsertSchema(transactions).omit({
+  id: true,
+  createdAt: true,
+})
 export const selectTransactionSchema = createSelectSchema(transactions)
 export type Transaction = typeof transactions.$inferSelect
 export type InsertTransaction = typeof transactions.$inferInsert
@@ -435,24 +540,43 @@ export const cashDrawerSessions = pgTable(
     branchId: varchar("branch_id", { length: 36 })
       .notNull()
       .references(() => branches.id, { onDelete: "cascade" }),
-    cashierId: varchar("cashier_id", { length: 36 }).references(() => users.id, {
-      onDelete: "set null",
-    }),
-    openedAt: timestamp("opened_at", { withTimezone: true }).defaultNow().notNull(),
+    cashierId: varchar("cashier_id", { length: 36 }).references(
+      () => users.id,
+      {
+        onDelete: "set null",
+      }
+    ),
+    openedAt: timestamp("opened_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
     closedAt: timestamp("closed_at", { withTimezone: true }),
     closedBy: varchar("closed_by", { length: 36 }).references(() => users.id, {
       onDelete: "set null",
     }),
-    startingCash: numeric("starting_cash", { precision: 10, scale: 2 }).default("0").notNull(),
-    expectedEndingCash: numeric("expected_ending_cash", { precision: 10, scale: 2 }),
-    actualEndingCash: numeric("actual_ending_cash", { precision: 10, scale: 2 }),
+    startingCash: numeric("starting_cash", { precision: 10, scale: 2 })
+      .default("0")
+      .notNull(),
+    expectedEndingCash: numeric("expected_ending_cash", {
+      precision: 10,
+      scale: 2,
+    }),
+    actualEndingCash: numeric("actual_ending_cash", {
+      precision: 10,
+      scale: 2,
+    }),
     notes: text("notes"),
-    status: text("status", { enum: ["open", "closed"] }).default("open").notNull(),
-    verifiedByAdminId: varchar("verified_by_admin_id", { length: 36 }).references(() => users.id, {
+    status: text("status", { enum: ["open", "closed"] })
+      .default("open")
+      .notNull(),
+    verifiedByAdminId: varchar("verified_by_admin_id", {
+      length: 36,
+    }).references(() => users.id, {
       onDelete: "set null",
     }),
     verifiedAt: timestamp("verified_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => ({
     cashierIdx: index("idx_cash_drawer_cashier").on(table.cashierId),
@@ -460,24 +584,30 @@ export const cashDrawerSessions = pgTable(
   })
 )
 
-export const cashDrawerSessionsRelations = relations(cashDrawerSessions, ({ one, many }) => ({
-  branch: one(branches, {
-    fields: [cashDrawerSessions.branchId],
-    references: [branches.id],
-  }),
-  cashier: one(users, {
-    fields: [cashDrawerSessions.cashierId],
-    references: [users.id],
-  }),
-  transactions: many(transactions),
-}))
+export const cashDrawerSessionsRelations = relations(
+  cashDrawerSessions,
+  ({ one, many }) => ({
+    branch: one(branches, {
+      fields: [cashDrawerSessions.branchId],
+      references: [branches.id],
+    }),
+    cashier: one(users, {
+      fields: [cashDrawerSessions.cashierId],
+      references: [users.id],
+    }),
+    transactions: many(transactions),
+  })
+)
 
-export const insertCashDrawerSessionSchema = createInsertSchema(cashDrawerSessions).omit({
+export const insertCashDrawerSessionSchema = createInsertSchema(
+  cashDrawerSessions
+).omit({
   id: true,
   openedAt: true,
   createdAt: true,
 })
-export const selectCashDrawerSessionSchema = createSelectSchema(cashDrawerSessions)
+export const selectCashDrawerSessionSchema =
+  createSelectSchema(cashDrawerSessions)
 export type CashDrawerSession = typeof cashDrawerSessions.$inferSelect
 export type InsertCashDrawerSession = typeof cashDrawerSessions.$inferInsert
 
@@ -505,7 +635,10 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }))
 
-export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true })
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+})
 export const selectNotificationSchema = createSelectSchema(notifications)
 export type Notification = typeof notifications.$inferSelect
 export type InsertNotification = typeof notifications.$inferInsert
@@ -522,17 +655,26 @@ export const notificationPreferences = pgTable("notification_preferences", {
   updatedAt,
 })
 
-export const notificationPreferencesRelations = relations(notificationPreferences, ({ one }) => ({
-  user: one(users, {
-    fields: [notificationPreferences.userId],
-    references: [users.id],
-  }),
-}))
+export const notificationPreferencesRelations = relations(
+  notificationPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [notificationPreferences.userId],
+      references: [users.id],
+    }),
+  })
+)
 
-export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({ id: true, createdAt: true, updatedAt: true })
-export const selectNotificationPreferencesSchema = createSelectSchema(notificationPreferences)
-export type NotificationPreferences = typeof notificationPreferences.$inferSelect
-export type InsertNotificationPreferences = typeof notificationPreferences.$inferInsert
+export const insertNotificationPreferencesSchema = createInsertSchema(
+  notificationPreferences
+).omit({ id: true, createdAt: true, updatedAt: true })
+export const selectNotificationPreferencesSchema = createSelectSchema(
+  notificationPreferences
+)
+export type NotificationPreferences =
+  typeof notificationPreferences.$inferSelect
+export type InsertNotificationPreferences =
+  typeof notificationPreferences.$inferInsert
 
 // ── Inventory Batches ──
 export const inventoryBatches = pgTable("inventory_batches", {
@@ -544,20 +686,27 @@ export const inventoryBatches = pgTable("inventory_batches", {
   quantity: integer("quantity").default(0).notNull(),
   originalQuantity: integer("original_quantity").default(0).notNull(),
   expiryDate: timestamp("expiry_date", { withTimezone: true }),
-  receivedDate: timestamp("received_date", { withTimezone: true }).defaultNow().notNull(),
+  receivedDate: timestamp("received_date", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
   supplier: varchar("supplier", { length: 255 }),
   createdAt,
   updatedAt,
 })
 
-export const inventoryBatchesRelations = relations(inventoryBatches, ({ one }) => ({
-  branchInventory: one(branchInventory, {
-    fields: [inventoryBatches.branchInventoryId],
-    references: [branchInventory.id],
-  }),
-}))
+export const inventoryBatchesRelations = relations(
+  inventoryBatches,
+  ({ one }) => ({
+    branchInventory: one(branchInventory, {
+      fields: [inventoryBatches.branchInventoryId],
+      references: [branchInventory.id],
+    }),
+  })
+)
 
-export const insertInventoryBatchSchema = createInsertSchema(inventoryBatches).omit({ id: true, createdAt: true, updatedAt: true })
+export const insertInventoryBatchSchema = createInsertSchema(
+  inventoryBatches
+).omit({ id: true, createdAt: true, updatedAt: true })
 export const selectInventoryBatchSchema = createSelectSchema(inventoryBatches)
 export type InventoryBatch = typeof inventoryBatches.$inferSelect
 export type InsertInventoryBatch = typeof inventoryBatches.$inferInsert
@@ -565,7 +714,9 @@ export type InsertInventoryBatch = typeof inventoryBatches.$inferInsert
 // ── Store Settings (single-row system configuration) ──
 export const storeSettings = pgTable("store_settings", {
   id: varchar("id", { length: 36 }).primaryKey(),
-  storeName: varchar("store_name", { length: 255 }).notNull().default("BentaHub"),
+  storeName: varchar("store_name", { length: 255 })
+    .notNull()
+    .default("BentaHub"),
   logo: text("logo"),
   storeAddress: varchar("store_address", { length: 255 }),
   storeContact: varchar("store_contact", { length: 50 }),
@@ -573,7 +724,9 @@ export const storeSettings = pgTable("store_settings", {
   updatedAt,
 })
 
-export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit({ id: true, updatedAt: true })
+export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit(
+  { id: true, updatedAt: true }
+)
 export const selectStoreSettingsSchema = createSelectSchema(storeSettings)
 export type StoreSettings = typeof storeSettings.$inferSelect
 export type InsertStoreSettings = typeof storeSettings.$inferInsert

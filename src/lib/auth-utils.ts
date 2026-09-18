@@ -50,6 +50,8 @@ export interface TokenPayload {
   email: string
   fullName: string
   role: string
+  /** Token audience: `full` = authenticated session, `mfa` = pending 2FA challenge. */
+  tokenType?: "full" | "mfa"
 }
 
 // ---------------------------------------------------------------------------
@@ -82,7 +84,10 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /** Compare a plaintext password against a bcrypt hash. */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
   return bcryptjs.compare(password, hash)
 }
 
@@ -92,7 +97,19 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 /** Sign a new JWT containing the user's identity and role. */
 export function generateToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY })
+  return jwt.sign({ ...payload, tokenType: "full" }, JWT_SECRET, {
+    expiresIn: TOKEN_EXPIRY,
+  })
+}
+
+/**
+ * Sign a short-lived JWT that only authorizes completing an MFA challenge.
+ * It carries no role, so it cannot be used against role-protected APIs.
+ */
+export function generateMfaToken(userId: string): string {
+  return jwt.sign({ userId, tokenType: "mfa" }, JWT_SECRET, {
+    expiresIn: "10m",
+  })
 }
 
 /** Verify and decode a JWT. Returns the payload on success, `null` on failure. */
@@ -112,7 +129,9 @@ export function verifyToken(token: string): TokenPayload | null {
  * Extract a Bearer token from a NextRequest's Authorization header.
  * Returns `null` if the header is missing or malformed.
  */
-export function extractToken(request: { headers: { get: (name: string) => string | null } }): string | null {
+export function extractToken(request: {
+  headers: { get: (name: string) => string | null }
+}): string | null {
   const header = request.headers.get("Authorization")
   if (!header || !header.startsWith("Bearer ")) {
     return null
@@ -156,16 +175,34 @@ export function getRoleScopedUserId(
  * Verify that the request has a valid admin JWT.
  * Returns `{ userId, error }` — if `error` is set, return it immediately.
  */
-export function checkAdminAuth(token: string | null): { userId?: string; error?: NextResponse } {
+export function checkAdminAuth(token: string | null): {
+  userId?: string
+  error?: NextResponse
+} {
   if (!token) {
-    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Authentication required" },
+        { status: 401 }
+      ),
+    }
   }
   const payload = verifyToken(token)
   if (!payload) {
-    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Invalid or expired token" },
+        { status: 401 }
+      ),
+    }
   }
   if (payload.role !== "admin") {
-    return { error: NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Admin access required" },
+        { status: 403 }
+      ),
+    }
   }
   return { userId: payload.userId }
 }
@@ -180,16 +217,29 @@ export function checkRoleAuth(
   label?: string
 ): { userId: string; error?: never } | { userId?: never; error: NextResponse } {
   if (!token) {
-    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Authentication required" },
+        { status: 401 }
+      ),
+    }
   }
   const payload = verifyToken(token)
   if (!payload) {
-    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Invalid or expired token" },
+        { status: 401 }
+      ),
+    }
   }
   if (!allowedRoles.includes(payload.role)) {
     return {
       error: NextResponse.json(
-        { success: false, message: `${label ?? "This area"} requires a ${allowedRoles.join(" or ")} account` },
+        {
+          success: false,
+          message: `${label ?? "This area"} requires a ${allowedRoles.join(" or ")} account`,
+        },
         { status: 403 }
       ),
     }
@@ -206,7 +256,10 @@ export function checkRoleAuth(
  * always treated as full access; these flags only extend what a staff account
  * may do beyond its default read-only inventory duties.
  */
-export type PermissionKey = "canManageUnits" | "canManageCategories" | "canManageProducts"
+export type PermissionKey =
+  | "canManageUnits"
+  | "canManageCategories"
+  | "canManageProducts"
 
 /** Map a permission key to the column it lives on (kept for clarity/safety). */
 export const PERMISSION_COLUMNS: Record<PermissionKey, PermissionKey> = {
@@ -223,14 +276,26 @@ export const PERMISSION_COLUMNS: Record<PermissionKey, PermissionKey> = {
 export async function requirePermission(
   request: { headers: { get: (name: string) => string | null } },
   permission: PermissionKey
-): Promise<{ userId: string; error?: never } | { userId?: never; error: NextResponse }> {
+): Promise<
+  { userId: string; error?: never } | { userId?: never; error: NextResponse }
+> {
   const token = extractToken(request)
   if (!token) {
-    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Authentication required" },
+        { status: 401 }
+      ),
+    }
   }
   const payload = verifyToken(token)
   if (!payload) {
-    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Invalid or expired token" },
+        { status: 401 }
+      ),
+    }
   }
   if (payload.role === "admin") {
     return { userId: payload.userId }
@@ -238,16 +303,28 @@ export async function requirePermission(
   if (payload.role !== "staff") {
     return {
       error: NextResponse.json(
-        { success: false, message: "This area requires an admin or staff account" },
+        {
+          success: false,
+          message: "This area requires an admin or staff account",
+        },
         { status: 403 }
       ),
     }
   }
-  const user = await db.query.users.findFirst({ where: eq(users.id, payload.userId) })
-  if (!user || user.isActive === false || !user[PERMISSION_COLUMNS[permission]]) {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, payload.userId),
+  })
+  if (
+    !user ||
+    user.isActive === false ||
+    !user[PERMISSION_COLUMNS[permission]]
+  ) {
     return {
       error: NextResponse.json(
-        { success: false, message: "You do not have permission to perform this action" },
+        {
+          success: false,
+          message: "You do not have permission to perform this action",
+        },
         { status: 403 }
       ),
     }
