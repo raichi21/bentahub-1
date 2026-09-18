@@ -24,6 +24,7 @@ export function RegisterForm() {
     confirmPassword: "",
     fullName: "",
   })
+  const [acceptTerms, setAcceptTerms] = React.useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -60,6 +61,12 @@ export function RegisterForm() {
       return
     }
 
+    if (!acceptTerms) {
+      setError("You must agree to the Terms of Service and Privacy Policy")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const result = await registerUser(formData as RegisterPayload)
 
@@ -70,7 +77,7 @@ export function RegisterForm() {
       }
 
       setSuccess(result.message)
-      
+
       // Store in session storage for the verify email page
       sessionStorage.setItem("pendingVerificationEmail", formData.email)
 
@@ -86,7 +93,7 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full max-w-[440px] animate-in duration-700 fade-in slide-in-from-bottom-4">
       <AuthHeader subtitle="Create your BentaHub Account" />
 
       <Card className="border-border shadow-md">
@@ -96,24 +103,29 @@ export function RegisterForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg animate-in fade-in duration-200">
+              <div className="animate-in rounded-lg border border-destructive/30 bg-destructive/10 p-3 duration-200 fade-in">
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg animate-in fade-in duration-200">
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">{success}</p>
+              <div className="animate-in rounded-lg border border-emerald-200 bg-emerald-50 p-3 duration-200 fade-in dark:border-emerald-800 dark:bg-emerald-950/30">
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                  {success}
+                </p>
               </div>
             )}
 
             {/* Full Name */}
             <div className="space-y-1.5">
-              <Label htmlFor="fullName" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label
+                htmlFor="fullName"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
                 Full Name
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-5" />
+                <User className="absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="fullName"
                   name="fullName"
@@ -130,11 +142,14 @@ export function RegisterForm() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label
+                htmlFor="email"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-5" />
+                <Mail className="absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
                   name="email"
@@ -151,7 +166,10 @@ export function RegisterForm() {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label
+                htmlFor="password"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
                 Password
               </Label>
               <PasswordInput
@@ -163,12 +181,19 @@ export function RegisterForm() {
                 disabled={isLoading}
                 required
               />
-              <div className="pt-1 space-y-1">
+              <div className="space-y-1 pt-1">
                 {PASSWORD_RULES.map((rule) => {
                   const passed = rule.test(formData.password)
                   return (
-                    <p key={rule.id} className={`flex items-center gap-1.5 text-xs ${passed ? "text-green-600" : "text-muted-foreground"}`}>
-                      <span className={passed ? "text-green-600" : "text-muted-foreground/60"}>
+                    <p
+                      key={rule.id}
+                      className={`flex items-center gap-1.5 text-xs ${passed ? "text-green-600" : "text-muted-foreground"}`}
+                    >
+                      <span
+                        className={
+                          passed ? "text-green-600" : "text-muted-foreground/60"
+                        }
+                      >
                         {passed ? "✓" : "✗"}
                       </span>
                       {rule.label}
@@ -180,7 +205,10 @@ export function RegisterForm() {
 
             {/* Confirm Password */}
             <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
                 Confirm Password
               </Label>
               <PasswordInput
@@ -194,8 +222,48 @@ export function RegisterForm() {
               />
             </div>
 
+            {/* Consent */}
+            <div className="flex items-start gap-2 pt-1">
+              <input
+                id="acceptTerms"
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => {
+                  setAcceptTerms(e.target.checked)
+                  setError("")
+                }}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                disabled={isLoading}
+                required
+              />
+              <label
+                htmlFor="acceptTerms"
+                className="text-sm text-muted-foreground"
+              >
+                I agree to the{" "}
+                <Link
+                  href="/terms"
+                  className="font-bold text-primary hover:underline"
+                >
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/privacy"
+                  className="font-bold text-primary hover:underline"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </label>
+            </div>
+
             <div className="pt-2">
-              <Button type="submit" className="w-full flex items-center justify-center gap-2 p-5" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="flex w-full items-center justify-center gap-2 p-5"
+                disabled={isLoading || !acceptTerms}
+              >
                 {isLoading ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
@@ -211,9 +279,12 @@ export function RegisterForm() {
             </div>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-4">
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary font-bold hover:underline">
+            <Link
+              href="/login"
+              className="font-bold text-primary hover:underline"
+            >
               Sign In
             </Link>
           </p>
