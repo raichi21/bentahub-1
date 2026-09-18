@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { registerUser } from "@/features/user-mgmt/actions/register"
 import { PASSWORD_RULES, getPasswordErrors } from "@/lib/password-validation"
+import {
+  LegalModal,
+  type LegalModalKind,
+} from "@/features/legal/components/legal-modal"
 import type { RegisterPayload } from "@/types/auth"
 
 export function RegisterForm() {
@@ -25,6 +29,9 @@ export function RegisterForm() {
     fullName: "",
   })
   const [acceptTerms, setAcceptTerms] = React.useState(false)
+  const [legalModal, setLegalModal] = React.useState<LegalModalKind | null>(
+    null
+  )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -241,19 +248,21 @@ export function RegisterForm() {
                 className="text-sm text-muted-foreground"
               >
                 I agree to the{" "}
-                <Link
-                  href="/terms"
+                <button
+                  type="button"
+                  onClick={() => setLegalModal("terms")}
                   className="font-bold text-primary hover:underline"
                 >
                   Terms of Service
-                </Link>{" "}
+                </button>{" "}
                 and{" "}
-                <Link
-                  href="/privacy"
+                <button
+                  type="button"
+                  onClick={() => setLegalModal("privacy")}
                   className="font-bold text-primary hover:underline"
                 >
                   Privacy Policy
-                </Link>
+                </button>
                 .
               </label>
             </div>
@@ -290,6 +299,12 @@ export function RegisterForm() {
           </p>
         </CardContent>
       </Card>
+
+      <LegalModal
+        kind={legalModal ?? "terms"}
+        open={legalModal !== null}
+        onClose={() => setLegalModal(null)}
+      />
     </div>
   )
 }

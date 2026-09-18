@@ -15,6 +15,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
+import {
+  LegalModal,
+  type LegalModalKind,
+} from "@/features/legal/components/legal-modal"
 import { useSearchParams } from "next/navigation"
 import type { LoginResponseData } from "@/types/auth"
 
@@ -38,6 +42,9 @@ function LoginPageInner() {
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
+  const [legalModal, setLegalModal] = React.useState<LegalModalKind | null>(
+    null
+  )
   const [error, setError] = React.useState(
     searchParams.get("oauth_error") ?? ""
   )
@@ -216,24 +223,6 @@ function LoginPageInner() {
                 <LogIn className="size-4" />
               </Button>
             </div>
-
-            <p className="text-center text-xs text-muted-foreground">
-              By signing in, you agree to our{" "}
-              <Link
-                href="/terms"
-                className="font-bold text-primary hover:underline"
-              >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy"
-                className="font-bold text-primary hover:underline"
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
           </form>
 
           <div className="mt-6 flex items-center gap-3">
@@ -257,8 +246,34 @@ function LoginPageInner() {
               Sign Up
             </Link>
           </p>
+
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            By signing in, you agree to our{" "}
+            <button
+              type="button"
+              onClick={() => setLegalModal("terms")}
+              className="font-bold text-primary hover:underline"
+            >
+              Terms of Service
+            </button>{" "}
+            and{" "}
+            <button
+              type="button"
+              onClick={() => setLegalModal("privacy")}
+              className="font-bold text-primary hover:underline"
+            >
+              Privacy Policy
+            </button>
+            .
+          </p>
         </CardContent>
       </Card>
+
+      <LegalModal
+        kind={legalModal ?? "terms"}
+        open={legalModal !== null}
+        onClose={() => setLegalModal(null)}
+      />
     </div>
   )
 }
