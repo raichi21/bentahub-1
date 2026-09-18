@@ -1,5 +1,3 @@
-import Link from "next/link"
-
 const termsSections = [
   {
     title: "1. Definitions",
@@ -342,14 +340,6 @@ export function TermsContent() {
           <ContactBox />
         </div>
       </section>
-
-      <p className="text-sm text-muted-foreground">
-        View the full page on our{" "}
-        <Link href="/terms" className="text-primary underline">
-          Terms and Conditions
-        </Link>{" "}
-        page.
-      </p>
     </div>
   )
 }
@@ -375,14 +365,6 @@ export function PrivacyContent() {
           <ContactBox />
         </div>
       </section>
-
-      <p className="text-sm text-muted-foreground">
-        View the full page on our{" "}
-        <Link href="/privacy" className="text-primary underline">
-          Privacy Policy
-        </Link>{" "}
-        page.
-      </p>
     </div>
   )
 }
