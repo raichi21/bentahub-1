@@ -11,7 +11,19 @@ export function maskEmail(email: string): string {
 }
 
 /**
- * Whether MFA is currently enforced for all users (production only).
+ * Roles that are subject to MFA. Staff and cashier accounts are shared
+ * work-station logins provisioned by the admin, so a personal email code
+ * would lock them out; only admin and customer accounts carry a mailbox.
+ */
+export const MFA_REQUIRED_ROLES = ["admin", "customer"] as const
+
+/** Whether a given role is subject to the MFA challenges. */
+export function mfaAppliesToRole(role: string): boolean {
+  return (MFA_REQUIRED_ROLES as readonly string[]).includes(role)
+}
+
+/**
+ * Whether MFA is currently enforced for eligible roles (production only).
  */
 export function isMfaEnforced(): boolean {
   return process.env.NODE_ENV === "production"

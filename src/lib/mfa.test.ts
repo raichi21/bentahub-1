@@ -1,5 +1,5 @@
 import { describe, it, expect, afterAll } from "vitest"
-import { isMfaEnforced, maskEmail } from "./mfa"
+import { isMfaEnforced, mfaAppliesToRole, maskEmail } from "./mfa"
 
 describe("isMfaEnforced", () => {
   const env = process.env as Record<string, string | undefined>
@@ -17,6 +17,22 @@ describe("isMfaEnforced", () => {
   it("is bypassed in development", () => {
     env.NODE_ENV = "development"
     expect(isMfaEnforced()).toBe(false)
+  })
+})
+
+describe("mfaAppliesToRole", () => {
+  it("applies to admin and customer accounts", () => {
+    expect(mfaAppliesToRole("admin")).toBe(true)
+    expect(mfaAppliesToRole("customer")).toBe(true)
+  })
+
+  it("exempts shared staff and cashier accounts", () => {
+    expect(mfaAppliesToRole("staff")).toBe(false)
+    expect(mfaAppliesToRole("cashier")).toBe(false)
+  })
+
+  it("does not apply to unknown roles", () => {
+    expect(mfaAppliesToRole("vendor")).toBe(false)
   })
 })
 

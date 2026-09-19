@@ -3,6 +3,7 @@ import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import { checkMfaCode } from "@/lib/mfa-email"
+import { mfaAppliesToRole } from "@/lib/mfa"
 import {
   resolveMfaChallengeToken,
   resolveMfaIdentity,
@@ -67,6 +68,15 @@ export async function POST(
 
     if (!user || !user.isActive) {
       return codeError<VerifyData>("Account not found or deactivated", 401)
+    }
+
+    // Shared staff/cashier accounts are exempt from MFA — reject the challenge
+    // even if a stale or forged mfa-scoped token reaches this route.
+    if (!mfaAppliesToRole(user.role)) {
+      return codeError<VerifyData>(
+        "MFA is not required for this account. Please sign in again.",
+        403
+      )
     }
 
     const check = await checkMfaCode(user.id, code)

@@ -7,7 +7,7 @@ import {
   generateToken,
   generateMfaToken,
 } from "@/lib/auth-utils"
-import { isMfaEnforced } from "@/lib/mfa"
+import { isMfaEnforced, mfaAppliesToRole } from "@/lib/mfa"
 import type {
   AuthResponse,
   LoginResponseData,
@@ -97,29 +97,23 @@ export async function POST(
 
     // --- MFA gate ----------------------------------------------------------
 
-    // Users who already enrolled MFA are always challenged with a code.
-    // Users who have not enrolled are forced to enroll in production; in
-    // development the challenge is skipped so seeded accounts aren't locked.
-    if (user.mfaEnabled) {
+    // Shared staff/cashier accounts are exempt so password login at the
+    // workstation completes without a personal email code. Admin and customer
+    // accounts that already enrolled MFA are always challenged; the rest are
+    // forced to enroll in production (in development the challenge is skipped
+    // so seeded accounts aren't locked).
+    if (mfaAppliesToRole(user.role) && (user.mfaEnabled || isMfaEnforced())) {
       const mfaToken = generateMfaToken(user.id)
       const data: LoginChallengeData = {
         requiresMfa: true,
         mfaToken,
       }
       return NextResponse.json(
-        { success: true, message: "MFA code required", data },
-        { status: 200 }
-      )
-    }
-
-    if (isMfaEnforced()) {
-      const mfaToken = generateMfaToken(user.id)
-      const data: LoginChallengeData = {
-        requiresMfa: true,
-        mfaToken,
-      }
-      return NextResponse.json(
-        { success: true, message: "MFA setup required", data },
+        {
+          success: true,
+          message: user.mfaEnabled ? "MFA code required" : "MFA setup required",
+          data,
+        },
         { status: 200 }
       )
     }

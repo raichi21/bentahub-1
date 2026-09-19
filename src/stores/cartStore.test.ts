@@ -43,14 +43,12 @@ describe("cartStore", () => {
   })
 
   it("coerces string prices and subtotals to numbers", () => {
-    useCartStore
-      .getState()
-      .setItems([
-        makeItem({
-          price: "10.5" as unknown as number,
-          subtotal: "10.5" as unknown as number,
-        }),
-      ])
+    useCartStore.getState().setItems([
+      makeItem({
+        price: "10.5" as unknown as number,
+        subtotal: "10.5" as unknown as number,
+      }),
+    ])
 
     const state = useCartStore.getState()
     expect(state.items[0].price).toBe(10.5)
