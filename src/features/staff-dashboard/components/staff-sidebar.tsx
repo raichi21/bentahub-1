@@ -11,7 +11,6 @@ import {
   Calendar,
   LogOut,
   X,
-  Settings,
 } from "lucide-react"
 import { StoreLogo } from "@/components/store-logo"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
@@ -147,14 +146,6 @@ export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
 
         <div className="mt-auto border-t border-slate-800/80 p-4">
           <nav className="space-y-1">
-            <Link
-              href="/staff/settings"
-              onClick={handleNav}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 transition-all duration-200 hover:bg-slate-800/50 hover:text-white"
-            >
-              <Settings className="h-5 w-5" />
-              <span>Settings</span>
-            </Link>
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-red-400 transition-all duration-200 hover:bg-red-500/10 hover:text-red-300"

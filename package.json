@@ -16,7 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit push:pg",
-    "db:migrate": "drizzle-kit up:pg",
+    "db:migrate": "drizzle-kit push:pg",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx scripts/seed-admin-data.ts",
     "db:seed-master": "npx tsx scripts/seed-master-data.ts",
