@@ -20,7 +20,9 @@ export function CreateNewPasswordForm() {
   const [confirmPassword, setConfirmPassword] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState(() =>
-    token ? "" : "Invalid or missing verification session. Please request a new password reset."
+    token
+      ? ""
+      : "Invalid or missing verification session. Please request a new password reset."
   )
   const [success, setSuccess] = React.useState(false)
 
@@ -80,19 +82,22 @@ export function CreateNewPasswordForm() {
 
   if (success) {
     return (
-      <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="w-full max-w-[440px] animate-in duration-700 fade-in slide-in-from-bottom-4">
         <AuthHeader subtitle="You're all set" />
 
         <Card className="border-border shadow-sm">
           <CardContent className="pt-8">
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-green-500/10">
-                <Lock className="h-8 w-8 text-green-600 animate-bounce" />
+            <div className="space-y-4 text-center">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
+                <Lock className="h-8 w-8 animate-bounce text-green-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">Password Reset Successful</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Your password has been reset. You can now sign in with your new password.
+                <h2 className="text-lg font-semibold">
+                  Password Reset Successful
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Your password has been reset. You can now sign in with your
+                  new password.
                 </p>
               </div>
             </div>
@@ -100,7 +105,7 @@ export function CreateNewPasswordForm() {
             <div className="mt-8">
               <Button
                 asChild
-                className="w-full flex items-center justify-center gap-2 p-5"
+                className="flex w-full items-center justify-center gap-2 p-5"
               >
                 <Link href="/login">
                   Sign In Now
@@ -115,16 +120,19 @@ export function CreateNewPasswordForm() {
   }
 
   return (
-    <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full max-w-[440px] animate-in duration-700 fade-in slide-in-from-bottom-4">
       <AuthHeader subtitle="Choose a new password for your account" />
 
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Create New Password</CardTitle>
-          <p className="text-sm text-muted-foreground mt-2">
+          <CardTitle className="text-xl font-semibold">
+            Create New Password
+          </CardTitle>
+          <p className="mt-2 text-sm text-muted-foreground">
             {email ? (
               <>
-                Create a new password for <span className="font-semibold text-foreground">{email}</span>.
+                Create a new password for{" "}
+                <span className="font-semibold text-foreground">{email}</span>.
               </>
             ) : (
               "Enter your new password below."
@@ -134,13 +142,16 @@ export function CreateNewPasswordForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <Label
+                htmlFor="password"
+                className="text-xs tracking-wider text-muted-foreground uppercase"
+              >
                 New Password
               </Label>
               <PasswordInput
@@ -151,12 +162,19 @@ export function CreateNewPasswordForm() {
                 disabled={isLoading || !token}
                 required
               />
-              <div className="pt-1 space-y-1">
+              <div className="space-y-1 pt-1">
                 {PASSWORD_RULES.map((rule) => {
                   const passed = rule.test(password)
                   return (
-                    <p key={rule.id} className={`flex items-center gap-1.5 text-xs ${passed ? "text-green-600" : "text-muted-foreground"}`}>
-                      <span className={passed ? "text-green-600" : "text-muted-foreground/60"}>
+                    <p
+                      key={rule.id}
+                      className={`flex items-center gap-1.5 text-xs ${passed ? "text-green-600" : "text-muted-foreground"}`}
+                    >
+                      <span
+                        className={
+                          passed ? "text-green-600" : "text-muted-foreground/60"
+                        }
+                      >
                         {passed ? "✓" : "✗"}
                       </span>
                       {rule.label}
@@ -167,7 +185,10 @@ export function CreateNewPasswordForm() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-xs tracking-wider text-muted-foreground uppercase"
+              >
                 Confirm Password
               </Label>
               <PasswordInput
@@ -183,7 +204,7 @@ export function CreateNewPasswordForm() {
             <div className="pt-2">
               <Button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 p-5"
+                className="flex w-full items-center justify-center gap-2 p-5"
                 disabled={isLoading || !token}
               >
                 {isLoading ? "Resetting..." : "Reset Password"}
@@ -192,8 +213,11 @@ export function CreateNewPasswordForm() {
             </div>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            <Link href="/login" className="text-primary font-bold hover:underline">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            <Link
+              href="/login"
+              className="font-bold text-primary hover:underline"
+            >
               Back to Sign In
             </Link>
           </p>

@@ -3,7 +3,9 @@ import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { getMonitoringData } from "@/features/admin-dashboard/actions/get-monitoring"
 import type { AdminApiResponse, MonitoringData } from "@/types/admin"
 
-export async function GET(request: NextRequest): Promise<NextResponse<AdminApiResponse<MonitoringData>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<AdminApiResponse<MonitoringData>>> {
   try {
     const token = extractToken(request)
 
@@ -36,13 +38,20 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
     const data = await getMonitoringData(branchId, dateFrom, dateTo)
 
     return NextResponse.json(
-      { success: true, message: "Monitoring data retrieved successfully", data },
+      {
+        success: true,
+        message: "Monitoring data retrieved successfully",
+        data,
+      },
       { status: 200 }
     )
   } catch (error) {
     console.error("Admin monitoring error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching monitoring data" },
+      {
+        success: false,
+        message: "An error occurred while fetching monitoring data",
+      },
       { status: 500 }
     )
   }

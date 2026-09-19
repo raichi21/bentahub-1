@@ -3,7 +3,12 @@ import { z } from "zod"
 import { db } from "@/servers/db"
 import { users, emailVerifications } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { generateId, generateVerificationCode, hashPassword, hashVerificationCode } from "@/lib/auth-utils"
+import {
+  generateId,
+  generateVerificationCode,
+  hashPassword,
+  hashVerificationCode,
+} from "@/lib/auth-utils"
 import { sendVerificationEmail } from "@/lib/email-service"
 import { PASSWORD_RULES } from "@/lib/password-validation"
 import type { AuthResponse } from "@/types/auth"
@@ -40,7 +45,9 @@ const registerSchema = z
  * Creates a new customer account, saves a secure hashed 6-digit OTP code to PostgreSQL,
  * and sends it via the configured nodemailer transporter.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<AuthResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse>> {
   try {
     const body = await request.json()
 
@@ -65,7 +72,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     if (existingUser) {
       if (!existingUser.isEmailVerified) {
         // Recycle unverified account by invalidating previous OTPs
-        await db.delete(emailVerifications).where(eq(emailVerifications.userId, existingUser.id))
+        await db
+          .delete(emailVerifications)
+          .where(eq(emailVerifications.userId, existingUser.id))
 
         // Create new OTP
         const verificationCode = generateVerificationCode()
@@ -81,12 +90,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
           attempts: 0,
         })
 
-        await sendVerificationEmail(existingUser.email, verificationCode, existingUser.fullName)
+        await sendVerificationEmail(
+          existingUser.email,
+          verificationCode,
+          existingUser.fullName
+        )
 
         return NextResponse.json(
           {
             success: true,
-            message: "Account already exists but is unverified. A new verification code has been sent.",
+            message:
+              "Account already exists but is unverified. A new verification code has been sent.",
             data: {
               userId: existingUser.id,
               email: existingUser.email,
@@ -132,7 +146,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     })
 
     // 6. Send verification email (non-blocking)
-    const emailSent = await sendVerificationEmail(email, verificationCode, fullName)
+    const emailSent = await sendVerificationEmail(
+      email,
+      verificationCode,
+      fullName
+    )
 
     return NextResponse.json(
       {

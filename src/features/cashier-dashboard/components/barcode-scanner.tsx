@@ -31,13 +31,19 @@ type ErrorType =
 function detectInAppBrowser(): boolean {
   if (typeof window === "undefined") return false
   const ua = navigator.userAgent || ""
-  return /FBAN\/|FBAV\/|Instagram|Messenger|Line\/|MicroMessenger|Snapchat|Twitter|TikTok|WeChat|WhatsApp/i.test(ua)
+  return /FBAN\/|FBAV\/|Instagram|Messenger|Line\/|MicroMessenger|Snapchat|Twitter|TikTok|WeChat|WhatsApp/i.test(
+    ua
+  )
 }
 
 function getSecureContextMessage(): string {
   const proto = window.location.protocol
   const host = window.location.hostname
-  if (proto === "https:" || proto === "http:" && (host === "localhost" || host === "127.0.0.1" || host === "[::1]")) {
+  if (
+    proto === "https:" ||
+    (proto === "http:" &&
+      (host === "localhost" || host === "127.0.0.1" || host === "[::1]"))
+  ) {
     return ""
   }
   return `Camera access requires a secure connection (HTTPS). You are currently using ${proto}//${host}.`
@@ -46,7 +52,9 @@ function getSecureContextMessage(): string {
 async function checkCameraPermission(): Promise<PermissionState | null> {
   try {
     if (!navigator.permissions) return null
-    const status = await navigator.permissions.query({ name: "camera" as PermissionName })
+    const status = await navigator.permissions.query({
+      name: "camera" as PermissionName,
+    })
     return status.state
   } catch {
     return null
@@ -65,35 +73,42 @@ function mapErrorToType(err: unknown): ErrorType {
 }
 
 const ERROR_UI: Record<ErrorType, { title: string; description: string }> = {
-  "insecure": {
+  insecure: {
     title: "Camera requires HTTPS",
-    description: "Browser camera access is only available on secure (HTTPS) connections. Open this page via HTTPS or use manual input below.",
+    description:
+      "Browser camera access is only available on secure (HTTPS) connections. Open this page via HTTPS or use manual input below.",
   },
   "no-media": {
     title: "Camera not supported",
-    description: "Your browser does not support camera access. Try opening this page in Chrome or Safari.",
+    description:
+      "Your browser does not support camera access. Try opening this page in Chrome or Safari.",
   },
-  "denied": {
+  denied: {
     title: "Camera permission denied",
-    description: "Camera access was blocked. You can retry or enable it in your browser settings.",
+    description:
+      "Camera access was blocked. You can retry or enable it in your browser settings.",
   },
   "not-found": {
     title: "No camera found",
-    description: "No camera was detected on this device. Use manual input below.",
+    description:
+      "No camera was detected on this device. Use manual input below.",
   },
   "in-use": {
     title: "Camera is in use",
-    description: "Another app is using the camera. Close other camera apps and try again.",
+    description:
+      "Another app is using the camera. Close other camera apps and try again.",
   },
-  "overconstrained": {
+  overconstrained: {
     title: "Rear camera unavailable",
-    description: "Your device does not have a rear-facing camera. Retrying with the front camera.",
+    description:
+      "Your device does not have a rear-facing camera. Retrying with the front camera.",
   },
   "in-app-browser": {
     title: "Camera blocked in this app",
-    description: "In-app browsers (Facebook, Messenger, Instagram, etc.) block camera access. Open this page directly in Chrome or Safari instead.",
+    description:
+      "In-app browsers (Facebook, Messenger, Instagram, etc.) block camera access. Open this page directly in Chrome or Safari instead.",
   },
-  "unknown": {
+  unknown: {
     title: "Camera unavailable",
     description: "Could not start the camera. Check permissions and try again.",
   },
@@ -103,7 +118,7 @@ const PERMISSION_STEPS: Record<string, { label: string; steps: string[] }> = {
   "android-chrome": {
     label: "Android Chrome",
     steps: [
-      'Tap the three dots (⋮) in Chrome → Settings',
+      "Tap the three dots (⋮) in Chrome → Settings",
       "Tap Site settings → Camera",
       "Find this site and tap it",
       'Change to "Allow"',
@@ -125,7 +140,10 @@ const PERMISSION_STEPS: Record<string, { label: string; steps: string[] }> = {
 function getDeviceSteps(): { label: string; steps: string[] } {
   if (typeof window === "undefined") return PERMISSION_STEPS["android-chrome"]
   const ua = navigator.userAgent || ""
-  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+  if (
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  ) {
     return PERMISSION_STEPS["ios-safari"]
   }
   return PERMISSION_STEPS["android-chrome"]
@@ -133,7 +151,9 @@ function getDeviceSteps(): { label: string; steps: string[] } {
 
 export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const html5QrCodeRef = useRef<unknown>(null)
-  const [phase, setPhase] = useState<"checking" | "requesting" | "ready" | "error">("checking")
+  const [phase, setPhase] = useState<
+    "checking" | "requesting" | "ready" | "error"
+  >("checking")
   const [errorType, setErrorType] = useState<ErrorType>("unknown")
   const [manualCode, setManualCode] = useState("")
   const [showSteps, setShowSteps] = useState(false)
@@ -192,7 +212,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           onScan(decodedText)
           onClose()
         },
-        () => {},
+        () => {}
       )
 
       setPhase("ready")
@@ -214,7 +234,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
               onScan(decodedText)
               onClose()
             },
-            () => {},
+            () => {}
           )
           setPhase("ready")
           return
@@ -240,7 +260,11 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       cancelled = true
       const s = html5QrCodeRef.current as { stop: () => Promise<void> } | null
       if (s && !stoppedRef.current) {
-        try { s.stop().catch(() => {}) } catch { /* already stopped */ }
+        try {
+          s.stop().catch(() => {})
+        } catch {
+          /* already stopped */
+        }
       }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -251,7 +275,11 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     // Clean up existing scanner first
     const s = html5QrCodeRef.current as { stop: () => Promise<void> } | null
     if (s) {
-      try { s.stop().catch(() => {}) } catch { /* already stopped */ }
+      try {
+        s.stop().catch(() => {})
+      } catch {
+        /* already stopped */
+      }
       html5QrCodeRef.current = null
     }
     startCamera()
@@ -275,32 +303,32 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const deviceSteps = getDeviceSteps()
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-card w-full max-w-md rounded-xl shadow-2xl border border-border overflow-hidden">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/20">
-          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Camera className="w-5 h-5 text-primary" />
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <Camera className="h-5 w-5 text-primary" />
             Scan Barcode
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Scanner View */}
-        <div className="p-6 space-y-4">
+        <div className="space-y-4 p-6">
           {/* Error state */}
           {phase === "error" && errorInfo && (
             <div className="space-y-3">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                 <div className="flex items-start gap-2">
-                  <ShieldAlert className="w-5 h-5 mt-0.5 shrink-0" />
+                  <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
                   <div>
-                    <p className="font-bold mb-1">{errorInfo.title}</p>
+                    <p className="mb-1 font-bold">{errorInfo.title}</p>
                     <p>{errorInfo.description}</p>
                   </div>
                 </div>
@@ -310,39 +338,44 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
               {errorType === "in-app-browser" && (
                 <button
                   onClick={openInBrowser}
-                  className="w-full h-11 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/95 transition-colors"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/95"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="h-4 w-4" />
                   Open in Chrome / Safari
                 </button>
               )}
 
               {/* Permission denied: step-by-step guidance */}
               {errorType === "denied" && (
-                <div className="border border-border rounded-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg border border-border">
                   <button
                     onClick={() => setShowSteps(!showSteps)}
-                    className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+                    className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
                   >
                     <span className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4 text-muted-foreground" />
+                      <Smartphone className="h-4 w-4 text-muted-foreground" />
                       How to enable camera permission
                     </span>
                     {showSteps ? (
-                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     )}
                   </button>
                   {showSteps && (
                     <div className="px-4 pb-4">
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                      <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                         {deviceSteps.label}
                       </p>
                       <ol className="space-y-1.5">
                         {deviceSteps.steps.map((step, i) => (
-                          <li key={i} className="text-xs text-muted-foreground flex gap-2">
-                            <span className="font-bold text-foreground">{i + 1}.</span>
+                          <li
+                            key={i}
+                            className="flex gap-2 text-xs text-muted-foreground"
+                          >
+                            <span className="font-bold text-foreground">
+                              {i + 1}.
+                            </span>
                             {step}
                           </li>
                         ))}
@@ -356,9 +389,9 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
               {errorType !== "in-app-browser" && errorType !== "insecure" && (
                 <button
                   onClick={handleRetry}
-                  className="w-full h-11 flex items-center justify-center gap-2 border border-border text-foreground hover:bg-muted rounded-lg text-sm font-bold transition-colors"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border text-sm font-bold text-foreground transition-colors hover:bg-muted"
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="h-4 w-4" />
                   Try Again
                 </button>
               )}
@@ -367,17 +400,22 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
           {/* Scanner View — always rendered so html5-qrcode video stream stays attached */}
           <div className="relative">
-            <div id="cashier-barcode-scanner-element" className="w-full aspect-video bg-black rounded-lg overflow-hidden" />
+            <div
+              id="cashier-barcode-scanner-element"
+              className="aspect-video w-full overflow-hidden rounded-lg bg-black"
+            />
             {(phase === "checking" || phase === "requesting") && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-lg text-white">
-                <Loader2 className="w-8 h-8 animate-spin mb-2" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-black/60 text-white">
+                <Loader2 className="mb-2 h-8 w-8 animate-spin" />
                 <p className="text-sm">
-                  {phase === "checking" ? "Checking camera..." : "Starting camera..."}
+                  {phase === "checking"
+                    ? "Checking camera..."
+                    : "Starting camera..."}
                 </p>
               </div>
             )}
             {phase === "ready" && (
-              <p className="text-xs text-muted-foreground text-center mt-2">
+              <p className="mt-2 text-center text-xs text-muted-foreground">
                 Point the camera at a barcode
               </p>
             )}
@@ -385,7 +423,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
           {/* Manual input — always visible */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            <label className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Or type barcode number
             </label>
             <div className="flex gap-2">
@@ -397,13 +435,13 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
                   if (e.key === "Enter") handleManualSubmit()
                 }}
                 placeholder="Type or scan barcode..."
-                className="flex-1 h-11 px-4 bg-background border border-border rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                className="h-11 flex-1 rounded-lg border border-border bg-background px-4 font-mono text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 autoFocus={phase === "error"}
               />
               <button
                 onClick={handleManualSubmit}
                 disabled={!manualCode.trim()}
-                className="h-11 px-5 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/95 disabled:opacity-40 transition-colors"
+                className="h-11 rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/95 disabled:opacity-40"
               >
                 Go
               </button>
@@ -412,10 +450,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
+        <div className="flex justify-end border-t border-border bg-muted/20 px-6 py-4">
           <button
             onClick={onClose}
-            className="h-10 px-5 border border-border text-muted-foreground hover:bg-muted rounded-lg text-sm font-bold transition-colors"
+            className="h-10 rounded-lg border border-border px-5 text-sm font-bold text-muted-foreground transition-colors hover:bg-muted"
           >
             Cancel
           </button>

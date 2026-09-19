@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { extractToken, checkAdminAuth, hashPassword, generateId } from "@/lib/auth-utils"
+import {
+  extractToken,
+  checkAdminAuth,
+  hashPassword,
+  generateId,
+} from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { sql } from "drizzle-orm"
 import { getUsers } from "@/features/admin-dashboard/actions/get-users"
@@ -12,14 +17,19 @@ const createUserSchema = z
     email: z.string().email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
-    role: z.enum(["admin", "cashier", "staff"], { message: "Role must be admin, cashier, or staff" }),
+    role: z.enum(["admin", "cashier", "staff"], {
+      message: "Role must be admin, cashier, or staff",
+    }),
     branch: z.string().optional(),
     canManageUnits: z.boolean().optional(),
     canManageCategories: z.boolean().optional(),
     canManageProducts: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.role !== "admin" && !data.email.toLowerCase().endsWith(ADMIN_DOMAIN)) {
+    if (
+      data.role !== "admin" &&
+      !data.email.toLowerCase().endsWith(ADMIN_DOMAIN)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["email"],
@@ -33,12 +43,27 @@ const createUserSchema = z
  * access; cashier/customer accounts are always restricted. Staff accounts
  * use whatever flags the admin assigned (defaulting to none).
  */
-function resolvePermissions(role: string, requested?: { canManageUnits?: boolean; canManageCategories?: boolean; canManageProducts?: boolean }) {
+function resolvePermissions(
+  role: string,
+  requested?: {
+    canManageUnits?: boolean
+    canManageCategories?: boolean
+    canManageProducts?: boolean
+  }
+) {
   if (role === "admin") {
-    return { canManageUnits: true, canManageCategories: true, canManageProducts: true }
+    return {
+      canManageUnits: true,
+      canManageCategories: true,
+      canManageProducts: true,
+    }
   }
   if (role !== "staff") {
-    return { canManageUnits: false, canManageCategories: false, canManageProducts: false }
+    return {
+      canManageUnits: false,
+      canManageCategories: false,
+      canManageProducts: false,
+    }
   }
   return {
     canManageUnits: requested?.canManageUnits ?? false,
@@ -61,10 +86,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const data = await getUsers({ role, search, page, pageSize })
 
-    return NextResponse.json({ success: true, message: "Users retrieved successfully", data })
+    return NextResponse.json({
+      success: true,
+      message: "Users retrieved successfully",
+      data,
+    })
   } catch (error) {
     console.error("Admin get users error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -79,11 +111,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
-    const { email, password, fullName, role, branch, canManageUnits, canManageCategories, canManageProducts } = parsed.data
-    const permissions = resolvePermissions(role, { canManageUnits, canManageCategories, canManageProducts })
+    const {
+      email,
+      password,
+      fullName,
+      role,
+      branch,
+      canManageUnits,
+      canManageCategories,
+      canManageProducts,
+    } = parsed.data
+    const permissions = resolvePermissions(role, {
+      canManageUnits,
+      canManageCategories,
+      canManageProducts,
+    })
 
     console.log("[POST] Checking email:", email, "new name:", fullName)
 
@@ -94,19 +142,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const existing = result[0] ?? null
 
     if (existing) {
-      console.log("[POST] Found user:", { id: existing.id, name: existing.full_name, active: existing.is_active })
+      console.log("[POST] Found user:", {
+        id: existing.id,
+        name: existing.full_name,
+        active: existing.is_active,
+      })
     } else {
       console.log("[POST] No existing user found")
     }
 
     if (existing && existing.is_active) {
-      return NextResponse.json({ success: false, message: "Email already registered" }, { status: 409 })
+      return NextResponse.json(
+        { success: false, message: "Email already registered" },
+        { status: 409 }
+      )
     }
 
     const hashedPassword = await hashPassword(password)
 
     if (existing && !existing.is_active) {
-      console.log("[POST] Reactivating user:", existing.id, "with name:", fullName)
+      console.log(
+        "[POST] Reactivating user:",
+        existing.id,
+        "with name:",
+        fullName
+      )
 
       await db.execute(
         sql`UPDATE users SET full_name = ${fullName}, password = ${hashedPassword}, role = ${role}, branch = ${branch || null}, can_manage_units = ${permissions.canManageUnits}, can_manage_categories = ${permissions.canManageCategories}, can_manage_products = ${permissions.canManageProducts}, is_active = true, is_email_verified = true, updated_at = NOW() WHERE id = ${existing.id}`
@@ -117,7 +177,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({
         success: true,
         message: `${role.charAt(0).toUpperCase() + role.slice(1)} account reactivated successfully`,
-        data: { userId: existing.id, email, fullName, role, branch: branch || null },
+        data: {
+          userId: existing.id,
+          email,
+          fullName,
+          role,
+          branch: branch || null,
+        },
       })
     }
 
@@ -127,13 +193,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       sql`INSERT INTO users (id, email, password, full_name, role, branch, can_manage_units, can_manage_categories, can_manage_products, is_active, is_email_verified, created_at, updated_at) VALUES (${userId}, ${email}, ${hashedPassword}, ${fullName}, ${role}, ${branch || null}, ${permissions.canManageUnits}, ${permissions.canManageCategories}, ${permissions.canManageProducts}, true, true, NOW(), NOW())`
     )
 
-    return NextResponse.json({
-      success: true,
-      message: `${role.charAt(0).toUpperCase() + role.slice(1)} account created successfully`,
-      data: { userId, email, fullName, role, branch: branch || null },
-    }, { status: 201 })
+    return NextResponse.json(
+      {
+        success: true,
+        message: `${role.charAt(0).toUpperCase() + role.slice(1)} account created successfully`,
+        data: { userId, email, fullName, role, branch: branch || null },
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error("Admin create user error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

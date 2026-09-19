@@ -2,10 +2,9 @@
  * MFA Feature Slice
  *
  * Responsible for:
- * - TOTP two-factor authentication (enrollment, verification, management)
- * - Backup codes for account recovery
+ * - Email-OTP two-factor authentication (enabling, verification, management)
  *
- * Consumed by: login flow, OAuth flow, admin/staff/customer settings
+ * Consumed by: login flow, OAuth flow, admin/customer settings
  */
 
 // Export components

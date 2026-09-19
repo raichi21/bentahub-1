@@ -1,5 +1,12 @@
 import { db } from "@/servers/db"
-import { transactions, transactionItems, users, notifications, branches, cashDrawerSessions } from "@/servers/schemas"
+import {
+  transactions,
+  transactionItems,
+  users,
+  notifications,
+  branches,
+  cashDrawerSessions,
+} from "@/servers/schemas"
 import { eq, max, and } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 import { deductStock } from "./finalize-transaction"
@@ -88,7 +95,10 @@ export async function createTransaction(input: CreateTransactionInput) {
 
   await deductStock(
     branchId,
-    items.map((item) => ({ productId: item.product.id, quantity: item.quantity }))
+    items.map((item) => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+    }))
   )
 
   const adminUsers = await db.query.users.findMany({

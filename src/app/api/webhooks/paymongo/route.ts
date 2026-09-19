@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV === "production") {
       // In production the signature and secret are mandatory.
       if (!signatureHeader || !secret) {
-        console.warn("[webhook] Missing signature or WEBHOOK_SECRET in production")
+        console.warn(
+          "[webhook] Missing signature or WEBHOOK_SECRET in production"
+        )
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       }
       verifySignature(rawBody, signatureHeader, secret)
@@ -54,7 +56,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    if (eventType === "payment.paid" || ["paid", "processing"].includes(paymentStatus)) {
+    if (
+      eventType === "payment.paid" ||
+      ["paid", "processing"].includes(paymentStatus)
+    ) {
       // Try to update orders table (customer flow)
       try {
         const orderResult = await db
@@ -66,10 +71,15 @@ export async function POST(request: NextRequest) {
           .where(eq(orders.gcashRef, paymentIntentId))
 
         if (orderResult) {
-          console.log(`[webhook] Updated order with gcashRef=${paymentIntentId}`)
+          console.log(
+            `[webhook] Updated order with gcashRef=${paymentIntentId}`
+          )
         }
       } catch (e) {
-        console.warn("[webhook] orders update failed (may be drizzle/column mismatch):", e)
+        console.warn(
+          "[webhook] orders update failed (may be drizzle/column mismatch):",
+          e
+        )
       }
 
       // Try to update transactions table (cashier flow)
@@ -81,7 +91,9 @@ export async function POST(request: NextRequest) {
         if (txn) {
           const result = await completeGcashTransaction(txn.id)
           if (result.deducted) {
-            console.log(`[webhook] Transaction completed and stock deducted for txn=${txn.id}`)
+            console.log(
+              `[webhook] Transaction completed and stock deducted for txn=${txn.id}`
+            )
           }
         }
       } catch (e) {
@@ -91,14 +103,19 @@ export async function POST(request: NextRequest) {
 
     if (eventType === "payment.failed" || paymentStatus === "failed") {
       // Optionally mark as failed
-      console.log(`[webhook] Payment failed for paymentIntentId=${paymentIntentId}`)
+      console.log(
+        `[webhook] Payment failed for paymentIntentId=${paymentIntentId}`
+      )
     }
 
     // Always acknowledge receipt — PayMongo will retry on non-200
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error("[webhook] Error:", error)
-    return NextResponse.json({ received: false, error: "Internal error" }, { status: 500 })
+    return NextResponse.json(
+      { received: false, error: "Internal error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -107,7 +124,11 @@ export async function POST(request: NextRequest) {
  * Header format: Paymongo-Signature: t=<timestamp>,v1=<signature>
  * The signature is HMAC-SHA256(secret, timestamp + "." + rawBody)
  */
-function verifySignature(rawBody: string, signatureHeader: string, secret: string): void {
+function verifySignature(
+  rawBody: string,
+  signatureHeader: string,
+  secret: string
+): void {
   const parts = signatureHeader.split(",")
   let timestamp = ""
   let signature = ""
@@ -139,7 +160,9 @@ function verifySignature(rawBody: string, signatureHeader: string, secret: strin
     throw new Error("PayMongo webhook signature mismatch (length)")
   }
 
-  if (!timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature))) {
+  if (
+    !timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature))
+  ) {
     throw new Error("PayMongo webhook signature mismatch")
   }
 }

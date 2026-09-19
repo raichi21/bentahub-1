@@ -44,10 +44,14 @@ export default function UsersPage() {
   }, [fetchData])
 
   const metrics = data?.metrics
-  const activeRate = metrics && metrics.total > 0 ? ((metrics.active / metrics.total) * 100).toFixed(1) : "0"
+  const activeRate =
+    metrics && metrics.total > 0
+      ? ((metrics.active / metrics.total) * 100).toFixed(1)
+      : "0"
   const roleSummary = `${(metrics?.adminCount ?? 0) + (metrics?.staffCount ?? 0) + (metrics?.cashierCount ?? 0)} total, ${metrics?.customerCount ?? 0} customers`
 
-  const isLoading = authLoading || (token != null && data == null && error == null)
+  const isLoading =
+    authLoading || (token != null && data == null && error == null)
 
   const handleSearch = (q: string) => {
     setSearch(q)
@@ -55,8 +59,8 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <KPICard
           title="New This Week"
           value={String(metrics?.newThisWeek ?? 0)}

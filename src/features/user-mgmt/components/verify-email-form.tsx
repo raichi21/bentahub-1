@@ -9,12 +9,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { verifyEmailAction, resendVerificationCodeAction } from "@/features/user-mgmt/actions/verify"
+import {
+  verifyEmailAction,
+  resendVerificationCodeAction,
+} from "@/features/user-mgmt/actions/verify"
 
 export function VerifyEmailForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const email = searchParams.get("email") || (typeof window !== "undefined" ? sessionStorage.getItem("pendingVerificationEmail") : "") || ""
+  const email =
+    searchParams.get("email") ||
+    (typeof window !== "undefined"
+      ? sessionStorage.getItem("pendingVerificationEmail")
+      : "") ||
+    ""
 
   const [code, setCode] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
@@ -120,61 +128,79 @@ export function VerifyEmailForm() {
   }
 
   return (
-    <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full max-w-[440px] animate-in duration-700 fade-in slide-in-from-bottom-4">
       <AuthHeader subtitle="Verify your email address" />
 
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Email Verification</CardTitle>
+          <CardTitle className="text-xl font-semibold">
+            Email Verification
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center mb-6">
+          <div className="mb-6 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <Mail className="h-8 w-8 text-primary animate-pulse" />
+              <Mail className="h-8 w-8 animate-pulse text-primary" />
             </div>
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mb-6">
-            We&apos;ve sent a verification code to <span className="font-medium text-foreground">{email || "your email"}</span>
+          <p className="mb-6 text-center text-sm text-muted-foreground">
+            We&apos;ve sent a verification code to{" "}
+            <span className="font-medium text-foreground">
+              {email || "your email"}
+            </span>
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg animate-in fade-in duration-200">
-                <p className="text-sm text-destructive font-medium">{error}</p>
+              <div className="animate-in rounded-lg border border-destructive/30 bg-destructive/10 p-3 duration-200 fade-in">
+                <p className="text-sm font-medium text-destructive">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg animate-in fade-in duration-200">
-                <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">{success}</p>
+              <div className="animate-in rounded-lg border border-emerald-200 bg-emerald-50 p-3 duration-200 fade-in dark:border-emerald-800 dark:bg-emerald-950/30">
+                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  {success}
+                </p>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="code" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label
+                htmlFor="code"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
                 Verification Code
               </Label>
               <Input
                 id="code"
                 type="text"
                 placeholder="000000"
-                className="text-center font-mono text-3xl tracking-widest p-6 h-14"
+                className="h-14 p-6 text-center font-mono text-3xl tracking-widest"
                 maxLength={6}
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
                 disabled={isLoading}
                 autoFocus
                 required
               />
-              <p className="text-xs text-muted-foreground text-center mt-1">Enter the 6-digit code we sent you</p>
+              <p className="mt-1 text-center text-xs text-muted-foreground">
+                Enter the 6-digit code we sent you
+              </p>
             </div>
 
             <div className="pt-2">
-              <Button type="submit" className="w-full p-5" disabled={isLoading || code.length !== 6}>
+              <Button
+                type="submit"
+                className="w-full p-5"
+                disabled={isLoading || code.length !== 6}
+              >
                 {isLoading ? (
                   <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent mr-2" />
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                     Verifying...
                   </>
                 ) : (
@@ -195,14 +221,12 @@ export function VerifyEmailForm() {
               onClick={handleResendCode}
               disabled={!canResend || isLoading}
             >
-              {resendCountdown > 0 ? (
-                `Resend code in ${resendCountdown}s`
-              ) : (
-                "Resend Code"
-              )}
+              {resendCountdown > 0
+                ? `Resend code in ${resendCountdown}s`
+                : "Resend Code"}
             </Button>
 
-            <Link href="/register" className="block text-center mt-2">
+            <Link href="/register" className="mt-2 block text-center">
               <Button variant="ghost" className="w-full gap-2">
                 <ArrowLeft className="size-4" />
                 Back to Registration

@@ -1,8 +1,4 @@
-import {
-  HeroSection,
-  CtaBanner,
-  Footer,
-} from "@/features/landing"
+import { HeroSection, CtaBanner, Footer } from "@/features/landing"
 
 export default function LandingPage() {
   return (

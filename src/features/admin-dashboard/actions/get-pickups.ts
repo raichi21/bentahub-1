@@ -18,79 +18,132 @@ function formatCurrency(amount: number): string {
 }
 
 function getInitials(name: string): string {
-  return name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase() || "UN"
+  return (
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase() || "UN"
+  )
 }
 
 function formatDate(d: Date): string {
   return formatPHDateTime(d, {
-    year: "numeric", month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   })
 }
 
-export async function getPickups(filters: PickupFilterOptions = { page: 1, pageSize: 15 }) {
+export async function getPickups(
+  filters: PickupFilterOptions = { page: 1, pageSize: 15 }
+) {
   const allBranches = await db.query.branches.findMany()
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
   const now = new Date()
 
   const baseConditions: SQL[] = []
   if (filters.status) {
-    baseConditions.push(eq(orders.status, filters.status as "pending" | "processing" | "ready" | "completed" | "cancelled"))
+    baseConditions.push(
+      eq(
+        orders.status,
+        filters.status as
+          | "pending"
+          | "processing"
+          | "ready"
+          | "completed"
+          | "cancelled"
+      )
+    )
   }
   if (filters.branch) {
-    baseConditions.push(eq(orders.branch, branchMap.get(filters.branch) ?? filters.branch))
+    baseConditions.push(
+      eq(orders.branch, branchMap.get(filters.branch) ?? filters.branch)
+    )
   }
   if (filters.dateFrom) {
-    baseConditions.push(gte(orders.createdAt, startOfManilaDay(new Date(filters.dateFrom))))
+    baseConditions.push(
+      gte(orders.createdAt, startOfManilaDay(new Date(filters.dateFrom)))
+    )
   }
   if (filters.dateTo) {
-    baseConditions.push(lte(orders.createdAt, endOfManilaDay(new Date(filters.dateTo))))
+    baseConditions.push(
+      lte(orders.createdAt, endOfManilaDay(new Date(filters.dateTo)))
+    )
   }
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined
 
-  const allOrders = await db.query.orders.findMany({
+  const allOrders = (await db.query.orders.findMany({
     where,
     orderBy: [desc(orders.createdAt)],
     with: {
       user: true,
       items: true,
     },
-  }) as Array<{
-    id: string; userId: string; status: string; paymentMethod: string
-    totalAmount: string; branch: string; notes: string | null
-    isPaid: boolean; paidAt: Date | null; pickupDeadline: Date | null
+  })) as Array<{
+    id: string
+    userId: string
+    status: string
+    paymentMethod: string
+    totalAmount: string
+    branch: string
+    notes: string | null
+    isPaid: boolean
+    paidAt: Date | null
+    pickupDeadline: Date | null
     phone: string | null
-    createdAt: Date; updatedAt: Date
+    createdAt: Date
+    updatedAt: Date
     user: { id: string; fullName: string; email: string }
-    items: Array<{ id: string; productName: string; quantity: number; price: string; subtotal: string }>
+    items: Array<{
+      id: string
+      productName: string
+      quantity: number
+      price: string
+      subtotal: string
+    }>
   }>
 
   let filtered = allOrders
   if (filters.search) {
     const q = filters.search.toLowerCase()
-    filtered = allOrders.filter((o) =>
-      o.id.toLowerCase().includes(q) ||
-      o.user.fullName.toLowerCase().includes(q) ||
-      o.user.email.toLowerCase().includes(q)
+    filtered = allOrders.filter(
+      (o) =>
+        o.id.toLowerCase().includes(q) ||
+        o.user.fullName.toLowerCase().includes(q) ||
+        o.user.email.toLowerCase().includes(q)
     )
   }
 
   const total = filtered.length
   const completed = filtered.filter((o) => o.status === "completed").length
-  const pending = filtered.filter((o) => o.status === "pending" || o.status === "processing").length
-  const delayed = filtered.filter((o) =>
-    (o.status === "pending" || o.status === "processing" || o.status === "ready") &&
-    o.pickupDeadline && o.pickupDeadline < now
+  const pending = filtered.filter(
+    (o) => o.status === "pending" || o.status === "processing"
   ).length
-  const urgent = filtered.filter((o) => o.status === "ready" && o.pickupDeadline && o.pickupDeadline < now).length
+  const delayed = filtered.filter(
+    (o) =>
+      (o.status === "pending" ||
+        o.status === "processing" ||
+        o.status === "ready") &&
+      o.pickupDeadline &&
+      o.pickupDeadline < now
+  ).length
+  const urgent = filtered.filter(
+    (o) => o.status === "ready" && o.pickupDeadline && o.pickupDeadline < now
+  ).length
   const completedRate = total > 0 ? ((completed / total) * 100).toFixed(1) : "0"
 
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const thisWeek = filtered.filter((o) => o.createdAt >= weekAgo)
-  const lastWeek = filtered.filter((o) =>
-    o.createdAt >= new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000) &&
-    o.createdAt < weekAgo
+  const lastWeek = filtered.filter(
+    (o) =>
+      o.createdAt >= new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000) &&
+      o.createdAt < weekAgo
   )
   let totalTrend = "0%"
   if (lastWeek.length > 0) {
@@ -123,11 +176,16 @@ export async function getPickups(filters: PickupFilterOptions = { page: 1, pageS
       totalAmount: formatCurrency(totalAmount),
       pickupDeadline: o.pickupDeadline ? formatDate(o.pickupDeadline) : null,
       status: o.status,
-      statusDisplay: o.status === "ready" ? "Ready for Pickup"
-        : o.status === "pending" ? "Pending"
-        : o.status === "processing" ? "Processing"
-        : o.status === "completed" ? "Completed"
-        : "Cancelled",
+      statusDisplay:
+        o.status === "ready"
+          ? "Ready for Pickup"
+          : o.status === "pending"
+            ? "Pending"
+            : o.status === "processing"
+              ? "Processing"
+              : o.status === "completed"
+                ? "Completed"
+                : "Cancelled",
       createdAt: o.createdAt,
     }
   })

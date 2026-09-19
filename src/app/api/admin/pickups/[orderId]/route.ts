@@ -17,9 +17,15 @@ export async function PATCH(
     if (result.success) {
       return NextResponse.json({ success: true, message: result.message })
     }
-    return NextResponse.json({ success: false, message: result.message }, { status: 400 })
+    return NextResponse.json(
+      { success: false, message: result.message },
+      { status: 400 }
+    )
   } catch (error) {
     console.error("Admin confirm pickup error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

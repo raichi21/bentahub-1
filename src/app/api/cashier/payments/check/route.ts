@@ -10,7 +10,11 @@ import { completeGcashTransaction } from "@/features/cashier-dashboard/actions/f
 export async function GET(request: NextRequest) {
   try {
     // Auth check
-    const auth = checkRoleAuth(extractToken(request), ["cashier"], "Cashier area")
+    const auth = checkRoleAuth(
+      extractToken(request),
+      ["cashier"],
+      "Cashier area"
+    )
     if (auth.error) {
       return auth.error
     }
@@ -24,7 +28,14 @@ export async function GET(request: NextRequest) {
 
     const isPaid = ["succeeded", "processing"].includes(paymentIntent.status)
 
-    console.log("[check] paymentIntentId:", paymentIntentId, "status:", paymentIntent.status, "isPaid:", isPaid)
+    console.log(
+      "[check] paymentIntentId:",
+      paymentIntentId,
+      "status:",
+      paymentIntent.status,
+      "isPaid:",
+      isPaid
+    )
 
     // If payment succeeded, complete the transaction and deduct stock
     if (isPaid) {
@@ -35,7 +46,10 @@ export async function GET(request: NextRequest) {
       if (txn) {
         const result = await completeGcashTransaction(txn.id)
         if (result.deducted) {
-          console.log("[check] Transaction completed and stock deducted for txn:", txn.id)
+          console.log(
+            "[check] Transaction completed and stock deducted for txn:",
+            txn.id
+          )
         }
       }
     }

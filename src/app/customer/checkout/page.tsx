@@ -2,10 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { 
-  ArrowLeft, 
-  CreditCard, 
-  Banknote, 
+import {
+  ArrowLeft,
+  CreditCard,
+  Banknote,
   CheckCircle,
   X,
   Loader2,
@@ -36,7 +36,7 @@ export default function CheckoutPage() {
 function CheckoutLoading() {
   return (
     <div className="flex items-center justify-center py-20">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+      <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-primary" />
     </div>
   )
 }
@@ -45,9 +45,16 @@ function CheckoutPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, token } = useAuth()
-  const branch = searchParams.get("branch") || user?.branch || "Lourdes Main Branch"
+  const branch =
+    searchParams.get("branch") || user?.branch || "Lourdes Main Branch"
 
-  const { items, total, clearCart, isLoading: cartLoading, fetchCart } = useCart()
+  const {
+    items,
+    total,
+    clearCart,
+    isLoading: cartLoading,
+    fetchCart,
+  } = useCart()
   const { createOrder, isLoading } = useOrders()
 
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
@@ -89,7 +96,12 @@ function CheckoutPageInner() {
       // Reuse existing order ID if payment was retried after a failure
       let orderId = createdOrderId
       if (!orderId) {
-        const order = await createOrder(paymentMethod, branch, phone.trim(), notes)
+        const order = await createOrder(
+          paymentMethod,
+          branch,
+          phone.trim(),
+          notes
+        )
         setCreatedOrderId(order.id)
         orderId = order.id
       }
@@ -128,7 +140,8 @@ function CheckoutPageInner() {
         throw new Error("No checkout URL returned")
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to process order"
+      const message =
+        err instanceof Error ? err.message : "Failed to process order"
       setOrderError(message)
       setOrderSuccess(false)
       setIsRedirecting(false)
@@ -158,13 +171,13 @@ function CheckoutPageInner() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl">
       <header className="mb-8">
         <button
           onClick={() => router.back()}
-          className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
+          className="group mb-4 flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <div className="p-1 rounded-lg border border-border group-hover:bg-muted transition-colors">
+          <div className="rounded-lg border border-border p-1 transition-colors group-hover:bg-muted">
             <ArrowLeft className="h-4 w-4" />
           </div>
           <span className="text-sm font-medium">Back to Cart</span>
@@ -172,64 +185,75 @@ function CheckoutPageInner() {
       </header>
 
       {orderError && (
-        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-          <p className="text-sm text-destructive font-medium">{orderError}</p>
+        <div className="mb-6 rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+          <p className="text-sm font-medium text-destructive">{orderError}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left: Checkout Form */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           {/* Pickup Branch */}
-          <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+          <section className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
               <Store className="h-5 w-5 text-muted-foreground" />
               Pickup Branch
             </h2>
-            <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/5 to-transparent rounded-xl border border-primary/10">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-4 rounded-xl border border-primary/10 bg-gradient-to-r from-primary/5 to-transparent p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 <Store className="h-5 w-5 text-primary" />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-bold text-foreground">{branch}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Pickup available until <strong>{formattedDeadline}</strong> ({formattedDeadlineDate})
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Pickup available until <strong>{formattedDeadline}</strong> (
+                  {formattedDeadlineDate})
                 </p>
               </div>
             </div>
           </section>
 
           {/* Payment Method */}
-          <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4">Payment Method</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <section className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 text-lg font-bold text-foreground">
+              Payment Method
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => setPaymentMethod("cash")}
                 className={cn(
-                  "relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
+                  "relative flex flex-col items-center gap-3 rounded-xl border-2 p-5 text-center transition-all",
                   paymentMethod === "cash"
                     ? "border-primary bg-primary/5 shadow-sm"
                     : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                 )}
               >
                 {paymentMethod === "cash" && (
-                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                  <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                     <CheckCircle className="h-3 w-3 text-white" />
                   </div>
                 )}
-                <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
-                  paymentMethod === "cash" ? "bg-primary/10" : "bg-muted"
-                )}>
-                  <Banknote className={cn(
-                    "h-6 w-6",
-                    paymentMethod === "cash" ? "text-primary" : "text-muted-foreground"
-                  )} />
+                <div
+                  className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
+                    paymentMethod === "cash" ? "bg-primary/10" : "bg-muted"
+                  )}
+                >
+                  <Banknote
+                    className={cn(
+                      "h-6 w-6",
+                      paymentMethod === "cash"
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    )}
+                  />
                 </div>
                 <div>
                   <p className="font-bold text-foreground">Cash</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Pay at pickup</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Pay at pickup
+                  </p>
                 </div>
               </button>
 
@@ -237,37 +261,45 @@ function CheckoutPageInner() {
                 type="button"
                 onClick={() => setPaymentMethod("gcash")}
                 className={cn(
-                  "relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
+                  "relative flex flex-col items-center gap-3 rounded-xl border-2 p-5 text-center transition-all",
                   paymentMethod === "gcash"
                     ? "border-primary bg-primary/5 shadow-sm"
                     : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                 )}
               >
                 {paymentMethod === "gcash" && (
-                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                  <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                     <CheckCircle className="h-3 w-3 text-white" />
                   </div>
                 )}
-                <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
-                  paymentMethod === "gcash" ? "bg-primary/10" : "bg-muted"
-                )}>
-                  <CreditCard className={cn(
-                    "h-6 w-6",
-                    paymentMethod === "gcash" ? "text-primary" : "text-muted-foreground"
-                  )} />
+                <div
+                  className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
+                    paymentMethod === "gcash" ? "bg-primary/10" : "bg-muted"
+                  )}
+                >
+                  <CreditCard
+                    className={cn(
+                      "h-6 w-6",
+                      paymentMethod === "gcash"
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    )}
+                  />
                 </div>
                 <div>
                   <p className="font-bold text-foreground">GCash</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Mobile payment</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Mobile payment
+                  </p>
                 </div>
               </button>
             </div>
           </section>
 
           {/* Phone Number */}
-          <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+          <section className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
               <Phone className="h-5 w-5 text-muted-foreground" />
               Phone Number
             </h2>
@@ -285,59 +317,79 @@ function CheckoutPageInner() {
                 }
               }}
               placeholder="09XXXXXXXXX"
-              className={`w-full p-3.5 border rounded-xl bg-background text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm ${
+              className={`w-full rounded-xl border bg-background p-3.5 text-sm text-foreground placeholder-muted-foreground/60 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none ${
                 phoneError ? "border-red-500" : "border-border"
               }`}
             />
             {phoneError ? (
-              <p className="text-xs text-red-500 mt-2">{phoneError}</p>
+              <p className="mt-2 text-xs text-red-500">{phoneError}</p>
             ) : phone.length > 0 && phone.length < 11 ? (
-              <p className="text-xs text-muted-foreground mt-2">{phone.length}/11 digits</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {phone.length}/11 digits
+              </p>
             ) : phone.length === 11 ? (
-              <p className="text-xs text-green-600 mt-2">11/11 digits ✓</p>
+              <p className="mt-2 text-xs text-green-600">11/11 digits ✓</p>
             ) : (
-              <p className="text-xs text-muted-foreground mt-2">We&apos;ll text or call you when your item is ready for pickup.</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                We&apos;ll text or call you when your item is ready for pickup.
+              </p>
             )}
           </section>
 
           {/* Order Notes */}
-          <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+          <section className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
               <FileText className="h-5 w-5 text-muted-foreground" />
-              Additional Notes <span className="text-sm font-normal text-muted-foreground">(Optional)</span>
+              Additional Notes{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                (Optional)
+              </span>
             </h2>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any special requests or notes for your order..."
-              className="w-full p-3.5 border border-border rounded-xl bg-background text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none text-sm"
+              className="w-full resize-none rounded-xl border border-border bg-background p-3.5 text-sm text-foreground placeholder-muted-foreground/60 transition-all focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none"
               rows={3}
             />
           </section>
 
           {/* Order Items Summary */}
-          <section className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+          <section className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
               <ShoppingBag className="h-5 w-5 text-muted-foreground" />
               Order Items
-              <span className="ml-auto text-sm font-normal text-muted-foreground">{items.length} item{items.length !== 1 ? "s" : ""}</span>
+              <span className="ml-auto text-sm font-normal text-muted-foreground">
+                {items.length} item{items.length !== 1 ? "s" : ""}
+              </span>
             </h2>
-            <div className="divide-y divide-border max-h-56 overflow-y-auto -mx-1">
+            <div className="-mx-1 max-h-56 divide-y divide-border overflow-y-auto">
               {items.map((item, idx) => (
-                <div key={item.id} className={cn(
-                  "flex justify-between items-center py-3 px-1 rounded-lg",
-                  idx % 2 === 0 ? "bg-transparent" : "bg-muted/20"
-                )}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-muted-foreground">{item.quantity}</span>
+                <div
+                  key={item.id}
+                  className={cn(
+                    "flex items-center justify-between rounded-lg px-1 py-3",
+                    idx % 2 === 0 ? "bg-transparent" : "bg-muted/20"
+                  )}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {item.quantity}
+                      </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{item.productName}</p>
-                      <p className="text-xs text-muted-foreground">₱{Number(item.price).toFixed(2)} each</p>
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {item.productName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        ₱{Number(item.price).toFixed(2)} each
+                      </p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-foreground font-mono shrink-0 ml-4">₱{(item.subtotal).toFixed(2)}</span>
+                  <span className="ml-4 shrink-0 font-mono text-sm font-bold text-foreground">
+                    ₱{item.subtotal.toFixed(2)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -346,34 +398,46 @@ function CheckoutPageInner() {
 
         {/* Right: Order Summary (Sticky) */}
         <aside className="lg:col-span-1">
-          <div className="bg-card border border-border rounded-xl p-6 sticky top-24 shadow-sm">
-            <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+          <div className="sticky top-24 rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-foreground">
               <FileText className="h-5 w-5 text-muted-foreground" />
               Order Summary
             </h3>
 
             {/* Breakdown */}
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between items-center">
+            <div className="mb-6 space-y-3">
+              <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Subtotal</span>
-                <span className="text-sm font-mono text-foreground">₱{subtotal.toFixed(2)}</span>
+                <span className="font-mono text-sm text-foreground">
+                  ₱{subtotal.toFixed(2)}
+                </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Service Fee (1%)</span>
-                <span className="text-sm font-mono text-foreground">₱{serviceFee.toFixed(2)}</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Service Fee (1%)
+                </span>
+                <span className="font-mono text-sm text-foreground">
+                  ₱{serviceFee.toFixed(2)}
+                </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Reservation Bond</span>
-                <span className="text-sm font-mono text-foreground">₱{bond.toFixed(2)}</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Reservation Bond
+                </span>
+                <span className="font-mono text-sm text-foreground">
+                  ₱{bond.toFixed(2)}
+                </span>
               </div>
             </div>
 
             {/* Total */}
-            <div className="pt-4 border-t border-border mb-6">
-              <div className="flex justify-between items-center">
+            <div className="mb-6 border-t border-border pt-4">
+              <div className="flex items-center justify-between">
                 <span className="font-bold text-foreground">Total Due</span>
                 <div className="text-right">
-                  <span className="text-2xl font-bold text-primary">₱{totalDue.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-primary">
+                    ₱{totalDue.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -383,7 +447,7 @@ function CheckoutPageInner() {
               onClick={handleSubmitOrder}
               disabled={isLoading || isRedirecting || !/^09\d{9}$/.test(phone)}
               size="lg"
-              className="w-full bg-primary text-white py-6 rounded-xl font-bold text-base active:scale-[0.98] transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 disabled:opacity-50 disabled:shadow-none"
+              className="w-full rounded-xl bg-primary py-6 text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
             >
               {isRedirecting ? (
                 <span className="flex items-center gap-2">
@@ -402,54 +466,62 @@ function CheckoutPageInner() {
                 </span>
               )}
             </Button>
-
           </div>
         </aside>
       </div>
 
       {/* Success Modal */}
       {orderSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 text-center space-y-6 shadow-2xl border border-border relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md space-y-6 rounded-2xl border border-border bg-card p-8 text-center shadow-2xl">
             {/* Close button */}
             <button
               onClick={() => setOrderSuccess(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute top-4 right-4 rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
             {/* Static checkmark */}
             <div className="flex justify-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-xl shadow-emerald-200/50 dark:shadow-emerald-900/30">
-                <CheckCircle className="w-12 h-12 text-white" />
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-xl shadow-emerald-200/50 dark:shadow-emerald-900/30">
+                <CheckCircle className="h-12 w-12 text-white" />
               </div>
             </div>
 
             {/* Order info */}
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">Order Submitted!</h2>
-              <p className="text-muted-foreground">Your order has been placed successfully.</p>
+              <h2 className="text-2xl font-bold text-foreground">
+                Order Submitted!
+              </h2>
+              <p className="text-muted-foreground">
+                Your order has been placed successfully.
+              </p>
               {createdOrderId && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border border-border">
-                  <span className="text-sm text-muted-foreground">Order ID:</span>
-                  <span className="text-sm font-mono font-bold text-foreground">{formatOrderId(createdOrderId)}</span>
+                <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted px-4 py-2">
+                  <span className="text-sm text-muted-foreground">
+                    Order ID:
+                  </span>
+                  <span className="font-mono text-sm font-bold text-foreground">
+                    {formatOrderId(createdOrderId)}
+                  </span>
                 </div>
               )}
             </div>
 
             {/* Pickup Deadline */}
-            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-lg text-sm text-center">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm dark:border-amber-800/50 dark:bg-amber-950/40">
               <p className="font-medium text-amber-800 dark:text-amber-200">
-                ⏰ Pickup deadline: <strong>{formattedDeadline}</strong> ({formattedDeadlineDate})
+                ⏰ Pickup deadline: <strong>{formattedDeadline}</strong> (
+                {formattedDeadlineDate})
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                 Reserve must be claimed before 5:00 PM or it will be cancelled.
               </p>
             </div>
 
             {/* Button */}
             <Link href="/customer/reservations">
-              <Button className="w-full h-12 text-base font-bold" size="lg">
+              <Button className="h-12 w-full text-base font-bold" size="lg">
                 View My Orders
               </Button>
             </Link>

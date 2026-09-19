@@ -1,6 +1,12 @@
 "use client"
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react"
 
 const TOKEN_STORAGE_KEY = "bentahub_token"
 
@@ -114,8 +120,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // If the server returned a non-OK status, avoid parsing as JSON
         if (!response.ok) {
           if (response.status !== 401) {
-            const text = await response.text().catch(() => "<unable to read response>")
-            console.error("/api/auth/verify returned non-OK status:", response.status, text)
+            const text = await response
+              .text()
+              .catch(() => "<unable to read response>")
+            console.error(
+              "/api/auth/verify returned non-OK status:",
+              response.status,
+              text
+            )
           }
           clearStoredToken()
           if (!cancelled) setIsLoading(false)
@@ -190,7 +202,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, setUser, setToken, token, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isLoading,
+        setUser,
+        setToken,
+        token,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

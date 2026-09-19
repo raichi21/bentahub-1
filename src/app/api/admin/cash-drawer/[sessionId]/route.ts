@@ -15,12 +15,22 @@ export async function GET(
 
     const data = await getCashDrawerTransactions(sessionId)
     if (!data) {
-      return NextResponse.json({ success: false, message: "Cash drawer session not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Cash drawer session not found" },
+        { status: 404 }
+      )
     }
 
-    return NextResponse.json({ success: true, message: "Cash drawer transactions retrieved successfully", data })
+    return NextResponse.json({
+      success: true,
+      message: "Cash drawer transactions retrieved successfully",
+      data,
+    })
   } catch (error) {
     console.error("Admin get cash drawer detail error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

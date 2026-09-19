@@ -4,55 +4,40 @@ import * as React from "react"
 import {
   ShieldCheck,
   ShieldAlert,
-  Copy,
-  Check,
-  RefreshCw,
   Trash2,
+  X,
+  Mail,
+  KeyRound,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/components/auth-provider"
-import { BackupCodesDialog } from "./backup-codes-dialog"
-import type { MfaSetupData, MfaStatusData } from "@/types/auth"
+import type { MfaStatusData } from "@/types/auth"
 
 type JsonResponse = {
   success: boolean
   message?: string
-  data?: Record<string, unknown> & {
-    qrCodeDataUrl?: string
-    manualSecret?: string
-    otpauthUrl?: string
-    backupCodes?: string[]
-    enabled?: boolean
-    backupCodesRemaining?: number
-  }
+  data?: { email?: string; enabled?: boolean; disabled?: boolean }
 }
 
 /**
- * MFA management panel for settings/profile pages:
- * enroll, view status, regenerate backup codes, and disable.
+ * MFA management panel for settings/profile pages: enable (via a code emailed
+ * to the account) and disable (via a fresh emailed code).
  */
 export function MfaPanel() {
   const { token } = useAuth()
   const [status, setStatus] = React.useState<MfaStatusData | null>(null)
   const [loadingStatus, setLoadingStatus] = React.useState(true)
 
-  const [setup, setSetup] = React.useState<MfaSetupData | null>(null)
-  const [setupCode, setSetupCode] = React.useState("")
-  const [pendingBackupCodes, setPendingBackupCodes] = React.useState<
-    string[] | null
+  const [pendingAction, setPendingAction] = React.useState<
+    "enable" | "disable" | null
   >(null)
-
-  const [verifyCode, setVerifyCode] = React.useState("")
-  const [action, setAction] = React.useState<"none" | "disable" | "regenerate">(
-    "none"
-  )
-
+  const [code, setCode] = React.useState("")
+  const [email, setEmail] = React.useState("")
   const [error, setError] = React.useState("")
   const [notice, setNotice] = React.useState("")
   const [busy, setBusy] = React.useState(false)
-  const [copied, setCopied] = React.useState(false)
 
   const refreshStatus = React.useCallback(async () => {
     if (!token) return
@@ -68,10 +53,7 @@ export function MfaPanel() {
         data?.success &&
         typeof data.data?.enabled === "boolean"
       ) {
-        setStatus({
-          enabled: data.data.enabled,
-          backupCodesRemaining: data.data.backupCodesRemaining ?? 0,
-        })
+        setStatus({ enabled: data.data.enabled })
       } else {
         setError(data?.message || "Unable to load MFA status")
       }
@@ -96,139 +78,86 @@ export function MfaPanel() {
     }
   }, [token, refreshStatus])
 
-  const beginSetup = async () => {
+  const requestCode = async (action: "enable" | "disable") => {
     if (!token) return
     setError("")
     setNotice("")
+    setCode("")
+    setEmail("")
+    setPendingAction(action)
     setBusy(true)
     try {
-      const response = await fetch("/api/auth/mfa/setup", {
+      const url =
+        action === "enable" ? "/api/auth/mfa/setup" : "/api/auth/mfa/disable"
+      const response = await fetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = (await response
         .json()
         .catch(() => null)) as JsonResponse | null
-      if (!response.ok || !data?.success || !data.data?.manualSecret) {
-        setError(data?.message || "Unable to start MFA setup")
-        return
-      }
-      setSetup({
-        manualSecret: data.data.manualSecret,
-        qrCodeDataUrl: data.data.qrCodeDataUrl ?? "",
-        otpauthUrl: data.data.otpauthUrl ?? "",
-      })
-      setSetupCode("")
-    } catch (err) {
-      console.error("MFA setup error:", err)
-      setError("Unable to start MFA setup")
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const confirmSetup = async () => {
-    if (!token || !setup) return
-    setError("")
-    setNotice("")
-    setBusy(true)
-    try {
-      const response = await fetch("/api/auth/mfa/confirm", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code: setupCode }),
-      })
-      const data = (await response
-        .json()
-        .catch(() => null)) as JsonResponse | null
       if (!response.ok || !data?.success) {
-        setError(data?.message || "Unable to confirm MFA setup")
+        setError(data?.message || "Unable to send the verification code")
+        setPendingAction(null)
         return
       }
-      setPendingBackupCodes(data.data?.backupCodes ?? [])
-      setSetup(null)
-      setSetupCode("")
-      await refreshStatus()
+      if (data.data?.email) setEmail(data.data.email)
     } catch (err) {
-      console.error("MFA confirm error:", err)
-      setError("Unable to confirm MFA setup")
+      console.error("MFA code request error:", err)
+      setError("Unable to send the verification code")
+      setPendingAction(null)
     } finally {
       setBusy(false)
     }
   }
 
-  const cancelSetup = () => {
-    setSetup(null)
-    setSetupCode("")
-    setError("")
-  }
-
-  const finishBackupCodes = () => {
-    setPendingBackupCodes(null)
-    setNotice(
-      "MFA is now enabled. Backup codes were shown once — store any new codes somewhere safe."
-    )
-  }
-
-  const runAction = async (nextAction: "disable" | "regenerate") => {
+  const confirmAction = async (action: "enable" | "disable") => {
     if (!token) return
     setError("")
     setNotice("")
     setBusy(true)
     try {
-      const response = await fetch(`/api/auth/mfa/${nextAction}`, {
+      const url =
+        action === "enable" ? "/api/auth/mfa/verify" : "/api/auth/mfa/disable"
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ code: verifyCode }),
+        body: JSON.stringify({ code }),
       })
       const data = (await response
         .json()
         .catch(() => null)) as JsonResponse | null
 
       if (!response.ok || !data?.success) {
-        setError(
-          data?.message ||
-            `Unable to ${nextAction === "disable" ? "disable" : "regenerate"} MFA`
-        )
+        setError(data?.message || "Verification failed")
         return
       }
 
-      if (nextAction === "disable") {
-        setNotice("MFA has been disabled for your account.")
-        setAction("none")
-        setVerifyCode("")
-        await refreshStatus()
-      } else {
-        setPendingBackupCodes(data.data?.backupCodes ?? [])
-        setVerifyCode("")
-        setAction("none")
-        await refreshStatus()
-      }
-    } catch (err) {
-      console.error(`MFA ${nextAction} error:`, err)
-      setError(
-        `Unable to ${nextAction === "disable" ? "disable" : "regenerate"} MFA`
+      setNotice(
+        action === "enable"
+          ? "MFA is now enabled. A verification code will be emailed to you at every sign-in."
+          : "MFA has been disabled for your account."
       )
+      setPendingAction(null)
+      setCode("")
+      setEmail("")
+      await refreshStatus()
+    } catch (err) {
+      console.error(`MFA ${action} error:`, err)
+      setError("Verification failed. Please try again.")
     } finally {
       setBusy(false)
     }
   }
 
-  const handleCopySecret = async () => {
-    if (!setup) return
-    try {
-      await navigator.clipboard.writeText(setup.manualSecret)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // Clipboard unavailable — ignore.
-    }
+  const cancelAction = () => {
+    setPendingAction(null)
+    setCode("")
+    setEmail("")
+    setError("")
   }
 
   if (loadingStatus) {
@@ -251,7 +180,7 @@ export function MfaPanel() {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {enabled
-              ? "Protected with an authenticator app"
+              ? "Protected with a verification code sent to your email"
               : "Add an extra layer of security to your account"}
           </p>
         </div>
@@ -285,186 +214,91 @@ export function MfaPanel() {
         </div>
       )}
 
-      {!enabled && !setup && (
+      {!enabled && pendingAction === null && (
         <>
-          <Button onClick={beginSetup} disabled={busy} className="gap-2">
+          <Button
+            onClick={() => requestCode("enable")}
+            disabled={busy}
+            className="gap-2"
+          >
             <ShieldCheck className="size-4" />
-            Set up MFA
+            Enable MFA
           </Button>
           <p className="text-xs text-muted-foreground">
-            You&apos;ll need to enter a code from your authenticator app every
-            time you sign in.
+            A 6-digit code will be sent to your email at every sign-in.
           </p>
         </>
       )}
 
-      {setup && (
-        <div className="space-y-4 border-t border-border pt-4">
-          <div className="space-y-2 text-center">
-            <div className="inline-flex rounded-xl border border-border bg-background p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={setup.qrCodeDataUrl}
-                alt="Scan this QR code with your authenticator app"
-                width={180}
-                height={180}
-                className="h-44 w-44"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Scan with Google Authenticator, Microsoft Authenticator, or any
-              TOTP app
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs tracking-wider text-muted-foreground uppercase">
-              Or enter this key manually
-            </Label>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-md border border-border bg-muted/40 px-3 py-2 text-center font-mono text-xs tracking-wider break-all">
-                {setup.manualSecret}
-              </code>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={handleCopySecret}
-                aria-label="Copy secret key"
-              >
-                {copied ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              htmlFor="mfa-setup-code"
-              className="text-xs tracking-wider text-muted-foreground uppercase"
-            >
-              6-digit code
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="mfa-setup-code"
-                type="text"
-                inputMode="numeric"
-                placeholder="000000"
-                maxLength={6}
-                value={setupCode}
-                onChange={(e) =>
-                  setSetupCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
-                className="font-mono tracking-widest"
-              />
-              <Button
-                onClick={confirmSetup}
-                disabled={busy || setupCode.length !== 6}
-              >
-                Verify
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Enter the code currently shown in your authenticator app
-            </p>
-          </div>
-
+      {enabled && pendingAction === null && (
+        <div className="flex flex-wrap gap-2 border-t border-border pt-4">
           <Button
-            variant="ghost"
-            onClick={cancelSetup}
+            variant="destructive"
+            onClick={() => requestCode("disable")}
             disabled={busy}
-            className="w-full"
+            className="gap-2"
           >
-            Cancel
+            <Trash2 className="size-4" />
+            Disable MFA
           </Button>
         </div>
       )}
 
-      {pendingBackupCodes && (
-        <BackupCodesDialog
-          codes={pendingBackupCodes}
-          onConfirm={finishBackupCodes}
-        />
-      )}
-
-      {enabled && !setup && !pendingBackupCodes && (
+      {pendingAction !== null && (
         <div className="space-y-4 border-t border-border pt-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Remaining backup codes
-            </span>
-            <span className="font-semibold">
-              {status?.backupCodesRemaining ?? 0}/10
-            </span>
+          <div className="flex items-start gap-2 text-sm text-muted-foreground">
+            <Mail className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p>
+              {email
+                ? `A verification code was sent to ${email}.`
+                : "A verification code was sent to your email."}{" "}
+              {pendingAction === "enable"
+                ? "Enter it to enable MFA."
+                : "Enter it to disable MFA."}
+            </p>
           </div>
 
-          {action !== "none" && (
-            <div className="space-y-2">
-              <Label
-                htmlFor="mfa-action-code"
-                className="text-xs tracking-wider text-muted-foreground uppercase"
-              >
-                Enter your current authenticator code
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="mfa-action-code"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="000000"
-                  maxLength={6}
-                  value={verifyCode}
-                  onChange={(e) =>
-                    setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                  className="font-mono tracking-widest"
-                />
-                <Button
-                  onClick={() => runAction(action)}
-                  disabled={busy || verifyCode.length !== 6}
-                >
-                  Confirm
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setAction("none")
-                    setVerifyCode("")
-                  }}
-                  disabled={busy}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {action === "none" && (
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
+            <Label
+              htmlFor="mfa-code"
+              className="text-xs tracking-wider text-muted-foreground uppercase"
+            >
+              Verification code
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="mfa-code"
+                type="text"
+                inputMode="numeric"
+                placeholder="000000"
+                maxLength={6}
+                value={code}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                className="font-mono tracking-widest"
+              />
               <Button
-                variant="outline"
-                onClick={() => setAction("regenerate")}
-                disabled={busy}
-                className="gap-2"
+                onClick={() => confirmAction(pendingAction)}
+                disabled={busy || code.length !== 6}
               >
-                <RefreshCw className="size-4" />
-                Regenerate backup codes
+                {pendingAction === "enable" ? "Enable" : "Confirm"}
               </Button>
               <Button
-                variant="destructive"
-                onClick={() => setAction("disable")}
+                variant="ghost"
+                onClick={cancelAction}
                 disabled={busy}
-                className="gap-2"
+                className="gap-1.5"
               >
-                <Trash2 className="size-4" />
-                Disable MFA
+                <X className="size-4" />
+                Cancel
               </Button>
             </div>
-          )}
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <KeyRound className="size-3.5" />
+              Code is valid for 5 minutes.
+            </p>
+          </div>
         </div>
       )}
     </div>

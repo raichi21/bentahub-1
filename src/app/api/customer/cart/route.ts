@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
-import { cartItems, products, branches, branchInventory } from "@/drizzle/schema"
+import {
+  cartItems,
+  products,
+  branches,
+  branchInventory,
+} from "@/drizzle/schema"
 import { eq, and, sql, getTableColumns } from "drizzle-orm"
 import { generateId, getRoleScopedUserId } from "@/lib/auth-utils"
-import { clampCartQuantity, MAX_ITEM_QUANTITY, validateCartQuantity } from "@/lib/cart"
+import {
+  clampCartQuantity,
+  MAX_ITEM_QUANTITY,
+  validateCartQuantity,
+} from "@/lib/cart"
 
 /**
  * GET /api/customer/cart
@@ -92,9 +101,7 @@ export async function POST(request: NextRequest) {
     // + per-branch stock (when a branch is provided).
     // When no branch is given, the branch join matches nothing (sql`false`)
     // so stock fields resolve to null and stock validation is skipped.
-    const branchCondition = branch
-      ? eq(branches.name, branch)
-      : sql`false`
+    const branchCondition = branch ? eq(branches.name, branch) : sql`false`
 
     // Run both reads in parallel — neither depends on the other, and both
     // only need userId/productId/branch which are known up front.
@@ -160,7 +167,10 @@ export async function POST(request: NextRequest) {
 
     if (newQuantity > MAX_ITEM_QUANTITY) {
       return NextResponse.json(
-        { success: false, message: `Maximum of ${MAX_ITEM_QUANTITY} units per item` },
+        {
+          success: false,
+          message: `Maximum of ${MAX_ITEM_QUANTITY} units per item`,
+        },
         { status: 400 }
       )
     }
@@ -180,7 +190,11 @@ export async function POST(request: NextRequest) {
 
     if (row.cartId) {
       // Keep carts single-branch: reject re-adding the same product for a different branch
-      if (effectiveBranch && row.cartBranch && row.cartBranch !== effectiveBranch) {
+      if (
+        effectiveBranch &&
+        row.cartBranch &&
+        row.cartBranch !== effectiveBranch
+      ) {
         return NextResponse.json(
           {
             success: false,

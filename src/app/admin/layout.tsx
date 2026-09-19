@@ -18,15 +18,20 @@ export default function AdminLayout({
   return (
     <RoleGate allow={ALLOWED_ROLES}>
       <div className="min-h-screen bg-background">
-      <AdminSidebar activePath={pathname} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <AdminSidebar
+          activePath={pathname}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
 
-      <div className="flex-1 flex flex-col min-h-screen md:ml-[280px] overflow-hidden">
-        <AdminTopbar pathname={pathname} onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
-        </main>
+        <div className="flex min-h-screen flex-1 flex-col overflow-hidden md:ml-[280px]">
+          <AdminTopbar
+            pathname={pathname}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          />
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        </div>
       </div>
-    </div>
     </RoleGate>
   )
 }

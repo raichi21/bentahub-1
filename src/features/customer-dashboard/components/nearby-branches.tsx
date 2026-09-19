@@ -38,12 +38,12 @@ export function NearbyBranches() {
 
   if (isLoading) {
     return (
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 p-4 md:p-6 border-b border-border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex items-center gap-2 border-b border-border p-4 md:p-6">
           <MapPin className="h-5 w-5 text-primary" />
           <h2 className="font-heading text-lg font-bold">Nearby Branches</h2>
         </div>
-        <div className="flex items-center justify-center h-32">
+        <div className="flex h-32 items-center justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       </div>
@@ -52,8 +52,8 @@ export function NearbyBranches() {
 
   if (branches.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 p-4 md:p-6 border-b border-border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex items-center gap-2 border-b border-border p-4 md:p-6">
           <MapPin className="h-5 w-5 text-primary" />
           <h2 className="font-heading text-lg font-bold">Nearby Branches</h2>
         </div>
@@ -65,9 +65,9 @@ export function NearbyBranches() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 md:p-6 border-b border-border">
+      <div className="flex items-center gap-2 border-b border-border p-4 md:p-6">
         <MapPin className="h-5 w-5 text-primary" />
         <h2 className="font-heading text-lg font-bold">Nearby Branches</h2>
       </div>
@@ -77,19 +77,31 @@ export function NearbyBranches() {
         {branches.map((branch) => (
           <button
             key={branch.id}
-            onClick={() => router.push(`/customer/catalog?branch=${encodeURIComponent(branch.name)}`)}
-            className="p-4 md:p-6 flex items-start gap-4 w-full text-left hover:bg-muted/50 transition-colors"
+            onClick={() =>
+              router.push(
+                `/customer/catalog?branch=${encodeURIComponent(branch.name)}`
+              )
+            }
+            className="flex w-full items-start gap-4 p-4 text-left transition-colors hover:bg-muted/50 md:p-6"
           >
-            <div className="size-10 bg-muted rounded-lg flex items-center justify-center shrink-0">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
               <Store className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-bold text-foreground truncate">{branch.name}</h3>
-              <p className="text-xs text-muted-foreground truncate mb-2">{branch.location}</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-sm font-bold text-foreground">
+                {branch.name}
+              </h3>
+              <p className="mb-2 truncate text-xs text-muted-foreground">
+                {branch.location}
+              </p>
 
               <div className="flex items-center gap-1.5">
-                <span className={`size-2 rounded-full ${openNow ? "bg-emerald-500" : "bg-destructive"}`} />
-                <span className={`text-xs font-medium ${openNow ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                <span
+                  className={`size-2 rounded-full ${openNow ? "bg-emerald-500" : "bg-destructive"}`}
+                />
+                <span
+                  className={`text-xs font-medium ${openNow ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
+                >
                   {openNow ? "Open Now • 8 AM - 5 PM" : "Closed • Opens 8 AM"}
                 </span>
               </div>

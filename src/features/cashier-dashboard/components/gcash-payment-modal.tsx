@@ -31,9 +31,12 @@ export function GcashPaymentModal({
     setError("")
 
     try {
-      const res = await fetch(`/api/cashier/payments/check?paymentIntentId=${paymentIntentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch(
+        `/api/cashier/payments/check?paymentIntentId=${paymentIntentId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
       const json = await res.json()
 
       if (json.success && json.data.isPaid) {
@@ -52,45 +55,46 @@ export function GcashPaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="mx-4 w-full max-w-sm animate-in overflow-hidden rounded-2xl bg-card shadow-2xl duration-200 zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-sm text-card-foreground">GCash Payment</h3>
+            <QrCode className="h-5 w-5 text-primary" />
+            <h3 className="text-sm font-bold text-card-foreground">
+              GCash Payment
+            </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-card-foreground hover:bg-muted transition-colors">
-            <X className="w-4 h-4" />
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-card-foreground"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 flex flex-col items-center text-center space-y-4">
+        <div className="flex flex-col items-center space-y-4 p-6 text-center">
           <p className="text-xs text-muted-foreground">
             Ipakita ang QR sa customer para i-scan gamit ang GCash app
           </p>
 
-          <div className="bg-card p-3 rounded-xl border border-border shadow-sm">
+          <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrUrl}
-              alt="GCash QR Code"
-              className="w-64 h-64"
-            />
+            <img src={qrUrl} alt="GCash QR Code" className="h-64 w-64" />
           </div>
 
           <div className="space-y-1">
-            <p className="text-2xl font-black text-card-foreground font-mono">
+            <p className="font-mono text-2xl font-black text-card-foreground">
               ₱{amount.toFixed(2)}
             </p>
-            <p className="text-[10px] font-mono text-muted-foreground">
+            <p className="font-mono text-[10px] text-muted-foreground">
               Receipt #{receiptNumber}
             </p>
           </div>
 
           {/* Error message */}
           {error && (
-            <p className="text-[10px] font-medium text-red-500 bg-red-50 px-3 py-1.5 rounded-lg w-full">
+            <p className="w-full rounded-lg bg-red-50 px-3 py-1.5 text-[10px] font-medium text-red-500">
               {error}
             </p>
           )}
@@ -99,12 +103,12 @@ export function GcashPaymentModal({
           <button
             onClick={handleCheckStatus}
             disabled={checking}
-            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           >
             {checking ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="h-4 w-4" />
             )}
             {checking ? "Checking..." : "Check Payment Status"}
           </button>

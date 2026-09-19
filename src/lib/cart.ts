@@ -21,7 +21,10 @@ export function clampCartQuantity(quantity: number): number | null {
  * resolved to inventory — in that case stock validation is skipped.
  * Returns an error message, or `null` when the quantity is acceptable.
  */
-export function validateCartQuantity(quantity: number, available: number | null | undefined): string | null {
+export function validateCartQuantity(
+  quantity: number,
+  available: number | null | undefined
+): string | null {
   if (available === null || available === undefined) return null
   if (available <= 0) {
     return "This product is out of stock at the selected branch"

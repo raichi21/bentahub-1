@@ -86,9 +86,7 @@ export const users = pgTable(
       .notNull(),
     canManageProducts: boolean("can_manage_products").default(false).notNull(),
     isEmailVerified: boolean("is_email_verified").default(false).notNull(),
-    mfaSecret: text("mfa_secret"),
     mfaEnabled: boolean("mfa_enabled").default(false).notNull(),
-    mfaBackupCodes: text("mfa_backup_codes"),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt,
     updatedAt,
@@ -139,6 +137,7 @@ export const oauthAccountsRelations = relations(oauthAccounts, ({ one }) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
   oauthAccounts: many(oauthAccounts),
+  mfaCodes: many(mfaCodes),
 }))
 
 export const insertOauthAccountSchema = createInsertSchema(oauthAccounts).omit({
@@ -182,6 +181,42 @@ export const emailVerificationRelations = relations(
     }),
   })
 )
+
+// ── MFA Codes ──
+export const mfaCodes = pgTable(
+  "mfa_codes",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    code: varchar("code", { length: 255 }).notNull(),
+    email: varchar("email", { length: 255 }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => ({
+    userIdIdx: index("mfa_codes_user_id_idx").on(table.userId),
+  })
+)
+
+export const mfaCodeRelations = relations(mfaCodes, ({ one }) => ({
+  user: one(users, {
+    fields: [mfaCodes.userId],
+    references: [users.id],
+  }),
+}))
+
+export const insertMfaCodeSchema = createInsertSchema(mfaCodes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
+export const selectMfaCodeSchema = createSelectSchema(mfaCodes)
+export type MfaCode = typeof mfaCodes.$inferSelect
+export type InsertMfaCode = typeof mfaCodes.$inferInsert
 
 export const insertEmailVerificationSchema = createInsertSchema(
   emailVerifications

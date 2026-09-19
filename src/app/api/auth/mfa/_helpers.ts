@@ -56,21 +56,18 @@ export function resolveMfaChallengeToken<T>(
 
 /**
  * Build the full-auth success payload (JWT + user) shared by login and
- * MFA verification. `backupCodes` is only present on first enrollment.
+ * MFA verification.
  */
-export function issueSession(
-  user: {
-    id: string
-    email: string
-    fullName: string
-    role: string
-    phone: string | null
-    image: string | null
-    branch: string | null
-    isEmailVerified: boolean
-  },
-  backupCodes?: string[]
-): MfaVerifyResponseData {
+export function issueSession(user: {
+  id: string
+  email: string
+  fullName: string
+  role: string
+  phone: string | null
+  image: string | null
+  branch: string | null
+  isEmailVerified: boolean
+}): MfaVerifyResponseData {
   const token = generateToken({
     userId: user.id,
     email: user.email,
@@ -89,6 +86,5 @@ export function issueSession(
       role: user.role,
       isEmailVerified: user.isEmailVerified,
     },
-    ...(backupCodes ? { backupCodes } : {}),
   }
 }

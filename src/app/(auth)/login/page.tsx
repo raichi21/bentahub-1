@@ -98,10 +98,10 @@ function LoginPageInner() {
       }
 
       // MFA challenge: hold the short-lived token and continue on the
-      // dedicated verify/setup screens instead of opening a session.
+      // dedicated verify screen instead of opening a session.
       if (data.data && "mfaToken" in data.data && data.data.mfaToken) {
         sessionStorage.setItem("pendingMfaToken", data.data.mfaToken)
-        router.push(data.data.requiresMfaSetup ? "/mfa-setup" : "/mfa-verify")
+        router.push("/mfa-verify")
         return
       }
 

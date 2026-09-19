@@ -18,7 +18,9 @@ const INTERNAL_DOMAIN = "@bentahub.com"
  * Accepts a reset token (from the emailed link) and a new password.
  * Validates the token, updates the password, and marks the token as used.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<AuthResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse>> {
   try {
     const body = await request.json()
     const { token, password } = body
@@ -75,7 +77,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
 
     if (resetToken.attempts >= MAX_RESET_ATTEMPTS) {
       return NextResponse.json(
-        { success: false, message: "Too many attempts. Please request a new reset link." },
+        {
+          success: false,
+          message: "Too many attempts. Please request a new reset link.",
+        },
         { status: 400 }
       )
     }

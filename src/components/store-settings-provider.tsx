@@ -1,6 +1,12 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,7 +37,9 @@ const DEFAULT_SETTINGS: StoreSettings = {
 // Context
 // ---------------------------------------------------------------------------
 
-const StoreSettingsContext = createContext<StoreSettingsContextValue | null>(null)
+const StoreSettingsContext = createContext<StoreSettingsContextValue | null>(
+  null
+)
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -47,7 +55,9 @@ interface StoreSettingsProviderProps {
  * Fetches GET /api/settings once on mount and exposes the values through
  * `useStoreSettings()`. Falls back to defaults while loading or on error.
  */
-export function StoreSettingsProvider({ children }: StoreSettingsProviderProps) {
+export function StoreSettingsProvider({
+  children,
+}: StoreSettingsProviderProps) {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
 
@@ -92,7 +102,14 @@ export function StoreSettingsProvider({ children }: StoreSettingsProviderProps) 
   }, [])
 
   return (
-    <StoreSettingsContext.Provider value={{ storeName: settings.storeName, logo: settings.logo, loading, refresh }}>
+    <StoreSettingsContext.Provider
+      value={{
+        storeName: settings.storeName,
+        logo: settings.logo,
+        loading,
+        refresh,
+      }}
+    >
       {children}
     </StoreSettingsContext.Provider>
   )
@@ -107,7 +124,9 @@ export function useStoreSettings() {
   const context = useContext(StoreSettingsContext)
 
   if (context === null) {
-    throw new Error("useStoreSettings must be used within a StoreSettingsProvider")
+    throw new Error(
+      "useStoreSettings must be used within a StoreSettingsProvider"
+    )
   }
 
   return context

@@ -45,19 +45,23 @@ export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
   const initials = getInitials(displayName)
 
   return (
-    <header className="bg-card border-b border-border px-4 md:px-6 sticky top-0 z-30 flex justify-between items-center h-[80px] w-full">
-      <div className="flex items-center gap-3 min-w-0">
+    <header className="sticky top-0 z-30 flex h-[80px] w-full items-center justify-between border-b border-border bg-card px-4 md:px-6">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors md:hidden flex-shrink-0"
+          className="flex-shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted md:hidden"
           aria-label="Toggle sidebar"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="h-5 w-5" />
         </button>
         <div className="flex flex-col">
-          <h1 className="text-xl font-bold text-foreground truncate">{title}</h1>
+          <h1 className="truncate text-xl font-bold text-foreground">
+            {title}
+          </h1>
           {ROUTE_DESCRIPTIONS[pathname] && (
-            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{ROUTE_DESCRIPTIONS[pathname]}</p>
+            <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
+              {ROUTE_DESCRIPTIONS[pathname]}
+            </p>
           )}
         </div>
       </div>
@@ -65,20 +69,26 @@ export function StaffTopbar({ onToggleSidebar }: StaffTopbarProps) {
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        <button onClick={() => router.push("/staff/notifications")} aria-label="Notifications" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors border border-border relative flex-shrink-0">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-card"></span>
+        <button
+          onClick={() => router.push("/staff/notifications")}
+          aria-label="Notifications"
+          className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:text-primary"
+        >
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-card"></span>
         </button>
 
-        <div className="h-8 w-px bg-border hidden sm:block"></div>
+        <div className="hidden h-8 w-px bg-border sm:block"></div>
 
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/20 select-none flex-shrink-0">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white shadow-md shadow-blue-600/20 select-none">
             {initials}
           </div>
-          <div className="flex-col hidden sm:flex">
-            <span className="text-sm font-bold text-foreground leading-tight">{displayName}</span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+          <div className="hidden flex-col sm:flex">
+            <span className="text-sm leading-tight font-bold text-foreground">
+              {displayName}
+            </span>
+            <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
               {user?.branch || "Branch Staff"}
             </span>
           </div>

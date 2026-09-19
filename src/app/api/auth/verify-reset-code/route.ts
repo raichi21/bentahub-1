@@ -13,7 +13,9 @@ const MAX_RESET_ATTEMPTS = 5
  * Accepts email and the 6-digit code.
  * Validates the code, checks for expiry/attempts, and increments the attempts counter.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<AuthResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse>> {
   try {
     const body = await request.json()
     const { email, token } = body
@@ -54,14 +56,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
 
     if (resetToken.usedAt) {
       return NextResponse.json(
-        { success: false, message: "This verification code has already been used" },
+        {
+          success: false,
+          message: "This verification code has already been used",
+        },
         { status: 400 }
       )
     }
 
     if (resetToken.attempts >= MAX_RESET_ATTEMPTS) {
       return NextResponse.json(
-        { success: false, message: "Too many attempts. Please request a new code." },
+        {
+          success: false,
+          message: "Too many attempts. Please request a new code.",
+        },
         { status: 400 }
       )
     }

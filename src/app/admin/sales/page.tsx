@@ -68,11 +68,21 @@ export default function SalesPage() {
     const transactions = data?.transactions || []
     if (transactions.length === 0) return
     const rows = [
-      ["Transaction ID", "Branch", "Date & Time", "Total", "Payment Method", "Status"],
+      [
+        "Transaction ID",
+        "Branch",
+        "Date & Time",
+        "Total",
+        "Payment Method",
+        "Status",
+      ],
       ...transactions.map((t) => [
-        t.id, t.branchName,
+        t.id,
+        t.branchName,
         new Date(t.createdAt).toISOString(),
-        t.totalAmount, t.paymentMethod, t.status,
+        t.totalAmount,
+        t.paymentMethod,
+        t.status,
       ]),
     ]
     const csv = rows.map((r) => r.join(",")).join("\n")
@@ -88,16 +98,25 @@ export default function SalesPage() {
   function exportPDF() {
     if (!data) return
     const tableRows = data.transactions.map((t) => [
-      t.id, t.branchName,
+      t.id,
+      t.branchName,
       new Date(t.createdAt).toLocaleString(),
-      t.totalAmount, t.paymentMethod, t.status,
+      t.totalAmount,
+      t.paymentMethod,
+      t.status,
     ])
     exportTableAsPdf({
       title: "Sales Report",
       metrics: [
         { label: "Total Sales", value: data.overview.totalSalesDisplay },
-        { label: "Transactions", value: String(data.overview.transactionCount) },
-        { label: "Avg Per Transaction", value: data.overview.avgPerTransactionDisplay },
+        {
+          label: "Transactions",
+          value: String(data.overview.transactionCount),
+        },
+        {
+          label: "Avg Per Transaction",
+          value: data.overview.avgPerTransactionDisplay,
+        },
       ],
       headers: ["ID", "Branch", "Date & Time", "Total", "Payment", "Status"],
       rows: tableRows,
@@ -106,8 +125,8 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <KPICard
           title="Total Sales"
           value={data?.overview.totalSalesDisplay ?? "₱0.00"}

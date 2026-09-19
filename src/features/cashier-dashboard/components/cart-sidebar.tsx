@@ -1,7 +1,15 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { ShoppingCart, QrCode, Coins, CheckCircle, Percent, X, Loader2 } from "lucide-react"
+import {
+  ShoppingCart,
+  QrCode,
+  Coins,
+  CheckCircle,
+  Percent,
+  X,
+  Loader2,
+} from "lucide-react"
 import { CartItem } from "./cart-item"
 import { ReceiptModal } from "./receipt-modal"
 import { GcashPaymentModal } from "./gcash-payment-modal"
@@ -17,7 +25,12 @@ interface CartSidebarProps {
   canAcceptCash?: boolean
 }
 
-export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = true }: CartSidebarProps) {
+export function CartSidebar({
+  cart,
+  onClose,
+  onSaleComplete,
+  canAcceptCash = true,
+}: CartSidebarProps) {
   const { token, user } = useAuth()
   const {
     items,
@@ -40,7 +53,9 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
   const [successMsg, setSuccessMsg] = useState("")
   const [showPromoInput, setShowPromoInput] = useState(discountPercent > 0)
   const [submitting, setSubmitting] = useState(false)
-  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null)
+  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(
+    null
+  )
   const [gcashPayment, setGcashPayment] = useState<{
     checkoutUrl: string
     amount: number
@@ -155,9 +170,7 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
       }
 
       setLastTransaction(transaction)
-      setSuccessMsg(
-        `Transaction completed! Total: ₱${total.toFixed(2)}`
-      )
+      setSuccessMsg(`Transaction completed! Total: ₱${total.toFixed(2)}`)
       setCheckoutSuccess(true)
       clearCart()
       onSaleComplete?.()
@@ -166,7 +179,21 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
     } finally {
       setSubmitting(false)
     }
-  }, [items, amountPaid, total, paymentMethod, discountPercent, discountAmount, subtotal, changeDue, token, clearCart, onSaleComplete, user, canAcceptCash])
+  }, [
+    items,
+    amountPaid,
+    total,
+    paymentMethod,
+    discountPercent,
+    discountAmount,
+    subtotal,
+    changeDue,
+    token,
+    clearCart,
+    onSaleComplete,
+    user,
+    canAcceptCash,
+  ])
 
   // Keyboard action shortcuts
   useEffect(() => {
@@ -185,10 +212,18 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [items, amountPaid, total, paymentMethod, completeSale, clearCart, submitting])
+  }, [
+    items,
+    amountPaid,
+    total,
+    paymentMethod,
+    completeSale,
+    clearCart,
+    submitting,
+  ])
 
   return (
-    <aside className="w-full lg:w-[520px] bg-card border-l border-border flex flex-col z-20 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.03)] h-full relative">
+    <aside className="relative z-20 flex h-full w-full flex-col overflow-hidden border-l border-border bg-card shadow-[-10px_0_30px_rgba(0,0,0,0.03)] lg:w-[520px]">
       {/* Receipt Modal */}
       {lastTransaction && (
         <ReceiptModal
@@ -239,15 +274,17 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
 
       {/* Success Toast */}
       {checkoutSuccess && !lastTransaction && (
-        <div className="absolute inset-0 bg-card/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 animate-bounce">
-            <CheckCircle className="w-10 h-10" />
+        <div className="animate-fade-in absolute inset-0 z-50 flex flex-col items-center justify-center bg-card/95 p-6 text-center backdrop-blur-sm">
+          <div className="mb-4 flex h-16 w-16 animate-bounce items-center justify-center rounded-full bg-green-100 text-green-600">
+            <CheckCircle className="h-10 w-10" />
           </div>
-          <h3 className="font-bold text-lg text-card-foreground mb-1">Sale Complete</h3>
-          <p className="text-xs text-muted-foreground max-w-xs">{successMsg}</p>
+          <h3 className="mb-1 text-lg font-bold text-card-foreground">
+            Sale Complete
+          </h3>
+          <p className="max-w-xs text-xs text-muted-foreground">{successMsg}</p>
           <button
             onClick={() => setCheckoutSuccess(false)}
-            className="mt-6 px-5 py-2 bg-foreground text-background rounded-xl text-xs font-bold hover:opacity-80 transition-colors"
+            className="mt-6 rounded-xl bg-foreground px-5 py-2 text-xs font-bold text-background transition-colors hover:opacity-80"
           >
             Dismiss
           </button>
@@ -255,28 +292,31 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
       )}
 
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-border flex justify-between items-center bg-card sticky top-0 z-30">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card p-4">
         <div className="flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-primary font-bold" />
-          <h2 className="font-bold text-lg text-card-foreground">Orders</h2>
+          <ShoppingCart className="h-5 w-5 font-bold text-primary" />
+          <h2 className="text-lg font-bold text-card-foreground">Orders</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold px-2 py-0.5 bg-muted rounded text-muted-foreground">
+          <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
             {items.length} Items
           </span>
           {onClose && (
-            <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-card-foreground hover:bg-muted transition-colors lg:hidden">
-              <X className="w-4 h-4" />
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-card-foreground lg:hidden"
+            >
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
 
       {/* Cart Items List */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-card">
+      <div className="flex-1 space-y-4 overflow-y-auto bg-card p-6">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <ShoppingCart className="w-12 h-12 stroke-[1.5] mb-2 text-muted-foreground/40" />
+            <ShoppingCart className="mb-2 h-12 w-12 stroke-[1.5] text-muted-foreground/40" />
             <span className="text-xs font-medium">Cart is empty</span>
           </div>
         ) : (
@@ -292,47 +332,52 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
       </div>
 
       {/* Checkout Panel */}
-      <div className="bg-muted/80 p-4 border-t border-border flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-t border-border bg-muted/80 p-4">
         {/* Subtotal & Discount info */}
-        <div className="space-y-1 bg-card p-3 rounded-xl border border-border/60 shadow-2xs">
-          <div className="flex justify-between text-muted-foreground text-xs font-medium">
+        <div className="space-y-1 rounded-xl border border-border/60 bg-card p-3 shadow-2xs">
+          <div className="flex justify-between text-xs font-medium text-muted-foreground">
             <span>Subtotal</span>
             <span className="font-mono">₱{subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between items-center text-muted-foreground text-xs font-medium min-h-[28px]">
+          <div className="flex min-h-[28px] items-center justify-between text-xs font-medium text-muted-foreground">
             <span>Discount</span>
             {showPromoInput ? (
-              <div className="flex items-center gap-1.5 animate-fade-in">
+              <div className="animate-fade-in flex items-center gap-1.5">
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={discountPercent || ""}
                   onChange={(e) => {
-                    const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0))
+                    const val = Math.min(
+                      100,
+                      Math.max(0, parseInt(e.target.value) || 0)
+                    )
                     setDiscountPercent(val)
                   }}
                   onBlur={() => {
                     if (!discountPercent) setShowPromoInput(false)
                   }}
-                  className="w-12 px-1 py-0.5 text-center font-mono text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-12 rounded border border-border px-1 py-0.5 text-center font-mono text-xs focus:ring-1 focus:ring-primary focus:outline-none"
                   placeholder="0"
                   autoFocus
                 />
-                <Percent className="w-3 h-3 text-muted-foreground" />
+                <Percent className="h-3 w-3 text-muted-foreground" />
               </div>
             ) : (
               <button
                 onClick={() => setShowPromoInput(true)}
-                className="text-primary hover:underline font-bold text-xs"
+                className="text-xs font-bold text-primary hover:underline"
               >
                 {discountPercent > 0 ? `${discountPercent}% Off` : "Add Promo"}
               </button>
             )}
           </div>
-          <div className="flex justify-between items-baseline pt-2 border-t border-border mt-2">
-            <span className="text-xs font-bold text-card-foreground">Total Amount</span>
-            <span className="text-2xl font-black text-primary font-mono">
+          <div className="mt-2 flex items-baseline justify-between border-t border-border pt-2">
+            <span className="text-xs font-bold text-card-foreground">
+              Total Amount
+            </span>
+            <span className="font-mono text-2xl font-black text-primary">
               ₱{total.toFixed(2)}
             </span>
           </div>
@@ -340,28 +385,33 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
 
         {/* Payment Options */}
         {!canAcceptCash && (
-          <p className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            Cash payment needs an open cash drawer session. Open one from the top bar, or use GCash.
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-600">
+            Cash payment needs an open cash drawer session. Open one from the
+            top bar, or use GCash.
           </p>
         )}
-        <div className="grid grid-cols-2 p-1 bg-muted rounded-2xl border border-border gap-2">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-muted p-1">
           <button
             onClick={() => {
               setPaymentMethod("cash")
               setAmountPaid("")
             }}
             disabled={!canAcceptCash}
-            title={!canAcceptCash ? "Open a cash drawer session first" : undefined}
+            title={
+              !canAcceptCash ? "Open a cash drawer session first" : undefined
+            }
             className={cn(
-              "flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all duration-200",
+              "flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 font-bold transition-all duration-200",
               paymentMethod === "cash"
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                 : "bg-card text-muted-foreground hover:bg-muted",
-              !canAcceptCash && "opacity-40 cursor-not-allowed hover:bg-card"
+              !canAcceptCash && "cursor-not-allowed opacity-40 hover:bg-card"
             )}
           >
-            <Coins className="w-6 h-6" />
-            <span className="text-[10px] tracking-wider uppercase font-bold">Cash</span>
+            <Coins className="h-6 w-6" />
+            <span className="text-[10px] font-bold tracking-wider uppercase">
+              Cash
+            </span>
           </button>
           <button
             onClick={() => {
@@ -369,26 +419,30 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
               setAmountPaid(total.toFixed(2)) // GCash is always exact amount
             }}
             className={cn(
-              "flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold transition-all duration-200",
+              "flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 font-bold transition-all duration-200",
               paymentMethod === "gcash"
                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                 : "bg-card text-muted-foreground hover:bg-muted"
             )}
           >
-            <QrCode className="w-6 h-6" />
-            <span className="text-[10px] tracking-wider uppercase font-bold">GCash</span>
+            <QrCode className="h-6 w-6" />
+            <span className="text-[10px] font-bold tracking-wider uppercase">
+              GCash
+            </span>
           </button>
         </div>
 
         {/* Payment Details Form */}
-        <div className="bg-card rounded-2xl border border-border p-3 shadow-sm space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+        <div className="space-y-2 rounded-2xl border border-border bg-card p-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
               Amount Paid
             </label>
           </div>
           <div className="flex items-baseline gap-1 border-b border-border pb-1.5">
-            <span className="text-2xl font-bold text-muted-foreground/40 font-mono">₱</span>
+            <span className="font-mono text-2xl font-bold text-muted-foreground/40">
+              ₱
+            </span>
             <input
               type="text"
               placeholder="0.00"
@@ -401,15 +455,15 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
                   setAmountPaid(val)
                 }
               }}
-              className="w-full border-none p-0 text-2xl font-black font-mono text-card-foreground focus:ring-0 placeholder:text-muted-foreground/20 bg-transparent outline-none"
+              className="w-full border-none bg-transparent p-0 font-mono text-2xl font-black text-card-foreground outline-none placeholder:text-muted-foreground/20 focus:ring-0"
             />
           </div>
           {paymentMethod === "cash" && (
-            <div className="flex justify-between items-center pt-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[10px] font-bold tracking-tight text-muted-foreground uppercase">
                 Change Due
               </span>
-              <span className="text-xl font-black font-mono text-amber-600">
+              <span className="font-mono text-xl font-black text-amber-600">
                 ₱{changeDue.toFixed(2)}
               </span>
             </div>
@@ -421,19 +475,19 @@ export function CartSidebar({ cart, onClose, onSaleComplete, canAcceptCash = tru
           <button
             disabled={items.length === 0 || submitting || !!gcashPayment}
             onClick={completeSale}
-            className="w-full bg-primary text-primary-foreground py-3 rounded-2xl font-black text-base shadow-xl shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-primary py-3 text-base font-black text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             {submitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="h-5 w-5" />
             )}
             {submitting ? "PROCESSING..." : "COMPLETE SALE"}
           </button>
           <button
             disabled={items.length === 0 || submitting}
             onClick={clearCart}
-            className="w-full bg-transparent text-muted-foreground hover:text-red-500 hover:bg-red-50 py-1.5 rounded-xl text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-transparent py-1.5 text-sm font-bold text-muted-foreground transition-all hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30"
           >
             CANCEL ORDER
           </button>

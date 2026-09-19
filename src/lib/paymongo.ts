@@ -12,7 +12,11 @@ function authHeader(): string {
 }
 
 /** #11: Fetch with AbortController timeout so requests don't hang indefinitely */
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = FETCH_TIMEOUT_MS
+): Promise<Response> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
   try {
@@ -58,21 +62,22 @@ export async function createCheckoutSession(params: {
     email: string
   }
 }): Promise<CheckoutSessionResult> {
-  const lineItems = params.lineItems && params.lineItems.length > 0
-    ? params.lineItems.map((item) => ({
-      name: item.name,
-      amount: item.amount,
-      currency: "PHP",
-      quantity: item.quantity,
-    }))
-    : [
-      {
-        name: params.description || "Store purchase",
-        amount: params.amount,
-        currency: "PHP",
-        quantity: 1,
-      },
-    ]
+  const lineItems =
+    params.lineItems && params.lineItems.length > 0
+      ? params.lineItems.map((item) => ({
+          name: item.name,
+          amount: item.amount,
+          currency: "PHP",
+          quantity: item.quantity,
+        }))
+      : [
+          {
+            name: params.description || "Store purchase",
+            amount: params.amount,
+            currency: "PHP",
+            quantity: 1,
+          },
+        ]
 
   const attributes: Record<string, unknown> = {
     line_items: lineItems,
@@ -167,7 +172,9 @@ export async function createPaymentIntent(params: {
   }
 }
 
-export async function retrievePaymentIntent(id: string): Promise<PayMongoPaymentIntent> {
+export async function retrievePaymentIntent(
+  id: string
+): Promise<PayMongoPaymentIntent> {
   const res = await fetchWithTimeout(`${PAYMONGO_API}/payment_intents/${id}`, {
     headers: { Authorization: authHeader() },
   })

@@ -2,7 +2,10 @@
  * Email Template Component for BentaHub Verification
  * Returns a fully styled, responsive HTML template string for email clients.
  */
-export function getVerificationEmailHtml(fullName: string, code: string): string {
+export function getVerificationEmailHtml(
+  fullName: string,
+  code: string
+): string {
   return `
     <!DOCTYPE html>
     <html lang="en">

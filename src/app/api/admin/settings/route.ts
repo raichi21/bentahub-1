@@ -30,20 +30,38 @@ function defaultSettings() {
 export async function GET(request: NextRequest) {
   try {
     const token = extractToken(request)
-    if (!token) return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 })
+    if (!token)
+      return NextResponse.json(
+        { success: false, message: "Authentication required" },
+        { status: 401 }
+      )
     const payload = verifyToken(token)
-    if (!payload) return NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 })
-    if (payload.role !== "admin") return NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 })
+    if (!payload)
+      return NextResponse.json(
+        { success: false, message: "Invalid or expired token" },
+        { status: 401 }
+      )
+    if (payload.role !== "admin")
+      return NextResponse.json(
+        { success: false, message: "Admin access required" },
+        { status: 403 }
+      )
 
     const existing = await db.query.storeSettings.findFirst({
       where: eq(storeSettings.id, DEFAULT_SETTINGS_ID),
     })
 
-    return NextResponse.json({ success: true, data: existing ?? defaultSettings() }, { status: 200 })
+    return NextResponse.json(
+      { success: true, data: existing ?? defaultSettings() },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Settings GET error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -55,15 +73,20 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const parsed = updateSettingsSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({
-        success: false,
-        message: parsed.error.errors[0]?.message ?? "Invalid input",
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message: parsed.error.errors[0]?.message ?? "Invalid input",
+        },
+        { status: 400 }
+      )
     }
 
-    const { storeName, logo, storeAddress, storeContact, storeEmail } = parsed.data
+    const { storeName, logo, storeAddress, storeContact, storeEmail } =
+      parsed.data
 
-    await db.insert(storeSettings)
+    await db
+      .insert(storeSettings)
       .values({
         id: DEFAULT_SETTINGS_ID,
         storeName,
@@ -83,10 +106,16 @@ export async function PUT(request: NextRequest) {
         },
       })
 
-    return NextResponse.json({ success: true, message: "Settings saved successfully" }, { status: 200 })
+    return NextResponse.json(
+      { success: true, message: "Settings saved successfully" },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Settings PUT error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

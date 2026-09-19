@@ -17,7 +17,8 @@ interface UseCashDrawerResult {
 export function useCashDrawer(): UseCashDrawerResult {
   const { token, isLoading: authLoading } = useAuth()
   const [session, setSession] = useState<CashDrawerSession | null>(null)
-  const [lastClosedSession, setLastClosedSession] = useState<LastClosedSessionInfo | null>(null)
+  const [lastClosedSession, setLastClosedSession] =
+    useState<LastClosedSessionInfo | null>(null)
   const [fetched, setFetched] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -106,4 +107,3 @@ export function useCashDrawer(): UseCashDrawerResult {
     refresh,
   }
 }
-

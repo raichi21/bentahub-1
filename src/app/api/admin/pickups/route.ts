@@ -17,11 +17,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const page = parseInt(searchParams.get("page") || "1", 10)
     const pageSize = parseInt(searchParams.get("pageSize") || "15", 10)
 
-    const data = await getPickups({ status, search, branch, dateFrom, dateTo, page, pageSize })
+    const data = await getPickups({
+      status,
+      search,
+      branch,
+      dateFrom,
+      dateTo,
+      page,
+      pageSize,
+    })
 
-    return NextResponse.json({ success: true, message: "Pickups retrieved successfully", data })
+    return NextResponse.json({
+      success: true,
+      message: "Pickups retrieved successfully",
+      data,
+    })
   } catch (error) {
     console.error("Admin get pickups error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

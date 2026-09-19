@@ -6,7 +6,9 @@ import { eq } from "drizzle-orm"
 import { getStaffProducts } from "@/features/staff-dashboard/actions/get-products"
 import type { StaffApiResponse, StaffProductsData } from "@/types/staff"
 
-export async function GET(request: NextRequest): Promise<NextResponse<StaffApiResponse<StaffProductsData>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<StaffApiResponse<StaffProductsData>>> {
   try {
     // Shared branch-catalog read used by both the Staff dashboard and the
     // Cashier POS product grid.
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<StaffApiRe
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
@@ -33,13 +35,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<StaffApiRe
 
     return NextResponse.json(
       { success: true, message: "Products retrieved successfully", data },
-      { status: 200 },
+      { status: 200 }
     )
   } catch (error) {
     console.error("Staff products error:", error)
     return NextResponse.json(
       { success: false, message: "An error occurred while fetching products" },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }

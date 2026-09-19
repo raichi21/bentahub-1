@@ -13,26 +13,30 @@ export function CartItem({ item, onUpdateQty, onRemove }: CartItemProps) {
   const { product, quantity } = item
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl hover:shadow-sm transition-all duration-200">
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:shadow-sm">
       {/* Thumbnail */}
-      <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden flex-shrink-0 border border-border/50 flex items-center justify-center">
+      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/50 bg-muted">
         {product.image ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+          <img
+            src={product.image}
+            alt={product.name}
+            className="h-full w-full object-cover"
+          />
         ) : (
-          <Package className="w-6 h-6 text-muted-foreground opacity-40" />
+          <Package className="h-6 w-6 text-muted-foreground opacity-40" />
         )}
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-sm text-card-foreground truncate leading-snug">
+      <div className="min-w-0 flex-1">
+        <h4 className="truncate text-sm leading-snug font-bold text-card-foreground">
           {product.name}
         </h4>
-        <span className="text-[11px] text-muted-foreground font-mono">
+        <span className="font-mono text-[11px] text-muted-foreground">
           SKU: {product.sku}
         </span>
-        <div className="flex justify-between items-center mt-1.5">
+        <div className="mt-1.5 flex items-center justify-between">
           <p className="text-sm font-bold text-primary">
             ₱{product.price.toFixed(2)}
           </p>
@@ -41,31 +45,31 @@ export function CartItem({ item, onUpdateQty, onRemove }: CartItemProps) {
 
       {/* Action Controls */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center bg-muted rounded-lg p-0.5 border border-border/40">
+        <div className="flex items-center rounded-lg border border-border/40 bg-muted p-0.5">
           <button
             onClick={() => onUpdateQty(quantity - 1)}
-            className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+            className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="h-4 w-4" />
           </button>
-          <span className="w-10 text-center text-sm font-mono font-bold text-card-foreground">
+          <span className="w-10 text-center font-mono text-sm font-bold text-card-foreground">
             {quantity}
           </span>
           <button
             disabled={quantity >= product.stock}
             onClick={() => onUpdateQty(quantity + 1)}
-            className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors disabled:opacity-30 disabled:hover:text-muted-foreground"
+            className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-primary disabled:opacity-30 disabled:hover:text-muted-foreground"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
           </button>
         </div>
 
         {/* Remove Button */}
         <button
           onClick={onRemove}
-          className="w-9 h-9 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all duration-150"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-500 transition-all duration-150 hover:bg-red-500 hover:text-white"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
     </div>

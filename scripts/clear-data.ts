@@ -20,7 +20,8 @@ if (existsSync(envPath)) {
 }
 
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/bentahub"
+  process.env.DATABASE_URL =
+    "postgresql://postgres:postgres@localhost:5432/bentahub"
 }
 
 async function run() {
@@ -69,15 +70,31 @@ async function run() {
 
   // ── Delete in FK-safe order ──
   console.log("\n🗑️  Clearing data...")
-  await db.delete(inventoryBatches).catch((e) => console.error("    inventory_batches:", e.message))
-  await db.delete(branchInventory).catch((e) => console.error("    branch_inventory:", e.message))
-  await db.delete(products).catch((e) => console.error("    products:", e.message))
-  await db.delete(transactionItems).catch((e) => console.error("    transaction_items:", e.message))
-  await db.delete(transactions).catch((e) => console.error("    transactions:", e.message))
-  await db.delete(orderItems).catch((e) => console.error("    order_items:", e.message))
+  await db
+    .delete(inventoryBatches)
+    .catch((e) => console.error("    inventory_batches:", e.message))
+  await db
+    .delete(branchInventory)
+    .catch((e) => console.error("    branch_inventory:", e.message))
+  await db
+    .delete(products)
+    .catch((e) => console.error("    products:", e.message))
+  await db
+    .delete(transactionItems)
+    .catch((e) => console.error("    transaction_items:", e.message))
+  await db
+    .delete(transactions)
+    .catch((e) => console.error("    transactions:", e.message))
+  await db
+    .delete(orderItems)
+    .catch((e) => console.error("    order_items:", e.message))
   await db.delete(orders).catch((e) => console.error("    orders:", e.message))
-  await db.delete(cartItems).catch((e) => console.error("    cart_items:", e.message))
-  await db.delete(notifications).catch((e) => console.error("    notifications:", e.message))
+  await db
+    .delete(cartItems)
+    .catch((e) => console.error("    cart_items:", e.message))
+  await db
+    .delete(notifications)
+    .catch((e) => console.error("    notifications:", e.message))
 
   // ── After counts ──
   console.log("\n📊 After:")

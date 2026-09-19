@@ -11,28 +11,46 @@ interface LiveTransactionFeedProps {
 
 const PAGE_SIZE = 10
 
-export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) {
+export function LiveTransactionFeed({
+  transactions,
+}: LiveTransactionFeedProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [paymentFilter, setPaymentFilter] = useState("All")
   const [statusFilter, setStatusFilter] = useState("All")
-  const [selectedTxn, setSelectedTxn] = useState<StaffTransactionItem | null>(null)
+  const [selectedTxn, setSelectedTxn] = useState<StaffTransactionItem | null>(
+    null
+  )
   const [page, setPage] = useState(1)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
-      const matchesSearch = t.id.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesPayment = paymentFilter === "All" || t.paymentMethod === paymentFilter.toLowerCase()
-      const matchesStatus = statusFilter === "All" || t.status === statusFilter.toLowerCase()
+      const matchesSearch = t.id
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+      const matchesPayment =
+        paymentFilter === "All" ||
+        t.paymentMethod === paymentFilter.toLowerCase()
+      const matchesStatus =
+        statusFilter === "All" || t.status === statusFilter.toLowerCase()
       return matchesSearch && matchesPayment && matchesStatus
     })
   }, [searchQuery, paymentFilter, statusFilter, transactions])
 
-  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE))
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredTransactions.length / PAGE_SIZE)
+  )
   const currentPage = Math.min(page, totalPages)
-  const start = filteredTransactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const start =
+    filteredTransactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
   const end = Math.min(currentPage * PAGE_SIZE, filteredTransactions.length)
-  const paginatedTransactions = filteredTransactions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  )
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     clearTimeout(searchTimer.current)
@@ -48,9 +66,12 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
   }
 
   const statusStyles: Record<string, string> = {
-    completed: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
-    pending: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
-    cancelled: "bg-destructive/10 text-destructive border border-destructive/20",
+    completed:
+      "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+    pending:
+      "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+    cancelled:
+      "bg-destructive/10 text-destructive border border-destructive/20",
   }
 
   const statusDotColors: Record<string, string> = {
@@ -63,79 +84,147 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
     <>
       {/* Details Modal */}
       {selectedTxn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setSelectedTxn(null)}>
-          <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={() => setSelectedTxn(null)}
+        >
+          <div
+            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
-            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
-              <h3 className="text-lg font-bold text-foreground">Transaction Details - {`TRN-${String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}`}</h3>
+            <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-4">
+              <h3 className="text-lg font-bold text-foreground">
+                Transaction Details -{" "}
+                {`TRN-${String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}`}
+              </h3>
               <div className="flex items-center gap-3">
-                <span className={cn(
-                  "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border",
-                  selectedTxn.status === "cancelled"
-                    ? "bg-destructive/10 text-destructive border-destructive/20"
-                    : selectedTxn.status === "pending"
-                      ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                      : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                )}>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold",
+                    selectedTxn.status === "cancelled"
+                      ? "border-destructive/20 bg-destructive/10 text-destructive"
+                      : selectedTxn.status === "pending"
+                        ? "border-amber-500/20 bg-amber-500/10 text-amber-600"
+                        : "border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
+                  )}
+                >
                   {selectedTxn.status}
                 </span>
-                <button onClick={() => setSelectedTxn(null)} className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                  <X className="w-4 h-4" />
+                <button
+                  onClick={() => setSelectedTxn(null)}
+                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto p-6">
               {/* Info Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-lg border border-border">
+              <div className="grid grid-cols-1 gap-6 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Transaction Info</h4>
+                  <h4 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                    Transaction Info
+                  </h4>
                   <div className="space-y-1 text-sm">
-                    <p className="text-muted-foreground">Transaction ID: <span className="font-semibold text-foreground">TRN-{String(transactions.length - transactions.findIndex((t) => t.id === selectedTxn.id)).padStart(5, "0")}</span></p>
-                    <p className="text-muted-foreground">Date &amp; Time: <span className="font-semibold text-foreground">{new Date(selectedTxn.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span></p>
+                    <p className="text-muted-foreground">
+                      Transaction ID:{" "}
+                      <span className="font-semibold text-foreground">
+                        TRN-
+                        {String(
+                          transactions.length -
+                            transactions.findIndex(
+                              (t) => t.id === selectedTxn.id
+                            )
+                        ).padStart(5, "0")}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground">
+                      Date &amp; Time:{" "}
+                      <span className="font-semibold text-foreground">
+                        {new Date(selectedTxn.date).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </p>
                     <div className="flex items-center gap-2">
                       <p className="text-muted-foreground">Payment Method:</p>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase">
                         {selectedTxn.paymentMethod === "gcash" ? (
-                          <><CreditCard className="w-3 h-3 text-emerald-500" /> GCash</>
+                          <>
+                            <CreditCard className="h-3 w-3 text-emerald-500" />{" "}
+                            GCash
+                          </>
                         ) : (
-                          <><Banknote className="w-3 h-3 text-amber-500" /> Cash</>
+                          <>
+                            <Banknote className="h-3 w-3 text-amber-500" /> Cash
+                          </>
                         )}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment Info</h4>
+                  <h4 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                    Payment Info
+                  </h4>
                   <div className="space-y-1 text-sm">
-                    <p className="text-muted-foreground">Status: <span className="font-semibold text-foreground">{selectedTxn.status}</span></p>
-                    <p className="text-muted-foreground">Total Amount: <span className="text-base font-bold text-primary">₱{selectedTxn.total.toFixed(2)}</span></p>
+                    <p className="text-muted-foreground">
+                      Status:{" "}
+                      <span className="font-semibold text-foreground">
+                        {selectedTxn.status}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground">
+                      Total Amount:{" "}
+                      <span className="text-base font-bold text-primary">
+                        ₱{selectedTxn.total.toFixed(2)}
+                      </span>
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Items */}
               <div>
-                <h3 className="text-sm font-bold text-foreground mb-3">Items</h3>
+                <h3 className="mb-3 text-sm font-bold text-foreground">
+                  Items
+                </h3>
                 {selectedTxn.items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No item details available.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No item details available.
+                  </p>
                 ) : (
-                  <div className="border border-border rounded-lg overflow-hidden">
-                    <table className="w-full text-left border-collapse text-sm">
-                      <thead className="bg-muted/10 border-b border-border">
-                        <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                          <th className="px-4 py-3 w-[50%]">Item</th>
-                          <th className="px-4 py-3 text-center w-[15%]">Qty</th>
-                          <th className="px-4 py-3 text-right w-[30%]">Price</th>
+                  <div className="overflow-hidden rounded-lg border border-border">
+                    <table className="w-full border-collapse text-left text-sm">
+                      <thead className="border-b border-border bg-muted/10">
+                        <tr className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                          <th className="w-[50%] px-4 py-3">Item</th>
+                          <th className="w-[15%] px-4 py-3 text-center">Qty</th>
+                          <th className="w-[30%] px-4 py-3 text-right">
+                            Price
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/30 text-foreground">
                         {selectedTxn.items.map((item, idx) => (
                           <tr key={idx}>
                             <td className="px-4 py-3">{item.productName}</td>
-                            <td className="px-4 py-3 text-center font-medium">{item.quantity}</td>
-                            <td className="px-4 py-3 text-right font-medium">₱{item.price.toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-medium">
+                              {item.quantity}
+                            </td>
+                            <td className="px-4 py-3 text-right font-medium">
+                              ₱{item.price.toFixed(2)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -146,10 +235,10 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
+            <div className="flex justify-end border-t border-border bg-muted/20 px-6 py-4">
               <button
                 onClick={() => setSelectedTxn(null)}
-                className="h-11 px-6 border border-border text-foreground hover:bg-muted rounded-lg text-sm font-bold transition-all"
+                className="h-11 rounded-lg border border-border px-6 text-sm font-bold text-foreground transition-all hover:bg-muted"
               >
                 Close
               </button>
@@ -158,18 +247,20 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
         </div>
       )}
 
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
-        <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-muted/20">
-          <h4 className="font-bold text-lg text-foreground">Transaction Monitoring</h4>
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
+          <h4 className="text-lg font-bold text-foreground">
+            Transaction Monitoring
+          </h4>
+          <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
             <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search by transaction ID..."
                 defaultValue={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+                className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
               />
             </div>
             <select
@@ -178,7 +269,7 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                 setPaymentFilter(e.target.value)
                 setPage(1)
               }}
-              className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
             >
               <option value="All">Payment: All</option>
               <option value="Cash">Cash</option>
@@ -190,7 +281,7 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                 setStatusFilter(e.target.value)
                 setPage(1)
               }}
-              className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none"
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
             >
               <option value="All">Status: All</option>
               <option value="Completed">Completed</option>
@@ -201,21 +292,36 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="bg-muted/10 border-b border-border">
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Date/Time</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Transaction ID</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Method</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Total</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Status</th>
-                <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold">Actions</th>
+              <tr className="border-b border-border bg-muted/10">
+                <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                  Date/Time
+                </th>
+                <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                  Transaction ID
+                </th>
+                <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                  Method
+                </th>
+                <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                  Total
+                </th>
+                <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
               {paginatedTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-xs text-muted-foreground">
+                  <td
+                    colSpan={6}
+                    className="p-8 text-center text-xs text-muted-foreground"
+                  >
                     No transactions matched your query
                   </td>
                 </tr>
@@ -224,23 +330,45 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                   const globalIdx = (currentPage - 1) * PAGE_SIZE + idx
                   const displayId = `TRN-${String(globalIdx + 1).padStart(5, "0")}`
                   const dateObj = new Date(t.date)
-                  const formattedDate = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                  const formattedTime = dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+                  const formattedDate = dateObj.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                  const formattedTime = dateObj.toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
 
                   return (
-                    <tr key={t.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="px-6 py-4 text-sm text-foreground whitespace-nowrap">{formattedDate} · {formattedTime}</td>
-                      <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{displayId}</td>
+                    <tr
+                      key={t.id}
+                      className="transition-colors hover:bg-muted/10"
+                    >
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-foreground">
+                        {formattedDate} · {formattedTime}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-sm font-medium text-foreground">
+                        {displayId}
+                      </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-bold text-[10px] uppercase bg-muted text-muted-foreground">
-                          <span className={`w-1.5 h-1.5 rounded-full ${dotColors[t.paymentMethod] || ""}`} />
+                        <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-[10px] font-bold text-muted-foreground uppercase">
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${dotColors[t.paymentMethod] || ""}`}
+                          />
                           {t.paymentMethod}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-bold text-foreground whitespace-nowrap">₱{t.total.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-sm font-bold whitespace-nowrap text-foreground">
+                        ₱{t.total.toFixed(2)}
+                      </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full font-bold text-[10px] uppercase ${statusStyles[t.status] || ""}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusDotColors[t.status] || ""}`} />
+                        <span
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase ${statusStyles[t.status] || ""}`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${statusDotColors[t.status] || ""}`}
+                          />
                           {t.status}
                         </span>
                       </td>
@@ -248,10 +376,10 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setSelectedTxn(t)}
-                            className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                            className="rounded p-1 text-primary transition-colors hover:bg-muted"
                             title="View Details"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -263,25 +391,25 @@ export function LiveTransactionFeed({ transactions }: LiveTransactionFeedProps) 
           </table>
         </div>
 
-        <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-muted/5">
-          <p className="text-xs text-muted-foreground font-medium">
+        <div className="flex items-center justify-between border-t border-border bg-muted/5 px-6 py-4">
+          <p className="text-xs font-medium text-muted-foreground">
             Showing {start} to {end} of {filteredTransactions.length} entries
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
             </button>
-            <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+            <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
               Page {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => setPage(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
             </button>

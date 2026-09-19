@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ShieldCheck, KeyRound, ArrowLeft } from "lucide-react"
+import { ShieldCheck, KeyRound, ArrowLeft, Mail } from "lucide-react"
 import { AuthHeader } from "@/features/user-mgmt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -37,6 +37,12 @@ type MfaVerifyResponse = {
   data?: MfaVerifyResponseData
 }
 
+type CodeSentResponse = {
+  success: boolean
+  message?: string
+  data?: { email?: string }
+}
+
 /** Build the AuthUser object stored client-side after MFA verification. */
 function toAuthUser(data: MfaVerifyResponseData): AuthUser {
   return {
@@ -52,21 +58,71 @@ function toAuthUser(data: MfaVerifyResponseData): AuthUser {
 }
 
 /**
- * Second authentication step: asks for the 6-digit TOTP (or a backup code)
- * after the password / OAuth step. Lives behind the pending-mfa token.
+ * Second authentication step: asks for the 6-digit code emailed to the user's
+ * account after the password / OAuth step. Also handles first-time MFA
+ * enrollment — a valid code on an un-enrolled account simply enables MFA.
  */
 export function MfaVerifyForm() {
   const router = useRouter()
   const { setToken, setUser } = useAuth()
-  const [mfaToken, setMfaToken] = React.useState<string | null>(null)
+  const [mfaToken] = React.useState<string | null>(() => getPendingMfaToken())
   const [code, setCode] = React.useState("")
-  const [useBackup, setUseBackup] = React.useState(false)
+  const [email, setEmail] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
+  const [sending, setSending] = React.useState(true)
   const [error, setError] = React.useState("")
 
+  const sendCode = React.useCallback(
+    async (silent = false) => {
+      const token = mfaToken ?? getPendingMfaToken()
+      if (!token) return
+      if (!silent) setError("")
+      try {
+        const response = await fetch("/api/auth/mfa/setup", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = (await response
+          .json()
+          .catch(() => null)) as CodeSentResponse | null
+        if (!response.ok || !data?.success) {
+          if (!silent) setError(data?.message || "Unable to send the code")
+          return
+        }
+        if (data.data?.email) setEmail(data.data.email)
+        if (!silent) setError("")
+      } catch (err) {
+        console.error("MFA code send error:", err)
+        if (!silent) setError("Unable to send the code. Please try again.")
+      }
+    },
+    [mfaToken]
+  )
+
   React.useEffect(() => {
-    setMfaToken(getPendingMfaToken())
-  }, [])
+    const token = mfaToken ?? getPendingMfaToken()
+    if (!token) return
+    let cancelled = false
+    void (async () => {
+      try {
+        await sendCode(true)
+      } finally {
+        if (!cancelled) setSending(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [mfaToken, sendCode])
+
+  const handleResend = async () => {
+    setSending(true)
+    try {
+      await sendCode(false)
+    } finally {
+      setSending(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,7 +134,7 @@ export function MfaVerifyForm() {
       return
     }
 
-    if (!/^\d{6}$/.test(code) && !useBackup) {
+    if (!/^\d{6}$/.test(code)) {
       setError("Please enter a valid 6-digit code")
       return
     }
@@ -154,7 +210,7 @@ export function MfaVerifyForm() {
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold">
-            {useBackup ? "Enter a backup code" : "Enter your code"}
+            Enter your code
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -165,7 +221,10 @@ export function MfaVerifyForm() {
           </div>
 
           <p className="mb-6 text-center text-sm text-muted-foreground">
-            Open your authenticator app and enter the 6-digit code to continue.
+            {email
+              ? `We emailed a 6-digit code to ${email}.`
+              : "We emailed a 6-digit code to your account."}{" "}
+            Enter it below to continue.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -180,34 +239,25 @@ export function MfaVerifyForm() {
                 htmlFor="code"
                 className="text-xs tracking-wider text-muted-foreground uppercase"
               >
-                {useBackup ? "Backup Code" : "Verification Code"}
+                Verification Code
               </Label>
               <Input
                 id="code"
                 type="text"
-                inputMode={useBackup ? "text" : "numeric"}
-                placeholder={useBackup ? "XXXX-XXXX" : "000000"}
+                inputMode="numeric"
+                placeholder="000000"
                 className="h-14 p-6 text-center font-mono text-3xl tracking-widest"
-                maxLength={useBackup ? 9 : 6}
+                maxLength={6}
                 value={code}
                 onChange={(e) =>
-                  setCode(
-                    useBackup
-                      ? e.target.value
-                          .replace(/[^A-Za-z0-9]/g, "")
-                          .toUpperCase()
-                          .slice(0, 9)
-                      : e.target.value.replace(/\D/g, "").slice(0, 6)
-                  )
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
                 }
                 disabled={isLoading}
                 autoFocus
                 required
               />
               <p className="mt-1 text-center text-xs text-muted-foreground">
-                {useBackup
-                  ? "Used a one-time backup code from when you set up MFA"
-                  : "6-digit code from your authenticator app"}
+                The code is valid for 5 minutes.
               </p>
             </div>
 
@@ -221,16 +271,12 @@ export function MfaVerifyForm() {
           <div className="mt-4 border-t border-border pt-4 text-center">
             <button
               type="button"
-              onClick={() => {
-                setUseBackup((prev) => !prev)
-                setCode("")
-                setError("")
-              }}
-              className="text-sm text-primary hover:underline"
+              onClick={handleResend}
+              disabled={sending}
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {useBackup
-                ? "Use an authenticator code instead"
-                : "Use a backup code instead"}
+              <Mail className="size-4" />
+              {sending ? "Sending..." : "Didn't get it? Resend the code"}
             </button>
           </div>
 

@@ -4,21 +4,30 @@ import { z } from "zod"
 import { db } from "@/servers/db"
 import { users, emailVerifications } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { generateId, generateVerificationCode, hashPassword, hashVerificationCode } from "@/lib/auth-utils"
+import {
+  generateId,
+  generateVerificationCode,
+  hashPassword,
+  hashVerificationCode,
+} from "@/lib/auth-utils"
 import { sendVerificationEmail } from "@/lib/email-service"
 import type { AuthResponse, RegisterPayload } from "@/types/auth"
 
-const registerSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z.string(),
-  fullName: z.string().min(2, "Full name must be at least 2 characters long"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-})
+const registerSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters long"),
+    confirmPassword: z.string(),
+    fullName: z.string().min(2, "Full name must be at least 2 characters long"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
 
-export async function registerUser(payload: RegisterPayload): Promise<AuthResponse> {
+export async function registerUser(
+  payload: RegisterPayload
+): Promise<AuthResponse> {
   try {
     // 1. Zod input validation
     const parsed = registerSchema.safeParse(payload)
@@ -42,7 +51,9 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
       if (!existingUser.isEmailVerified) {
         // If user registered before but didn't verify, we reuse their user record
         // Invalidate old verification codes
-        await db.delete(emailVerifications).where(eq(emailVerifications.userId, existingUser.id))
+        await db
+          .delete(emailVerifications)
+          .where(eq(emailVerifications.userId, existingUser.id))
 
         // Create new verification code
         const verificationCode = generateVerificationCode()
@@ -59,11 +70,16 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
         })
 
         // Send verification email
-        await sendVerificationEmail(existingUser.email, verificationCode, existingUser.fullName)
+        await sendVerificationEmail(
+          existingUser.email,
+          verificationCode,
+          existingUser.fullName
+        )
 
         return {
           success: true,
-          message: "Account already exists but is unverified. A new verification code has been sent to your email.",
+          message:
+            "Account already exists but is unverified. A new verification code has been sent to your email.",
           data: {
             userId: existingUser.id,
             email: existingUser.email,
@@ -107,7 +123,11 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
     })
 
     // 6. Send verification email (non-blocking so user is registered)
-    const emailSent = await sendVerificationEmail(email, verificationCode, fullName)
+    const emailSent = await sendVerificationEmail(
+      email,
+      verificationCode,
+      fullName
+    )
 
     return {
       success: true,

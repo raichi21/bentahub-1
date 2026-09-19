@@ -13,11 +13,13 @@ export function AuthHeader({ subtitle, className }: AuthHeaderProps) {
   const { storeName } = useStoreSettings()
 
   return (
-    <div className={cn("flex flex-col items-center mb-6", className)}>
+    <div className={cn("mb-6 flex flex-col items-center", className)}>
       <StoreLogo size="lg" boxClassName="shadow-sm mb-2" />
       <h1 className="text-2xl font-bold text-primary">{storeName}</h1>
       {subtitle && (
-        <p className="text-sm text-muted-foreground mt-1 text-center">{subtitle}</p>
+        <p className="mt-1 text-center text-sm text-muted-foreground">
+          {subtitle}
+        </p>
       )}
     </div>
   )

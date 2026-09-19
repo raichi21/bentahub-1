@@ -1,8 +1,4 @@
-export const REQUIRED_ENV_KEYS = [
-  "DATABASE_URL",
-  "JWT_SECRET",
-  "MFA_ENC_KEY",
-] as const
+export const REQUIRED_ENV_KEYS = ["DATABASE_URL", "JWT_SECRET"] as const
 
 /**
  * Returns the names of any required environment variables that are missing

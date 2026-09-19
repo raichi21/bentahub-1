@@ -16,12 +16,17 @@ export default function CashierLayout({
 
   return (
     <RoleGate allow={ALLOWED_ROLES}>
-      <div className="h-screen bg-background text-foreground flex overflow-hidden">
-        <CashierSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <div className="flex h-screen overflow-hidden bg-background text-foreground">
+        <CashierSidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
 
-        <div className="flex-1 flex flex-col h-screen md:ml-[280px] overflow-hidden">
-          <CashierTopbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <main className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex h-screen flex-1 flex-col overflow-hidden md:ml-[280px]">
+          <CashierTopbar
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          />
+          <main className="flex flex-1 flex-col overflow-hidden">
             {children}
           </main>
         </div>

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { cashDrawerSessions, transactions, branches, users } from "@/servers/schemas"
+import {
+  cashDrawerSessions,
+  transactions,
+  branches,
+  users,
+} from "@/servers/schemas"
 import { eq, and, sql } from "drizzle-orm"
 
 export async function PATCH(
@@ -9,7 +14,11 @@ export async function PATCH(
   context: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["cashier"], "Cashier area")
+    const auth = checkRoleAuth(
+      extractToken(request),
+      ["cashier"],
+      "Cashier area"
+    )
     if (auth.error) return auth.error
 
     const { sessionId } = await context.params
@@ -19,7 +28,10 @@ export async function PATCH(
     })
 
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const branchName = user.branch || "Lourdes Main Branch"
@@ -28,7 +40,10 @@ export async function PATCH(
     })
 
     if (!branchRecord) {
-      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Branch not found" },
+        { status: 404 }
+      )
     }
 
     const session = await db.query.cashDrawerSessions.findFirst({
@@ -36,38 +51,62 @@ export async function PATCH(
     })
 
     if (!session) {
-      return NextResponse.json({ success: false, message: "Cash drawer session not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Cash drawer session not found" },
+        { status: 404 }
+      )
     }
 
     if (session.branchId !== branchRecord.id) {
       return NextResponse.json(
-        { success: false, message: "This cash drawer session does not belong to your branch" },
+        {
+          success: false,
+          message: "This cash drawer session does not belong to your branch",
+        },
         { status: 403 }
       )
     }
 
     if (session.status !== "open") {
       return NextResponse.json(
-        { success: false, message: "This cash drawer session is already closed" },
+        {
+          success: false,
+          message: "This cash drawer session is already closed",
+        },
         { status: 409 }
       )
     }
 
     const body = await request.json()
-    const parsedActual = body?.actualEndingCash === undefined ? null : Number(body.actualEndingCash)
+    const parsedActual =
+      body?.actualEndingCash === undefined
+        ? null
+        : Number(body.actualEndingCash)
 
-    if (parsedActual === null || !Number.isFinite(parsedActual) || parsedActual < 0) {
+    if (
+      parsedActual === null ||
+      !Number.isFinite(parsedActual) ||
+      parsedActual < 0
+    ) {
       return NextResponse.json(
-        { success: false, message: "A valid actual ending cash count is required" },
+        {
+          success: false,
+          message: "A valid actual ending cash count is required",
+        },
         { status: 400 }
       )
     }
 
-    const notes = typeof body?.notes === "string" && body.notes.trim() ? body.notes.trim() : session.notes
+    const notes =
+      typeof body?.notes === "string" && body.notes.trim()
+        ? body.notes.trim()
+        : session.notes
 
     // expectedEndingCash = startingCash + Σ(amountPaid - change of linked cash transactions)
     const cashAgg = await db
-      .select({ netCash: sql<number>`coalesce(sum(${transactions.amountPaid} - coalesce(${transactions.change}, 0)), 0)` })
+      .select({
+        netCash: sql<number>`coalesce(sum(${transactions.amountPaid} - coalesce(${transactions.change}, 0)), 0)`,
+      })
       .from(transactions)
       .where(
         and(
@@ -105,7 +144,10 @@ export async function PATCH(
   } catch (error) {
     console.error("Close cash drawer session error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while closing the cash drawer session" },
+      {
+        success: false,
+        message: "An error occurred while closing the cash drawer session",
+      },
       { status: 500 }
     )
   }

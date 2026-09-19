@@ -79,11 +79,11 @@ export async function GET(request: NextRequest) {
       isActive: p.isActive,
       quantity: p.quantity,
       branch: p.branchName,
-      stockStatus: (
-        p.quantity === 0 ? "out-of-stock"
-        : p.quantity <= p.lowStockThreshold ? "low-stock"
-        : "in-stock"
-      ) as "in-stock" | "low-stock" | "out-of-stock",
+      stockStatus: (p.quantity === 0
+        ? "out-of-stock"
+        : p.quantity <= p.lowStockThreshold
+          ? "low-stock"
+          : "in-stock") as "in-stock" | "low-stock" | "out-of-stock",
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     }))

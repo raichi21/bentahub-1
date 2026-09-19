@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
   try {
     const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     let prefs = await db.query.notificationPreferences.findFirst({
@@ -27,14 +30,23 @@ export async function GET(request: NextRequest) {
         userId,
         orderUpdates: true,
       })
-      prefs = { id, userId, orderUpdates: true, createdAt: new Date(), updatedAt: new Date() }
+      prefs = {
+        id,
+        userId,
+        orderUpdates: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     }
 
     return NextResponse.json({ success: true, data: prefs }, { status: 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Failed to fetch notification preferences:", message)
-    return NextResponse.json({ success: false, message: "Failed to fetch preferences" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch preferences" },
+      { status: 500 }
+    )
   }
 }
 
@@ -42,17 +54,23 @@ export async function PUT(request: NextRequest) {
   try {
     const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     const body = await request.json()
     const parsed = updateNotifPrefsSchema.safeParse(body)
 
     if (!parsed.success) {
-      return NextResponse.json({
-        success: false,
-        message: parsed.error.errors[0]?.message ?? "Invalid input",
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message: parsed.error.errors[0]?.message ?? "Invalid input",
+        },
+        { status: 400 }
+      )
     }
 
     const { orderUpdates } = parsed.data
@@ -62,7 +80,8 @@ export async function PUT(request: NextRequest) {
     })
 
     if (existing) {
-      await db.update(notificationPreferences)
+      await db
+        .update(notificationPreferences)
         .set({ orderUpdates })
         .where(eq(notificationPreferences.userId, userId))
     } else {
@@ -73,13 +92,19 @@ export async function PUT(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Notification preferences updated",
-    }, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Notification preferences updated",
+      },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Failed to update notification preferences:", message)
-    return NextResponse.json({ success: false, message: "Failed to update preferences" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "Failed to update preferences" },
+      { status: 500 }
+    )
   }
 }

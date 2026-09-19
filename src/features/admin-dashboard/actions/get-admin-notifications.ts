@@ -22,16 +22,17 @@ interface GetAdminNotificationsResult {
   unreadCount: number
 }
 
-const severityMap: Record<string, "critical" | "info" | "success" | "warning"> = {
-  "low-stock": "critical",
-  "order-status": "info",
-  "order-ready": "success",
-  "order-completed": "success",
-  "payment-received": "success",
-  "new-product": "info",
-  promotion: "info",
-  system: "info",
-}
+const severityMap: Record<string, "critical" | "info" | "success" | "warning"> =
+  {
+    "low-stock": "critical",
+    "order-status": "info",
+    "order-ready": "success",
+    "order-completed": "success",
+    "payment-received": "success",
+    "new-product": "info",
+    promotion: "info",
+    system: "info",
+  }
 
 const categoryMap: Record<string, string> = {
   "low-stock": "Inventory",
@@ -82,7 +83,9 @@ export async function getAdminNotifications(
     query = db
       .select()
       .from(notifications)
-      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
+      .where(
+        and(eq(notifications.userId, userId), eq(notifications.isRead, false))
+      )
   }
 
   const rows = (await query
@@ -93,7 +96,9 @@ export async function getAdminNotifications(
   const unreadRows = (await db
     .select()
     .from(notifications)
-    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))) as DbNotification[]
+    .where(
+      and(eq(notifications.userId, userId), eq(notifications.isRead, false))
+    )) as DbNotification[]
 
   return {
     notifications: rows.map((n) => ({

@@ -1,14 +1,23 @@
 import { NextRequest } from "next/server"
 import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, branches, transactions, transactionItems } from "@/servers/schemas"
+import {
+  users,
+  branches,
+  transactions,
+  transactionItems,
+} from "@/servers/schemas"
 import { eq, max } from "drizzle-orm"
 import { createCheckoutSession } from "@/lib/paymongo"
 import { apiResponse, apiError } from "@/lib/api-response"
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["cashier"], "Cashier area")
+    const auth = checkRoleAuth(
+      extractToken(request),
+      ["cashier"],
+      "Cashier area"
+    )
     if (auth.error) {
       return auth.error
     }
@@ -54,15 +63,20 @@ export async function POST(request: NextRequest) {
       status: "pending",
     })
 
-    const transactionItemsData = items.map((item: { product: { id: string; name: string; price: number }; quantity: number }) => ({
-      id: generateId(),
-      transactionId,
-      productId: item.product.id,
-      productName: item.product.name,
-      quantity: item.quantity,
-      price: item.product.price.toString(),
-      subtotal: (item.product.price * item.quantity).toString(),
-    }))
+    const transactionItemsData = items.map(
+      (item: {
+        product: { id: string; name: string; price: number }
+        quantity: number
+      }) => ({
+        id: generateId(),
+        transactionId,
+        productId: item.product.id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price.toString(),
+        subtotal: (item.product.price * item.quantity).toString(),
+      })
+    )
 
     if (transactionItemsData.length > 0) {
       await db.insert(transactionItems).values(transactionItemsData)
@@ -70,15 +84,23 @@ export async function POST(request: NextRequest) {
 
     // Create PayMongo Checkout Session (returns real checkout_url for QR)
     const amountInCentavos = Math.round(totalAmount * 100)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.headers.get("origin") || "http://localhost:3000"
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      request.headers.get("origin") ||
+      "http://localhost:3000"
     const checkout = await createCheckoutSession({
       amount: amountInCentavos,
       description: `Receipt #${nextReceiptNumber} (txn:${transactionId}) - ${branchName}`,
-      lineItems: items.map((item: { product: { name: string; price: number }; quantity: number }) => ({
-        name: item.product.name,
-        amount: Math.round(item.product.price * 100), // unit price in centavos
-        quantity: item.quantity,
-      })),
+      lineItems: items.map(
+        (item: {
+          product: { name: string; price: number }
+          quantity: number
+        }) => ({
+          name: item.product.name,
+          amount: Math.round(item.product.price * 100), // unit price in centavos
+          quantity: item.quantity,
+        })
+      ),
       successUrl: `${baseUrl}/cashier?gcash_success=receipt_${nextReceiptNumber}`,
       cancelUrl: `${baseUrl}/cashier?gcash_cancelled=receipt_${nextReceiptNumber}`,
       billing: {
@@ -106,7 +128,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("GCash payment error:", error)
-    const detail = error instanceof Error ? error.message : "Failed to process GCash payment"
+    const detail =
+      error instanceof Error ? error.message : "Failed to process GCash payment"
     console.error("GCash payment error detail:", detail)
     return apiError("Failed to process GCash payment", 500)
   }

@@ -34,7 +34,7 @@ export default function CashierPage() {
   }
 
   return (
-    <div className="flex flex-1 overflow-hidden h-full relative">
+    <div className="relative flex h-full flex-1 overflow-hidden">
       {drawerMode && (
         <CashDrawerModal
           mode={drawerMode}
@@ -64,25 +64,25 @@ export default function CashierPage() {
       {!isCartOpen && cart.items.length > 0 && (
         <button
           onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-6 right-4 z-20 lg:hidden bg-primary text-primary-foreground p-4 rounded-full shadow-lg shadow-primary/30 hover:brightness-110 transition-all flex items-center gap-2"
+          className="fixed right-4 bottom-6 z-20 flex items-center gap-2 rounded-full bg-primary p-4 text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:brightness-110 lg:hidden"
         >
-          <ShoppingCart className="w-5 h-5" />
+          <ShoppingCart className="h-5 w-5" />
           <span className="text-sm font-bold">{cart.items.length}</span>
         </button>
       )}
 
-      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
-        <div className="p-4 pb-0 flex items-center justify-end">
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-end p-4 pb-0">
           <button
             onClick={() => setDrawerMode(hasOpenSession ? "close" : "open")}
             disabled={drawer.isLoading}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 border ${
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors disabled:opacity-50 ${
               hasOpenSession
                 ? "border-border text-muted-foreground hover:bg-muted"
-                : "border-emerald-500/40 text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/15"
+                : "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15"
             }`}
           >
-            <Wallet className="w-3.5 h-3.5" />
+            <Wallet className="h-3.5 w-3.5" />
             {hasOpenSession ? "Close Cash Drawer" : "Open Cash Drawer"}
           </button>
         </div>
@@ -95,12 +95,24 @@ export default function CashierPage() {
         />
       </div>
 
-      <div className={`${isCartOpen ? 'fixed inset-0 z-40 lg:static lg:inset-auto' : 'hidden lg:block'} lg:h-full`}>
+      <div
+        className={`${isCartOpen ? "fixed inset-0 z-40 lg:static lg:inset-auto" : "hidden lg:block"} lg:h-full`}
+      >
         {isCartOpen && (
-          <div onClick={() => setIsCartOpen(false)} className="absolute inset-0 bg-black/50 lg:hidden" />
+          <div
+            onClick={() => setIsCartOpen(false)}
+            className="absolute inset-0 bg-black/50 lg:hidden"
+          />
         )}
-        <div className={`${isCartOpen ? 'relative z-10 h-full' : 'h-full'} w-full lg:w-auto`}>
-          <CartSidebar cart={cart} onClose={() => setIsCartOpen(false)} onSaleComplete={refetch} canAcceptCash={drawer.canAcceptCash} />
+        <div
+          className={`${isCartOpen ? "relative z-10 h-full" : "h-full"} w-full lg:w-auto`}
+        >
+          <CartSidebar
+            cart={cart}
+            onClose={() => setIsCartOpen(false)}
+            onSaleComplete={refetch}
+            canAcceptCash={drawer.canAcceptCash}
+          />
         </div>
       </div>
     </div>

@@ -19,15 +19,31 @@ interface HistoryTableProps {
   loading: boolean
 }
 
-export function HistoryTable({ transactions, totalCount, page, pageSize, onPageChange, onSearch, branches = [], branchId, onBranchChange, onExportPDF, loading }: HistoryTableProps) {
-  const [selectedTransaction, setSelectedTransaction] = useState<HistoryTransactionRowData | null>(null)
+export function HistoryTable({
+  transactions,
+  totalCount,
+  page,
+  pageSize,
+  onPageChange,
+  onSearch,
+  branches = [],
+  branchId,
+  onBranchChange,
+  onExportPDF,
+  loading,
+}: HistoryTableProps) {
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<HistoryTransactionRowData | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+      if (exportRef.current && !exportRef.current.contains(e.target as Node))
+        setExportOpen(false)
     }
     document.addEventListener("mousedown", handleClick)
     return () => document.removeEventListener("mousedown", handleClick)
@@ -43,17 +59,34 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
   }
 
   const handleExport = () => {
-    const headers = ["Date", "Transaction ID", "Branch", "Items", "Subtotal", "Total", "Payment", "Status"]
+    const headers = [
+      "Date",
+      "Transaction ID",
+      "Branch",
+      "Items",
+      "Subtotal",
+      "Total",
+      "Payment",
+      "Status",
+    ]
     const rows = transactions.map((t) => [
-      t.dateDisplay, t.displayId, t.branchName, String(t.itemsCount),
-      t.subtotalDisplay, t.totalAmountDisplay, t.paymentMethodDisplay, t.statusDisplay,
+      t.dateDisplay,
+      t.displayId,
+      t.branchName,
+      String(t.itemsCount),
+      t.subtotalDisplay,
+      t.totalAmountDisplay,
+      t.paymentMethodDisplay,
+      t.statusDisplay,
     ])
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n")
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
-    a.href = url; a.download = `history-${new Date().toISOString().split("T")[0]}.csv`
-    a.click(); URL.revokeObjectURL(url)
+    a.href = url
+    a.download = `history-${new Date().toISOString().split("T")[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const paymentStyles: Record<string, string> = {
@@ -62,59 +95,71 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
   }
 
   const statusStyles: Record<string, string> = {
-    completed: "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800",
-    pending: "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800",
-    cancelled: "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800",
+    completed:
+      "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800",
+    pending:
+      "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800",
+    cancelled:
+      "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800",
   }
 
   return (
     <>
-      <section className="bg-card rounded-xl border border-border shadow-sm">
-        <div className="px-6 py-3 bg-muted/20 border-b border-border flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+      <section className="rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 px-6 py-3 sm:flex-row sm:items-center">
           <div>
-            <h3 className="text-sm font-bold text-foreground">All Branch Transactions</h3>
-
+            <h3 className="text-sm font-bold text-foreground">
+              All Branch Transactions
+            </h3>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative w-full md:w-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search ID, Branch..."
-                className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none w-full md:w-64"
+                className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary/20 md:w-64"
                 onChange={handleSearchChange}
               />
             </div>
             <select
               value={branchId}
               onChange={(e) => onBranchChange(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-primary focus:border-primary outline-none w-full md:w-auto"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary md:w-auto"
             >
               <option value="">All Branches</option>
               {branches.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
               ))}
             </select>
             <div ref={exportRef} className="relative">
               <button
                 onClick={() => setExportOpen(!exportOpen)}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-lg border border-border text-xs font-bold transition-all w-full md:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-2 text-xs font-bold transition-all hover:bg-muted md:w-auto"
               >
                 <Download className="h-[18px] w-[18px]" />
                 Export
               </button>
               {exportOpen && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="absolute top-full right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-border bg-card shadow-xl">
                   <button
-                    onClick={() => { handleExport(); setExportOpen(false) }}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                    onClick={() => {
+                      handleExport()
+                      setExportOpen(false)
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
                   >
                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                     Export as CSV (Excel)
                   </button>
                   <button
-                    onClick={() => { onExportPDF?.(); setExportOpen(false) }}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-accent transition-colors border-t border-border"
+                    onClick={() => {
+                      onExportPDF?.()
+                      setExportOpen(false)
+                    }}
+                    className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
                   >
                     <FileText className="h-4 w-4 text-red-600" />
                     Export as PDF
@@ -127,45 +172,82 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
 
         <div className="overflow-x-auto">
           {loading && transactions.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground animate-pulse">Loading transactions...</div>
+            <div className="animate-pulse p-12 text-center text-sm text-muted-foreground">
+              Loading transactions...
+            </div>
           ) : transactions.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">No transactions found.</div>
+            <div className="p-12 text-center text-sm text-muted-foreground">
+              No transactions found.
+            </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-muted/10 border-b border-border">
+            <table className="w-full border-collapse text-left">
+              <thead className="border-b border-border bg-muted/10">
                 <tr>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Transaction ID</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Branch</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Items</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Payment</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Action</th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Date
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Transaction ID
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Branch
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Items
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Total
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Payment
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold tracking-wider uppercase">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {transactions.map((txn) => (
-                  <tr key={txn.id} className="hover:bg-muted/10 transition-colors">
-                    <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{txn.dateDisplay}</td>
-                    <td className="px-6 py-4 font-mono font-medium text-sm text-foreground">{txn.displayId}</td>
-                    <td className="px-6 py-4 font-medium text-sm text-foreground">{txn.branchName}</td>
-                    <td className="px-6 py-4 font-medium text-sm text-foreground">{txn.itemsCount} items</td>
-                    <td className="px-6 py-4 font-medium text-sm text-foreground whitespace-nowrap">{txn.totalAmountDisplay}</td>
+                  <tr
+                    key={txn.id}
+                    className="transition-colors hover:bg-muted/10"
+                  >
+                    <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-foreground">
+                      {txn.dateDisplay}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-sm font-medium text-foreground">
+                      {txn.displayId}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">
+                      {txn.branchName}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">
+                      {txn.itemsCount} items
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-foreground">
+                      {txn.totalAmountDisplay}
+                    </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${paymentStyles[txn.paymentMethod] || ""}`}>
+                      <span
+                        className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold uppercase ${paymentStyles[txn.paymentMethod] || ""}`}
+                      >
                         {txn.paymentMethodDisplay}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusStyles[txn.status] || ""}`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusStyles[txn.status] || ""}`}
+                      >
                         {txn.statusDisplay}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <button
-                          className="p-1 hover:bg-muted rounded text-primary transition-colors"
+                          className="rounded p-1 text-primary transition-colors hover:bg-muted"
                           title="View Details"
                           onClick={() => setSelectedTransaction(txn)}
                         >
@@ -181,25 +263,25 @@ export function HistoryTable({ transactions, totalCount, page, pageSize, onPageC
         </div>
 
         {totalCount > 0 && (
-          <div className="px-6 py-4 bg-muted/20 border-t border-border flex justify-between items-center">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+          <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
+            <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
               Showing {start} to {end} of {totalCount} entries
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1}
-                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
               </button>
-              <span className="px-3 py-1 text-sm text-muted-foreground font-medium">
+              <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
                 Page {page} of {totalPages}
               </span>
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= totalPages}
-                className="px-3 py-1 border border-border rounded text-muted-foreground text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
               </button>

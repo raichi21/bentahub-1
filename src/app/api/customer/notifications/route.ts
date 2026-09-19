@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
       query = db
         .select()
         .from(notifications)
-        .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
+        .where(
+          and(eq(notifications.userId, userId), eq(notifications.isRead, false))
+        )
     }
 
     const userNotifications = await query
@@ -119,9 +121,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    await db
-      .delete(notifications)
-      .where(eq(notifications.userId, userId))
+    await db.delete(notifications).where(eq(notifications.userId, userId))
 
     return NextResponse.json(
       { success: true, message: "All notifications cleared" },

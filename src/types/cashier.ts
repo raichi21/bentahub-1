@@ -125,4 +125,3 @@ export function formatPeso(value: string | number | null | undefined): string {
   if (!Number.isFinite(num)) return "₱0.00"
   return `₱${num.toFixed(2)}`
 }
-

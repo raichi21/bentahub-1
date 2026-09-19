@@ -31,9 +31,24 @@ export async function POST(request: NextRequest) {
 
     // ── Find or create the store branches ──
     const branchNames = [
-      { name: "Lourdes Main Branch", location: "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan", capacity: 500 },
-      { name: "Lourdes Second Branch", location: "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan", capacity: 400 },
-      { name: "Lourdes Third Branch", location: "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan", capacity: 400 },
+      {
+        name: "Lourdes Main Branch",
+        location:
+          "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan",
+        capacity: 500,
+      },
+      {
+        name: "Lourdes Second Branch",
+        location:
+          "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan",
+        capacity: 400,
+      },
+      {
+        name: "Lourdes Third Branch",
+        location:
+          "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan",
+        capacity: 400,
+      },
     ]
 
     const branchIds: string[] = []
@@ -44,7 +59,8 @@ export async function POST(request: NextRequest) {
       })
 
       if (existing) {
-        await db.update(branches)
+        await db
+          .update(branches)
           .set({ location: b.location, capacity: b.capacity })
           .where(eq(branches.id, existing.id))
         branchIds.push(existing.id)
@@ -68,9 +84,9 @@ export async function POST(request: NextRequest) {
         count: branchIds.length,
       },
       { status: 200 }
-    );
+    )
   } catch (error) {
-    console.error("❌ Error seeding branches:", error);
+    console.error("❌ Error seeding branches:", error)
     return NextResponse.json(
       {
         success: false,
@@ -78,6 +94,6 @@ export async function POST(request: NextRequest) {
         error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
-    );
+    )
   }
 }

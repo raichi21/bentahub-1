@@ -58,8 +58,12 @@ function formatCurrency(amount: number): string {
 
 function formatDateTime(d: Date): string {
   return formatPHDateTime(d, {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   })
 }
 
@@ -82,10 +86,17 @@ export async function getCashDrawerSessions(
     baseConditions.push(eq(cashDrawerSessions.branchId, filters.branchId))
   }
   if (filters.dateFrom) {
-    baseConditions.push(gte(cashDrawerSessions.openedAt, startOfManilaDay(new Date(filters.dateFrom))))
+    baseConditions.push(
+      gte(
+        cashDrawerSessions.openedAt,
+        startOfManilaDay(new Date(filters.dateFrom))
+      )
+    )
   }
   if (filters.dateTo) {
-    baseConditions.push(lte(cashDrawerSessions.openedAt, endOfManilaDay(new Date(filters.dateTo))))
+    baseConditions.push(
+      lte(cashDrawerSessions.openedAt, endOfManilaDay(new Date(filters.dateTo)))
+    )
   }
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined
@@ -99,21 +110,46 @@ export async function getCashDrawerSessions(
 
   const totalNetworkCash = sessions
     .filter((s) => s.status === "closed" && s.actualEndingCash != null)
-    .reduce((sum, s) => sum + parseFloat(s.actualEndingCash as unknown as string), 0)
+    .reduce(
+      (sum, s) => sum + parseFloat(s.actualEndingCash as unknown as string),
+      0
+    )
 
   const totalDiscrepancy = sessions
-    .filter((s) => s.status === "closed" && s.expectedEndingCash != null && s.actualEndingCash != null)
-    .reduce((sum, s) => sum + (parseFloat(s.actualEndingCash as unknown as string) - parseFloat(s.expectedEndingCash as unknown as string)), 0)
+    .filter(
+      (s) =>
+        s.status === "closed" &&
+        s.expectedEndingCash != null &&
+        s.actualEndingCash != null
+    )
+    .reduce(
+      (sum, s) =>
+        sum +
+        (parseFloat(s.actualEndingCash as unknown as string) -
+          parseFloat(s.expectedEndingCash as unknown as string)),
+      0
+    )
 
   const offset = (filters.page - 1) * filters.pageSize
   const pageRows = sessions.slice(offset, offset + filters.pageSize)
 
   const mappedSessions = pageRows.map((s, idx) => {
     const startingCash = parseFloat(s.startingCash as unknown as string)
-    const expected = s.expectedEndingCash != null ? parseFloat(s.expectedEndingCash as unknown as string) : null
-    const actual = s.actualEndingCash != null ? parseFloat(s.actualEndingCash as unknown as string) : null
+    const expected =
+      s.expectedEndingCash != null
+        ? parseFloat(s.expectedEndingCash as unknown as string)
+        : null
+    const actual =
+      s.actualEndingCash != null
+        ? parseFloat(s.actualEndingCash as unknown as string)
+        : null
     const diff = expected != null && actual != null ? actual - expected : null
-    const netCashImpact = actual != null ? actual - startingCash : (expected != null ? expected - startingCash : 0)
+    const netCashImpact =
+      actual != null
+        ? actual - startingCash
+        : expected != null
+          ? expected - startingCash
+          : 0
 
     return {
       id: s.id,
@@ -129,7 +165,8 @@ export async function getCashDrawerSessions(
       startingCash,
       startingCashDisplay: formatCurrency(startingCash),
       expectedEndingCash: expected,
-      expectedEndingCashDisplay: expected != null ? formatCurrency(expected) : "—",
+      expectedEndingCashDisplay:
+        expected != null ? formatCurrency(expected) : "—",
       actualEndingCash: actual,
       actualEndingCashDisplay: actual != null ? formatCurrency(actual) : "—",
       netCashImpact,

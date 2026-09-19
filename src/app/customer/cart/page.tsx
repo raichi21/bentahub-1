@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { 
-  Minus, 
-  Plus, 
-  Trash2, 
-  HelpCircle, 
+import {
+  Minus,
+  Plus,
+  Trash2,
+  HelpCircle,
   ShoppingCart,
-  Loader2
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
@@ -31,7 +31,15 @@ export default function CartPage() {
 function CartPageInner() {
   const router = useRouter()
   const { user } = useAuth()
-  const { items, total, isLoading, error, fetchCart, updateCartItem, removeFromCart } = useCart()
+  const {
+    items,
+    total,
+    isLoading,
+    error,
+    fetchCart,
+    updateCartItem,
+    removeFromCart,
+  } = useCart()
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Fetch cart on mount
@@ -94,7 +102,9 @@ function CartPageInner() {
   const handleCheckout = () => {
     if (items.length === 0) return
     setIsProcessing(true)
-    router.push(`/customer/checkout?branch=${encodeURIComponent(items[0]?.branch || user?.branch || "Lourdes Main Branch")}`)
+    router.push(
+      `/customer/checkout?branch=${encodeURIComponent(items[0]?.branch || user?.branch || "Lourdes Main Branch")}`
+    )
   }
 
   const subtotal = Number(total) || 0
@@ -103,98 +113,117 @@ function CartPageInner() {
   const totalDue = subtotal + serviceFee + bond
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl">
       {error && (
-        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+        <div className="mb-6 rounded border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {items.length === 0 ? (
         isLoading ? (
-          <div className="flex flex-col items-center justify-center h-96 gap-4">
+          <div className="flex h-96 flex-col items-center justify-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground text-lg">Loading cart...</p>
+            <p className="text-lg text-muted-foreground">Loading cart...</p>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-96 gap-4">
-            <p className="text-muted-foreground text-lg">Your cart is empty</p>
+          <div className="flex h-96 flex-col items-center justify-center gap-4">
+            <p className="text-lg text-muted-foreground">Your cart is empty</p>
             <Button onClick={() => router.push("/customer/catalog")}>
               Continue Shopping
             </Button>
           </div>
         )
       ) : (
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex flex-col items-start gap-6 lg:flex-row">
           {/* Left: Item List & Schedule */}
-          <div className="flex-1 space-y-6 w-full">
+          <div className="w-full flex-1 space-y-6">
             {/* Items Section */}
-            <section className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
-              <div className="p-4 bg-muted border-b border-border flex justify-between items-center">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Product Details</span>
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quantity</span>
+            <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+              <div className="flex items-center justify-between border-b border-border bg-muted p-4">
+                <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Product Details
+                </span>
+                <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                  Quantity
+                </span>
               </div>
               <div className="divide-y divide-border">
                 {items.map((item) => {
-                  const atMax = item.availableStock != null && item.quantity >= item.availableStock
+                  const atMax =
+                    item.availableStock != null &&
+                    item.quantity >= item.availableStock
                   return (
-                  <div key={item.id} className="p-6 flex items-center gap-6 group">
-                    <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-border shrink-0 bg-muted">
-                      {item.image && (
-                        <Image 
-                          alt={item.productName} 
-                          src={item.image}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-foreground truncate">{item.productName}</h3>
-                      <p className="text-sm text-muted-foreground">{item.category}</p>
-                      <p className="font-mono text-primary font-bold mt-2">₱{Number(item.price).toFixed(2)}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <div className="flex items-center border border-border rounded-lg overflow-hidden h-10">
+                    <div
+                      key={item.id}
+                      className="group flex items-center gap-6 p-6"
+                    >
+                      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                        {item.image && (
+                          <Image
+                            alt={item.productName}
+                            src={item.image}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-lg font-bold text-foreground">
+                          {item.productName}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {item.category}
+                        </p>
+                        <p className="mt-2 font-mono font-bold text-primary">
+                          ₱{Number(item.price).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <div className="flex h-10 items-center overflow-hidden rounded-lg border border-border">
+                          <button
+                            onClick={() => handleDecrement(item.id)}
+                            className="flex h-full items-center px-3 transition-colors hover:bg-muted"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <input
+                            className="h-full w-12 border-x border-border bg-transparent text-center font-mono text-foreground"
+                            type="text"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleQuantityChange(item.id, e.target.value)
+                            }
+                            onBlur={() => handleQuantityBlur(item.id)}
+                          />
+                          <button
+                            onClick={() => handleIncrement(item.id)}
+                            disabled={atMax}
+                            title={atMax ? "Maximum stock reached" : undefined}
+                            className={cn(
+                              "flex h-full items-center px-3 transition-colors",
+                              atMax
+                                ? "cursor-not-allowed opacity-40"
+                                : "hover:bg-muted"
+                            )}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                        {atMax && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Max {item.availableStock} in stock
+                          </span>
+                        )}
                         <button
-                          onClick={() => handleDecrement(item.id)}
-                          className="px-3 hover:bg-muted transition-colors h-full flex items-center"
+                          onClick={() => handleRemove(item.id)}
+                          className="flex items-center gap-1 text-xs text-destructive hover:underline"
                         >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <input
-                          className="w-12 text-center border-x border-border bg-transparent font-mono text-foreground h-full"
-                          type="text"
-                          value={item.quantity}
-                          onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                          onBlur={() => handleQuantityBlur(item.id)}
-                        />
-                        <button
-                          onClick={() => handleIncrement(item.id)}
-                          disabled={atMax}
-                          title={atMax ? "Maximum stock reached" : undefined}
-                          className={cn(
-                            "px-3 transition-colors h-full flex items-center",
-                            atMax ? "opacity-40 cursor-not-allowed" : "hover:bg-muted"
-                          )}
-                        >
-                          <Plus className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" /> Remove
                         </button>
                       </div>
-                      {atMax && (
-                        <span className="text-[10px] text-muted-foreground">
-                          Max {item.availableStock} in stock
-                        </span>
-                      )}
-                      <button
-                        onClick={() => handleRemove(item.id)}
-                        className="text-destructive text-xs hover:underline flex items-center gap-1"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Remove
-                      </button>
                     </div>
-                  </div>
                   )
                 })}
               </div>
@@ -202,36 +231,53 @@ function CartPageInner() {
           </div>
 
           {/* Right: Order Summary (Sticky) */}
-          <aside className="w-full lg:w-96 sticky top-24">
-            <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-foreground mb-6">Order Summary</h3>
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Subtotal</span>
-                  <span className="font-mono text-foreground">₱{subtotal.toFixed(2)}</span>
+          <aside className="sticky top-24 w-full lg:w-96">
+            <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+              <h3 className="mb-6 text-lg font-bold text-foreground">
+                Order Summary
+              </h3>
+              <div className="mb-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Subtotal
+                  </span>
+                  <span className="font-mono text-foreground">
+                    ₱{subtotal.toFixed(2)}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
-                    <span className="text-sm text-muted-foreground">Service Fee</span>
-                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    <span className="text-sm text-muted-foreground">
+                      Service Fee
+                    </span>
+                    <HelpCircle className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
                   </div>
-                  <span className="font-mono text-foreground">₱{serviceFee.toFixed(2)}</span>
+                  <span className="font-mono text-foreground">
+                    ₱{serviceFee.toFixed(2)}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Reservation Bond</span>
-                  <span className="font-mono text-foreground">₱{bond.toFixed(2)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Reservation Bond
+                  </span>
+                  <span className="font-mono text-foreground">
+                    ₱{bond.toFixed(2)}
+                  </span>
                 </div>
               </div>
-              <div className="pt-4 border-t border-border mb-8">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-foreground">Total Due</span>
-                  <span className="text-2xl font-bold text-primary">₱{totalDue.toFixed(2)}</span>
+              <div className="mb-8 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold text-foreground">
+                    Total Due
+                  </span>
+                  <span className="text-2xl font-bold text-primary">
+                    ₱{totalDue.toFixed(2)}
+                  </span>
                 </div>
-
               </div>
               <div className="space-y-3">
                 <Button
-                  className="w-full bg-primary text-white py-4 rounded-lg font-bold active:scale-[0.99] transition-all shadow-sm hover:brightness-110"
+                  className="w-full rounded-lg bg-primary py-4 font-bold text-white shadow-sm transition-all hover:brightness-110 active:scale-[0.99]"
                   onClick={handleCheckout}
                   disabled={isProcessing || items.length === 0}
                 >
@@ -239,13 +285,12 @@ function CartPageInner() {
                 </Button>
                 <button
                   onClick={() => router.push("/customer/catalog")}
-                  className="w-full bg-transparent border border-border text-muted-foreground py-4 rounded-lg font-semibold hover:bg-muted transition-colors flex items-center justify-center gap-2"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-transparent py-4 font-semibold text-muted-foreground transition-colors hover:bg-muted"
                 >
                   <ShoppingCart className="h-4 w-4" />
                   Continue Shopping
                 </button>
               </div>
-
             </div>
           </aside>
         </div>

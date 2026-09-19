@@ -82,27 +82,20 @@ export interface LoginResponseData {
 /** Shape returned when a login must continue with an MFA challenge. */
 export interface LoginChallengeData {
   requiresMfa: boolean
-  /** True when the user has no MFA enrolled and must set it up now. */
-  requiresMfaSetup: boolean
   /** Short-lived JWT used to complete the MFA challenge. */
   mfaToken: string
 }
 
 /** Shape returned after a successful MFA verification/enrollment. */
-export interface MfaVerifyResponseData extends LoginResponseData {
-  /** Backup codes shown exactly once right after enrollment. */
-  backupCodes?: string[]
-}
+export type MfaVerifyResponseData = LoginResponseData
 
-/** Shape returned by the MFA setup endpoint (enrollment QR data). */
-export interface MfaSetupData {
-  otpauthUrl: string
-  qrCodeDataUrl: string
-  manualSecret: string
+/** Shape returned by the MFA code request endpoint. */
+export interface MfaCodeSentData {
+  /** The address the 6-digit code was emailed to. */
+  email: string
 }
 
 /** Shape returned by the MFA status endpoint. */
 export interface MfaStatusData {
   enabled: boolean
-  backupCodesRemaining: number
 }

@@ -1,7 +1,11 @@
 import { db } from "@/servers/db"
 import { branchInventory, branches, inventoryBatches } from "@/servers/schemas"
 import { eq, and, gt, inArray } from "drizzle-orm"
-import type { StaffProductsData, StaffProductItem, InventoryBatchItem } from "@/types/staff"
+import type {
+  StaffProductsData,
+  StaffProductItem,
+  InventoryBatchItem,
+} from "@/types/staff"
 
 interface InventoryWithProduct {
   id: string
@@ -44,7 +48,10 @@ interface InventoryBatchRecord {
   updatedAt: Date
 }
 
-function computeStockStatus(quantity: number, threshold: number): "in-stock" | "low-stock" | "out-of-stock" {
+function computeStockStatus(
+  quantity: number,
+  threshold: number
+): "in-stock" | "low-stock" | "out-of-stock" {
   if (quantity === 0) return "out-of-stock"
   if (quantity <= threshold) return "low-stock"
   return "in-stock"
@@ -57,20 +64,33 @@ function computeStockStatus(quantity: number, threshold: number): "in-stock" | "
  *  - "out"           -> no remaining quantity
  *  - "normal"        -> anything else
  */
-function computeBatchStatus(batch: InventoryBatchRecord, isHead: boolean, now: Date): InventoryBatchItem["status"] {
+function computeBatchStatus(
+  batch: InventoryBatchRecord,
+  isHead: boolean,
+  now: Date
+): InventoryBatchItem["status"] {
   if (batch.quantity <= 0) return "out"
   if (isHead) return "next-to-sell"
   if (batch.expiryDate) {
-    const days = (new Date(batch.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    const days =
+      (new Date(batch.expiryDate).getTime() - now.getTime()) /
+      (1000 * 60 * 60 * 24)
     if (days >= 0 && days <= 30) return "expiring"
   }
   return "normal"
 }
 
-function getNearestExpiry(inventoryId: string, allBatches: InventoryBatchRecord[]): string | null {
+function getNearestExpiry(
+  inventoryId: string,
+  allBatches: InventoryBatchRecord[]
+): string | null {
   const now = new Date()
   const futureBatches = allBatches.filter(
-    (b) => b.branchInventoryId === inventoryId && b.expiryDate && new Date(b.expiryDate) > now && b.quantity > 0
+    (b) =>
+      b.branchInventoryId === inventoryId &&
+      b.expiryDate &&
+      new Date(b.expiryDate) > now &&
+      b.quantity > 0
   )
   if (futureBatches.length === 0) return null
   const nearest = futureBatches.reduce((prev, curr) =>
@@ -79,7 +99,9 @@ function getNearestExpiry(inventoryId: string, allBatches: InventoryBatchRecord[
   return nearest.expiryDate!.toISOString()
 }
 
-export async function getStaffProducts(branchName: string): Promise<StaffProductsData> {
+export async function getStaffProducts(
+  branchName: string
+): Promise<StaffProductsData> {
   const branchRecord = await db.query.branches.findFirst({
     where: eq(branches.name, branchName),
   })
@@ -88,27 +110,28 @@ export async function getStaffProducts(branchName: string): Promise<StaffProduct
     throw new Error(`Branch "${branchName}" not found`)
   }
 
-  const inventory = await db.query.branchInventory.findMany({
+  const inventory = (await db.query.branchInventory.findMany({
     where: eq(branchInventory.branchId, branchRecord.id),
     with: {
       product: true,
     },
-  }) as unknown as InventoryWithProduct[]
+  })) as unknown as InventoryWithProduct[]
 
   const inventoryIds = inventory.map((inv) => inv.id)
-  const allBatches = inventoryIds.length > 0
-    ? await db.query.inventoryBatches.findMany({
-        where: and(
-          gt(inventoryBatches.quantity, 0),
-          inArray(inventoryBatches.branchInventoryId, inventoryIds),
-        ),
-        orderBy: (batches, { asc }) => [
-          asc(batches.expiryDate),
-          asc(batches.receivedDate),
-          asc(batches.createdAt),
-        ],
-      }) as unknown as (InventoryBatchRecord & { status?: never })[]
-    : []
+  const allBatches =
+    inventoryIds.length > 0
+      ? ((await db.query.inventoryBatches.findMany({
+          where: and(
+            gt(inventoryBatches.quantity, 0),
+            inArray(inventoryBatches.branchInventoryId, inventoryIds)
+          ),
+          orderBy: (batches, { asc }) => [
+            asc(batches.expiryDate),
+            asc(batches.receivedDate),
+            asc(batches.createdAt),
+          ],
+        })) as unknown as (InventoryBatchRecord & { status?: never })[])
+      : []
 
   const now = new Date()
 
@@ -140,7 +163,10 @@ export async function getStaffProducts(branchName: string): Promise<StaffProduct
       barcode: inv.product.barcode ?? "",
       name: inv.product.name,
       price: parseFloat(inv.product.price),
-      bulkPrice: inv.product.bulkPrice !== null ? parseFloat(inv.product.bulkPrice) : null,
+      bulkPrice:
+        inv.product.bulkPrice !== null
+          ? parseFloat(inv.product.bulkPrice)
+          : null,
       unit: inv.product.unit || "pcs",
       category: inv.product.category,
       image: inv.product.image,
@@ -155,7 +181,9 @@ export async function getStaffProducts(branchName: string): Promise<StaffProduct
 
   const inStock = products.filter((p) => p.stockStatus === "in-stock").length
   const lowStock = products.filter((p) => p.stockStatus === "low-stock").length
-  const outOfStock = products.filter((p) => p.stockStatus === "out-of-stock").length
+  const outOfStock = products.filter(
+    (p) => p.stockStatus === "out-of-stock"
+  ).length
 
   return {
     products,

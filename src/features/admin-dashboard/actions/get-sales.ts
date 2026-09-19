@@ -3,8 +3,18 @@ import { transactions } from "@/servers/schemas"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
 
 const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ]
 
 export interface SalesOverview {
@@ -27,7 +37,12 @@ export interface SalesTransactionRow {
   receiptNumber: number | null
   gcashRef: string | null
   cashierName: string | null
-  items: Array<{ productName: string; quantity: number; price: number; subtotal: number }>
+  items: Array<{
+    productName: string
+    quantity: number
+    price: number
+    subtotal: number
+  }>
 }
 
 export interface SalesTrendPoint {
@@ -55,7 +70,9 @@ function formatCurrency(amount: number): string {
   return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export async function getSalesData(filters: SalesFilterOptions = { page: 1, pageSize: 15 }): Promise<SalesPageData> {
+export async function getSalesData(
+  filters: SalesFilterOptions = { page: 1, pageSize: 15 }
+): Promise<SalesPageData> {
   const now = new Date()
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -77,7 +94,7 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
 
   const where = and(...baseConditions)
 
-  const allMatched = await db.query.transactions.findMany({
+  const allMatched = (await db.query.transactions.findMany({
     where,
     orderBy: [desc(transactions.createdAt)],
     with: {
@@ -86,29 +103,47 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
         columns: { fullName: true },
       },
     },
-  }) as Array<{
-    id: string; branchId: string; totalAmount: string; paymentMethod: string; status: string; createdAt: Date
-    receiptNumber: number | null; gcashRef: string | null
+  })) as Array<{
+    id: string
+    branchId: string
+    totalAmount: string
+    paymentMethod: string
+    status: string
+    createdAt: Date
+    receiptNumber: number | null
+    gcashRef: string | null
     cashier: { fullName: string } | null
-    items: Array<{ productName: string; quantity: number; price: string; subtotal: string }>
+    items: Array<{
+      productName: string
+      quantity: number
+      price: string
+      subtotal: string
+    }>
   }>
 
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
 
-  const totalSales = allMatched.reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
+  const totalSales = allMatched.reduce(
+    (sum, t) => sum + parseFloat(t.totalAmount),
+    0
+  )
   const transactionCount = allMatched.length
-  const avgPerTransaction = transactionCount > 0 ? totalSales / transactionCount : 0
+  const avgPerTransaction =
+    transactionCount > 0 ? totalSales / transactionCount : 0
 
   const currentMonthRevenue = allMatched
     .filter((t) => t.createdAt >= currentMonthStart)
     .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
   const lastMonthRevenue = allMatched
-    .filter((t) => t.createdAt >= lastMonthStart && t.createdAt < currentMonthStart)
+    .filter(
+      (t) => t.createdAt >= lastMonthStart && t.createdAt < currentMonthStart
+    )
     .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
 
   let trend = "0%"
   if (lastMonthRevenue > 0) {
-    const pct = ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+    const pct =
+      ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
     trend = `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`
   } else if (currentMonthRevenue > 0) {
     trend = "+100%"
@@ -138,9 +173,10 @@ export async function getSalesData(filters: SalesFilterOptions = { page: 1, page
   const salesTrend: SalesTrendPoint[] = []
   for (let i = 11; i >= 0; i--) {
     const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const end = i === 0
-      ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-      : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59)
+    const end =
+      i === 0
+        ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+        : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59)
     const revenue = allMatched
       .filter((t) => t.createdAt >= start && t.createdAt <= end)
       .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)

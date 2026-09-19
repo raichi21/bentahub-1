@@ -11,8 +11,8 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div 
-      className="min-h-screen flex flex-col items-center justify-center bg-background p-6"
+    <div
+      className="flex min-h-screen flex-col items-center justify-center bg-background p-6"
       style={{
         backgroundImage: "radial-gradient(#c4c5d7 0.5px, transparent 0.5px)",
         backgroundSize: "24px 24px",

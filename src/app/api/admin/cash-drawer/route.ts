@@ -16,11 +16,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const page = parseInt(searchParams.get("page") || "1", 10)
     const pageSize = parseInt(searchParams.get("pageSize") || "15", 10)
 
-    const data = await getCashDrawerSessions({ cashierId, branchId, dateFrom, dateTo, page, pageSize })
+    const data = await getCashDrawerSessions({
+      cashierId,
+      branchId,
+      dateFrom,
+      dateTo,
+      page,
+      pageSize,
+    })
 
-    return NextResponse.json({ success: true, message: "Cash drawer sessions retrieved successfully", data })
+    return NextResponse.json({
+      success: true,
+      message: "Cash drawer sessions retrieved successfully",
+      data,
+    })
   } catch (error) {
     console.error("Admin get cash drawer error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

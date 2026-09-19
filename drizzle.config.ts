@@ -5,7 +5,9 @@ export default {
   out: "./drizzle",
   driver: "pg",
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/bentahub",
+    connectionString:
+      process.env.DATABASE_URL ||
+      "postgresql://postgres:postgres@localhost:5432/bentahub",
   },
   verbose: true,
   strict: false,

@@ -19,7 +19,9 @@ const VALID_PROVIDERS: Record<string, OAuthProvider> = {
 /** Redirect back to the app with a human-readable error. */
 function redirectWithError(message: string): NextResponse {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-  return NextResponse.redirect(`${appUrl}/login?oauth_error=${encodeURIComponent(message)}`)
+  return NextResponse.redirect(
+    `${appUrl}/login?oauth_error=${encodeURIComponent(message)}`
+  )
 }
 
 /**
@@ -41,7 +43,9 @@ export async function GET(
   }
 
   if (!isProviderConfigured(oauthProvider)) {
-    return redirectWithError(`${provider} sign-in is not configured yet. Please contact the administrator.`)
+    return redirectWithError(
+      `${provider} sign-in is not configured yet. Please contact the administrator.`
+    )
   }
 
   const config = getProviderConfig(oauthProvider)
@@ -52,7 +56,11 @@ export async function GET(
   const state = crypto.randomBytes(24).toString("base64url")
   const pkce = oauthProvider === "google" ? generatePkce() : undefined
 
-  const authUrl = buildAuthorizationUrl(oauthProvider, state, pkce?.codeChallenge)
+  const authUrl = buildAuthorizationUrl(
+    oauthProvider,
+    state,
+    pkce?.codeChallenge
+  )
 
   const response = NextResponse.redirect(authUrl)
 

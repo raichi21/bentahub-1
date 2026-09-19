@@ -20,44 +20,72 @@ function formatCurrency(amount: number): string {
 
 function formatDate(d: Date): string {
   return formatPHDateTime(d, {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   })
 }
 
-export async function getHistory(filters: HistoryFilterOptions = { page: 1, pageSize: 15 }) {
+export async function getHistory(
+  filters: HistoryFilterOptions = { page: 1, pageSize: 15 }
+) {
   const allBranches = await db.query.branches.findMany()
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
 
   const baseConditions: SQL[] = []
   if (filters.dateFrom) {
-    baseConditions.push(gte(transactions.createdAt, startOfManilaDay(new Date(filters.dateFrom))))
+    baseConditions.push(
+      gte(transactions.createdAt, startOfManilaDay(new Date(filters.dateFrom)))
+    )
   }
   if (filters.dateTo) {
-    baseConditions.push(lte(transactions.createdAt, endOfManilaDay(new Date(filters.dateTo))))
+    baseConditions.push(
+      lte(transactions.createdAt, endOfManilaDay(new Date(filters.dateTo)))
+    )
   }
   if (filters.branchId) {
     baseConditions.push(eq(transactions.branchId, filters.branchId))
   }
   if (filters.method) {
-    baseConditions.push(eq(transactions.paymentMethod, filters.method as "cash" | "gcash"))
+    baseConditions.push(
+      eq(transactions.paymentMethod, filters.method as "cash" | "gcash")
+    )
   }
   if (filters.status) {
-    baseConditions.push(eq(transactions.status, filters.status as "completed" | "pending" | "cancelled"))
+    baseConditions.push(
+      eq(
+        transactions.status,
+        filters.status as "completed" | "pending" | "cancelled"
+      )
+    )
   }
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined
 
-  const allRows = await db.query.transactions.findMany({
+  const allRows = (await db.query.transactions.findMany({
     where,
     orderBy: [desc(transactions.createdAt)],
-  }) as Array<{
-    id: string; branchId: string; totalAmount: string; paymentMethod: string; status: string; createdAt: Date
+  })) as Array<{
+    id: string
+    branchId: string
+    totalAmount: string
+    paymentMethod: string
+    status: string
+    createdAt: Date
   }>
 
-  const allItems = await db.query.transactionItems.findMany() as Array<{
-    id: string; transactionId: string; productId: string; productName: string
-    quantity: number; price: string; subtotal: string; createdAt: Date
+  const allItems = (await db.query.transactionItems.findMany()) as Array<{
+    id: string
+    transactionId: string
+    productId: string
+    productName: string
+    quantity: number
+    price: string
+    subtotal: string
+    createdAt: Date
   }>
 
   const itemsByTxnId = new Map<string, typeof allItems>()
@@ -70,9 +98,10 @@ export async function getHistory(filters: HistoryFilterOptions = { page: 1, page
   let filtered = allRows
   if (filters.search) {
     const q = filters.search.toLowerCase()
-    filtered = allRows.filter((t) =>
-      t.id.toLowerCase().includes(q) ||
-      (branchMap.get(t.branchId) || "").toLowerCase().includes(q)
+    filtered = allRows.filter(
+      (t) =>
+        t.id.toLowerCase().includes(q) ||
+        (branchMap.get(t.branchId) || "").toLowerCase().includes(q)
     )
   }
 
@@ -82,9 +111,19 @@ export async function getHistory(filters: HistoryFilterOptions = { page: 1, page
   const now = new Date()
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const thisWeek = filtered.filter((t) => t.createdAt >= weekAgo)
-  const lastWeek = filtered.filter((t) => t.createdAt >= new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000) && t.createdAt < weekAgo)
-  const thisWeekSales = thisWeek.reduce((sum, t) => sum + Number(t.totalAmount), 0)
-  const lastWeekSales = lastWeek.reduce((sum, t) => sum + Number(t.totalAmount), 0)
+  const lastWeek = filtered.filter(
+    (t) =>
+      t.createdAt >= new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000) &&
+      t.createdAt < weekAgo
+  )
+  const thisWeekSales = thisWeek.reduce(
+    (sum, t) => sum + Number(t.totalAmount),
+    0
+  )
+  const lastWeekSales = lastWeek.reduce(
+    (sum, t) => sum + Number(t.totalAmount),
+    0
+  )
   let trend = "0%"
   if (lastWeekSales > 0) {
     const pct = ((thisWeekSales - lastWeekSales) / lastWeekSales) * 100
@@ -120,7 +159,12 @@ export async function getHistory(filters: HistoryFilterOptions = { page: 1, page
       paymentMethod: t.paymentMethod,
       paymentMethodDisplay: t.paymentMethod === "cash" ? "CASH" : "GCASH",
       status: t.status,
-      statusDisplay: t.status === "completed" ? "Completed" : t.status === "pending" ? "Pending" : "Cancelled",
+      statusDisplay:
+        t.status === "completed"
+          ? "Completed"
+          : t.status === "pending"
+            ? "Pending"
+            : "Cancelled",
     }
   })
 

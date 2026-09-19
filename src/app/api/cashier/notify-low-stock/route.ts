@@ -6,7 +6,11 @@ import { eq, and } from "drizzle-orm"
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["cashier"], "Cashier area")
+    const auth = checkRoleAuth(
+      extractToken(request),
+      ["cashier"],
+      "Cashier area"
+    )
     if (auth.error) {
       return auth.error
     }
@@ -16,27 +20,43 @@ export async function POST(request: NextRequest) {
     })
 
     if (!cashier) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const body = await request.json()
     const { productId, productName, sku } = body
 
     if (!productId || !productName || !sku) {
-      return NextResponse.json({ success: false, message: "Missing product details" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Missing product details" },
+        { status: 400 }
+      )
     }
 
     const branch = cashier.branch
     if (!branch) {
-      return NextResponse.json({ success: false, message: "Cashier has no assigned branch" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Cashier has no assigned branch" },
+        { status: 400 }
+      )
     }
 
     const staffUsers = await db.query.users.findMany({
-      where: and(eq(users.role, "staff"), eq(users.branch, branch), eq(users.isActive, true)),
+      where: and(
+        eq(users.role, "staff"),
+        eq(users.branch, branch),
+        eq(users.isActive, true)
+      ),
     })
 
     if (staffUsers.length === 0) {
-      return NextResponse.json({ success: false, message: "No staff users found in your branch" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "No staff users found in your branch" },
+        { status: 404 }
+      )
     }
 
     const adminUsers = await db.query.users.findMany({
@@ -47,12 +67,15 @@ export async function POST(request: NextRequest) {
       where: and(
         eq(notifications.relatedProductId, productId),
         eq(notifications.type, "low-stock"),
-        eq(notifications.isRead, false),
+        eq(notifications.isRead, false)
       ),
     })
 
     if (existingNotification) {
-      return NextResponse.json({ success: true, message: "Staff already notified about this product" })
+      return NextResponse.json({
+        success: true,
+        message: "Staff already notified about this product",
+      })
     }
 
     const allTargetUsers = [...staffUsers, ...adminUsers]
@@ -78,8 +101,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Notify low stock error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while creating low stock notification" },
-      { status: 500 },
+      {
+        success: false,
+        message: "An error occurred while creating low stock notification",
+      },
+      { status: 500 }
     )
   }
 }

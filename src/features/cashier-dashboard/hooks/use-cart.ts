@@ -56,7 +56,10 @@ export function useCart() {
   }
 
   // Computed totals
-  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0
+  )
   const discountAmount = (subtotal * discountPercent) / 100
   const total = Math.max(0, subtotal - discountAmount)
 

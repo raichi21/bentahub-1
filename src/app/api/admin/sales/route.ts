@@ -3,7 +3,9 @@ import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { getSalesData } from "@/features/admin-dashboard/actions/get-sales"
 import type { AdminApiResponse, SalesApiData } from "@/types/admin"
 
-export async function GET(request: NextRequest): Promise<NextResponse<AdminApiResponse<SalesApiData>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<AdminApiResponse<SalesApiData>>> {
   try {
     const token = extractToken(request)
 
@@ -37,7 +39,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
     const page = parseInt(searchParams.get("page") || "1", 10)
     const pageSize = parseInt(searchParams.get("pageSize") || "15", 10)
 
-    const data = await getSalesData({ branchId, dateFrom, dateTo, page, pageSize })
+    const data = await getSalesData({
+      branchId,
+      dateFrom,
+      dateTo,
+      page,
+      pageSize,
+    })
 
     return NextResponse.json({
       success: true,
@@ -47,7 +55,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
   } catch (error) {
     console.error("Admin sales error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching sales data" },
+      {
+        success: false,
+        message: "An error occurred while fetching sales data",
+      },
       { status: 500 }
     )
   }

@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic"
 /**
  * GET /api/auth/mfa/status
  *
- * Returns whether the signed-in user has MFA enabled and how many backup
- * codes remain. Used by the MFA management panel in settings/profile.
+ * Returns whether the signed-in user has MFA enabled. Used by the MFA
+ * management panel in settings/profile.
  */
 export async function GET(
   request: NextRequest
@@ -43,12 +43,7 @@ export async function GET(
       {
         success: true,
         message: "MFA status retrieved",
-        data: {
-          enabled: user.mfaEnabled,
-          backupCodesRemaining: user.mfaBackupCodes
-            ? storedBackupCount(user.mfaBackupCodes)
-            : 0,
-        },
+        data: { enabled: user.mfaEnabled },
       },
       { status: 200 }
     )
@@ -61,14 +56,5 @@ export async function GET(
       },
       { status: 500 }
     )
-  }
-}
-
-function storedBackupCount(storedJson: string): number {
-  try {
-    const parsed: unknown = JSON.parse(storedJson)
-    return Array.isArray(parsed) ? parsed.length : 0
-  } catch {
-    return 0
   }
 }

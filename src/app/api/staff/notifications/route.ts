@@ -19,16 +19,17 @@ interface NotificationItem {
   icon: string
 }
 
-const severityMap: Record<string, "critical" | "info" | "success" | "warning"> = {
-  "low-stock": "critical",
-  "order-status": "info",
-  "order-ready": "success",
-  "order-completed": "success",
-  "payment-received": "success",
-  "new-product": "info",
-  promotion: "info",
-  system: "info",
-}
+const severityMap: Record<string, "critical" | "info" | "success" | "warning"> =
+  {
+    "low-stock": "critical",
+    "order-status": "info",
+    "order-ready": "success",
+    "order-completed": "success",
+    "payment-received": "success",
+    "new-product": "info",
+    promotion: "info",
+    system: "info",
+  }
 
 const categoryMap: Record<string, string> = {
   "low-stock": "Inventory",
@@ -85,7 +86,12 @@ export async function GET(request: NextRequest) {
       query = db
         .select()
         .from(notifications)
-        .where(and(eq(notifications.userId, auth.userId), eq(notifications.isRead, false)))
+        .where(
+          and(
+            eq(notifications.userId, auth.userId),
+            eq(notifications.isRead, false)
+          )
+        )
     }
 
     const rows = (await query
@@ -96,7 +102,12 @@ export async function GET(request: NextRequest) {
     const unreadRows = (await db
       .select()
       .from(notifications)
-      .where(and(eq(notifications.userId, auth.userId), eq(notifications.isRead, false)))) as DbNotification[]
+      .where(
+        and(
+          eq(notifications.userId, auth.userId),
+          eq(notifications.isRead, false)
+        )
+      )) as DbNotification[]
 
     const mapped: NotificationItem[] = rows.map((n) => ({
       id: n.id,
@@ -119,8 +130,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Staff notifications error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching notifications" },
-      { status: 500 },
+      {
+        success: false,
+        message: "An error occurred while fetching notifications",
+      },
+      { status: 500 }
     )
   }
 }
@@ -139,16 +153,32 @@ export async function PATCH(request: NextRequest) {
       await db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })
-        .where(and(eq(notifications.userId, auth.userId), eq(notifications.isRead, false)))
-      return NextResponse.json({ success: true, message: "All notifications marked as read" })
+        .where(
+          and(
+            eq(notifications.userId, auth.userId),
+            eq(notifications.isRead, false)
+          )
+        )
+      return NextResponse.json({
+        success: true,
+        message: "All notifications marked as read",
+      })
     }
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
       await db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })
-        .where(and(inArray(notifications.id, ids), eq(notifications.userId, auth.userId)))
-      return NextResponse.json({ success: true, message: `${ids.length} notifications marked as read` })
+        .where(
+          and(
+            inArray(notifications.id, ids),
+            eq(notifications.userId, auth.userId)
+          )
+        )
+      return NextResponse.json({
+        success: true,
+        message: `${ids.length} notifications marked as read`,
+      })
     }
 
     const { notificationId } = body
@@ -156,14 +186,28 @@ export async function PATCH(request: NextRequest) {
       await db
         .update(notifications)
         .set({ isRead: true, readAt: new Date() })
-        .where(and(eq(notifications.id, notificationId), eq(notifications.userId, auth.userId)))
-      return NextResponse.json({ success: true, message: "Notification marked as read" })
+        .where(
+          and(
+            eq(notifications.id, notificationId),
+            eq(notifications.userId, auth.userId)
+          )
+        )
+      return NextResponse.json({
+        success: true,
+        message: "Notification marked as read",
+      })
     }
 
-    return NextResponse.json({ success: false, message: "No notification IDs provided" }, { status: 400 })
+    return NextResponse.json(
+      { success: false, message: "No notification IDs provided" },
+      { status: 400 }
+    )
   } catch (error) {
     console.error("Staff notifications patch error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -174,13 +218,17 @@ export async function DELETE(request: NextRequest) {
       return auth.error
     }
 
-    await db
-      .delete(notifications)
-      .where(eq(notifications.userId, auth.userId))
+    await db.delete(notifications).where(eq(notifications.userId, auth.userId))
 
-    return NextResponse.json({ success: true, message: "All notifications cleared" })
+    return NextResponse.json({
+      success: true,
+      message: "All notifications cleared",
+    })
   } catch (error) {
     console.error("Staff notifications delete error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

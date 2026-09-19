@@ -54,12 +54,7 @@ export async function PUT(
           eq(branchInventory.branchId, branches.id)
         )
       )
-      .where(
-        and(
-          eq(cartItems.id, itemId),
-          eq(cartItems.userId, userId)
-        )
-      )
+      .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, userId)))
       .limit(1)
 
     if (rows.length === 0) {
@@ -90,12 +85,7 @@ export async function PUT(
         quantity: cappedQuantity,
         subtotal: sql`(${cartItems.price} * ${cappedQuantity})::numeric(10, 2)`,
       })
-      .where(
-        and(
-          eq(cartItems.id, itemId),
-          eq(cartItems.userId, userId)
-        )
-      )
+      .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, userId)))
       .returning()
 
     if (updated.length === 0) {
@@ -146,12 +136,7 @@ export async function DELETE(
     // row can be deleted. No separate pre-SELECT needed — one query total.
     const deleted = await db
       .delete(cartItems)
-      .where(
-        and(
-          eq(cartItems.id, itemId),
-          eq(cartItems.userId, userId)
-        )
-      )
+      .where(and(eq(cartItems.id, itemId), eq(cartItems.userId, userId)))
       .returning({ id: cartItems.id })
 
     if (deleted.length === 0) {

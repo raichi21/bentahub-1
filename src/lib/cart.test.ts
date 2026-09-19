@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest"
-import { MAX_ITEM_QUANTITY, clampCartQuantity, validateCartQuantity } from "./cart"
+import {
+  MAX_ITEM_QUANTITY,
+  clampCartQuantity,
+  validateCartQuantity,
+} from "./cart"
 
 describe("clampCartQuantity", () => {
   it("returns null for non-finite or non-positive inputs", () => {
@@ -33,11 +37,15 @@ describe("validateCartQuantity", () => {
   })
 
   it("rejects when the product is out of stock", () => {
-    expect(validateCartQuantity(1, 0)).toBe("This product is out of stock at the selected branch")
+    expect(validateCartQuantity(1, 0)).toBe(
+      "This product is out of stock at the selected branch"
+    )
   })
 
   it("rejects quantities above available stock", () => {
-    expect(validateCartQuantity(5, 3)).toBe("Only 3 item(s) available at the selected branch")
+    expect(validateCartQuantity(5, 3)).toBe(
+      "Only 3 item(s) available at the selected branch"
+    )
   })
 
   it("accepts quantities at or below available stock", () => {

@@ -58,9 +58,7 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
 
   updateOrder: (id, updates) => {
     const { orders } = get()
-    const updated = orders.map((o) =>
-      o.id === id ? { ...o, ...updates } : o
-    )
+    const updated = orders.map((o) => (o.id === id ? { ...o, ...updates } : o))
     set({ orders: updated })
   },
 

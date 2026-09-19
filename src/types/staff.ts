@@ -57,7 +57,12 @@ export interface StaffTransactionItem {
   paymentMethod: "cash" | "gcash"
   total: number
   status: "completed" | "cancelled" | "pending"
-  items: { productName: string; quantity: number; price: number; subtotal: number }[]
+  items: {
+    productName: string
+    quantity: number
+    price: number
+    subtotal: number
+  }[]
 }
 
 export interface StaffApiResponse<T = unknown> {

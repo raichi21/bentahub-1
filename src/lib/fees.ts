@@ -5,4 +5,4 @@
  * RESERVATION_BOND  – fixed bond amount per order
  */
 export const SERVICE_FEE_RATE = 0.01
-export const RESERVATION_BOND = 50.00
+export const RESERVATION_BOND = 50.0

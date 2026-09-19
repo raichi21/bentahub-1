@@ -3,11 +3,18 @@ import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { createTransaction, NoOpenCashDrawerError } from "@/features/cashier-dashboard/actions/create-transaction"
+import {
+  createTransaction,
+  NoOpenCashDrawerError,
+} from "@/features/cashier-dashboard/actions/create-transaction"
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["cashier"], "Cashier area")
+    const auth = checkRoleAuth(
+      extractToken(request),
+      ["cashier"],
+      "Cashier area"
+    )
 
     if (auth.error) {
       return auth.error
@@ -20,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
@@ -33,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (!branchRecord) {
       return NextResponse.json(
         { success: false, message: "Branch not found" },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
@@ -43,21 +50,21 @@ export async function POST(request: NextRequest) {
     if (!items || items.length === 0) {
       return NextResponse.json(
         { success: false, message: "No items provided" },
-        { status: 400 },
+        { status: 400 }
       )
     }
 
     if (!paymentMethod || !["cash", "gcash"].includes(paymentMethod)) {
       return NextResponse.json(
         { success: false, message: "Invalid payment method" },
-        { status: 400 },
+        { status: 400 }
       )
     }
 
     if (!totalAmount || totalAmount <= 0) {
       return NextResponse.json(
         { success: false, message: "Invalid total amount" },
-        { status: 400 },
+        { status: 400 }
       )
     }
 
@@ -77,19 +84,22 @@ export async function POST(request: NextRequest) {
         message: "Transaction completed successfully",
         data: { id: result.id, receiptNumber: result.receiptNumber },
       },
-      { status: 201 },
+      { status: 201 }
     )
   } catch (error) {
     if (error instanceof NoOpenCashDrawerError) {
       return NextResponse.json(
         { success: false, message: error.message },
-        { status: 400 },
+        { status: 400 }
       )
     }
     console.error("Cashier transaction error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while processing the transaction" },
-      { status: 500 },
+      {
+        success: false,
+        message: "An error occurred while processing the transaction",
+      },
+      { status: 500 }
     )
   }
 }

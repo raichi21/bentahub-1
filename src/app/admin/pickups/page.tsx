@@ -70,8 +70,12 @@ export default function PickupsPage() {
     const rows = [
       ["Order ID", "Customer", "Branch", "Items", "Scheduled Date", "Status"],
       ...pickups.map((p) => [
-        p.displayId, p.customerName, p.branch, String(p.itemsCount),
-        p.pickupDeadline ?? "", p.status,
+        p.displayId,
+        p.customerName,
+        p.branch,
+        String(p.itemsCount),
+        p.pickupDeadline ?? "",
+        p.status,
       ]),
     ]
     const csv = rows.map((r) => r.join(",")).join("\n")
@@ -87,8 +91,12 @@ export default function PickupsPage() {
   function exportPDF() {
     if (!data) return
     const tableRows = data.pickups.map((p) => [
-      p.displayId, p.customerName, p.branch, String(p.itemsCount),
-      p.pickupDeadline ?? "", p.status,
+      p.displayId,
+      p.customerName,
+      p.branch,
+      String(p.itemsCount),
+      p.pickupDeadline ?? "",
+      p.status,
     ])
     exportTableAsPdf({
       title: "Pickup Orders Report",
@@ -98,7 +106,14 @@ export default function PickupsPage() {
         { label: "Pending", value: String(data.metrics.pending) },
         { label: "Delayed", value: String(data.metrics.delayed) },
       ],
-      headers: ["Order ID", "Customer", "Branch", "Items", "Scheduled Date", "Status"],
+      headers: [
+        "Order ID",
+        "Customer",
+        "Branch",
+        "Items",
+        "Scheduled Date",
+        "Status",
+      ],
       rows: tableRows,
       filename: `pickups-report-${new Date().toISOString().slice(0, 10)}.pdf`,
     })
@@ -122,8 +137,8 @@ export default function PickupsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Total Orders"
           value={String(metrics?.total ?? 0)}

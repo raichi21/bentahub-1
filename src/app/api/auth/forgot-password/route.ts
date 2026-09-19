@@ -13,7 +13,6 @@ const RESET_TOKEN_EXPIRY_HOURS = 1
 /** Internal work-account domain — not a registered domain, mail sent here bounces. */
 const INTERNAL_DOMAIN = "@bentahub.com"
 
-
 /**
  * POST /api/auth/forgot-password
  *
@@ -21,7 +20,9 @@ const INTERNAL_DOMAIN = "@bentahub.com"
  * Always returns the same message regardless of whether the email exists
  * to prevent user-enumeration attacks.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<AuthResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse>> {
   try {
     const body = await request.json()
     const { email } = body
@@ -40,20 +41,29 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     })
 
     // Security: identical response for existing and non-existing accounts
-    const safeMessage = "If an account exists with this email, a password reset link will be sent"
+    const safeMessage =
+      "If an account exists with this email, a password reset link will be sent"
 
     if (!user) {
-      return NextResponse.json({ success: true, message: safeMessage }, { status: 200 })
+      return NextResponse.json(
+        { success: true, message: safeMessage },
+        { status: 200 }
+      )
     }
 
     if (user.email.toLowerCase().endsWith(INTERNAL_DOMAIN)) {
-      return NextResponse.json({ success: true, message: safeMessage }, { status: 200 })
+      return NextResponse.json(
+        { success: true, message: safeMessage },
+        { status: 200 }
+      )
     }
 
     // --- Generate & store reset token ---------------------------------------
 
     // Delete any existing reset tokens for this user first
-    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, user.id))
+    await db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.userId, user.id))
 
     let resetToken = ""
     let isUnique = false
@@ -69,7 +79,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
       }
     }
 
-    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
+    const expiresAt = new Date(
+      Date.now() + RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000
+    )
 
     await db.insert(passwordResetTokens).values({
       id: generateId(),
@@ -82,17 +94,31 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     // --- Send email (fail silently to avoid leaking account existence) ------
 
     const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`
-    const emailSent = await sendPasswordResetEmail(user.email, resetToken, resetLink, user.fullName)
+    const emailSent = await sendPasswordResetEmail(
+      user.email,
+      resetToken,
+      resetLink,
+      user.fullName
+    )
 
     if (!emailSent) {
-      console.error("[Auth] Failed to send password reset email for user:", user.id)
+      console.error(
+        "[Auth] Failed to send password reset email for user:",
+        user.id
+      )
     }
 
-    return NextResponse.json({ success: true, message: safeMessage }, { status: 200 })
+    return NextResponse.json(
+      { success: true, message: safeMessage },
+      { status: 200 }
+    )
   } catch (error) {
     console.error("Forgot password error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred during password reset request" },
+      {
+        success: false,
+        message: "An error occurred during password reset request",
+      },
       { status: 500 }
     )
   }

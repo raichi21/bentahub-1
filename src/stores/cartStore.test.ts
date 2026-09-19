@@ -20,14 +20,22 @@ function makeItem(overrides: Partial<CartItem> = {}): CartItem {
 
 describe("cartStore", () => {
   beforeEach(() => {
-    useCartStore.setState({ items: [], itemCount: 0, total: 0, isLoading: false, error: null })
+    useCartStore.setState({
+      items: [],
+      itemCount: 0,
+      total: 0,
+      isLoading: false,
+      error: null,
+    })
   })
 
   it("computes itemCount and total from items", () => {
-    useCartStore.getState().setItems([
-      makeItem({ id: "a", quantity: 2, subtotal: 20 }),
-      makeItem({ id: "b", productId: "prod-2", quantity: 3, subtotal: 30 }),
-    ])
+    useCartStore
+      .getState()
+      .setItems([
+        makeItem({ id: "a", quantity: 2, subtotal: 20 }),
+        makeItem({ id: "b", productId: "prod-2", quantity: 3, subtotal: 30 }),
+      ])
 
     const state = useCartStore.getState()
     expect(state.itemCount).toBe(5)
@@ -35,7 +43,14 @@ describe("cartStore", () => {
   })
 
   it("coerces string prices and subtotals to numbers", () => {
-    useCartStore.getState().setItems([makeItem({ price: "10.5" as unknown as number, subtotal: "10.5" as unknown as number })])
+    useCartStore
+      .getState()
+      .setItems([
+        makeItem({
+          price: "10.5" as unknown as number,
+          subtotal: "10.5" as unknown as number,
+        }),
+      ])
 
     const state = useCartStore.getState()
     expect(state.items[0].price).toBe(10.5)
@@ -69,7 +84,9 @@ describe("cartStore", () => {
   it("updateItem honors an explicit subtotal", () => {
     useCartStore.getState().addItem(makeItem())
 
-    useCartStore.getState().updateItem("item-1", { quantity: 3, subtotal: 29.99 })
+    useCartStore
+      .getState()
+      .updateItem("item-1", { quantity: 3, subtotal: 29.99 })
 
     expect(useCartStore.getState().items[0].subtotal).toBe(29.99)
     expect(useCartStore.getState().total).toBe(29.99)
@@ -78,7 +95,9 @@ describe("cartStore", () => {
   it("removeItem drops the row and recomputes totals", () => {
     const state = useCartStore.getState()
     state.addItem(makeItem())
-    state.addItem(makeItem({ id: "b", productId: "prod-2", quantity: 2, subtotal: 20 }))
+    state.addItem(
+      makeItem({ id: "b", productId: "prod-2", quantity: 2, subtotal: 20 })
+    )
 
     state.removeItem("item-1")
 
@@ -91,7 +110,9 @@ describe("cartStore", () => {
   it("clearCart resets items and totals", () => {
     const state = useCartStore.getState()
     state.addItem(makeItem())
-    state.addItem(makeItem({ id: "b", productId: "prod-2", quantity: 2, subtotal: 20 }))
+    state.addItem(
+      makeItem({ id: "b", productId: "prod-2", quantity: 2, subtotal: 20 })
+    )
 
     state.clearCart()
 

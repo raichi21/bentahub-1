@@ -22,7 +22,9 @@ export default function MonitoringPage() {
     fetch("/api/staff/transactions", {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json() as Promise<StaffApiResponse<StaffTransactionItem[]>>)
+      .then(
+        (res) => res.json() as Promise<StaffApiResponse<StaffTransactionItem[]>>
+      )
       .then((json) => {
         if (cancelled) return
         if (json.success && json.data) {
@@ -31,10 +33,16 @@ export default function MonitoringPage() {
           setError(json.message)
         }
       })
-      .catch(() => { if (!cancelled) setError("Failed to load transactions") })
-      .finally(() => { if (!cancelled) setFetched(true) })
+      .catch(() => {
+        if (!cancelled) setError("Failed to load transactions")
+      })
+      .finally(() => {
+        if (!cancelled) setFetched(true)
+      })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [token, authLoading])
 
   const isLoading = authLoading || (token !== null && !fetched && !error)
@@ -54,18 +62,21 @@ export default function MonitoringPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
-              <div className="h-4 w-24 bg-muted rounded mb-4" />
-              <div className="h-8 w-32 bg-muted rounded" />
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-6"
+            >
+              <div className="mb-4 h-4 w-24 rounded bg-muted" />
+              <div className="h-8 w-32 rounded bg-muted" />
             </div>
           ))}
         </div>
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6 animate-pulse">
-          <div className="h-8 w-48 bg-muted rounded mb-6" />
+        <div className="animate-pulse rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-6 h-8 w-48 rounded bg-muted" />
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-12 bg-muted/50 rounded mb-2" />
+            <div key={i} className="mb-2 h-12 rounded bg-muted/50" />
           ))}
         </div>
       </div>
@@ -82,7 +93,7 @@ export default function MonitoringPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KPICard
           title="Today's Transactions"
           value={String(kpis.totalTransactions)}

@@ -46,7 +46,11 @@ function deferred<T>(): Deferred<T> {
 }
 
 function okResponse(payload: unknown): Response {
-  return { ok: true, status: 200, json: async () => payload } as unknown as Response
+  return {
+    ok: true,
+    status: 200,
+    json: async () => payload,
+  } as unknown as Response
 }
 
 function badResponse(payload: unknown, status = 400): Response {
@@ -58,7 +62,13 @@ describe("useCartActions quantity sync", () => {
     vi.useFakeTimers()
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockAuth = { user: { userId: "user-1" }, token: "test-token" }
-    useCartStore.setState({ items: [], itemCount: 0, total: 0, isLoading: false, error: null })
+    useCartStore.setState({
+      items: [],
+      itemCount: 0,
+      total: 0,
+      isLoading: false,
+      error: null,
+    })
   })
 
   afterEach(() => {
@@ -185,7 +195,10 @@ describe("useCartActions quantity sync", () => {
 
     await act(async () => {
       response.resolve(
-        badResponse({ success: false, message: "Only 20 item(s) available at the selected branch" })
+        badResponse({
+          success: false,
+          message: "Only 20 item(s) available at the selected branch",
+        })
       )
     })
     const after = useCartStore.getState().items[0]
@@ -219,7 +232,9 @@ describe("useCartActions quantity sync", () => {
     // PUT fails: the temp row doesn't exist on the server yet (the add POST
     // was still in flight) → the hook re-syncs the cart and rolls back
     await act(async () => {
-      putResponse.resolve(badResponse({ success: false, message: "Cart item not found" }, 404))
+      putResponse.resolve(
+        badResponse({ success: false, message: "Cart item not found" }, 404)
+      )
     })
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(useCartStore.getState().items[0].quantity).toBe(1)
@@ -255,9 +270,9 @@ describe("useCartActions quantity sync", () => {
   })
 
   it("adopts the server's availableStock from a successful sync", async () => {
-    useCartStore.getState().setItems([
-      makeItem({ quantity: 20, subtotal: 200, availableStock: 20 }),
-    ])
+    useCartStore
+      .getState()
+      .setItems([makeItem({ quantity: 20, subtotal: 200, availableStock: 20 })])
     const { result } = renderHook(() => useCartActions())
 
     const response = deferred<Response>()
@@ -272,7 +287,11 @@ describe("useCartActions quantity sync", () => {
     })
 
     await act(async () => {
-      response.resolve(okResponse({ data: { quantity: 20, subtotal: 200, availableStock: 18 } }))
+      response.resolve(
+        okResponse({
+          data: { quantity: 20, subtotal: 200, availableStock: 18 },
+        })
+      )
     })
     const after = useCartStore.getState().items[0]
     expect(after.quantity).toBe(20)
@@ -345,7 +364,13 @@ describe("useCartActions add / fetch merge / remove-during-add", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     mockAuth = { user: { userId: "user-1" }, token: "test-token" }
-    useCartStore.setState({ items: [], itemCount: 0, total: 0, isLoading: false, error: null })
+    useCartStore.setState({
+      items: [],
+      itemCount: 0,
+      total: 0,
+      isLoading: false,
+      error: null,
+    })
   })
 
   afterEach(() => {
@@ -405,13 +430,18 @@ describe("useCartActions add / fetch merge / remove-during-add", () => {
     vi.stubGlobal("fetch", fetchMock)
 
     await act(async () => {
-      result.current.addToCart("prod-1", 1, "Main Branch", { ...snapshot, availableStock: 20 })
+      result.current.addToCart("prod-1", 1, "Main Branch", {
+        ...snapshot,
+        availableStock: 20,
+      })
     })
     // Optimistic row carries the catalog's stock limit immediately
     expect(useCartStore.getState().items[0].availableStock).toBe(20)
 
     await act(async () => {
-      addResponse.resolve(okResponse({ data: { ...serverData, availableStock: 19 } }))
+      addResponse.resolve(
+        okResponse({ data: { ...serverData, availableStock: 19 } })
+      )
     })
     const after = useCartStore.getState().items[0]
     expect(after.id).toBe("server-1")

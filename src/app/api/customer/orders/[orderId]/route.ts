@@ -22,7 +22,13 @@ export async function GET(
     const existingOrders = await db
       .select()
       .from(orders)
-      .where(and(eq(orders.id, orderId), eq(orders.userId, userId), isNull(orders.deletedAt)))
+      .where(
+        and(
+          eq(orders.id, orderId),
+          eq(orders.userId, userId),
+          isNull(orders.deletedAt)
+        )
+      )
 
     if (existingOrders.length === 0) {
       return apiError("Order not found", 404)
@@ -82,7 +88,11 @@ export async function PATCH(
       .where(eq(orders.id, orderId))
       .returning()
 
-    return apiResponse({ success: true, message: "Order cancelled successfully", data: updated })
+    return apiResponse({
+      success: true,
+      message: "Order cancelled successfully",
+      data: updated,
+    })
   } catch (error) {
     console.error("Error cancelling order:", error)
     return apiError("Failed to cancel order", 500)

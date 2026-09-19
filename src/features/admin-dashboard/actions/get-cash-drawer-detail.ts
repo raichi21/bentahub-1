@@ -63,20 +63,25 @@ function formatCurrency(amount: number): string {
 
 function formatDate(d: Date): string {
   return formatPHDateTime(d, {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   })
 }
 
 export async function getCashDrawerTransactions(
   sessionId: string
 ): Promise<CashDrawerTransactionsData | null> {
-  const sessionTxn = await db.query.transactions.findMany({
+  const sessionTxn = (await db.query.transactions.findMany({
     where: eq(transactions.sessionId, sessionId),
     orderBy: [asc(transactions.createdAt)],
-  }) as RawTransaction[]
+  })) as RawTransaction[]
 
-  const allItems = await db.query.transactionItems.findMany() as RawTransactionItem[]
+  const allItems =
+    (await db.query.transactionItems.findMany()) as RawTransactionItem[]
   const itemsByTxnId = new Map<string, RawTransactionItem[]>()
   for (const item of allItems) {
     const list = itemsByTxnId.get(item.transactionId)
@@ -84,34 +89,42 @@ export async function getCashDrawerTransactions(
     else itemsByTxnId.set(item.transactionId, [item])
   }
 
-  const mappedTransactions: CashDrawerTransactionDetail[] = sessionTxn.map((t, idx) => {
-    const txnItems = itemsByTxnId.get(t.id) || []
-    const total = Number(t.totalAmount)
-    const amountPaid = t.amountPaid != null ? Number(t.amountPaid) : null
-    const change = t.change != null ? Number(t.change) : null
-    return {
-      id: t.id,
-      displayId: `TXN-${String(idx + 1).padStart(3, "0")}`,
-      createdAt: t.createdAt,
-      createdAtDisplay: formatDate(t.createdAt),
-      totalAmount: total,
-      totalAmountDisplay: formatCurrency(total),
-      paymentMethod: t.paymentMethod,
-      paymentMethodDisplay: t.paymentMethod === "cash" ? "CASH" : "GCASH",
-      amountPaid,
-      amountPaidDisplay: amountPaid != null ? formatCurrency(amountPaid) : "—",
-      change,
-      changeDisplay: change != null ? formatCurrency(change) : "—",
-      status: t.status,
-      statusDisplay: t.status === "completed" ? "Completed" : t.status === "pending" ? "Pending" : "Cancelled",
-      items: txnItems.map((item) => ({
-        productName: item.productName,
-        quantity: item.quantity,
-        price: Number(item.price),
-        subtotal: Number(item.subtotal),
-      })),
+  const mappedTransactions: CashDrawerTransactionDetail[] = sessionTxn.map(
+    (t, idx) => {
+      const txnItems = itemsByTxnId.get(t.id) || []
+      const total = Number(t.totalAmount)
+      const amountPaid = t.amountPaid != null ? Number(t.amountPaid) : null
+      const change = t.change != null ? Number(t.change) : null
+      return {
+        id: t.id,
+        displayId: `TXN-${String(idx + 1).padStart(3, "0")}`,
+        createdAt: t.createdAt,
+        createdAtDisplay: formatDate(t.createdAt),
+        totalAmount: total,
+        totalAmountDisplay: formatCurrency(total),
+        paymentMethod: t.paymentMethod,
+        paymentMethodDisplay: t.paymentMethod === "cash" ? "CASH" : "GCASH",
+        amountPaid,
+        amountPaidDisplay:
+          amountPaid != null ? formatCurrency(amountPaid) : "—",
+        change,
+        changeDisplay: change != null ? formatCurrency(change) : "—",
+        status: t.status,
+        statusDisplay:
+          t.status === "completed"
+            ? "Completed"
+            : t.status === "pending"
+              ? "Pending"
+              : "Cancelled",
+        items: txnItems.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          price: Number(item.price),
+          subtotal: Number(item.subtotal),
+        })),
+      }
     }
-  })
+  )
 
   const transactionCount = sessionTxn.length
   const cashTxn = sessionTxn.filter((t) => t.paymentMethod === "cash")

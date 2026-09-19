@@ -3,7 +3,9 @@ import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { getAdminOverview } from "@/features/admin-dashboard/actions/get-overview"
 import type { AdminApiResponse, AdminOverviewData } from "@/types/admin"
 
-export async function GET(request: NextRequest): Promise<NextResponse<AdminApiResponse<AdminOverviewData>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<AdminApiResponse<AdminOverviewData>>> {
   try {
     const token = extractToken(request)
 
@@ -39,7 +41,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
   } catch (error) {
     console.error("Admin overview error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching overview data" },
+      {
+        success: false,
+        message: "An error occurred while fetching overview data",
+      },
       { status: 500 }
     )
   }

@@ -32,18 +32,24 @@ export function useOrders() {
       if (!response.ok) throw new Error("Failed to fetch orders")
 
       const data = await response.json()
-      const orders: Order[] = (data.data ?? []).map((o: Record<string, unknown>) => ({
-        ...o,
-        totalAmount: Number(o.totalAmount),
-        paidAt: o.paidAt ? new Date(o.paidAt as string) : null,
-        pickupDeadline: o.pickupDeadline ? new Date(o.pickupDeadline as string) : null,
-        createdAt: new Date(o.createdAt as string),
-        updatedAt: new Date(o.updatedAt as string),
-        items: ((o.items as Record<string, unknown>[]) ?? []).map((item: Record<string, unknown>) => ({
-          ...item,
-          createdAt: new Date(item.createdAt as string),
-        })),
-      })) as Order[]
+      const orders: Order[] = (data.data ?? []).map(
+        (o: Record<string, unknown>) => ({
+          ...o,
+          totalAmount: Number(o.totalAmount),
+          paidAt: o.paidAt ? new Date(o.paidAt as string) : null,
+          pickupDeadline: o.pickupDeadline
+            ? new Date(o.pickupDeadline as string)
+            : null,
+          createdAt: new Date(o.createdAt as string),
+          updatedAt: new Date(o.updatedAt as string),
+          items: ((o.items as Record<string, unknown>[]) ?? []).map(
+            (item: Record<string, unknown>) => ({
+              ...item,
+              createdAt: new Date(item.createdAt as string),
+            })
+          ),
+        })
+      ) as Order[]
 
       ordersStore.setOrders(orders)
       return orders
@@ -66,7 +72,12 @@ export function useOrders() {
    * @param notes - Optional order notes
    */
   const createOrder = useCallback(
-    async (paymentMethod: "cash" | "gcash", branch: string, phone: string, notes?: string) => {
+    async (
+      paymentMethod: "cash" | "gcash",
+      branch: string,
+      phone: string,
+      notes?: string
+    ) => {
       if (!user) throw new Error("User not authenticated")
 
       if (!token) throw new Error("No authentication token found")
@@ -83,9 +94,7 @@ export function useOrders() {
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(
-            errorData.message || "Failed to create order"
-          )
+          throw new Error(errorData.message || "Failed to create order")
         }
 
         const data = await response.json()
@@ -95,13 +104,17 @@ export function useOrders() {
           ...orderPayload,
           totalAmount: Number(orderPayload.totalAmount),
           paidAt: orderPayload.paidAt ? new Date(orderPayload.paidAt) : null,
-          pickupDeadline: orderPayload.pickupDeadline ? new Date(orderPayload.pickupDeadline) : null,
+          pickupDeadline: orderPayload.pickupDeadline
+            ? new Date(orderPayload.pickupDeadline)
+            : null,
           createdAt: new Date(orderPayload.createdAt),
           updatedAt: new Date(orderPayload.updatedAt),
-          items: (orderPayload.items as Record<string, unknown>[] ?? []).map((item: Record<string, unknown>) => ({
-            ...item,
-            createdAt: new Date(item.createdAt as string),
-          })),
+          items: ((orderPayload.items as Record<string, unknown>[]) ?? []).map(
+            (item: Record<string, unknown>) => ({
+              ...item,
+              createdAt: new Date(item.createdAt as string),
+            })
+          ),
         }
 
         ordersStore.addOrder(order)

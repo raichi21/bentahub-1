@@ -41,7 +41,9 @@ export function ProductCard({
   const [error, setError] = useState<string | null>(null)
   // Persistent in-cart quantity for this product. Subscribes to just this
   // product's row so the card only re-renders when its own quantity changes.
-  const inCartQty = useCartStore((s) => s.items.find((i) => i.productId === id)?.quantity ?? 0)
+  const inCartQty = useCartStore(
+    (s) => s.items.find((i) => i.productId === id)?.quantity ?? 0
+  )
 
   const isOutOfStock = stockStatus === "out-of-stock"
   const isLowStock = stockStatus === "low-stock"
@@ -70,17 +72,20 @@ export function ProductCard({
       category,
       availableStock,
     }).catch((err) => {
-      const message = err instanceof Error ? err.message : "Failed to add to cart"
+      const message =
+        err instanceof Error ? err.message : "Failed to add to cart"
       setError(message)
       console.error(message)
     })
   }
 
   return (
-    <div className={cn(
-      "group bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col h-full",
-      isOutOfStock && "opacity-75"
-    )}>
+    <div
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-md",
+        isOutOfStock && "opacity-75"
+      )}
+    >
       {/* Image Container */}
       <Link href={detailHref} className="block">
         <div className="relative aspect-square bg-muted">
@@ -99,26 +104,26 @@ export function ProductCard({
           <button
             type="button"
             onClick={() => router.push(detailHref)}
-            className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-sm text-xs font-medium text-foreground hover:bg-background"
+            className="absolute top-2 right-2 z-10 flex items-center gap-1.5 rounded-full border border-border/50 bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm hover:bg-background"
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="h-3.5 w-3.5" />
             View
           </button>
 
           {/* Stock Badge */}
           <div className="absolute top-2 left-2">
             {stockStatus === "in-stock" && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 In Stock
               </span>
             )}
             {isLowStock && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                 Low Stock
               </span>
             )}
             {isOutOfStock && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                 Out of Stock
               </span>
             )}
@@ -126,8 +131,8 @@ export function ProductCard({
 
           {/* Out of Stock Overlay */}
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-              <span className="text-sm font-bold text-foreground bg-background/80 px-3 py-1.5 rounded-lg shadow-sm">
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+              <span className="rounded-lg bg-background/80 px-3 py-1.5 text-sm font-bold text-foreground shadow-sm">
                 Temporarily Unavailable
               </span>
             </div>
@@ -136,22 +141,22 @@ export function ProductCard({
       </Link>
 
       {/* Card Body */}
-      <div className="p-4 flex flex-col flex-1">
-        <Link href={detailHref} className="flex-1 group/link">
-          <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-1 block">
+      <div className="flex flex-1 flex-col p-4">
+        <Link href={detailHref} className="group/link flex-1">
+          <span className="mb-1 block text-xs font-bold tracking-widest text-muted-foreground uppercase">
             {category}
           </span>
-          <h3 className="font-heading text-base font-bold text-foreground mb-1 line-clamp-1 group-hover/link:text-primary transition-colors">
+          <h3 className="font-heading mb-1 line-clamp-1 text-base font-bold text-foreground transition-colors group-hover/link:text-primary">
             {name}
           </h3>
-          <div className="text-xs text-muted-foreground mb-3">
+          <div className="mb-3 text-xs text-muted-foreground">
             {weight && <span>{weight}</span>}
             {weight && branch && <span> • </span>}
             {branch && <span>{branch}</span>}
           </div>
 
           <div className="mt-auto">
-            <span className="text-lg font-bold text-primary block mb-3">
+            <span className="mb-3 block text-lg font-bold text-primary">
               {price}
             </span>
           </div>
@@ -159,7 +164,12 @@ export function ProductCard({
 
         <div>
           {isOutOfStock ? (
-            <Button size="sm" variant="outline" className="w-full gap-1.5" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full gap-1.5"
+              disabled
+            >
               <Bell className="size-3.5" />
               Notify Me
             </Button>
@@ -173,16 +183,15 @@ export function ProductCard({
             >
               <ShoppingCart className="size-3.5" />
               {inCartQty > 0
-                ? (atMax ? "Max Stock Reached" : `In Cart · ${inCartQty}`)
+                ? atMax
+                  ? "Max Stock Reached"
+                  : `In Cart · ${inCartQty}`
                 : "Add to Cart"}
             </Button>
           )}
-          {error && (
-            <p className="text-xs text-destructive mt-1">{error}</p>
-          )}
+          {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
         </div>
       </div>
     </div>
   )
 }
-

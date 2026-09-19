@@ -11,7 +11,14 @@ interface ExportTableAsPdfOptions {
   filename: string
 }
 
-export function exportTableAsPdf({ title, subtitle, metrics, headers, rows, filename }: ExportTableAsPdfOptions) {
+export function exportTableAsPdf({
+  title,
+  subtitle,
+  metrics,
+  headers,
+  rows,
+  filename,
+}: ExportTableAsPdfOptions) {
   const doc = new jsPDF()
 
   doc.setFontSize(18)
@@ -20,7 +27,9 @@ export function exportTableAsPdf({ title, subtitle, metrics, headers, rows, file
 
   doc.setFontSize(9)
   doc.setTextColor(107, 114, 128)
-  const dateLine = subtitle ?? `Generated on ${formatPHDate(new Date(), { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
+  const dateLine =
+    subtitle ??
+    `Generated on ${formatPHDate(new Date(), { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
   doc.text(dateLine, 14, 26)
 
   let y = 32
@@ -53,7 +62,12 @@ export function exportTableAsPdf({ title, subtitle, metrics, headers, rows, file
     body: rows,
     startY: y,
     theme: "grid",
-    headStyles: { fillColor: [31, 41, 55], fontSize: 9, fontStyle: "bold", cellPadding: 3 },
+    headStyles: {
+      fillColor: [31, 41, 55],
+      fontSize: 9,
+      fontStyle: "bold",
+      cellPadding: 3,
+    },
     bodyStyles: { fontSize: 8, cellPadding: 3 },
     alternateRowStyles: { fillColor: [249, 250, 251] },
     margin: { top: y, left: 14, right: 14, bottom: 14 },

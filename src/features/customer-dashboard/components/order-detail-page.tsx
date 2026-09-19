@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Store, CreditCard, Calendar, Clock, ShoppingBag, AlertTriangle } from "lucide-react"
+import {
+  ArrowLeft,
+  Store,
+  CreditCard,
+  Calendar,
+  Clock,
+  ShoppingBag,
+  AlertTriangle,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader, ContentCard } from "@/components/layouts"
 import { OrderTracker } from "./order-tracker"
@@ -17,10 +25,14 @@ interface OrderDetailPageProps {
 }
 
 const statusColorMap: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  processing: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  ready: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  pending:
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  processing:
+    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  ready:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  completed:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   cancelled: "bg-destructive/10 text-destructive",
 }
 
@@ -76,14 +88,16 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
     }
     load()
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [orderId, orders, fetchOrders, token])
 
   if (loading) {
     return (
       <div className="space-y-6">
         <PageHeader title="Order Details" />
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <p className="text-muted-foreground">Loading order details...</p>
         </div>
       </div>
@@ -94,10 +108,14 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
     return (
       <div className="space-y-6">
         <PageHeader title="Order Details" />
-        <div className="flex flex-col items-center justify-center h-64 text-center">
-          <AlertTriangle className="w-12 h-12 text-muted-foreground mb-4" />
+        <div className="flex h-64 flex-col items-center justify-center text-center">
+          <AlertTriangle className="mb-4 h-12 w-12 text-muted-foreground" />
           <p className="text-lg font-medium text-foreground">Order not found</p>
-          <Button className="mt-4" variant="outline" onClick={() => router.push("/customer/orders")}>
+          <Button
+            className="mt-4"
+            variant="outline"
+            onClick={() => router.push("/customer/orders")}
+          >
             Back to Orders
           </Button>
         </div>
@@ -115,7 +133,7 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="h-5 w-5" />
         </Button>
         <PageHeader
           title={`Order ${formatOrderId(orderId)}`}
@@ -125,42 +143,73 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
 
       {/* Status Tracker */}
       <ContentCard title="Order Status">
-        <OrderTracker status={order.status as "pending" | "processing" | "ready" | "completed" | "cancelled"} />
+        <OrderTracker
+          status={
+            order.status as
+              | "pending"
+              | "processing"
+              | "ready"
+              | "completed"
+              | "cancelled"
+          }
+        />
       </ContentCard>
 
       {/* Order Info */}
       <ContentCard title="Order Information">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-            <Store className="w-5 h-5 text-muted-foreground mt-0.5" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-3">
+            <Store className="mt-0.5 h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Branch</p>
-              <p className="text-sm font-medium text-foreground">{order.branch}</p>
+              <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                Branch
+              </p>
+              <p className="text-sm font-medium text-foreground">
+                {order.branch}
+              </p>
             </div>
           </div>
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-            <CreditCard className="w-5 h-5 text-muted-foreground mt-0.5" />
+          <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-3">
+            <CreditCard className="mt-0.5 h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Payment</p>
-              <p className="text-sm font-medium text-foreground capitalize">{order.paymentMethod}</p>
+              <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                Payment
+              </p>
+              <p className="text-sm font-medium text-foreground capitalize">
+                {order.paymentMethod}
+              </p>
             </div>
           </div>
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-            <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
+          <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-3">
+            <Calendar className="mt-0.5 h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Status</p>
-              <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-0.5", statusColorMap[order.status])}>
+              <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                Status
+              </p>
+              <span
+                className={cn(
+                  "mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                  statusColorMap[order.status]
+                )}
+              >
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </span>
             </div>
           </div>
           {order.pickupDeadline && (
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-              <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
+            <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-3">
+              <Clock className="mt-0.5 h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Pickup Deadline</p>
+                <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                  Pickup Deadline
+                </p>
                 <p className="text-sm font-medium text-foreground">
-                  {new Date(order.pickupDeadline).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  {new Date(order.pickupDeadline).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>
@@ -172,30 +221,44 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
       <ContentCard title="Items">
         <div className="divide-y divide-border">
           {(order.items ?? []).map((item) => (
-            <div key={item.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+            <div
+              key={item.id}
+              className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+            >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                  <ShoppingBag className="w-4 h-4 text-muted-foreground" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                  <ShoppingBag className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{item.productName}</p>
-                  <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {item.productName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Qty: {item.quantity}
+                  </p>
                 </div>
               </div>
-              <p className="text-sm font-medium text-foreground">₱{Number(item.subtotal).toFixed(2)}</p>
+              <p className="text-sm font-medium text-foreground">
+                ₱{Number(item.subtotal).toFixed(2)}
+              </p>
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between pt-4 mt-2 border-t border-border">
+        <div className="mt-2 flex items-center justify-between border-t border-border pt-4">
           <p className="text-sm font-bold text-foreground">Total</p>
-          <p className="text-lg font-bold text-primary">₱{Number(order.totalAmount).toFixed(2)}</p>
+          <p className="text-lg font-bold text-primary">
+            ₱{Number(order.totalAmount).toFixed(2)}
+          </p>
         </div>
       </ContentCard>
 
       {/* Actions */}
       {canCancel && (
         <div className="flex justify-end">
-          <Button variant="destructive" onClick={() => setShowCancelModal(true)}>
+          <Button
+            variant="destructive"
+            onClick={() => setShowCancelModal(true)}
+          >
             Cancel Order
           </Button>
         </div>

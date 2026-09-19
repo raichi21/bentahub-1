@@ -53,24 +53,40 @@ export default function HistoryPage() {
   function exportPDF() {
     if (!data) return
     const tableRows = data.transactions.map((t) => [
-      t.dateDisplay, t.displayId, t.branchName, String(t.itemsCount),
-      t.totalAmountDisplay, t.paymentMethodDisplay, t.statusDisplay,
+      t.dateDisplay,
+      t.displayId,
+      t.branchName,
+      String(t.itemsCount),
+      t.totalAmountDisplay,
+      t.paymentMethodDisplay,
+      t.statusDisplay,
     ])
     exportTableAsPdf({
       title: "Transaction History Report",
       metrics: [
-        { label: "Total Transactions", value: data.metrics.totalTransactionsDisplay },
+        {
+          label: "Total Transactions",
+          value: data.metrics.totalTransactionsDisplay,
+        },
         { label: "Total Sales (PHP)", value: data.metrics.totalSalesDisplay },
       ],
-      headers: ["Date", "Transaction ID", "Branch", "Items", "Total", "Payment", "Status"],
+      headers: [
+        "Date",
+        "Transaction ID",
+        "Branch",
+        "Items",
+        "Total",
+        "Payment",
+        "Status",
+      ],
       rows: tableRows,
       filename: `history-report-${new Date().toISOString().slice(0, 10)}.pdf`,
     })
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <KPICard
           title="Total Transactions"
           value={data?.metrics?.totalTransactionsDisplay ?? "0"}

@@ -4,7 +4,11 @@ import { z } from "zod"
 import { db } from "@/servers/db"
 import { users, emailVerifications } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { generateId, generateVerificationCode, hashVerificationCode } from "@/lib/auth-utils"
+import {
+  generateId,
+  generateVerificationCode,
+  hashVerificationCode,
+} from "@/lib/auth-utils"
 import { sendVerificationEmail } from "@/lib/email-service"
 import type { AuthResponse } from "@/types/auth"
 
@@ -20,7 +24,10 @@ const resendCodeSchema = z.object({
 /**
  * Server Action to verify a user's email using a 6-digit OTP code.
  */
-export async function verifyEmailAction(payload: { email: string; code: string }): Promise<AuthResponse> {
+export async function verifyEmailAction(payload: {
+  email: string
+  code: string
+}): Promise<AuthResponse> {
   try {
     // 1. Zod input validation
     const parsed = verifyEmailSchema.safeParse(payload)
@@ -51,13 +58,19 @@ export async function verifyEmailAction(payload: { email: string; code: string }
     })
 
     if (!verification) {
-      return { success: false, message: "No verification request found. Please request a new code." }
+      return {
+        success: false,
+        message: "No verification request found. Please request a new code.",
+      }
     }
 
     // 4. Rate limiting: Check verification attempts
     const MAX_ATTEMPTS = 5
     if (verification.attempts >= MAX_ATTEMPTS) {
-      return { success: false, message: "Too many incorrect attempts. Please request a new code." }
+      return {
+        success: false,
+        message: "Too many incorrect attempts. Please request a new code.",
+      }
     }
 
     // Increment attempt count immediately to prevent brute-forcing
@@ -68,7 +81,10 @@ export async function verifyEmailAction(payload: { email: string; code: string }
 
     // 5. Expiry Check (5 minutes)
     if (new Date() > verification.expiresAt) {
-      return { success: false, message: "Verification code has expired. Please request a new code." }
+      return {
+        success: false,
+        message: "Verification code has expired. Please request a new code.",
+      }
     }
 
     // 6. Compare hashed verification codes (SHA-256)
@@ -76,11 +92,14 @@ export async function verifyEmailAction(payload: { email: string; code: string }
     if (hashedInputCode !== verification.code) {
       const remainingAttempts = MAX_ATTEMPTS - (verification.attempts + 1)
       if (remainingAttempts <= 0) {
-        return { success: false, message: "Too many incorrect attempts. Please request a new code." }
+        return {
+          success: false,
+          message: "Too many incorrect attempts. Please request a new code.",
+        }
       }
-      return { 
-        success: false, 
-        message: `Invalid verification code. You have ${remainingAttempts} attempts remaining.` 
+      return {
+        success: false,
+        message: `Invalid verification code. You have ${remainingAttempts} attempts remaining.`,
       }
     }
 
@@ -101,7 +120,10 @@ export async function verifyEmailAction(payload: { email: string; code: string }
     }
   } catch (error) {
     console.error("❌ Email Verification Server Action Error:", error)
-    return { success: false, message: "An unexpected error occurred during verification" }
+    return {
+      success: false,
+      message: "An unexpected error occurred during verification",
+    }
   }
 }
 
@@ -109,7 +131,9 @@ export async function verifyEmailAction(payload: { email: string; code: string }
  * Server Action to resend a verification email.
  * Includes a 60-second rate-limit cooldown check.
  */
-export async function resendVerificationCodeAction(payload: { email: string }): Promise<AuthResponse> {
+export async function resendVerificationCodeAction(payload: {
+  email: string
+}): Promise<AuthResponse> {
   try {
     // 1. Zod input validation
     const parsed = resendCodeSchema.safeParse(payload)
@@ -140,7 +164,8 @@ export async function resendVerificationCodeAction(payload: { email: string }): 
     })
 
     if (existingCode) {
-      const timePassedMs = Date.now() - new Date(existingCode.createdAt).getTime()
+      const timePassedMs =
+        Date.now() - new Date(existingCode.createdAt).getTime()
       const cooldownMs = 60 * 1000 // 60 seconds
       if (timePassedMs < cooldownMs) {
         const secondsRemaining = Math.ceil((cooldownMs - timePassedMs) / 1000)
@@ -152,7 +177,9 @@ export async function resendVerificationCodeAction(payload: { email: string }): 
     }
 
     // 4. Invalidate old codes (clean database)
-    await db.delete(emailVerifications).where(eq(emailVerifications.userId, user.id))
+    await db
+      .delete(emailVerifications)
+      .where(eq(emailVerifications.userId, user.id))
 
     // 5. Generate secure random OTP and hash it
     const newCode = generateVerificationCode()
@@ -172,7 +199,10 @@ export async function resendVerificationCodeAction(payload: { email: string }): 
     const emailSent = await sendVerificationEmail(email, newCode, user.fullName)
 
     if (!emailSent) {
-      return { success: false, message: "Failed to send verification email. Please try again." }
+      return {
+        success: false,
+        message: "Failed to send verification email. Please try again.",
+      }
     }
 
     return {
@@ -181,6 +211,9 @@ export async function resendVerificationCodeAction(payload: { email: string }): 
     }
   } catch (error) {
     console.error("❌ Resend Code Server Action Error:", error)
-    return { success: false, message: "An unexpected error occurred. Please try again." }
+    return {
+      success: false,
+      message: "An unexpected error occurred. Please try again.",
+    }
   }
 }

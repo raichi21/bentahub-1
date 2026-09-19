@@ -23,56 +23,70 @@ function authHeaders(token: string): HeadersInit {
   }
 }
 
-export function useStaffNotifications({ pollInterval = 30000 }: { pollInterval?: number } = {}) {
+export function useStaffNotifications({
+  pollInterval = 30000,
+}: { pollInterval?: number } = {}) {
   const { token } = useAuth()
-  const [notifications, setNotifications] = useState<StaffNotificationItem[]>([])
+  const [notifications, setNotifications] = useState<StaffNotificationItem[]>(
+    []
+  )
   const [unreadCount, setUnreadCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const isFetchingRef = useRef(false)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
 
-  const fetchNotifications = useCallback(async (unreadOnly: boolean = false) => {
-    if (!token || isFetchingRef.current) return
+  const fetchNotifications = useCallback(
+    async (unreadOnly: boolean = false) => {
+      if (!token || isFetchingRef.current) return
 
-    try {
-      isFetchingRef.current = true
-      setError(null)
+      try {
+        isFetchingRef.current = true
+        setError(null)
 
-      const params = new URLSearchParams()
-      params.append("limit", "50")
-      params.append("offset", "0")
-      if (unreadOnly) params.append("unreadOnly", "true")
+        const params = new URLSearchParams()
+        params.append("limit", "50")
+        params.append("offset", "0")
+        if (unreadOnly) params.append("unreadOnly", "true")
 
-      const response = await fetch(`/api/staff/notifications?${params.toString()}`, {
-        method: "GET",
-        headers: authHeaders(token),
-      })
+        const response = await fetch(
+          `/api/staff/notifications?${params.toString()}`,
+          {
+            method: "GET",
+            headers: authHeaders(token),
+          }
+        )
 
-      if (!response.ok) throw new Error("Failed to fetch notifications")
+        if (!response.ok) throw new Error("Failed to fetch notifications")
 
-      const json = await response.json()
-      if (json.success && json.data) {
-        setNotifications(json.data.notifications ?? [])
-        setUnreadCount(json.data.unreadCount ?? 0)
-      } else {
-        throw new Error(json.message || "Failed to fetch notifications")
+        const json = await response.json()
+        if (json.success && json.data) {
+          setNotifications(json.data.notifications ?? [])
+          setUnreadCount(json.data.unreadCount ?? 0)
+        } else {
+          throw new Error(json.message || "Failed to fetch notifications")
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error"
+        setError(message)
+        console.error("Failed to fetch staff notifications:", err)
+      } finally {
+        isFetchingRef.current = false
+        setInitialLoadComplete(true)
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error"
-      setError(message)
-      console.error("Failed to fetch staff notifications:", err)
-    } finally {
-      isFetchingRef.current = false
-      setInitialLoadComplete(true)
-    }
-  }, [token])
+    },
+    [token]
+  )
 
-  const isLoading = token === undefined || (token !== null && !initialLoadComplete)
+  const isLoading =
+    token === undefined || (token !== null && !initialLoadComplete)
 
   useEffect(() => {
     if (!token) {
       const timer = setTimeout(() => setInitialLoadComplete(true), 0)
-      return () => { clearTimeout(timer); return }
+      return () => {
+        clearTimeout(timer)
+        return
+      }
     }
 
     const timer = setTimeout(() => fetchNotifications(), 0)
@@ -91,29 +105,32 @@ export function useStaffNotifications({ pollInterval = 30000 }: { pollInterval?:
     return () => clearTimeout(timer)
   }, [token, fetchNotifications, pollInterval])
 
-  const markAsRead = useCallback(async (notificationId: string) => {
-    if (!token) return
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      if (!token) return
 
-    try {
-      const response = await fetch(`/api/staff/notifications`, {
-        method: "PATCH",
-        headers: authHeaders(token),
-        body: JSON.stringify({ notificationId }),
-      })
+      try {
+        const response = await fetch(`/api/staff/notifications`, {
+          method: "PATCH",
+          headers: authHeaders(token),
+          body: JSON.stringify({ notificationId }),
+        })
 
-      if (!response.ok) throw new Error("Failed to mark notification as read")
+        if (!response.ok) throw new Error("Failed to mark notification as read")
 
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notificationId ? { ...n, isRead: true } : n
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === notificationId ? { ...n, isRead: true } : n
+          )
         )
-      )
-      setUnreadCount((prev) => Math.max(0, prev - 1))
-      window.dispatchEvent(new CustomEvent("notifications-read"))
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err)
-    }
-  }, [token])
+        setUnreadCount((prev) => Math.max(0, prev - 1))
+        window.dispatchEvent(new CustomEvent("notifications-read"))
+      } catch (err) {
+        console.error("Failed to mark notification as read:", err)
+      }
+    },
+    [token]
+  )
 
   const clearAll = useCallback(async () => {
     if (!token) return

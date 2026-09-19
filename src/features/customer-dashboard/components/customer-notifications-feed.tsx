@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react"
 import {
-  CheckCircle, Wallet, AlertTriangle, Bell,
-  Percent, Loader2, Inbox, Trash2
+  CheckCircle,
+  Wallet,
+  AlertTriangle,
+  Bell,
+  Percent,
+  Loader2,
+  Inbox,
+  Trash2,
 } from "lucide-react"
 import { useNotifications } from "@/hooks/useNotifications"
 
@@ -15,9 +21,7 @@ const tabs: { key: FilterTab; label: string }[] = [
   { key: "payments", label: "Payments" },
 ]
 
-function getDisplayType(
-  type: string
-): "order" | "payment" | "offer" | "alert" {
+function getDisplayType(type: string): "order" | "payment" | "offer" | "alert" {
   if (type.startsWith("order")) return "order"
   if (type === "payment-received") return "payment"
   if (type === "promotion") return "offer"
@@ -25,10 +29,10 @@ function getDisplayType(
 }
 
 function getNotificationIcon(type: string) {
-  if (type.startsWith("order")) return <CheckCircle className="w-5 h-5" />
-  if (type === "payment-received") return <Wallet className="w-5 h-5" />
-  if (type === "promotion") return <Percent className="w-5 h-5" />
-  return <AlertTriangle className="w-5 h-5" />
+  if (type.startsWith("order")) return <CheckCircle className="h-5 w-5" />
+  if (type === "payment-received") return <Wallet className="h-5 w-5" />
+  if (type === "promotion") return <Percent className="h-5 w-5" />
+  return <AlertTriangle className="h-5 w-5" />
 }
 
 function getNotificationStyle(type: string) {
@@ -75,7 +79,14 @@ function formatTimestamp(date: Date): string {
 }
 
 export function CustomerNotificationsFeed() {
-  const { notifications, isLoading, fetchNotifications, markAllAsRead, markAsRead, clearAll } = useNotifications()
+  const {
+    notifications,
+    isLoading,
+    fetchNotifications,
+    markAllAsRead,
+    markAsRead,
+    clearAll,
+  } = useNotifications()
   const [activeTab, setActiveTab] = useState<FilterTab>("all")
 
   useEffect(() => {
@@ -97,20 +108,27 @@ export function CustomerNotificationsFeed() {
           iconColor: style.iconColor,
           borderColor: style.borderColor,
           timestamp: formatTimestamp(n.createdAt),
-          span: getDisplayType(n.type) === "offer" ? "md:col-span-3" : "md:col-span-2",
-          layout: getDisplayType(n.type) === "offer" ? "featured" : ("default" as const),
+          span:
+            getDisplayType(n.type) === "offer"
+              ? "md:col-span-3"
+              : "md:col-span-2",
+          layout:
+            getDisplayType(n.type) === "offer"
+              ? "featured"
+              : ("default" as const),
         }
       }),
     [notifications]
   )
 
-  const filtered = activeTab === "all"
-    ? displayNotifications
-    : displayNotifications.filter((n) => {
-        if (activeTab === "orders") return n.type === "order"
-        if (activeTab === "payments") return n.type === "payment"
-        return true
-      })
+  const filtered =
+    activeTab === "all"
+      ? displayNotifications
+      : displayNotifications.filter((n) => {
+          if (activeTab === "orders") return n.type === "order"
+          if (activeTab === "payments") return n.type === "payment"
+          return true
+        })
 
   return (
     <div className="space-y-6">
@@ -122,45 +140,47 @@ export function CustomerNotificationsFeed() {
               onClick={() => setActiveTab(tab.key)}
               className={
                 activeTab === tab.key
-                  ? "px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm transition-colors"
-                  : "px-4 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-bold hover:bg-muted/70 transition-colors"
+                  ? "rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-colors"
+                  : "rounded-full bg-muted px-4 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted/70"
               }
             >
               {tab.label}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="ml-auto flex items-center gap-3">
           {notifications.length > 0 && (
             <button
               onClick={clearAll}
-              className="flex items-center gap-1 cursor-pointer text-red-500 hover:text-red-600 hover:underline"
+              className="flex cursor-pointer items-center gap-1 text-red-500 hover:text-red-600 hover:underline"
             >
-              <Trash2 className="w-[18px] h-[18px]" />
+              <Trash2 className="h-[18px] w-[18px]" />
               <span className="text-xs font-bold">Clear all</span>
             </button>
           )}
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-1 cursor-pointer text-primary hover:underline"
+            className="flex cursor-pointer items-center gap-1 text-primary hover:underline"
           >
-            <Bell className="w-[18px] h-[18px]" />
+            <Bell className="h-[18px] w-[18px]" />
             <span className="text-xs font-bold">Mark all as read</span>
           </button>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-6">
         {isLoading ? (
           <div className="col-span-6 flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="col-span-6 flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Inbox className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground font-medium">No notifications yet</p>
+            <p className="font-medium text-muted-foreground">
+              No notifications yet
+            </p>
           </div>
         ) : (
           filtered.map((n) => {
@@ -170,20 +190,22 @@ export function CustomerNotificationsFeed() {
               return (
                 <div
                   key={n.id}
-                  className={`${n.span} relative overflow-hidden bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-5 rounded-xl shadow-lg group`}
+                  className={`${n.span} group relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground shadow-lg`}
                 >
-                  <div className="absolute right-0 bottom-0 w-32 h-32 opacity-10 transform translate-x-4 translate-y-4 group-hover:scale-110 transition-transform duration-500">
-                    <div className="w-full h-full bg-white/20 rounded-full" />
+                  <div className="absolute right-0 bottom-0 h-32 w-32 translate-x-4 translate-y-4 transform opacity-10 transition-transform duration-500 group-hover:scale-110">
+                    <div className="h-full w-full rounded-full bg-white/20" />
                   </div>
                   <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
+                    <div className="mb-3 flex items-start justify-between">
+                      <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
                         Promo
                       </span>
                       <span className="text-xs opacity-80">{n.timestamp}</span>
                     </div>
-                    <h3 className="text-xl font-bold mb-1">{n.title}</h3>
-                    <p className="text-sm opacity-90 mb-4 max-w-[80%]">{n.description}</p>
+                    <h3 className="mb-1 text-xl font-bold">{n.title}</h3>
+                    <p className="mb-4 max-w-[80%] text-sm opacity-90">
+                      {n.description}
+                    </p>
                   </div>
                 </div>
               )
@@ -192,28 +214,36 @@ export function CustomerNotificationsFeed() {
             return (
               <div
                 key={n.id}
-                onClick={() => { if (!n.isRead) markAsRead(n.id) }}
-                className={`${n.span} bg-card border ${isAlert ? "border-red-200 dark:border-red-900/30 bg-red-50/30 dark:bg-red-950/10" : "border-border"} ${
-                  n.borderColor ? `border-l-4 ${n.borderColor}` : "rounded-xl border"
-                } p-4 rounded-xl shadow-sm hover:shadow-md transition-all group cursor-pointer ${!n.isRead ? "ring-1 ring-primary/10" : ""}`}
+                onClick={() => {
+                  if (!n.isRead) markAsRead(n.id)
+                }}
+                className={`${n.span} border bg-card ${isAlert ? "border-red-200 bg-red-50/30 dark:border-red-900/30 dark:bg-red-950/10" : "border-border"} ${
+                  n.borderColor
+                    ? `border-l-4 ${n.borderColor}`
+                    : "rounded-xl border"
+                } group cursor-pointer rounded-xl p-4 shadow-sm transition-all hover:shadow-md ${!n.isRead ? "ring-1 ring-primary/10" : ""}`}
               >
                 <div className="flex gap-3">
-                  <div className={`w-10 h-10 rounded-full ${n.iconBg} flex items-center justify-center flex-shrink-0 ${isAlert ? "animate-pulse" : ""}`}>
+                  <div
+                    className={`h-10 w-10 rounded-full ${n.iconBg} flex flex-shrink-0 items-center justify-center ${isAlert ? "animate-pulse" : ""}`}
+                  >
                     <div className={n.iconColor}>{n.icon}</div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1 gap-2">
-                      <h3 className={`text-sm font-bold ${isAlert ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-start justify-between gap-2">
+                      <h3
+                        className={`text-sm font-bold ${isAlert ? "text-red-600 dark:text-red-400" : "text-foreground"}`}
+                      >
                         {!n.isRead && (
-                          <span className="inline-block w-2 h-2 bg-primary rounded-full mr-1.5 align-middle" />
+                          <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-primary align-middle" />
                         )}
                         {n.title}
                       </h3>
-                      <span className="text-[11px] text-muted-foreground/60 whitespace-nowrap flex-shrink-0">
+                      <span className="flex-shrink-0 text-[11px] whitespace-nowrap text-muted-foreground/60">
                         {n.timestamp}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-xs leading-relaxed text-muted-foreground">
                       {n.description}
                     </p>
                   </div>

@@ -58,8 +58,13 @@ export default function PaymentsPage() {
   function exportPDF() {
     if (!data) return
     const tableRows = data.payments.map((p) => [
-      p.displayId, p.transactionDisplayId, p.amountDisplay, p.methodDisplay,
-      p.dateTimeDisplay, p.branchName, p.statusDisplay,
+      p.displayId,
+      p.transactionDisplayId,
+      p.amountDisplay,
+      p.methodDisplay,
+      p.dateTimeDisplay,
+      p.branchName,
+      p.statusDisplay,
     ])
     exportTableAsPdf({
       title: "Payment Report",
@@ -68,15 +73,23 @@ export default function PaymentsPage() {
         { label: "Cash", value: data.metrics.cashTotalDisplay },
         { label: "GCash", value: data.metrics.gcashTotalDisplay },
       ],
-      headers: ["Payment ID", "Transaction", "Amount", "Method", "Date & Time", "Branch", "Status"],
+      headers: [
+        "Payment ID",
+        "Transaction",
+        "Amount",
+        "Method",
+        "Date & Time",
+        "Branch",
+        "Status",
+      ],
       rows: tableRows,
       filename: `payments-report-${new Date().toISOString().slice(0, 10)}.pdf`,
     })
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <KPICard
           title="Total Payments"
           value={metrics?.totalAmountDisplay ?? "₱0.00"}

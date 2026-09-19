@@ -27,7 +27,11 @@ interface AdminSidebarProps {
   onClose: () => void
 }
 
-export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps) {
+export function AdminSidebar({
+  activePath,
+  isOpen,
+  onClose,
+}: AdminSidebarProps) {
   const router = useRouter()
   const { storeName } = useStoreSettings()
 
@@ -43,9 +47,7 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
   const sections = [
     {
       title: "Dashboard",
-      items: [
-        { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
-      ]
+      items: [{ label: "Dashboard", icon: LayoutDashboard, path: "/admin" }],
     },
     {
       title: "Management",
@@ -55,7 +57,7 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
         { label: "Notifications", icon: Bell, path: "/admin/notifications" },
         { label: "Sales", icon: Tag, path: "/admin/sales" },
         { label: "User Management", icon: Users, path: "/admin/users" },
-      ]
+      ],
     },
     {
       title: "Operations",
@@ -64,37 +66,52 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
         { label: "Cash Drawer", icon: Banknote, path: "/admin/cash-drawer" },
         { label: "Transaction History", icon: History, path: "/admin/history" },
         { label: "Pickups", icon: Truck, path: "/admin/pickups" },
-      ]
-    }
+      ],
+    },
   ]
 
   return (
     <>
       {/* Backdrop for mobile */}
-      {isOpen && <div onClick={onClose} className="fixed inset-0 bg-black/50 z-30 md:hidden" />}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+        />
+      )}
 
-      <aside className={cn(
-        "w-[280px] bg-[#0c1221] text-white flex flex-col fixed inset-y-0 left-0 z-40",
-        "transition-transform duration-300 ease-in-out md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-[#0c1221] text-white",
+          "transition-transform duration-300 ease-in-out md:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
         {/* Header */}
-        <div className="px-6 py-8 flex items-center gap-3">
+        <div className="flex items-center gap-3 px-6 py-8">
           <StoreLogo />
-          <div className="flex flex-col min-w-0">
-            <span className="font-bold text-lg tracking-tight truncate">{storeName}</span>
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest">Admin Panel</span>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-lg font-bold tracking-tight">
+              {storeName}
+            </span>
+            <span className="text-[10px] tracking-widest text-slate-400 uppercase">
+              Admin Panel
+            </span>
           </div>
-          <button onClick={onClose} aria-label="Close sidebar" className="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors md:hidden">
+          <button
+            onClick={onClose}
+            aria-label="Close sidebar"
+            className="ml-auto rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white md:hidden"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 px-4 overflow-y-auto custom-scrollbar">
+        <div className="custom-scrollbar flex-1 overflow-y-auto px-4">
           {sections.map((section) => (
             <div key={section.title} className="mb-6">
-              <p className="px-4 mb-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <p className="mb-2 px-4 text-[11px] font-bold tracking-wider text-slate-500 uppercase">
                 {section.title}
               </p>
               <nav className="space-y-1">
@@ -107,10 +124,10 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
                       href={item.path}
                       onClick={onClose}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm font-medium",
+                        "flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium transition-all",
                         isActive
                           ? "bg-primary text-white"
-                          : "text-slate-400 hover:text-white hover:bg-slate-800"
+                          : "text-slate-400 hover:bg-slate-800 hover:text-white"
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -124,24 +141,27 @@ export function AdminSidebar({ activePath, isOpen, onClose }: AdminSidebarProps)
         </div>
 
         {/* Footer */}
-        <div className="p-4 mt-auto">
+        <div className="mt-auto p-4">
           <nav className="space-y-1">
             <Link
               href="/admin/settings"
               onClick={onClose}
               className={cn(
-                "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm font-medium",
+                "flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium transition-all",
                 activePath === "/admin/settings"
                   ? "bg-primary text-white"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
               )}
             >
               <Settings className="h-5 w-5" />
               <span>Settings</span>
             </Link>
             <button
-              onClick={() => { handleLogout(); onClose(); }}
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all text-sm font-medium w-full text-left"
+              onClick={() => {
+                handleLogout()
+                onClose()
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-2 text-left text-sm font-medium text-destructive transition-all hover:bg-destructive/10"
             >
               <LogOut className="h-5 w-5" />
               <span>Logout</span>

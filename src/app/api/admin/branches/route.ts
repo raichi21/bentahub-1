@@ -32,7 +32,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Admin get branches error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -47,7 +50,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
     const { name, location, capacity } = parsed.data
@@ -56,10 +62,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       where: eq(branches.name, name),
     })
     if (existing) {
-      return NextResponse.json({ success: false, message: "A branch with this name already exists" }, { status: 409 })
+      return NextResponse.json(
+        { success: false, message: "A branch with this name already exists" },
+        { status: 409 }
+      )
     }
 
-    const [created] = await db.insert(branches)
+    const [created] = await db
+      .insert(branches)
       .values({
         id: generateId(),
         name,
@@ -69,11 +79,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning()
 
-    return NextResponse.json({ success: true, message: "Branch created successfully", data: created }, { status: 201 })
+    return NextResponse.json(
+      { success: true, message: "Branch created successfully", data: created },
+      { status: 201 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Admin create branch error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -86,7 +102,10 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url)
     const id = url.searchParams.get("id")
     if (!id) {
-      return NextResponse.json({ success: false, message: "Branch id is required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Branch id is required" },
+        { status: 400 }
+      )
     }
 
     const body = await request.json()
@@ -94,7 +113,10 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
     const { name, location, capacity, isActive } = parsed.data
@@ -103,14 +125,20 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       where: eq(branches.id, id),
     })
     if (!existing) {
-      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Branch not found" },
+        { status: 404 }
+      )
     }
 
     const nameClash = await db.query.branches.findFirst({
       where: eq(branches.name, name),
     })
     if (nameClash && nameClash.id !== id) {
-      return NextResponse.json({ success: false, message: "A branch with this name already exists" }, { status: 409 })
+      return NextResponse.json(
+        { success: false, message: "A branch with this name already exists" },
+        { status: 409 }
+      )
     }
 
     const updateData: Partial<typeof branches.$inferInsert> = { name }
@@ -118,15 +146,22 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     if (capacity !== undefined) updateData.capacity = capacity
     if (isActive !== undefined) updateData.isActive = isActive
 
-    const [updated] = await db.update(branches)
+    const [updated] = await db
+      .update(branches)
       .set(updateData)
       .where(eq(branches.id, id))
       .returning()
 
-    return NextResponse.json({ success: true, message: "Branch updated successfully", data: updated }, { status: 200 })
+    return NextResponse.json(
+      { success: true, message: "Branch updated successfully", data: updated },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Admin update branch error:", message)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

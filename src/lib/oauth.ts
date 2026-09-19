@@ -39,7 +39,9 @@ export interface OAuthTokenResult {
 // ---------------------------------------------------------------------------
 
 /** Returns the configured credentials for a provider or `null` if unset. */
-export function getProviderConfig(provider: OAuthProvider): OAuthProviderInfo | null {
+export function getProviderConfig(
+  provider: OAuthProvider
+): OAuthProviderInfo | null {
   const env = process.env
 
   if (provider === "google") {
@@ -83,9 +85,15 @@ export function getCallbackUrl(provider: OAuthProvider): string {
 // ---------------------------------------------------------------------------
 
 /** Generate a cryptographically random PKCE verifier/challenge pair. */
-export function generatePkce(): { codeVerifier: string; codeChallenge: string } {
+export function generatePkce(): {
+  codeVerifier: string
+  codeChallenge: string
+} {
   const codeVerifier = crypto.randomBytes(48).toString("base64url")
-  const challengeHash = crypto.createHash("sha256").update(codeVerifier).digest("base64url")
+  const challengeHash = crypto
+    .createHash("sha256")
+    .update(codeVerifier)
+    .digest("base64url")
   return { codeVerifier, codeChallenge: challengeHash }
 }
 
@@ -110,7 +118,8 @@ export function buildAuthorizationUrl(
     redirect_uri: getCallbackUrl(provider),
     response_type: "code",
     state,
-    scope: provider === "google" ? "openid email profile" : "email public_profile",
+    scope:
+      provider === "google" ? "openid email profile" : "email public_profile",
   })
 
   if (provider === "google") {
@@ -147,7 +156,8 @@ export async function exchangeCodeForToken(
 
   if (provider === "google") {
     // PKCE verifier must be sent back to Google during token exchange.
-    if (!codeVerifier) throw new Error("Missing PKCE code verifier for Google exchange")
+    if (!codeVerifier)
+      throw new Error("Missing PKCE code verifier for Google exchange")
     body.set("code_verifier", codeVerifier)
   }
 
@@ -163,13 +173,19 @@ export async function exchangeCodeForToken(
   const data = await response.json().catch(() => null)
 
   if (!response.ok || !data || typeof data.access_token !== "string") {
-    console.error("OAuth token exchange failed:", provider, response.status, JSON.stringify(data))
+    console.error(
+      "OAuth token exchange failed:",
+      provider,
+      response.status,
+      JSON.stringify(data)
+    )
     throw new Error("Failed to exchange authorization code")
   }
 
   return {
     accessToken: data.access_token as string,
-    idToken: typeof data.id_token === "string" ? (data.id_token as string) : undefined,
+    idToken:
+      typeof data.id_token === "string" ? (data.id_token as string) : undefined,
   }
 }
 
@@ -183,7 +199,8 @@ export async function fetchProviderProfile(
   tokenResult: OAuthTokenResult
 ): Promise<OAuthUserProfile> {
   if (provider === "google") {
-    if (!tokenResult.idToken) throw new Error("Google did not return an ID token")
+    if (!tokenResult.idToken)
+      throw new Error("Google did not return an ID token")
     return fetchGoogleProfile(tokenResult.idToken)
   }
   return fetchFacebookProfile(tokenResult.accessToken)
@@ -191,7 +208,9 @@ export async function fetchProviderProfile(
 
 async function fetchGoogleProfile(idToken: string): Promise<OAuthUserProfile> {
   // tokeninfo is Google's server-side id_token validation endpoint.
-  const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`)
+  const response = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
+  )
   const data = (await response.json().catch(() => null)) as {
     aud?: string
     sub?: string
@@ -215,7 +234,9 @@ async function fetchGoogleProfile(idToken: string): Promise<OAuthUserProfile> {
   }
 }
 
-async function fetchFacebookProfile(accessToken: string): Promise<OAuthUserProfile> {
+async function fetchFacebookProfile(
+  accessToken: string
+): Promise<OAuthUserProfile> {
   const url = `https://graph.facebook.com/v19.0/me?fields=id,name,email,picture.type(large)&access_token=${encodeURIComponent(accessToken)}`
   const response = await fetch(url)
   const data = (await response.json().catch(() => null)) as {
@@ -252,7 +273,9 @@ async function fetchFacebookProfile(accessToken: string): Promise<OAuthUserProfi
  * Returns the resolved user or throws a descriptive error (e.g. when the email
  * belongs to a privileged account which must not be linked via OAuth).
  */
-export async function findOrCreateUserFromOAuth(profile: OAuthUserProfile): Promise<User> {
+export async function findOrCreateUserFromOAuth(
+  profile: OAuthUserProfile
+): Promise<User> {
   // 1. Existing OAuth-mapped account → return its user.
   const existing = await db.query.oauthAccounts.findFirst({
     where: and(
@@ -265,8 +288,12 @@ export async function findOrCreateUserFromOAuth(profile: OAuthUserProfile): Prom
     const user = await db.query.users.findFirst({
       where: eq(users.id, existing.userId),
     })
-    if (!user) throw new Error("OAuth account exists but linked user was not found")
-    if (!user.isActive) throw new Error("Your account has been deactivated. Please contact the administrator.")
+    if (!user)
+      throw new Error("OAuth account exists but linked user was not found")
+    if (!user.isActive)
+      throw new Error(
+        "Your account has been deactivated. Please contact the administrator."
+      )
     return user
   }
 
@@ -279,10 +306,14 @@ export async function findOrCreateUserFromOAuth(profile: OAuthUserProfile): Prom
     if (emailUser) {
       // Never link OAuth access to privileged accounts.
       if (emailUser.role !== "customer") {
-        throw new Error("This email belongs to a staff account. Please sign in with your password.")
+        throw new Error(
+          "This email belongs to a staff account. Please sign in with your password."
+        )
       }
       if (!emailUser.isActive) {
-        throw new Error("Your account has been deactivated. Please contact the administrator.")
+        throw new Error(
+          "Your account has been deactivated. Please contact the administrator."
+        )
       }
 
       await db.insert(oauthAccounts).values({
@@ -298,7 +329,8 @@ export async function findOrCreateUserFromOAuth(profile: OAuthUserProfile): Prom
   }
 
   // 3. No match → create a new customer account.
-  const email = profile.email || fallbackEmail(profile.provider, profile.providerUserId)
+  const email =
+    profile.email || fallbackEmail(profile.provider, profile.providerUserId)
 
   const [newUser] = await db
     .insert(users)
@@ -325,7 +357,10 @@ export async function findOrCreateUserFromOAuth(profile: OAuthUserProfile): Prom
 }
 
 /** Deterministic placeholder email when a provider does not return one. */
-function fallbackEmail(provider: OAuthProvider, providerUserId: string): string {
+function fallbackEmail(
+  provider: OAuthProvider,
+  providerUserId: string
+): string {
   return `${provider}.${providerUserId}@social.bentahub.local`
 }
 

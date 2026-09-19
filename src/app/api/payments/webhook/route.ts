@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { transactions, branchInventory, users, notifications, branches } from "@/servers/schemas"
+import {
+  transactions,
+  branchInventory,
+  users,
+  notifications,
+  branches,
+} from "@/servers/schemas"
 import { eq, sql, and } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 
@@ -10,7 +16,10 @@ export async function POST(request: NextRequest) {
     const event = body.data
 
     if (!event) {
-      return NextResponse.json({ success: false, message: "Invalid payload" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Invalid payload" },
+        { status: 400 }
+      )
     }
 
     const eventType = event.attributes?.type || event.type
@@ -21,13 +30,19 @@ export async function POST(request: NextRequest) {
 
     const paymentIntent = event.attributes?.data
     if (!paymentIntent) {
-      return NextResponse.json({ success: false, message: "No payment intent data" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "No payment intent data" },
+        { status: 400 }
+      )
     }
 
     const description = paymentIntent.attributes?.description || ""
     const txnMatch = description.match(/txn:([a-f0-9-]+)/i)
     if (!txnMatch) {
-      return NextResponse.json({ success: false, message: "Could not extract transaction ID" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "Could not extract transaction ID" },
+        { status: 400 }
+      )
     }
 
     const transactionId = txnMatch[1]
@@ -38,11 +53,17 @@ export async function POST(request: NextRequest) {
     })
 
     if (!transaction) {
-      return NextResponse.json({ success: false, message: "Transaction not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Transaction not found" },
+        { status: 404 }
+      )
     }
 
     if (transaction.status !== "pending") {
-      return NextResponse.json({ success: true, message: "Transaction already processed" })
+      return NextResponse.json({
+        success: true,
+        message: "Transaction already processed",
+      })
     }
 
     await db
@@ -58,7 +79,7 @@ export async function POST(request: NextRequest) {
           quantity: sql`${branchInventory.quantity} - ${item.quantity}`,
         })
         .where(
-          sql`${branchInventory.branchId} = ${transaction.branchId} AND ${branchInventory.productId} = ${item.productId}`,
+          sql`${branchInventory.branchId} = ${transaction.branchId} AND ${branchInventory.productId} = ${item.productId}`
         )
     }
 
@@ -87,9 +108,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true, message: "Transaction completed" })
+    return NextResponse.json({
+      success: true,
+      message: "Transaction completed",
+    })
   } catch (error) {
     console.error("Webhook error:", error)
-    return NextResponse.json({ success: false, message: "Webhook processing failed" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "Webhook processing failed" },
+      { status: 500 }
+    )
   }
 }

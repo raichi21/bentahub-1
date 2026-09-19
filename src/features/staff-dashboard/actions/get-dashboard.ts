@@ -1,5 +1,10 @@
 import { db } from "@/servers/db"
-import { branchInventory, transactions, orders, branches } from "@/servers/schemas"
+import {
+  branchInventory,
+  transactions,
+  orders,
+  branches,
+} from "@/servers/schemas"
 import { eq, and, gte, sql } from "drizzle-orm"
 import type { StaffDashboardData } from "@/types/staff"
 import { startOfManilaDay } from "@/lib/date"
@@ -37,7 +42,9 @@ interface RawOrder {
   updatedAt: Date
 }
 
-export async function getStaffDashboard(branchName: string): Promise<StaffDashboardData> {
+export async function getStaffDashboard(
+  branchName: string
+): Promise<StaffDashboardData> {
   const branchRecord = await db.query.branches.findFirst({
     where: eq(branches.name, branchName),
   })
@@ -50,9 +57,9 @@ export async function getStaffDashboard(branchName: string): Promise<StaffDashbo
 
   // Stock is authoritative in branch_inventory — products.stockStatus / products.branch
   // are legacy denormalized columns that go stale. Compute all KPIs from inventory.
-  const allInventory = await db.query.branchInventory.findMany({
+  const allInventory = (await db.query.branchInventory.findMany({
     where: eq(branchInventory.branchId, branchId),
-  }) as RawBranchInventory[]
+  })) as RawBranchInventory[]
 
   const totalProducts = allInventory.length
   const inStockCount = allInventory.filter(
@@ -64,26 +71,26 @@ export async function getStaffDashboard(branchName: string): Promise<StaffDashbo
 
   const today = startOfManilaDay()
 
-  const allTransactions = await db.query.transactions.findMany({
+  const allTransactions = (await db.query.transactions.findMany({
     where: and(
       eq(transactions.branchId, branchId),
       eq(transactions.status, "completed"),
-      gte(transactions.createdAt, today),
+      gte(transactions.createdAt, today)
     ),
-  }) as RawTransaction[]
+  })) as RawTransaction[]
 
   const todayRevenue = allTransactions.reduce(
     (sum, t) => sum + parseFloat(t.totalAmount),
-    0,
+    0
   )
 
-  const allOrders = await db.query.orders.findMany({
+  const allOrders = (await db.query.orders.findMany({
     where: and(
       eq(orders.branch, branchName),
       eq(orders.isPaid, true),
-      sql`${orders.status} IN ('pending', 'processing', 'ready')`,
+      sql`${orders.status} IN ('pending', 'processing', 'ready')`
     ),
-  }) as RawOrder[]
+  })) as RawOrder[]
 
   const pendingPickups = allOrders.length
 

@@ -11,9 +11,12 @@ export function NotificationBadge() {
   const fetchUnreadCount = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch("/api/staff/notifications?unreadOnly=true&limit=1", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch(
+        "/api/staff/notifications?unreadOnly=true&limit=1",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
       const json = await res.json()
       if (json.success && typeof json.data?.unreadCount === "number") {
         setUnreadCount(json.data.unreadCount)
@@ -42,7 +45,7 @@ export function NotificationBadge() {
   if (unreadCount === 0) return null
 
   return (
-    <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+    <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
       {unreadCount > 99 ? "99+" : unreadCount}
     </span>
   )

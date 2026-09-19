@@ -33,11 +33,17 @@ export const PASSWORD_RULES: PasswordRule[] = [
   {
     id: "special",
     label: "Contains a special character (!@#$%^&* etc.)",
-    test: (p) => new RegExp(`[${SPECIAL_CHARACTERS.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}]`).test(p),
+    test: (p) =>
+      new RegExp(
+        `[${SPECIAL_CHARACTERS.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}]`
+      ).test(p),
   },
 ]
 
-export function validatePassword(password: string): { valid: boolean; message: string } {
+export function validatePassword(password: string): {
+  valid: boolean
+  message: string
+} {
   for (const rule of PASSWORD_RULES) {
     if (!rule.test(password)) {
       return { valid: false, message: rule.label }

@@ -3,7 +3,11 @@ import { z } from "zod"
 import { db } from "@/servers/db"
 import { users, emailVerifications } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { generateId, generateVerificationCode, hashVerificationCode } from "@/lib/auth-utils"
+import {
+  generateId,
+  generateVerificationCode,
+  hashVerificationCode,
+} from "@/lib/auth-utils"
 import { sendVerificationEmail } from "@/lib/email-service"
 import type { AuthResponse } from "@/types/auth"
 
@@ -22,7 +26,9 @@ const MAX_VERIFICATION_ATTEMPTS = 5
  * POST /api/auth/verify-email
  * Verifies a 6-digit OTP code against the database.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<AuthResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse>> {
   try {
     const body = await request.json()
 
@@ -65,7 +71,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
 
     if (!verification) {
       return NextResponse.json(
-        { success: false, message: "No verification request found. Please request a new code." },
+        {
+          success: false,
+          message: "No verification request found. Please request a new code.",
+        },
         { status: 400 }
       )
     }
@@ -73,7 +82,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     // 4. Rate-limiting verification attempts
     if (verification.attempts >= MAX_VERIFICATION_ATTEMPTS) {
       return NextResponse.json(
-        { success: false, message: "Too many incorrect attempts. Please request a new code." },
+        {
+          success: false,
+          message: "Too many incorrect attempts. Please request a new code.",
+        },
         { status: 400 }
       )
     }
@@ -87,7 +99,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     // 5. Expiry Check (5 minutes)
     if (new Date() > verification.expiresAt) {
       return NextResponse.json(
-        { success: false, message: "Verification code has expired. Please request a new code." },
+        {
+          success: false,
+          message: "Verification code has expired. Please request a new code.",
+        },
         { status: 400 }
       )
     }
@@ -95,17 +110,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
     // 6. Secure verification code comparison (SHA-256 hashes)
     const hashedInputCode = hashVerificationCode(code)
     if (hashedInputCode !== verification.code) {
-      const remainingAttempts = MAX_VERIFICATION_ATTEMPTS - (verification.attempts + 1)
+      const remainingAttempts =
+        MAX_VERIFICATION_ATTEMPTS - (verification.attempts + 1)
       if (remainingAttempts <= 0) {
         return NextResponse.json(
-          { success: false, message: "Too many incorrect attempts. Please request a new code." },
+          {
+            success: false,
+            message: "Too many incorrect attempts. Please request a new code.",
+          },
           { status: 400 }
         )
       }
       return NextResponse.json(
-        { 
-          success: false, 
-          message: `Invalid verification code. You have ${remainingAttempts} attempts remaining.` 
+        {
+          success: false,
+          message: `Invalid verification code. You have ${remainingAttempts} attempts remaining.`,
         },
         { status: 400 }
       )
@@ -123,7 +142,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
       .where(eq(emailVerifications.id, verification.id))
 
     return NextResponse.json(
-      { success: true, message: "Email verified successfully! You can now log in." },
+      {
+        success: true,
+        message: "Email verified successfully! You can now log in.",
+      },
       { status: 200 }
     )
   } catch (error) {
@@ -139,7 +161,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<AuthRespo
  * PUT /api/auth/verify-email
  * Resends verification code with 60-second cooldown rate-limiting.
  */
-export async function PUT(request: NextRequest): Promise<NextResponse<AuthResponse>> {
+export async function PUT(
+  request: NextRequest
+): Promise<NextResponse<AuthResponse>> {
   try {
     const body = await request.json()
 
@@ -181,7 +205,8 @@ export async function PUT(request: NextRequest): Promise<NextResponse<AuthRespon
     })
 
     if (existingCode) {
-      const timePassedMs = Date.now() - new Date(existingCode.createdAt).getTime()
+      const timePassedMs =
+        Date.now() - new Date(existingCode.createdAt).getTime()
       const cooldownMs = 60 * 1000 // 60 seconds
       if (timePassedMs < cooldownMs) {
         const secondsRemaining = Math.ceil((cooldownMs - timePassedMs) / 1000)
@@ -196,7 +221,9 @@ export async function PUT(request: NextRequest): Promise<NextResponse<AuthRespon
     }
 
     // 4. Invalidate old codes
-    await db.delete(emailVerifications).where(eq(emailVerifications.userId, user.id))
+    await db
+      .delete(emailVerifications)
+      .where(eq(emailVerifications.userId, user.id))
 
     // 5. Generate secure random OTP and save hashed
     const code = generateVerificationCode()
@@ -229,7 +256,10 @@ export async function PUT(request: NextRequest): Promise<NextResponse<AuthRespon
   } catch (error) {
     console.error("❌ Resend Verification Handler Error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while resending verification code" },
+      {
+        success: false,
+        message: "An error occurred while resending verification code",
+      },
       { status: 500 }
     )
   }

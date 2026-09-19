@@ -1,17 +1,31 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { KPICard, SalesChart, TopProductsCard, LowStockByCategoryCard, PaymentBreakdownCard } from "@/features/admin-dashboard"
+import {
+  KPICard,
+  SalesChart,
+  TopProductsCard,
+  LowStockByCategoryCard,
+  PaymentBreakdownCard,
+} from "@/features/admin-dashboard"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
-import type { AdminOverviewData, TopProductData, LowStockByCategoryData, PaymentBreakdownData } from "@/types/admin"
+import type {
+  AdminOverviewData,
+  TopProductData,
+  LowStockByCategoryData,
+  PaymentBreakdownData,
+} from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function AdminPage() {
   const { token, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<AdminOverviewData | null>(null)
   const [topProducts, setTopProducts] = useState<TopProductData[]>([])
-  const [lowStockByCategory, setLowStockByCategory] = useState<LowStockByCategoryData[]>([])
-  const [paymentBreakdown, setPaymentBreakdown] = useState<PaymentBreakdownData | null>(null)
+  const [lowStockByCategory, setLowStockByCategory] = useState<
+    LowStockByCategoryData[]
+  >([])
+  const [paymentBreakdown, setPaymentBreakdown] =
+    useState<PaymentBreakdownData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
 
@@ -30,7 +44,6 @@ export default function AdminPage() {
       }).then((r) => r.json()),
     ])
       .then(([overviewJson, topProductsJson, lowStockJson]) => {
-
         if (overviewJson.success && overviewJson.data) {
           setData(overviewJson.data)
           setPaymentBreakdown(overviewJson.data.paymentBreakdown)
@@ -52,21 +65,27 @@ export default function AdminPage() {
 
   if (isLoading) {
     return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
-              <div className="h-4 w-24 bg-muted rounded mb-4" />
-              <div className="h-8 w-32 bg-muted rounded" />
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-6"
+            >
+              <div className="mb-4 h-4 w-24 rounded bg-muted" />
+              <div className="h-8 w-32 rounded bg-muted" />
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-12 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="h-[400px] animate-pulse rounded-xl border border-border bg-card p-6 lg:col-span-12" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="lg:col-span-4 bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+            <div
+              key={i}
+              className="h-[400px] animate-pulse rounded-xl border border-border bg-card p-6 lg:col-span-4"
+            />
           ))}
         </div>
       </div>
@@ -83,7 +102,7 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <KPICard
           title="Total Revenue"
           value={data?.kpis.totalRevenue.value ?? "₱0.00"}
@@ -108,13 +127,17 @@ export default function AdminPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-12">
-          <SalesChart data={data?.salesTrend} weeklyData={data?.weeklyTrend} dailyData={data?.dailyTrend} />
+          <SalesChart
+            data={data?.salesTrend}
+            weeklyData={data?.weeklyTrend}
+            dailyData={data?.dailyTrend}
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <TopProductsCard data={topProducts} />
         </div>
@@ -125,7 +148,6 @@ export default function AdminPage() {
           <PaymentBreakdownCard data={paymentBreakdown} />
         </div>
       </div>
-
     </div>
   )
 }

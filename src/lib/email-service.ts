@@ -17,7 +17,9 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
   if (cachedTransporter) return cachedTransporter
 
   const emailHost = process.env.EMAIL_HOST || "localhost"
-  const emailPort = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT) : 1025
+  const emailPort = process.env.EMAIL_PORT
+    ? parseInt(process.env.EMAIL_PORT)
+    : 1025
   const emailUser = process.env.EMAIL_USER
   const emailPassword = process.env.EMAIL_PASSWORD
   const emailService = process.env.EMAIL_SERVICE
@@ -50,7 +52,9 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
       cachedTransporter = transport
       return cachedTransporter
     } catch {
-      console.warn("⚠️ Configured SMTP credentials failed to authenticate. Falling back...")
+      console.warn(
+        "⚠️ Configured SMTP credentials failed to authenticate. Falling back..."
+      )
     }
   }
 
@@ -103,11 +107,15 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
       },
     })
     await dynamicTransporter.verify()
-    console.log(`✅ Fresh Ethereal account created successfully: ${testAccount.user}`)
+    console.log(
+      `✅ Fresh Ethereal account created successfully: ${testAccount.user}`
+    )
     cachedTransporter = dynamicTransporter
     return cachedTransporter
   } catch {
-    console.warn("⚠️ Failed to generate dynamic Ethereal account. Falling back to JSON transport.")
+    console.warn(
+      "⚠️ Failed to generate dynamic Ethereal account. Falling back to JSON transport."
+    )
   }
 
   // 5. Absolute fallback: Mock JSON transport (works offline, never fails)
@@ -122,10 +130,14 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
  * Sends a verification email containing the 6-digit OTP code.
  * Also logs the code to the terminal for easy local testing.
  */
-export async function sendVerificationEmail(email: string, code: string, fullName: string): Promise<boolean> {
+export async function sendVerificationEmail(
+  email: string,
+  code: string,
+  fullName: string
+): Promise<boolean> {
   try {
     const transporter = await getTransporter()
-    
+
     // Print code to terminal so developers can copy/paste it immediately
     console.log("\n==================================================")
     console.log(`[VERIFICATION EMAIL LOG]`)
@@ -148,7 +160,10 @@ export async function sendVerificationEmail(email: string, code: string, fullNam
     return true
   } catch (error) {
     console.error("❌ Failed to send verification email:")
-    console.error("   Error:", error instanceof Error ? error.message : String(error))
+    console.error(
+      "   Error:",
+      error instanceof Error ? error.message : String(error)
+    )
     // Reset cached transporter on error to try a fresh connection strategy on next attempt
     cachedTransporter = null
     return false
@@ -156,12 +171,85 @@ export async function sendVerificationEmail(email: string, code: string, fullNam
 }
 
 /**
- * Sends a password reset email containing the reset link and code.
+ * Sends an MFA sign-in code email containing the 6-digit OTP code.
+ * Also logs the code to the terminal for easy local testing.
  */
-export async function sendPasswordResetEmail(email: string, code: string, resetLink: string, fullName: string): Promise<boolean> {
+export async function sendMfaCodeEmail(
+  email: string,
+  code: string,
+  fullName: string
+): Promise<boolean> {
   try {
     const transporter = await getTransporter()
-    
+
+    console.log("\n==================================================")
+    console.log(`[MFA CODE EMAIL LOG]`)
+    console.log(`To: ${email} (${fullName})`)
+    console.log(`Code: ${code}`)
+    console.log("==================================================\n")
+
+    const info = await transporter.sendMail({
+      from: DEMO_EMAIL_FROM,
+      to: email,
+      subject: "Your BentaHub sign-in code",
+      html: getMfaCodeEmailHtml(fullName, code),
+    })
+
+    const previewUrl = nodemailer.getTestMessageUrl(info)
+    if (previewUrl) {
+      console.log(`✉️ View sent email preview online: ${previewUrl}`)
+    }
+
+    return true
+  } catch (error) {
+    console.error("❌ Failed to send MFA code email:")
+    console.error(
+      "   Error:",
+      error instanceof Error ? error.message : String(error)
+    )
+    cachedTransporter = null
+    return false
+  }
+}
+
+function getMfaCodeEmailHtml(fullName: string, code: string): string {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <h2 style="color: #333; text-align: center;">BentaHub Sign-In Code</h2>
+      <p style="color: #666; font-size: 16px; line-height: 1.5;">
+        Hi ${fullName},
+      </p>
+      <p style="color: #666; font-size: 16px; line-height: 1.5;">
+        Use the code below to complete your sign-in to BentaHub:
+      </p>
+      <div style="background-color: #f7f7f7; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 1px dashed #d0d0d0;">
+        <p style="font-size: 36px; font-weight: bold; color: #1a56db; letter-spacing: 6px; margin: 0;">
+          ${code}
+        </p>
+      </div>
+      <p style="color: #999; font-size: 13px; text-align: center;">
+        This code expires in 5 minutes. Do not share it with anyone.
+      </p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="color: #aaa; font-size: 11px; text-align: center; margin: 0;">
+        If you did not request this code, you can safely ignore this email.
+      </p>
+    </div>
+  `
+}
+
+/**
+ * Sends a password reset email containing the reset link and code.
+ */
+export async function sendPasswordResetEmail(
+  email: string,
+  code: string,
+  resetLink: string,
+  fullName: string
+): Promise<boolean> {
+  try {
+    const transporter = await getTransporter()
+
     console.log("\n==================================================")
     console.log(`[PASSWORD RESET EMAIL LOG]`)
     console.log(`To: ${email} (${fullName})`)
@@ -214,7 +302,10 @@ export async function sendPasswordResetEmail(email: string, code: string, resetL
     return true
   } catch (error) {
     console.error("❌ Failed to send password reset email:")
-    console.error("   Error:", error instanceof Error ? error.message : String(error))
+    console.error(
+      "   Error:",
+      error instanceof Error ? error.message : String(error)
+    )
     cachedTransporter = null
     return false
   }

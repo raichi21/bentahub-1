@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
   try {
     const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     const user = await db.query.users.findFirst({
@@ -34,24 +37,33 @@ export async function GET(request: NextRequest) {
     })
 
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const prefs = await db.query.notificationPreferences.findFirst({
       where: eq(notificationPreferences.userId, userId),
     })
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        ...user,
-        notificationPreferences: prefs ?? { orderUpdates: true },
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          ...user,
+          notificationPreferences: prefs ?? { orderUpdates: true },
+        },
       },
-    }, { status: 200 })
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Failed to fetch profile:", message)
-    return NextResponse.json({ success: false, message: "Failed to fetch profile" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch profile" },
+      { status: 500 }
+    )
   }
 }
 
@@ -59,17 +71,23 @@ export async function PUT(request: NextRequest) {
   try {
     const userId = getRoleScopedUserId(request, ["customer"])
     if (!userId) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 })
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
     const body = await request.json()
     const parsed = updateProfileSchema.safeParse(body)
 
     if (!parsed.success) {
-      return NextResponse.json({
-        success: false,
-        message: parsed.error.errors[0]?.message ?? "Invalid input",
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message: parsed.error.errors[0]?.message ?? "Invalid input",
+        },
+        { status: 400 }
+      )
     }
 
     const { fullName, phone, image, branch } = parsed.data
@@ -85,11 +103,13 @@ export async function PUT(request: NextRequest) {
       updateData.branch = branch
     }
 
-    await db.update(users)
-      .set(updateData)
-      .where(eq(users.id, userId))
+    await db.update(users).set(updateData).where(eq(users.id, userId))
 
-    const responseData: Record<string, string | null> = { userId, fullName, phone: phone ?? null }
+    const responseData: Record<string, string | null> = {
+      userId,
+      fullName,
+      phone: phone ?? null,
+    }
     if (image !== undefined) {
       responseData.image = image
     }
@@ -97,14 +117,20 @@ export async function PUT(request: NextRequest) {
       responseData.branch = branch
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Profile updated successfully",
-      data: responseData,
-    }, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Profile updated successfully",
+        data: responseData,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Failed to update profile:", message)
-    return NextResponse.json({ success: false, message: "Failed to update profile" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "Failed to update profile" },
+      { status: 500 }
+    )
   }
 }

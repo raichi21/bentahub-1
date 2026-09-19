@@ -1,5 +1,9 @@
 import { db } from "@/servers/db"
-import { branchInventory, inventoryBatches, transactions } from "@/servers/schemas"
+import {
+  branchInventory,
+  inventoryBatches,
+  transactions,
+} from "@/servers/schemas"
 import { eq, and, asc, sql, gt } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 
@@ -18,7 +22,10 @@ import { generateId } from "@/lib/auth-utils"
  * Runs inside a DB transaction so stock and batch deductions stay atomic.
  * No longer writes to the deprecated `products.quantity` column.
  */
-export async function deductStock(branchId: string, items: { productId: string; quantity: number }[]) {
+export async function deductStock(
+  branchId: string,
+  items: { productId: string; quantity: number }[]
+) {
   await db.transaction(async (tx) => {
     for (const item of items) {
       const requested = item.quantity
@@ -30,7 +37,7 @@ export async function deductStock(branchId: string, items: { productId: string; 
         .where(
           and(
             eq(branchInventory.branchId, branchId),
-            eq(branchInventory.productId, item.productId),
+            eq(branchInventory.productId, item.productId)
           )
         )
         .limit(1)
@@ -46,18 +53,24 @@ export async function deductStock(branchId: string, items: { productId: string; 
       const batches = await tx
         .select()
         .from(inventoryBatches)
-        .where(and(eq(inventoryBatches.branchInventoryId, inv.id), gt(inventoryBatches.quantity, 0)))
+        .where(
+          and(
+            eq(inventoryBatches.branchInventoryId, inv.id),
+            gt(inventoryBatches.quantity, 0)
+          )
+        )
         .orderBy(
           asc(inventoryBatches.expiryDate),
           asc(inventoryBatches.receivedDate),
-          asc(inventoryBatches.createdAt),
+          asc(inventoryBatches.createdAt)
         )
 
       let remaining = requested
       for (const batch of batches) {
         if (remaining <= 0) break
         // Skip expired batches (expiry in the past) - never sell expired stock.
-        if (batch.expiryDate && new Date(batch.expiryDate) <= new Date()) continue
+        if (batch.expiryDate && new Date(batch.expiryDate) <= new Date())
+          continue
 
         const qty = Math.min(batch.quantity, remaining)
         remaining -= qty
@@ -123,7 +136,12 @@ export async function completeGcashTransaction(transactionId: string) {
     const flipped = await tx
       .update(transactions)
       .set({ status: "completed" })
-      .where(and(eq(transactions.id, transactionId), eq(transactions.status, "pending")))
+      .where(
+        and(
+          eq(transactions.id, transactionId),
+          eq(transactions.status, "pending")
+        )
+      )
       .returning({ id: transactions.id })
 
     if (flipped.length === 0) {
@@ -142,7 +160,10 @@ export async function completeGcashTransaction(transactionId: string) {
 
     await deductStock(
       txn.branchId,
-      txn.items.map((item) => ({ productId: item.productId, quantity: item.quantity }))
+      txn.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }))
     )
 
     return { completed: true, deducted: true }

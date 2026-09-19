@@ -1,7 +1,12 @@
 import { db } from "@/servers/db"
 import { and, isNotNull, gte } from "drizzle-orm"
 import { inventoryBatches } from "@/servers/schemas"
-import type { MonitoringData, InventoryStatusItem, SystemAlertItem, ExpiringItemData } from "@/types/admin"
+import type {
+  MonitoringData,
+  InventoryStatusItem,
+  SystemAlertItem,
+  ExpiringItemData,
+} from "@/types/admin"
 
 interface RawBranch {
   id: string
@@ -40,11 +45,17 @@ function formatCurrency(amount: number): string {
   return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export async function getMonitoringData(branchId?: string, dateFrom?: string, dateTo?: string): Promise<MonitoringData> {
-  const allBranches = await db.query.branches.findMany() as RawBranch[]
-  const allProducts = await db.query.products.findMany() as RawProduct[]
-  const allInventory = await db.query.branchInventory.findMany() as RawInventory[]
-  const allTransactions = await db.query.transactions.findMany() as RawTransaction[]
+export async function getMonitoringData(
+  branchId?: string,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<MonitoringData> {
+  const allBranches = (await db.query.branches.findMany()) as RawBranch[]
+  const allProducts = (await db.query.products.findMany()) as RawProduct[]
+  const allInventory =
+    (await db.query.branchInventory.findMany()) as RawInventory[]
+  const allTransactions =
+    (await db.query.transactions.findMany()) as RawTransaction[]
 
   // Filter by branch if specified
   const filteredInventory = branchId
@@ -67,9 +78,15 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
   const dateEnd = dateTo ? new Date(`${dateTo}T23:59:59.999`) : null
 
   // --- Total Stock Value ---
-  const productPriceMap = new Map(allProducts.map((p: RawProduct) => [p.id, parseFloat(p.price)]))
-  const productNameMap = new Map(allProducts.map((p: RawProduct) => [p.id, p.name]))
-  const productCategoryMap = new Map(allProducts.map((p: RawProduct) => [p.id, p.category || "Uncategorized"]))
+  const productPriceMap = new Map(
+    allProducts.map((p: RawProduct) => [p.id, parseFloat(p.price)])
+  )
+  const productNameMap = new Map(
+    allProducts.map((p: RawProduct) => [p.id, p.name])
+  )
+  const productCategoryMap = new Map(
+    allProducts.map((p: RawProduct) => [p.id, p.category || "Uncategorized"])
+  )
 
   let totalValue = 0
   for (const inv of filteredInventory) {
@@ -77,12 +94,21 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
     totalValue += price * inv.quantity
   }
 
-  const branchNameMap = new Map(allBranches.map((b: RawBranch) => [b.id, b.name]))
+  const branchNameMap = new Map(
+    allBranches.map((b: RawBranch) => [b.id, b.name])
+  )
 
   function buildInventoryStatus(source: RawInventory[]): InventoryStatusItem[] {
     const aggregator = new Map<
       string,
-      { productId: string; branchId: string; branchName: string; totalQty: number; lastUpdated: Date; thresholds: number[] }
+      {
+        productId: string
+        branchId: string
+        branchName: string
+        totalQty: number
+        lastUpdated: Date
+        thresholds: number[]
+      }
     >()
 
     for (const inv of source) {
@@ -96,7 +122,8 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
         thresholds: [],
       }
       existing.totalQty += inv.quantity
-      if (inv.updatedAt.getTime() > existing.lastUpdated.getTime()) existing.lastUpdated = inv.updatedAt
+      if (inv.updatedAt.getTime() > existing.lastUpdated.getTime())
+        existing.lastUpdated = inv.updatedAt
       existing.thresholds.push(inv.lowStockThreshold)
       aggregator.set(key, existing)
     }
@@ -107,12 +134,15 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
       const name = productNameMap.get(productId) || "Unknown"
       const category = productCategoryMap.get(productId) || "Uncategorized"
       const minThreshold = Math.min(...agg.thresholds)
-      const avgThreshold = Math.round(agg.thresholds.reduce((a, b) => a + b, 0) / agg.thresholds.length)
+      const avgThreshold = Math.round(
+        agg.thresholds.reduce((a, b) => a + b, 0) / agg.thresholds.length
+      )
 
       let status: "In Stock" | "Low Stock" | "Critical" = "In Stock"
       if (agg.totalQty === 0) status = "Critical"
       else if (agg.totalQty < minThreshold) status = "Critical"
-      else if (agg.totalQty < avgThreshold * agg.thresholds.length) status = "Low Stock"
+      else if (agg.totalQty < avgThreshold * agg.thresholds.length)
+        status = "Low Stock"
 
       items.push({
         productId,
@@ -124,13 +154,17 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
         reorderLevel: avgThreshold,
         status,
         lastUpdated: agg.lastUpdated,
-        earliestExpiry: earliestExpiryMap.get(`${agg.branchId}|${productId}`)?.toISOString() ?? null,
+        earliestExpiry:
+          earliestExpiryMap
+            .get(`${agg.branchId}|${productId}`)
+            ?.toISOString() ?? null,
       })
     }
 
     items.sort((a, b) => {
       const order = { Critical: 0, "Low Stock": 1, "In Stock": 2 }
-      if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status]
+      if (order[a.status] !== order[b.status])
+        return order[a.status] - order[b.status]
       return a.productName.localeCompare(b.productName)
     })
 
@@ -138,19 +172,27 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
   }
 
   // --- Low Stock Items ---
-  const lowStockRecords = filteredInventory.filter((i: RawInventory) => i.quantity < i.lowStockThreshold)
+  const lowStockRecords = filteredInventory.filter(
+    (i: RawInventory) => i.quantity < i.lowStockThreshold
+  )
   const totalLowStockCount = lowStockRecords.length
 
   // --- Pending Reservations (using pending transactions as proxy) ---
-  const pendingTransactions = filteredTransactions.filter((t: RawTransaction) => t.status === "pending")
+  const pendingTransactions = filteredTransactions.filter(
+    (t: RawTransaction) => t.status === "pending"
+  )
   // When a date range is set, count pending reservations created within it.
   // Otherwise keep the original behavior (all pending + today count).
-  const rangeFilteredPending = pendingTransactions.filter((t: RawTransaction) => {
-    if (!dateStart || !dateEnd) return true
-    const d = new Date(t.createdAt)
-    return d >= dateStart && d <= dateEnd
-  })
-  const pendingMetricCount = dateStart ? rangeFilteredPending.length : pendingTransactions.length
+  const rangeFilteredPending = pendingTransactions.filter(
+    (t: RawTransaction) => {
+      if (!dateStart || !dateEnd) return true
+      const d = new Date(t.createdAt)
+      return d >= dateStart && d <= dateEnd
+    }
+  )
+  const pendingMetricCount = dateStart
+    ? rangeFilteredPending.length
+    : pendingTransactions.length
   const todayPending = pendingTransactions.filter(
     (t: RawTransaction) => new Date(t.createdAt) >= todayStart
   ).length
@@ -159,11 +201,11 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
   // The query intentionally has no 30-day ceiling so the inventory table can
   // show each product-branch's earliest future expiry; the Expiring Soon
   // section filters back down to the 30-day window below.
-  const allBatches = await db.query.inventoryBatches.findMany({
+  const allBatches = (await db.query.inventoryBatches.findMany({
     where: and(
       gte(inventoryBatches.quantity, 1),
       isNotNull(inventoryBatches.expiryDate),
-      gte(inventoryBatches.expiryDate, now),
+      gte(inventoryBatches.expiryDate, now)
     ),
     with: {
       branchInventory: {
@@ -173,7 +215,7 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
         },
       },
     },
-  }) as unknown as Array<{
+  })) as unknown as Array<{
     id: string
     batchNumber: string | null
     quantity: number
@@ -224,15 +266,18 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
   const inventoryStatus = buildInventoryStatus(
     dateStart && dateEnd
       ? filteredInventory.filter(
-          (i: RawInventory) => i.updatedAt >= dateStart && i.updatedAt <= dateEnd,
+          (i: RawInventory) =>
+            i.updatedAt >= dateStart && i.updatedAt <= dateEnd
         )
-      : filteredInventory,
+      : filteredInventory
   )
 
   // --- System Alerts from real low stock data ---
   const alerts: SystemAlertItem[] = []
 
-  const criticalProducts = inventoryStatus.filter((i) => i.status === "Critical")
+  const criticalProducts = inventoryStatus.filter(
+    (i) => i.status === "Critical"
+  )
   for (const p of criticalProducts.slice(0, 3)) {
     alerts.push({
       type: "critical",
@@ -270,7 +315,12 @@ export async function getMonitoringData(branchId?: string, dateFrom?: string, da
       },
       lowStockItems: {
         value: totalLowStockCount,
-        severity: totalLowStockCount > 20 ? "Critical" : totalLowStockCount > 5 ? "Warning" : "Normal",
+        severity:
+          totalLowStockCount > 20
+            ? "Critical"
+            : totalLowStockCount > 5
+              ? "Warning"
+              : "Normal",
       },
       pendingReservations: {
         value: pendingMetricCount,

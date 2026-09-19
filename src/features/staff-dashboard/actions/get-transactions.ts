@@ -20,7 +20,9 @@ interface RawTransactionItem {
   subtotal: string
 }
 
-export async function getTransactions(branchName: string): Promise<StaffTransactionItem[]> {
+export async function getTransactions(
+  branchName: string
+): Promise<StaffTransactionItem[]> {
   const branchRecord = await db.query.branches.findFirst({
     where: eq(branches.name, branchName),
   })
@@ -31,18 +33,19 @@ export async function getTransactions(branchName: string): Promise<StaffTransact
 
   const branchId = branchRecord.id
 
-  const allTransactions = await db.query.transactions.findMany({
+  const allTransactions = (await db.query.transactions.findMany({
     where: eq(transactions.branchId, branchId),
     orderBy: desc(transactions.createdAt),
-  }) as RawTransaction[]
+  })) as RawTransaction[]
 
   const transactionIds = allTransactions.map((t) => t.id)
 
-  const allItems = transactionIds.length > 0
-    ? await db.query.transactionItems.findMany({
-        where: inArray(transactionItems.transactionId, transactionIds),
-      }) as RawTransactionItem[]
-    : []
+  const allItems =
+    transactionIds.length > 0
+      ? ((await db.query.transactionItems.findMany({
+          where: inArray(transactionItems.transactionId, transactionIds),
+        })) as RawTransactionItem[])
+      : []
 
   const itemsByTxnId = new Map<string, RawTransactionItem[]>()
   for (const item of allItems) {

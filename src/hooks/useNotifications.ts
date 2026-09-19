@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef } from "react"
-import { useNotificationsStore, type Notification } from "@/stores/notificationsStore"
+import {
+  useNotificationsStore,
+  type Notification,
+} from "@/stores/notificationsStore"
 import { useAuth } from "./useAuth"
 
 const POLL_INTERVAL = 30000 // 30 seconds
@@ -49,12 +52,14 @@ export function useNotifications() {
 
         const data = await response.json()
         const payload = data.data ?? {}
-        const notifications: Notification[] = (payload.notifications ?? []).map((n: Record<string, unknown>) => ({
-          ...n,
-          readAt: n.readAt ? new Date(n.readAt as string) : null,
-          createdAt: new Date(n.createdAt as string),
-          expiresAt: n.expiresAt ? new Date(n.expiresAt as string) : null,
-        })) as Notification[]
+        const notifications: Notification[] = (payload.notifications ?? []).map(
+          (n: Record<string, unknown>) => ({
+            ...n,
+            readAt: n.readAt ? new Date(n.readAt as string) : null,
+            createdAt: new Date(n.createdAt as string),
+            expiresAt: n.expiresAt ? new Date(n.expiresAt as string) : null,
+          })
+        ) as Notification[]
 
         notificationsStore.setNotifications(notifications)
         return notifications
@@ -131,7 +136,8 @@ export function useNotifications() {
         body: JSON.stringify({ isRead: true }),
       })
 
-      if (!response.ok) throw new Error("Failed to mark all notifications as read")
+      if (!response.ok)
+        throw new Error("Failed to mark all notifications as read")
 
       notificationsStore.markAllAsRead()
     } catch (error) {

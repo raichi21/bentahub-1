@@ -3,11 +3,13 @@ import { CreateNewPasswordForm } from "@/features/user-mgmt/components/create-ne
 
 export default function CreateNewPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="w-full max-w-[440px] flex items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex w-full max-w-[440px] items-center justify-center p-8">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      }
+    >
       <CreateNewPasswordForm />
     </Suspense>
   )

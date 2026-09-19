@@ -1,6 +1,12 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
-import { cartItems, orders, orderItems, branches, branchInventory } from "@/drizzle/schema"
+import {
+  cartItems,
+  orders,
+  orderItems,
+  branches,
+  branchInventory,
+} from "@/drizzle/schema"
 import { eq, and, inArray, isNull, desc } from "drizzle-orm"
 import { generateId, getRoleScopedUserId } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
@@ -97,7 +103,10 @@ export async function POST(request: NextRequest) {
     // The client-supplied branch may confirm it, but never override it.
     const cartBranch = userCartItems.find((i) => i.branch)?.branch ?? null
     if (cartBranch && branch && branch !== cartBranch) {
-      return apiError("Selected branch does not match the items in your cart", 400)
+      return apiError(
+        "Selected branch does not match the items in your cart",
+        400
+      )
     }
     const effectiveBranch = cartBranch || branch
     if (!effectiveBranch) {
@@ -174,10 +183,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const [order] = await tx
-          .insert(orders)
-          .values(newOrder)
-          .returning()
+        const [order] = await tx.insert(orders).values(newOrder).returning()
 
         await tx.insert(orderItems).values(orderItemsData)
 

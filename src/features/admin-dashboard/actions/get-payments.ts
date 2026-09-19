@@ -56,39 +56,61 @@ function formatCurrency(amount: number): string {
 
 function formatDateTime(d: Date): string {
   return formatPHDateTime(d, {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   })
 }
 
-export async function getPayments(filters: PaymentFilterOptions = { page: 1, pageSize: 15 }): Promise<PaymentPageData> {
+export async function getPayments(
+  filters: PaymentFilterOptions = { page: 1, pageSize: 15 }
+): Promise<PaymentPageData> {
   const allBranches = await db.query.branches.findMany()
   const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
 
   const baseConditions: SQL[] = []
   if (filters.method) {
-    baseConditions.push(eq(transactions.paymentMethod, filters.method as "cash" | "gcash"))
+    baseConditions.push(
+      eq(transactions.paymentMethod, filters.method as "cash" | "gcash")
+    )
   }
   if (filters.status) {
-    baseConditions.push(eq(transactions.status, filters.status as "pending" | "completed" | "cancelled"))
+    baseConditions.push(
+      eq(
+        transactions.status,
+        filters.status as "pending" | "completed" | "cancelled"
+      )
+    )
   }
   if (filters.branchId) {
     baseConditions.push(eq(transactions.branchId, filters.branchId))
   }
   if (filters.dateFrom) {
-    baseConditions.push(gte(transactions.createdAt, startOfManilaDay(new Date(filters.dateFrom))))
+    baseConditions.push(
+      gte(transactions.createdAt, startOfManilaDay(new Date(filters.dateFrom)))
+    )
   }
   if (filters.dateTo) {
-    baseConditions.push(lte(transactions.createdAt, endOfManilaDay(new Date(filters.dateTo))))
+    baseConditions.push(
+      lte(transactions.createdAt, endOfManilaDay(new Date(filters.dateTo)))
+    )
   }
 
   const where = baseConditions.length > 0 ? and(...baseConditions) : undefined
 
-  const allRows = await db.query.transactions.findMany({
+  const allRows = (await db.query.transactions.findMany({
     where,
     orderBy: [desc(transactions.createdAt)],
-  }) as Array<{
-    id: string; branchId: string; totalAmount: string; paymentMethod: string; status: string; createdAt: Date
+  })) as Array<{
+    id: string
+    branchId: string
+    totalAmount: string
+    paymentMethod: string
+    status: string
+    createdAt: Date
   }>
 
   let filtered = allRows
@@ -110,8 +132,10 @@ export async function getPayments(filters: PaymentFilterOptions = { page: 1, pag
     .filter((t) => t.paymentMethod === "gcash")
     .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
   const totalAmount = cashTotal + gcashTotal
-  const cashPercentage = totalAmount > 0 ? Math.round((cashTotal / totalAmount) * 100) : 0
-  const gcashPercentage = totalAmount > 0 ? Math.round((gcashTotal / totalAmount) * 100) : 0
+  const cashPercentage =
+    totalAmount > 0 ? Math.round((cashTotal / totalAmount) * 100) : 0
+  const gcashPercentage =
+    totalAmount > 0 ? Math.round((gcashTotal / totalAmount) * 100) : 0
 
   const completedCount = filtered.filter((t) => t.status === "completed").length
   const pendingCount = filtered.filter((t) => t.status === "pending").length
@@ -122,7 +146,12 @@ export async function getPayments(filters: PaymentFilterOptions = { page: 1, pag
 
   const payments = pageRows.map((t, idx) => {
     const amount = parseFloat(t.totalAmount)
-    const statusDisplay = t.status === "completed" ? "Verified" : t.status === "pending" ? "Pending" : "Failed"
+    const statusDisplay =
+      t.status === "completed"
+        ? "Verified"
+        : t.status === "pending"
+          ? "Pending"
+          : "Failed"
     return {
       id: t.id,
       displayId: `#P-${String(totalCount - offset - idx).padStart(4, "0")}`,

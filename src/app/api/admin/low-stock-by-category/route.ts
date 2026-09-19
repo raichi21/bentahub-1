@@ -3,7 +3,9 @@ import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { getLowStockByCategory } from "@/features/admin-dashboard/actions/get-low-stock-by-category"
 import type { AdminApiResponse, LowStockByCategoryData } from "@/types/admin"
 
-export async function GET(request: NextRequest): Promise<NextResponse<AdminApiResponse<LowStockByCategoryData[]>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<AdminApiResponse<LowStockByCategoryData[]>>> {
   try {
     const token = extractToken(request)
 
@@ -33,13 +35,20 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
     const data = await getLowStockByCategory()
 
     return NextResponse.json(
-      { success: true, message: "Low stock by category retrieved successfully", data },
+      {
+        success: true,
+        message: "Low stock by category retrieved successfully",
+        data,
+      },
       { status: 200 }
     )
   } catch (error) {
     console.error("Admin low stock by category error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching low stock by category" },
+      {
+        success: false,
+        message: "An error occurred while fetching low stock by category",
+      },
       { status: 500 }
     )
   }

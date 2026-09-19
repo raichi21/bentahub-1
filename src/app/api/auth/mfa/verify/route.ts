@@ -1,152 +1,126 @@
-import crypto from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
+import { checkMfaCode } from "@/lib/mfa-email"
 import {
-  decryptMfaSecret,
-  verifyTotp,
-  verifyBackupCode,
-  consumeBackupCode,
-} from "@/lib/mfa"
-import { resolveMfaChallengeToken, issueSession } from "../_helpers"
+  resolveMfaChallengeToken,
+  resolveMfaIdentity,
+  issueSession,
+} from "../_helpers"
 import type { AuthResponse, MfaVerifyResponseData } from "@/types/auth"
+
+type VerifyData = MfaVerifyResponseData | { enabled: boolean }
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const MAX_ATTEMPTS = 5
-const ATTEMPT_WINDOW_MS = 10 * 60 * 1000
-
-// In-memory attempt tracker keyed by the hashed mfa token. Acceptable for this
-// app's single-instance deployment; the window matches the token's 10-minute
-// lifetime so stale entries are pruned naturally.
-const attemptStore = new Map<string, { attempts: number; expiresAt: number }>()
-
-function attemptKey(mfaToken: string): string {
-  return crypto.createHash("sha256").update(mfaToken).digest("hex")
-}
-
-/** Register (or block) a failed attempt for the given mfa token. */
-function registerFailedAttempt(key: string): boolean {
-  const now = Date.now()
-  const entry = attemptStore.get(key)
-  if (!entry || entry.expiresAt < now) {
-    attemptStore.set(key, { attempts: 1, expiresAt: now + ATTEMPT_WINDOW_MS })
-    return true
-  }
-  entry.attempts += 1
-  if (entry.attempts >= MAX_ATTEMPTS) {
-    attemptStore.delete(key)
-    return false
-  }
-  return true
-}
-
-function pruneAttemptStore(): void {
-  if (attemptStore.size < 500) return
-  const now = Date.now()
-  for (const [key, entry] of attemptStore) {
-    if (entry.expiresAt < now) attemptStore.delete(key)
-  }
+function codeError<T>(
+  message: string,
+  status: number
+): NextResponse<AuthResponse<T>> {
+  return NextResponse.json({ success: false, message }, { status })
 }
 
 /**
  * POST /api/auth/mfa/verify
  *
- * Completes a login by validating the 6-digit TOTP code (or a backup code)
- * against the user's enrolled authenticator. On success it issues the full
- * session JWT, same shape as a normal login response.
+ * Validates the 6-digit code emailed to the user.
+ *
+ * - With an `mfaToken` (login flow, from the password or OAuth step): a valid
+ *   code completes the sign-in and issues the full session JWT. Users whose
+ *   MFA was not yet enabled are auto-enrolled on first successful verify.
+ * - With a full session token (settings): a valid code simply enables MFA for
+ *   the signed-in user.
  */
 export async function POST(
   request: NextRequest
-): Promise<NextResponse<AuthResponse<MfaVerifyResponseData>>> {
+): Promise<NextResponse<AuthResponse<VerifyData>>> {
   try {
     const body = await request.json().catch(() => null)
     const mfaToken: unknown = body?.mfaToken
     const code: unknown = body?.code
 
-    if (
-      typeof mfaToken !== "string" ||
-      typeof code !== "string" ||
-      !code.trim()
-    ) {
-      return NextResponse.json(
-        { success: false, message: "MFA token and code are required" },
-        { status: 400 }
-      )
+    if (typeof code !== "string" || !code.trim()) {
+      return codeError<VerifyData>("Verification code is required", 400)
     }
 
-    // --- Validate the challenge token --------------------------------------
-
-    const challenge = resolveMfaChallengeToken<MfaVerifyResponseData>(mfaToken)
-    if (challenge.error) return challenge.error
-
-    pruneAttemptStore()
-    const key = attemptKey(mfaToken)
-
-    // --- Load the user -----------------------------------------------------
+    // Resolve who is acting: the MFA challenge token (login) or a full
+    // session token (settings panel).
+    let identity: { userId: string; tokenType: "mfa" | "full" }
+    if (typeof mfaToken === "string" && mfaToken) {
+      const challenge = resolveMfaChallengeToken<VerifyData>(mfaToken)
+      if (challenge.error) return challenge.error
+      identity = challenge.identity
+    } else {
+      const auth = resolveMfaIdentity<VerifyData>(request)
+      if (auth.error) return auth.error
+      if (auth.identity.tokenType !== "full") {
+        return codeError<VerifyData>("A full session is required", 403)
+      }
+      identity = auth.identity
+    }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, challenge.identity.userId),
+      where: eq(users.id, identity.userId),
     })
 
     if (!user || !user.isActive) {
-      return NextResponse.json(
-        { success: false, message: "Account not found or deactivated" },
-        { status: 401 }
-      )
+      return codeError<VerifyData>("Account not found or deactivated", 401)
     }
 
-    if (!user.mfaEnabled || !user.mfaSecret) {
+    const check = await checkMfaCode(user.id, code)
+
+    switch (check.status) {
+      case "missing":
+        return codeError<VerifyData>(
+          "No verification code was found. Please request a new code.",
+          400
+        )
+      case "expired":
+        return codeError<VerifyData>(
+          "Verification code has expired. Please request a new one.",
+          400
+        )
+      case "locked":
+        return codeError<VerifyData>(
+          "Too many incorrect attempts. Please request a new code.",
+          429
+        )
+      case "invalid":
+        return codeError<VerifyData>(
+          `Invalid verification code. You have ${check.attemptsLeft} attempt${
+            check.attemptsLeft === 1 ? "" : "s"
+          } remaining.`,
+          401
+        )
+    }
+
+    // Auto-enroll on first successful verification (enforcement flow).
+    if (!user.mfaEnabled) {
+      await db
+        .update(users)
+        .set({ mfaEnabled: true })
+        .where(eq(users.id, user.id))
+    }
+
+    // Login flow: upgrade the challenge into a full session.
+    if (identity.tokenType === "mfa") {
       return NextResponse.json(
         {
-          success: false,
-          message: "MFA is not enabled for this account. Please sign in again.",
+          success: true,
+          message: "Verification successful",
+          data: issueSession(user),
         },
-        { status: 400 }
+        { status: 200 }
       )
-    }
-
-    // --- Rate limit brute-force attempts -----------------------------------
-
-    const secret = decryptMfaSecret(user.mfaSecret)
-
-    const totpValid = verifyTotp(secret, code)
-    const backupValid = verifyBackupCode(code, user.mfaBackupCodes)
-
-    if (!totpValid && !backupValid) {
-      if (!registerFailedAttempt(key)) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Too many failed attempts. Please sign in again.",
-          },
-          { status: 429 }
-        )
-      }
-      return NextResponse.json(
-        { success: false, message: "Invalid verification code" },
-        { status: 401 }
-      )
-    }
-
-    // A valid single-use backup code is consumed immediately.
-    if (backupValid && !totpValid && user.mfaBackupCodes) {
-      const updated = consumeBackupCode(code, user.mfaBackupCodes)
-      if (updated !== null) {
-        await db
-          .update(users)
-          .set({ mfaBackupCodes: updated })
-          .where(eq(users.id, user.id))
-      }
     }
 
     return NextResponse.json(
       {
         success: true,
-        message: "Verification successful",
-        data: issueSession(user),
+        message: "MFA enabled successfully",
+        data: { enabled: true },
       },
       { status: 200 }
     )

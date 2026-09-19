@@ -15,22 +15,43 @@ const updateUserSchema = z.object({
   canManageCategories: z.boolean().optional(),
   canManageProducts: z.boolean().optional(),
   // Optional — when present, the admin resets the user's password.
-  password: z.string().min(8, "Password must be at least 8 characters").optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .optional(),
 })
 
 /** Internal work-account domain required for cashier/staff accounts. */
 const INTERNAL_DOMAIN = "@bentahub.com"
 
-function checkAuth(token: string | null): { userId?: string; error?: NextResponse } {
+function checkAuth(token: string | null): {
+  userId?: string
+  error?: NextResponse
+} {
   if (!token) {
-    return { error: NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Authentication required" },
+        { status: 401 }
+      ),
+    }
   }
   const payload = verifyToken(token)
   if (!payload) {
-    return { error: NextResponse.json({ success: false, message: "Invalid or expired token" }, { status: 401 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Invalid or expired token" },
+        { status: 401 }
+      ),
+    }
   }
   if (payload.role !== "admin") {
-    return { error: NextResponse.json({ success: false, message: "Admin access required" }, { status: 403 }) }
+    return {
+      error: NextResponse.json(
+        { success: false, message: "Admin access required" },
+        { status: 403 }
+      ),
+    }
   }
   return { userId: payload.userId }
 }
@@ -46,9 +67,14 @@ export async function PATCH(
 
     const { userId } = await params
 
-    const existing = await db.query.users.findFirst({ where: eq(users.id, userId) })
+    const existing = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    })
     if (!existing) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const body = await request.json()
@@ -56,7 +82,10 @@ export async function PATCH(
     if (!parsed.success) {
       const errorMap = parsed.error.flatten().fieldErrors
       const firstError = Object.values(errorMap)[0]?.[0] || "Validation failed"
-      return NextResponse.json({ success: false, message: firstError }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: firstError },
+        { status: 400 }
+      )
     }
 
     // Hash an optional new password before it touches the database — the
@@ -70,7 +99,10 @@ export async function PATCH(
       !effectiveEmail.toLowerCase().endsWith(INTERNAL_DOMAIN)
     ) {
       return NextResponse.json(
-        { success: false, message: `Cashier and Staff accounts require an ${INTERNAL_DOMAIN} email` },
+        {
+          success: false,
+          message: `Cashier and Staff accounts require an ${INTERNAL_DOMAIN} email`,
+        },
         { status: 400 }
       )
     }
@@ -81,9 +113,21 @@ export async function PATCH(
     const isAdminRole = effectiveRole === "admin"
     const isStaffRole = effectiveRole === "staff"
     const resolvedPermissions = {
-      canManageUnits: isAdminRole ? true : !isStaffRole ? false : rest.canManageUnits ?? existing.canManageUnits,
-      canManageCategories: isAdminRole ? true : !isStaffRole ? false : rest.canManageCategories ?? existing.canManageCategories,
-      canManageProducts: isAdminRole ? true : !isStaffRole ? false : rest.canManageProducts ?? existing.canManageProducts,
+      canManageUnits: isAdminRole
+        ? true
+        : !isStaffRole
+          ? false
+          : (rest.canManageUnits ?? existing.canManageUnits),
+      canManageCategories: isAdminRole
+        ? true
+        : !isStaffRole
+          ? false
+          : (rest.canManageCategories ?? existing.canManageCategories),
+      canManageProducts: isAdminRole
+        ? true
+        : !isStaffRole
+          ? false
+          : (rest.canManageProducts ?? existing.canManageProducts),
     }
 
     const updateData = {
@@ -93,14 +137,18 @@ export async function PATCH(
       updatedAt: new Date(),
     }
 
-    await db.update(users)
-      .set(updateData)
-      .where(eq(users.id, userId))
+    await db.update(users).set(updateData).where(eq(users.id, userId))
 
-    return NextResponse.json({ success: true, message: "User updated successfully" })
+    return NextResponse.json({
+      success: true,
+      message: "User updated successfully",
+    })
   } catch (error) {
     console.error("Admin update user error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }
 
@@ -115,19 +163,31 @@ export async function DELETE(
 
     const { userId } = await params
 
-    const existing = await db.query.users.findFirst({ where: eq(users.id, userId) })
+    const existing = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    })
     if (!existing) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     // Soft delete — deactivate instead of removing
-    await db.update(users)
+    await db
+      .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, userId))
 
-    return NextResponse.json({ success: true, message: "User deactivated successfully" })
+    return NextResponse.json({
+      success: true,
+      message: "User deactivated successfully",
+    })
   } catch (error) {
     console.error("Admin delete user error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

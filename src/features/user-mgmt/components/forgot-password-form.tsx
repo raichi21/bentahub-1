@@ -48,7 +48,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full max-w-[440px] animate-in duration-700 fade-in slide-in-from-bottom-4">
       <AuthHeader subtitle="We'll help you recover your account" />
 
       <Card className="border-border shadow-sm">
@@ -56,30 +56,36 @@ export function ForgotPasswordForm() {
           <div className="flex items-center gap-2">
             <Link
               href="/login"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <CardTitle className="text-xl font-semibold">Reset Password</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              Reset Password
+            </CardTitle>
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Enter your email address and we&apos;ll send you a link to reset your password.
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enter your email address and we&apos;ll send you a link to reset
+            your password.
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <Label
+                htmlFor="email"
+                className="text-xs tracking-wider text-muted-foreground uppercase"
+              >
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-5" />
+                <Mail className="absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
@@ -96,7 +102,7 @@ export function ForgotPasswordForm() {
             <div className="pt-2">
               <Button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 p-5"
+                className="flex w-full items-center justify-center gap-2 p-5"
                 disabled={isLoading}
               >
                 {isLoading ? "Sending..." : "Send Verification Code"}
@@ -105,13 +111,17 @@ export function ForgotPasswordForm() {
             </div>
           </form>
 
-          <p className="text-xs text-muted-foreground/80 text-center mt-4">
-            Staff &amp; Cashier accounts: contact your administrator for password resets.
+          <p className="mt-4 text-center text-xs text-muted-foreground/80">
+            Staff &amp; Cashier accounts: contact your administrator for
+            password resets.
           </p>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Remember your password?{" "}
-            <Link href="/login" className="text-primary font-bold hover:underline">
+            <Link
+              href="/login"
+              className="font-bold text-primary hover:underline"
+            >
               Sign In
             </Link>
           </p>

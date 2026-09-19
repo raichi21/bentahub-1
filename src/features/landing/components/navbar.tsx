@@ -15,23 +15,25 @@ export function Navbar() {
   const isCatalog = pathname === "/catalog" || pathname.startsWith("/catalog")
 
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/95 shadow-sm backdrop-blur-md">
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <StoreLogo variant="bare" size="sm" iconClassName="text-primary" />
-            <span className="font-bold text-xl tracking-tight">{storeName}</span>
+            <span className="text-xl font-bold tracking-tight">
+              {storeName}
+            </span>
           </Link>
 
           {/* Navigation Links - Hidden on mobile */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden items-center gap-6 md:flex">
             <Link
               href="/"
               className={cn(
                 "px-1 pt-1 transition-colors",
                 isHome
-                  ? "text-foreground font-semibold border-b-2 border-primary"
+                  ? "border-b-2 border-primary font-semibold text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -42,7 +44,7 @@ export function Navbar() {
               className={cn(
                 "px-1 pt-1 transition-colors",
                 isCatalog
-                  ? "text-foreground font-semibold border-b-2 border-primary"
+                  ? "border-b-2 border-primary font-semibold text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >

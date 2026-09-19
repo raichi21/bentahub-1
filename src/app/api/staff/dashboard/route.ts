@@ -6,7 +6,9 @@ import { eq } from "drizzle-orm"
 import { getStaffDashboard } from "@/features/staff-dashboard/actions/get-dashboard"
 import type { StaffApiResponse, StaffDashboardData } from "@/types/staff"
 
-export async function GET(request: NextRequest): Promise<NextResponse<StaffApiResponse<StaffDashboardData>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<StaffApiResponse<StaffDashboardData>>> {
   try {
     const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
 
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<StaffApiRe
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
-        { status: 404 },
+        { status: 404 }
       )
     }
 
@@ -31,13 +33,16 @@ export async function GET(request: NextRequest): Promise<NextResponse<StaffApiRe
 
     return NextResponse.json(
       { success: true, message: "Dashboard data retrieved successfully", data },
-      { status: 200 },
+      { status: 200 }
     )
   } catch (error) {
     console.error("Staff dashboard error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching dashboard data" },
-      { status: 500 },
+      {
+        success: false,
+        message: "An error occurred while fetching dashboard data",
+      },
+      { status: 500 }
     )
   }
 }

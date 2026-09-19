@@ -25,10 +25,7 @@ export async function markNotificationsRead(
     .update(notifications)
     .set({ isRead: true, readAt: new Date() })
     .where(
-      and(
-        inArray(notifications.id, ids),
-        eq(notifications.userId, userId)
-      )
+      and(inArray(notifications.id, ids), eq(notifications.userId, userId))
     )
 }
 
@@ -37,9 +34,6 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .update(notifications)
     .set({ isRead: true, readAt: new Date() })
     .where(
-      and(
-        eq(notifications.userId, userId),
-        eq(notifications.isRead, false)
-      )
+      and(eq(notifications.userId, userId), eq(notifications.isRead, false))
     )
 }

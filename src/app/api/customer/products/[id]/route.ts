@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
-import { products, branches, branchInventory, inventoryBatches } from "@/drizzle/schema"
+import {
+  products,
+  branches,
+  branchInventory,
+  inventoryBatches,
+} from "@/drizzle/schema"
 import { eq, and, inArray, isNotNull, gte } from "drizzle-orm"
 import { apiResponse, apiError } from "@/lib/api-response"
 
@@ -12,7 +17,10 @@ import { apiResponse, apiError } from "@/lib/api-response"
  * that doesn't apply to what they're buying, so it returns `null` instead.
  * When no branch is requested, best-effort fallbacks are fine.
  */
-async function getNearestExpiry(productId: string, branchName: string | null): Promise<string | null> {
+async function getNearestExpiry(
+  productId: string,
+  branchName: string | null
+): Promise<string | null> {
   const now = new Date()
 
   let inventory = null
@@ -25,7 +33,7 @@ async function getNearestExpiry(productId: string, branchName: string | null): P
     inventory = await db.query.branchInventory.findMany({
       where: and(
         eq(branchInventory.productId, productId),
-        eq(branchInventory.branchId, branchRecord.id),
+        eq(branchInventory.branchId, branchRecord.id)
       ),
     })
   } else {
@@ -40,7 +48,7 @@ async function getNearestExpiry(productId: string, branchName: string | null): P
         inventory = await db.query.branchInventory.findMany({
           where: and(
             eq(branchInventory.productId, productId),
-            eq(branchInventory.branchId, branchRecord.id),
+            eq(branchInventory.branchId, branchRecord.id)
           ),
         })
       }
@@ -60,7 +68,7 @@ async function getNearestExpiry(productId: string, branchName: string | null): P
     where: and(
       inArray(inventoryBatches.branchInventoryId, inventoryIds),
       isNotNull(inventoryBatches.expiryDate),
-      gte(inventoryBatches.quantity, 1),
+      gte(inventoryBatches.quantity, 1)
     ),
   })
 
@@ -69,7 +77,9 @@ async function getNearestExpiry(productId: string, branchName: string | null): P
     .filter((d): d is Date => d !== null && new Date(d) > now)
 
   if (futureDates.length === 0) return null
-  return futureDates.reduce((prev, curr) => (prev < curr ? prev : curr)).toISOString()
+  return futureDates
+    .reduce((prev, curr) => (prev < curr ? prev : curr))
+    .toISOString()
 }
 
 /**
@@ -103,13 +113,15 @@ export async function GET(
     // listing route so the detail page shows the same availability as the
     // listing, cart, and checkout.
     const branchRecord = p.branch
-      ? await db.query.branches.findFirst({ where: eq(branches.name, p.branch) })
+      ? await db.query.branches.findFirst({
+          where: eq(branches.name, p.branch),
+        })
       : null
     const inv = branchRecord
       ? await db.query.branchInventory.findFirst({
           where: and(
             eq(branchInventory.productId, id),
-            eq(branchInventory.branchId, branchRecord.id),
+            eq(branchInventory.branchId, branchRecord.id)
           ),
         })
       : null

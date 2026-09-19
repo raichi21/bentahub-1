@@ -104,7 +104,6 @@ export async function POST(
       const mfaToken = generateMfaToken(user.id)
       const data: LoginChallengeData = {
         requiresMfa: true,
-        requiresMfaSetup: false,
         mfaToken,
       }
       return NextResponse.json(
@@ -117,7 +116,6 @@ export async function POST(
       const mfaToken = generateMfaToken(user.id)
       const data: LoginChallengeData = {
         requiresMfa: true,
-        requiresMfaSetup: true,
         mfaToken,
       }
       return NextResponse.json(

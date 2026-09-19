@@ -1,5 +1,11 @@
 import { db } from "@/servers/db"
-import type { AdminOverviewData, BranchStockData, SalesTrendData, SalesTrendWeeklyData, SalesTrendDailyData } from "@/types/admin"
+import type {
+  AdminOverviewData,
+  BranchStockData,
+  SalesTrendData,
+  SalesTrendWeeklyData,
+  SalesTrendDailyData,
+} from "@/types/admin"
 
 interface RawTransaction {
   id: string
@@ -30,16 +36,34 @@ interface RawBranch {
 }
 
 const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ]
 
 function getMonthRange(monthsAgo: number): { start: Date; end: Date } {
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1)
-  const end = monthsAgo === 0
-    ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-    : new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 0, 23, 59, 59)
+  const end =
+    monthsAgo === 0
+      ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+      : new Date(
+          now.getFullYear(),
+          now.getMonth() - monthsAgo + 1,
+          0,
+          23,
+          59,
+          59
+        )
   return { start, end }
 }
 
@@ -47,9 +71,15 @@ function formatCurrency(amount: number): string {
   return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function computeTrend(current: number, previous: number): { trend: string; trendType: "up" | "down" | "warning" } {
+function computeTrend(
+  current: number,
+  previous: number
+): { trend: string; trendType: "up" | "down" | "warning" } {
   if (previous === 0) {
-    return { trend: current > 0 ? "+100%" : "0%", trendType: current > 0 ? "up" : "warning" }
+    return {
+      trend: current > 0 ? "+100%" : "0%",
+      trendType: current > 0 ? "up" : "warning",
+    }
   }
   const pct = ((current - previous) / previous) * 100
   const sign = pct >= 0 ? "+" : ""
@@ -60,9 +90,11 @@ function computeTrend(current: number, previous: number): { trend: string; trend
 }
 
 export async function getAdminOverview(): Promise<AdminOverviewData> {
-  const allBranches = await db.query.branches.findMany() as RawBranch[]
-  const allTransactions = await db.query.transactions.findMany() as RawTransaction[]
-  const allInventory = await db.query.branchInventory.findMany() as RawInventory[]
+  const allBranches = (await db.query.branches.findMany()) as RawBranch[]
+  const allTransactions =
+    (await db.query.transactions.findMany()) as RawTransaction[]
+  const allInventory =
+    (await db.query.branchInventory.findMany()) as RawInventory[]
 
   // --- Revenue KPI ---
   const now = new Date()
@@ -70,23 +102,41 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
   const currentMonthRevenue = allTransactions
-    .filter((t: RawTransaction) => t.status === "completed" && new Date(t.createdAt) >= currentMonthStart)
-    .reduce((sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount), 0)
+    .filter(
+      (t: RawTransaction) =>
+        t.status === "completed" && new Date(t.createdAt) >= currentMonthStart
+    )
+    .reduce(
+      (sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount),
+      0
+    )
 
   const lastMonthRevenue = allTransactions
     .filter((t: RawTransaction) => {
       const d = new Date(t.createdAt)
-      return t.status === "completed" && d >= lastMonthStart && d < currentMonthStart
+      return (
+        t.status === "completed" && d >= lastMonthStart && d < currentMonthStart
+      )
     })
-    .reduce((sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount), 0)
+    .reduce(
+      (sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount),
+      0
+    )
 
   const revenueTrend = computeTrend(currentMonthRevenue, lastMonthRevenue)
 
   // --- Inventory KPI ---
-  const totalStock = allInventory.reduce((sum: number, i: RawInventory) => sum + i.quantity, 0)
-  const uniqueProducts = new Set(allInventory.map((i: RawInventory) => i.productId)).size
+  const totalStock = allInventory.reduce(
+    (sum: number, i: RawInventory) => sum + i.quantity,
+    0
+  )
+  const uniqueProducts = new Set(
+    allInventory.map((i: RawInventory) => i.productId)
+  ).size
 
-  const lowStockItems = allInventory.filter((i: RawInventory) => i.quantity < i.lowStockThreshold)
+  const lowStockItems = allInventory.filter(
+    (i: RawInventory) => i.quantity < i.lowStockThreshold
+  )
 
   // --- Sales Trend (last 12 months) ---
   const salesTrend: SalesTrendData[] = []
@@ -97,7 +147,10 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
         const d = new Date(t.createdAt)
         return t.status === "completed" && d >= start && d <= end
       })
-      .reduce((sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount), 0)
+      .reduce(
+        (sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount),
+        0
+      )
 
     salesTrend.push({
       month: MONTH_NAMES[start.getMonth()],
@@ -106,7 +159,14 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
   }
 
   // --- Weekly Trend (current month only) ---
-  const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+  const currentMonthEnd = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59
+  )
 
   // Determine week-of-month (1-based) for a given date
   function getWeekOfMonth(date: Date): number {
@@ -114,7 +174,11 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
   }
 
   // Get total weeks in current month (28-day month = 4 weeks, 31-day month = 5 weeks)
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const daysInMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0
+  ).getDate()
   const totalWeeks = Math.max(Math.min(Math.ceil(daysInMonth / 7), 5), 1)
 
   // Initialize correct number of weeks with ₱0
@@ -126,7 +190,9 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
   // Add actual revenue to correct week
   const thisMonthTransactions = allTransactions.filter((t: RawTransaction) => {
     const d = new Date(t.createdAt)
-    return t.status === "completed" && d >= currentMonthStart && d <= currentMonthEnd
+    return (
+      t.status === "completed" && d >= currentMonthStart && d <= currentMonthEnd
+    )
   })
   for (const t of thisMonthTransactions) {
     const weekIndex = getWeekOfMonth(new Date(t.createdAt)) - 1
@@ -143,7 +209,10 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
         const d = new Date(t.createdAt)
         return t.status === "completed" && d >= dayStart && d <= dayEnd
       })
-      .reduce((sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount), 0)
+      .reduce(
+        (sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount),
+        0
+      )
 
     dailyTrend.push({
       day: String(day),
@@ -155,10 +224,15 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
   const branchStock: BranchStockData[] = allBranches
     .filter((b: RawBranch) => b.isActive)
     .map((b: RawBranch) => {
-      const branchInv = allInventory.filter((i: RawInventory) => i.branchId === b.id)
+      const branchInv = allInventory.filter(
+        (i: RawInventory) => i.branchId === b.id
+      )
       const totalProducts = branchInv.length
-      const lowInBranch = branchInv.filter((i: RawInventory) => i.quantity < i.lowStockThreshold).length
-      const pct = b.capacity > 0 ? Math.round((totalProducts / b.capacity) * 100) : 0
+      const lowInBranch = branchInv.filter(
+        (i: RawInventory) => i.quantity < i.lowStockThreshold
+      ).length
+      const pct =
+        b.capacity > 0 ? Math.round((totalProducts / b.capacity) * 100) : 0
 
       let status: "Healthy" | "Warning" | "Critical" = "Healthy"
       if (lowInBranch > 15) status = "Critical"
@@ -176,7 +250,9 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     })
 
   // --- Payment Breakdown ---
-  const completedTransactions = allTransactions.filter((t) => t.status === "completed")
+  const completedTransactions = allTransactions.filter(
+    (t) => t.status === "completed"
+  )
 
   const cashTotal = completedTransactions
     .filter((t) => t.paymentMethod === "cash")
@@ -187,7 +263,10 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
 
   const totalPaymentRevenue = cashTotal + gcashTotal
-  const cashPct = totalPaymentRevenue > 0 ? Math.round((cashTotal / totalPaymentRevenue) * 100) : 0
+  const cashPct =
+    totalPaymentRevenue > 0
+      ? Math.round((cashTotal / totalPaymentRevenue) * 100)
+      : 0
   const gcashPct = 100 - cashPct
 
   return {

@@ -45,7 +45,6 @@ function OAuthResultInner() {
     const token = searchParams.get("token")
     const error = searchParams.get("oauth_error")
     const mfaToken = searchParams.get("mfaToken")
-    const mfa = searchParams.get("mfa")
 
     // Scrub token/error from the URL as soon as we read them.
     router.replace("/oauth-result", { scroll: false })
@@ -56,10 +55,10 @@ function OAuthResultInner() {
     }
 
     // MFA challenge: stash the short-lived token and continue on the
-    // dedicated verify/setup screens.
+    // dedicated verify screen (which also handles first-time enrollment).
     if (mfaToken) {
       sessionStorage.setItem("pendingMfaToken", mfaToken)
-      router.replace(mfa === "setup" ? "/mfa-setup" : "/mfa-verify")
+      router.replace("/mfa-verify")
       return
     }
 

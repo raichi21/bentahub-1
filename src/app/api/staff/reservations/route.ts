@@ -15,33 +15,55 @@ export async function GET(request: NextRequest) {
       where: eq(users.id, auth.userId),
     })
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const branchName = user.branch || "Lourdes Main Branch"
 
-    const allOrders = await db.query.orders.findMany({
+    const allOrders = (await db.query.orders.findMany({
       where: and(
         eq(orders.branch, branchName),
         or(
           eq(orders.status, "pending"),
           eq(orders.status, "processing"),
-          eq(orders.status, "ready"),
-        ),
+          eq(orders.status, "ready")
+        )
       ),
       orderBy: desc(orders.createdAt),
       with: {
         user: true,
         items: true,
       },
-    }) as Array<{
-      id: string; userId: string; status: string; paymentMethod: string
-      totalAmount: string; branch: string; notes: string | null
+    })) as Array<{
+      id: string
+      userId: string
+      status: string
+      paymentMethod: string
+      totalAmount: string
+      branch: string
+      notes: string | null
       phone: string | null
-      isPaid: boolean; paidAt: Date | null; pickupDeadline: Date | null
-      createdAt: Date; updatedAt: Date
-      user: { id: string; fullName: string; email: string; phone: string | null }
-      items: Array<{ id: string; productName: string; quantity: number; price: string; subtotal: string }>
+      isPaid: boolean
+      paidAt: Date | null
+      pickupDeadline: Date | null
+      createdAt: Date
+      updatedAt: Date
+      user: {
+        id: string
+        fullName: string
+        email: string
+        phone: string | null
+      }
+      items: Array<{
+        id: string
+        productName: string
+        quantity: number
+        price: string
+        subtotal: string
+      }>
     }>
 
     const mapped = allOrders.map((o) => ({
@@ -72,7 +94,7 @@ export async function GET(request: NextRequest) {
     console.error("Staff reservations error:", error)
     return NextResponse.json(
       { success: false, message: "An error occurred" },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }
@@ -88,14 +110,20 @@ export async function PATCH(request: NextRequest) {
       where: eq(users.id, auth.userId),
     })
     if (!staff) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const body = await request.json()
     const { orderId, action } = body
 
     if (!orderId || !action) {
-      return NextResponse.json({ success: false, message: "orderId and action required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "orderId and action required" },
+        { status: 400 }
+      )
     }
 
     const order = await db.query.orders.findFirst({
@@ -103,15 +131,25 @@ export async function PATCH(request: NextRequest) {
     })
 
     if (!order) {
-      return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 }
+      )
     }
 
     if (action === "confirm") {
       if (order.status !== "pending") {
-        return NextResponse.json({ success: false, message: "Only pending reservations can be confirmed" }, { status: 400 })
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Only pending reservations can be confirmed",
+          },
+          { status: 400 }
+        )
       }
 
-      await db.update(orders)
+      await db
+        .update(orders)
         .set({ status: "processing" })
         .where(eq(orders.id, orderId))
 
@@ -148,10 +186,17 @@ export async function PATCH(request: NextRequest) {
       )
     } else if (action === "cancel") {
       if (order.status !== "pending") {
-        return NextResponse.json({ success: false, message: "Only pending reservations can be cancelled" }, { status: 400 })
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Only pending reservations can be cancelled",
+          },
+          { status: 400 }
+        )
       }
 
-      await db.update(orders)
+      await db
+        .update(orders)
         .set({ status: "cancelled" })
         .where(eq(orders.id, orderId))
 
@@ -188,10 +233,17 @@ export async function PATCH(request: NextRequest) {
       )
     } else if (action === "ready") {
       if (order.status !== "processing") {
-        return NextResponse.json({ success: false, message: "Only processing reservations can be marked as ready" }, { status: 400 })
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Only processing reservations can be marked as ready",
+          },
+          { status: 400 }
+        )
       }
 
-      await db.update(orders)
+      await db
+        .update(orders)
         .set({ status: "ready" })
         .where(eq(orders.id, orderId))
 
@@ -227,15 +279,24 @@ export async function PATCH(request: NextRequest) {
         }))
       )
     } else {
-      return NextResponse.json({ success: false, message: "Invalid action. Use: confirm, cancel, or ready" }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid action. Use: confirm, cancel, or ready",
+        },
+        { status: 400 }
+      )
     }
 
-    return NextResponse.json({ success: true, message: "Reservation updated successfully" })
+    return NextResponse.json({
+      success: true,
+      message: "Reservation updated successfully",
+    })
   } catch (error) {
     console.error("Staff reservations patch error:", error)
     return NextResponse.json(
       { success: false, message: "An error occurred" },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }

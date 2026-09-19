@@ -23,14 +23,13 @@ export function matchBarcode(scannedCode: string, storedCode: string): boolean {
  * Checks the `barcode` field first (exact match), then falls back to `sku`.
  * Returns the first matching product or undefined.
  */
-export function findProductByBarcode<T extends { sku: string; barcode?: string }>(
-  products: T[],
-  scannedCode: string,
-): T | undefined {
+export function findProductByBarcode<
+  T extends { sku: string; barcode?: string },
+>(products: T[], scannedCode: string): T | undefined {
   // First: check dedicated barcode field (exact match only)
   const normalized = normalizeBarcode(scannedCode)
   const byBarcode = products.find(
-    (p) => p.barcode && normalizeBarcode(p.barcode) === normalized,
+    (p) => p.barcode && normalizeBarcode(p.barcode) === normalized
   )
   if (byBarcode) return byBarcode
 

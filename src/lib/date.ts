@@ -22,7 +22,8 @@ function getPHParts(date: Date): PHParts {
     minute: "2-digit",
     second: "2-digit",
   }).formatToParts(date)
-  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0)
+  const get = (type: string) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0)
   return {
     year: get("year"),
     month: get("month"),
@@ -34,10 +35,18 @@ function getPHParts(date: Date): PHParts {
 }
 
 /** Build the Date instant whose Manila wall-clock equals the given parts. */
-function fromManilaParts(parts: Omit<PHParts, "second"> & { second?: number }): Date {
+function fromManilaParts(
+  parts: Omit<PHParts, "second"> & { second?: number }
+): Date {
   return new Date(
-    Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second ?? 0) -
-      PH_UTC_OFFSET_MS
+    Date.UTC(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      parts.second ?? 0
+    ) - PH_UTC_OFFSET_MS
   )
 }
 
@@ -67,13 +76,19 @@ export function nextPickupDeadline(date: Date = new Date()): Date {
 }
 
 /** Format a date as a Manila-timezone date string. */
-export function formatPHDate(date: Date | string, options: Intl.DateTimeFormatOptions = {}): string {
+export function formatPHDate(
+  date: Date | string,
+  options: Intl.DateTimeFormatOptions = {}
+): string {
   const d = typeof date === "string" ? new Date(date) : date
   return d.toLocaleDateString("en-PH", { ...options, timeZone: PH_TIME_ZONE })
 }
 
 /** Format a date as a Manila-timezone date+time string. */
-export function formatPHDateTime(date: Date | string, options: Intl.DateTimeFormatOptions = {}): string {
+export function formatPHDateTime(
+  date: Date | string,
+  options: Intl.DateTimeFormatOptions = {}
+): string {
   const d = typeof date === "string" ? new Date(date) : date
   return d.toLocaleString("en-PH", { ...options, timeZone: PH_TIME_ZONE })
 }

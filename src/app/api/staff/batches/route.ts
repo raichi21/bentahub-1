@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, branches, branchInventory, inventoryBatches } from "@/servers/schemas"
+import {
+  users,
+  branches,
+  branchInventory,
+  inventoryBatches,
+} from "@/servers/schemas"
 import { eq, and, asc } from "drizzle-orm"
 
 /**
@@ -21,7 +26,10 @@ export async function GET(request: NextRequest) {
       where: eq(users.id, auth.userId),
     })
     if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      )
     }
 
     const branchName = user.branch || "Lourdes Main Branch"
@@ -29,23 +37,33 @@ export async function GET(request: NextRequest) {
       where: eq(branches.name, branchName),
     })
     if (!branchRecord) {
-      return NextResponse.json({ success: false, message: "Branch not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, message: "Branch not found" },
+        { status: 404 }
+      )
     }
 
     const productId = request.nextUrl.searchParams.get("productId")
     if (!productId) {
-      return NextResponse.json({ success: false, message: "productId is required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: "productId is required" },
+        { status: 400 }
+      )
     }
 
     const inv = await db.query.branchInventory.findFirst({
       where: and(
         eq(branchInventory.branchId, branchRecord.id),
-        eq(branchInventory.productId, productId),
+        eq(branchInventory.productId, productId)
       ),
     })
 
     if (!inv) {
-      return NextResponse.json({ success: true, message: "No inventory found", data: [] })
+      return NextResponse.json({
+        success: true,
+        message: "No inventory found",
+        data: [],
+      })
     }
 
     const batches = await db
@@ -55,7 +73,7 @@ export async function GET(request: NextRequest) {
       .orderBy(
         asc(inventoryBatches.expiryDate),
         asc(inventoryBatches.receivedDate),
-        asc(inventoryBatches.createdAt),
+        asc(inventoryBatches.createdAt)
       )
 
     return NextResponse.json({
@@ -67,7 +85,7 @@ export async function GET(request: NextRequest) {
     console.error("Staff batches error:", error)
     return NextResponse.json(
       { success: false, message: "An error occurred while fetching batches" },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }

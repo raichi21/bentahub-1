@@ -9,14 +9,20 @@ import { getStockStatus } from "@/lib/staff-utils"
 export default function StockCheckPage() {
   const { products, isLoading, error } = useCashierProducts()
 
-  const inStockCount = products.filter((p) => getStockStatus(p) === "in-stock").length
-  const lowStockCount = products.filter((p) => getStockStatus(p) === "low-stock").length
-  const outOfStockCount = products.filter((p) => getStockStatus(p) === "out-of-stock").length
+  const inStockCount = products.filter(
+    (p) => getStockStatus(p) === "in-stock"
+  ).length
+  const lowStockCount = products.filter(
+    (p) => getStockStatus(p) === "low-stock"
+  ).length
+  const outOfStockCount = products.filter(
+    (p) => getStockStatus(p) === "out-of-stock"
+  ).length
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-background">
-        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-medium">
+      <div className="flex flex-1 flex-col space-y-6 overflow-y-auto bg-background p-6">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
           {error}
         </div>
       </div>
@@ -25,23 +31,26 @@ export default function StockCheckPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-background">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="flex flex-1 flex-col space-y-6 overflow-y-auto bg-background p-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
-              <div className="h-4 w-20 bg-muted rounded mb-4" />
-              <div className="h-8 w-28 bg-muted rounded" />
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-6"
+            >
+              <div className="mb-4 h-4 w-20 rounded bg-muted" />
+              <div className="h-8 w-28 rounded bg-muted" />
             </div>
           ))}
         </div>
-        <div className="bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+        <div className="h-[400px] animate-pulse rounded-xl border border-border bg-card p-6" />
       </div>
     )
   }
 
   return (
-    <div className="flex-1 flex flex-col p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto bg-background">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="flex flex-1 flex-col space-y-4 overflow-y-auto bg-background p-4 md:space-y-6 md:p-6">
+      <div className="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
         <KPICard
           title="Total SKUs"
           value={String(products.length)}

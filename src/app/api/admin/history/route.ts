@@ -18,11 +18,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const page = parseInt(searchParams.get("page") || "1", 10)
     const pageSize = parseInt(searchParams.get("pageSize") || "15", 10)
 
-    const data = await getHistory({ dateFrom, dateTo, branchId, method, status, search, page, pageSize })
+    const data = await getHistory({
+      dateFrom,
+      dateTo,
+      branchId,
+      method,
+      status,
+      search,
+      page,
+      pageSize,
+    })
 
-    return NextResponse.json({ success: true, message: "History retrieved successfully", data })
+    return NextResponse.json({
+      success: true,
+      message: "History retrieved successfully",
+      data,
+    })
   } catch (error) {
     console.error("Admin get history error:", error)
-    return NextResponse.json({ success: false, message: "An error occurred" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: "An error occurred" },
+      { status: 500 }
+    )
   }
 }

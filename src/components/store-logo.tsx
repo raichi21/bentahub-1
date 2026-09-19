@@ -19,7 +19,10 @@ interface StoreLogoProps {
   iconClassName?: string
 }
 
-const SIZE_MAP: Record<StoreLogoSize, { box: string; padding: string; icon: string; sizes: string }> = {
+const SIZE_MAP: Record<
+  StoreLogoSize,
+  { box: string; padding: string; icon: string; sizes: string }
+> = {
   sm: { box: "h-7 w-7", padding: "p-0", icon: "h-5 w-5", sizes: "28px" },
   md: { box: "h-10 w-10", padding: "p-1", icon: "h-6 w-6", sizes: "40px" },
   lg: { box: "h-12 w-12", padding: "p-1.5", icon: "h-7 w-7", sizes: "48px" },
@@ -42,7 +45,7 @@ export function StoreLogo({
   return (
     <div
       className={cn(
-        "relative overflow-hidden flex items-center justify-center flex-shrink-0",
+        "relative flex flex-shrink-0 items-center justify-center overflow-hidden",
         variant === "boxed" && "rounded-lg bg-primary",
         preset.box,
         variant === "boxed" && preset.padding,

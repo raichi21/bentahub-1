@@ -3,7 +3,9 @@ import { verifyToken, extractToken } from "@/lib/auth-utils"
 import { getTopProducts } from "@/features/admin-dashboard/actions/get-top-products"
 import type { AdminApiResponse, TopProductData } from "@/types/admin"
 
-export async function GET(request: NextRequest): Promise<NextResponse<AdminApiResponse<TopProductData[]>>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<AdminApiResponse<TopProductData[]>>> {
   try {
     const token = extractToken(request)
 
@@ -30,7 +32,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
       )
     }
 
-    const limit = Math.min(Math.max(parseInt(request.nextUrl.searchParams.get("limit") || "10", 10), 1), 50)
+    const limit = Math.min(
+      Math.max(
+        parseInt(request.nextUrl.searchParams.get("limit") || "10", 10),
+        1
+      ),
+      50
+    )
     const data = await getTopProducts(limit)
 
     return NextResponse.json(
@@ -40,7 +48,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<AdminApiRe
   } catch (error) {
     console.error("Admin top products error:", error)
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching top products" },
+      {
+        success: false,
+        message: "An error occurred while fetching top products",
+      },
       { status: 500 }
     )
   }

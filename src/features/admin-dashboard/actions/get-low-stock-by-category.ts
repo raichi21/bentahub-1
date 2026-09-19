@@ -3,7 +3,9 @@ import { branchInventory, products } from "@/servers/schemas"
 import { sql } from "drizzle-orm"
 import type { LowStockByCategoryData } from "@/types/admin"
 
-export async function getLowStockByCategory(): Promise<LowStockByCategoryData[]> {
+export async function getLowStockByCategory(): Promise<
+  LowStockByCategoryData[]
+> {
   const inventoryWithProducts = await db
     .select({
       quantity: branchInventory.quantity,

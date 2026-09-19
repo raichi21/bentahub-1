@@ -23,7 +23,7 @@ export function SocialAuthButtons() {
       <Button
         type="button"
         variant="outline"
-        className="w-full flex items-center justify-center gap-2.5 p-5 bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-800"
+        className="flex w-full items-center justify-center gap-2.5 border-slate-300 bg-white p-5 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         disabled={isBusy !== null}
         onClick={() => handleProvider("google")}
       >
@@ -37,7 +37,7 @@ export function SocialAuthButtons() {
 
       <Button
         type="button"
-        className="w-full flex items-center justify-center gap-2.5 p-5 bg-[#1877F2] hover:bg-[#166fe5] text-white"
+        className="flex w-full items-center justify-center gap-2.5 bg-[#1877F2] p-5 text-white hover:bg-[#166fe5]"
         disabled={isBusy !== null}
         onClick={() => handleProvider("facebook")}
       >
@@ -77,7 +77,13 @@ function GoogleGlyph() {
 
 function FacebookGlyph() {
   return (
-    <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true" focusable="false" role="img">
+    <svg
+      viewBox="0 0 24 24"
+      className="size-4 shrink-0"
+      aria-hidden="true"
+      focusable="false"
+      role="img"
+    >
       <path
         fill="currentColor"
         d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.02 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.8-4.7 4.55-4.7 1.32 0 2.7.24 2.7.24v2.97h-1.52c-1.5 0-1.96.93-1.96 1.89v2.26h3.34l-.53 3.49h-2.81V24C19.61 23.09 24 18.09 24 12.07Z"

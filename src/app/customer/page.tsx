@@ -4,7 +4,10 @@ import { ShoppingBag, Calendar } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useOrders } from "@/hooks/useOrders"
 import { KPICard } from "@/features/admin-dashboard"
-import { RecentOrdersTable, NearbyBranches } from "@/features/customer-dashboard"
+import {
+  RecentOrdersTable,
+  NearbyBranches,
+} from "@/features/customer-dashboard"
 import { PageHeader, ContentCard } from "@/components/layouts"
 import { RoleGate } from "@/components/role-gate"
 
@@ -28,11 +31,9 @@ function CustomerPageInner() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`Hello, ${displayName}!`}
-      />
+      <PageHeader title={`Hello, ${displayName}!`} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
         <KPICard
           title="Total Orders"
           value={String(totalOrders)}
@@ -49,7 +50,7 @@ function CustomerPageInner() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <ContentCard title="Recent Orders">
             <RecentOrdersTable />

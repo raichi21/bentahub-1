@@ -65,24 +65,60 @@ export default function CashDrawerPage() {
 
   const isLoading = authLoading || (token != null && !firstLoadDone)
 
-  const handleBranchChange = (b: string) => { setBranchId(b); setPage(1) }
-  const handleCashierChange = (c: string) => { setCashierId(c); setPage(1) }
-  const handleDateChange = (from: string, to: string) => { setDateFrom(from); setDateTo(to); setPage(1) }
+  const handleBranchChange = (b: string) => {
+    setBranchId(b)
+    setPage(1)
+  }
+  const handleCashierChange = (c: string) => {
+    setCashierId(c)
+    setPage(1)
+  }
+  const handleDateChange = (from: string, to: string) => {
+    setDateFrom(from)
+    setDateTo(to)
+    setPage(1)
+  }
 
   function exportPDF() {
     if (!data) return
     const rows = data.sessions.map((s) => [
-      s.displayId, s.branchName, s.cashierName, s.openedAtDisplay,
-      s.closedAtDisplay ?? "", s.startingCashDisplay, s.expectedEndingCashDisplay,
-      s.actualEndingCashDisplay, s.netCashImpactDisplay, s.diffDisplay, s.statusDisplay,
+      s.displayId,
+      s.branchName,
+      s.cashierName,
+      s.openedAtDisplay,
+      s.closedAtDisplay ?? "",
+      s.startingCashDisplay,
+      s.expectedEndingCashDisplay,
+      s.actualEndingCashDisplay,
+      s.netCashImpactDisplay,
+      s.diffDisplay,
+      s.statusDisplay,
     ])
     exportTableAsPdf({
       title: "Cash Drawer Report",
       metrics: [
-        { label: "Total Network Cash", value: data.metrics.totalNetworkCashDisplay },
-        { label: "Total Discrepancy", value: data.metrics.totalDiscrepancyDisplay },
+        {
+          label: "Total Network Cash",
+          value: data.metrics.totalNetworkCashDisplay,
+        },
+        {
+          label: "Total Discrepancy",
+          value: data.metrics.totalDiscrepancyDisplay,
+        },
       ],
-      headers: ["ID", "Branch", "Cashier", "Opened", "Closed", "Starting", "Expected", "Actual", "Net Impact", "Difference", "Status"],
+      headers: [
+        "ID",
+        "Branch",
+        "Cashier",
+        "Opened",
+        "Closed",
+        "Starting",
+        "Expected",
+        "Actual",
+        "Net Impact",
+        "Difference",
+        "Status",
+      ],
       rows,
       filename: `cash-drawer-report-${new Date().toISOString().slice(0, 10)}.pdf`,
     })
@@ -92,40 +128,52 @@ export default function CashDrawerPage() {
 
   if (!authLoading && !token) {
     return (
-      <div className="p-8 text-center max-w-7xl mx-auto w-full">
-        <p className="text-sm text-red-500">Not authenticated. Auth state: loading={String(authLoading)}, hasToken={String(!!token)}, isAuth={String(isAuthenticated)}</p>
-        <p className="text-sm text-red-500 mt-2">Try going to <a href="/login" className="underline">/login</a> to log in again.</p>
+      <div className="mx-auto w-full max-w-7xl p-8 text-center">
+        <p className="text-sm text-red-500">
+          Not authenticated. Auth state: loading={String(authLoading)},
+          hasToken={String(!!token)}, isAuth={String(isAuthenticated)}
+        </p>
+        <p className="mt-2 text-sm text-red-500">
+          Try going to{" "}
+          <a href="/login" className="underline">
+            /login
+          </a>{" "}
+          to log in again.
+        </p>
       </div>
     )
   }
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
-              <div className="h-4 w-24 bg-muted rounded mb-4" />
-              <div className="h-8 w-32 bg-muted rounded" />
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-border bg-card p-6"
+            >
+              <div className="mb-4 h-4 w-24 rounded bg-muted" />
+              <div className="h-8 w-32 rounded bg-muted" />
             </div>
           ))}
         </div>
-        <div className="bg-card border border-border rounded-xl p-6 h-[400px] animate-pulse" />
+        <div className="h-[400px] animate-pulse rounded-xl border border-border bg-card p-6" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="p-8 text-center max-w-7xl mx-auto w-full">
+      <div className="mx-auto w-full max-w-7xl p-8 text-center">
         <p className="text-sm text-red-500">Error: {error}</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <KPICard
           title="Total Network Cash"
           value={metrics?.totalNetworkCashDisplay ?? "₱0.00"}
@@ -136,8 +184,18 @@ export default function CashDrawerPage() {
         <KPICard
           title="Total Discrepancy"
           value={metrics?.totalDiscrepancyDisplay ?? "₱0.00"}
-          trend={metrics ? (metrics.totalDiscrepancy > 0 ? "over" : metrics.totalDiscrepancy < 0 ? "short" : "balanced") : "—"}
-          trendType={metrics ? (metrics.totalDiscrepancy < 0 ? "down" : "up") : "warning"}
+          trend={
+            metrics
+              ? metrics.totalDiscrepancy > 0
+                ? "over"
+                : metrics.totalDiscrepancy < 0
+                  ? "short"
+                  : "balanced"
+              : "—"
+          }
+          trendType={
+            metrics ? (metrics.totalDiscrepancy < 0 ? "down" : "up") : "warning"
+          }
           icon={Scale}
         />
       </div>

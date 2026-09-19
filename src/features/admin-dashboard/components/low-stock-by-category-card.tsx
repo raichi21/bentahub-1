@@ -16,55 +16,75 @@ function getSeverity(pct: number): { bar: string; text: string } {
 
 export function LowStockByCategoryCard({ data }: LowStockByCategoryCardProps) {
   const isEmpty = !data || data.length === 0
-  const maxPct = !isEmpty ? Math.max(...data.map((d) => d.lowStockPercentage), 1) : 1
+  const maxPct = !isEmpty
+    ? Math.max(...data.map((d) => d.lowStockPercentage), 1)
+    : 1
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 flex flex-col gap-5 min-h-[400px]">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-foreground">Low Stock by Category</h2>
-            <p className="text-sm text-muted-foreground">Products below reorder threshold across all branches</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/monitoring"
-              className="text-[11px] font-semibold text-primary hover:underline tracking-wide"
-            >
-              View Details
-            </Link>
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
+    <div className="flex min-h-[400px] flex-col gap-5 rounded-xl border border-border bg-card p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-foreground">
+            Low Stock by Category
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Products below reorder threshold across all branches
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/monitoring"
+            className="text-[11px] font-semibold tracking-wide text-primary hover:underline"
+          >
+            View Details
+          </Link>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <AlertTriangle className="h-5 w-5" />
           </div>
         </div>
+      </div>
 
       {isEmpty ? (
-        <div className="flex flex-col items-center justify-center gap-2 flex-1">
-          <Package className="w-8 h-8 text-muted-foreground/40" />
-          <p className="text-xs text-muted-foreground">No category data available</p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          <Package className="h-8 w-8 text-muted-foreground/40" />
+          <p className="text-xs text-muted-foreground">
+            No category data available
+          </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 flex-1">
+        <div className="flex flex-1 flex-col gap-4">
           {data.map((item) => {
             const severity = getSeverity(item.lowStockPercentage)
             return (
               <div key={item.category} className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium text-foreground">{item.category}</span>
-                    <span className="text-xs text-muted-foreground">({item.totalItems} items)</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="font-medium text-foreground">
+                      {item.category}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      ({item.totalItems} items)
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className={`text-xs font-mono font-bold ${severity.text}`}>{item.lowStockCount}</span>
-                    <span className={`text-xs font-mono font-bold min-w-[3ch] text-right ${severity.text}`}>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span
+                      className={`font-mono text-xs font-bold ${severity.text}`}
+                    >
+                      {item.lowStockCount}
+                    </span>
+                    <span
+                      className={`min-w-[3ch] text-right font-mono text-xs font-bold ${severity.text}`}
+                    >
                       {item.lowStockPercentage}%
                     </span>
                   </div>
                 </div>
-                <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className={`h-full rounded-full transition-all ${severity.bar}`}
-                    style={{ width: `${Math.min((item.lowStockPercentage / maxPct) * 100, 100)}%` }}
+                    style={{
+                      width: `${Math.min((item.lowStockPercentage / maxPct) * 100, 100)}%`,
+                    }}
                   />
                 </div>
               </div>
