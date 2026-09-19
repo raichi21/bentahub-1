@@ -10,7 +10,6 @@ import {
 import { eq, and, inArray, isNull, desc } from "drizzle-orm"
 import { generateId, getRoleScopedUserId } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
-import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import { nextPickupDeadline } from "@/lib/date"
 
 /** Thrown by the checkout transaction when stock cannot fulfil an order. */
@@ -113,14 +112,12 @@ export async function POST(request: NextRequest) {
       return apiError("A pickup branch is required", 400)
     }
 
-    // Calculate total amount (subtotal + service fee + bond)
+    // Calculate total amount (subtotal only — no service fee or reservation bond)
     const subtotal = userCartItems.reduce(
       (sum, item) => sum + Number(item.subtotal),
       0
     )
-    const serviceFee = Number((subtotal * SERVICE_FEE_RATE).toFixed(2))
-    const bond = RESERVATION_BOND
-    const totalAmount = Number((subtotal + serviceFee + bond).toFixed(2))
+    const totalAmount = Number(subtotal.toFixed(2))
 
     // Create order
     const orderId = generateId()

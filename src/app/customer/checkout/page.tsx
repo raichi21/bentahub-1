@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
 import { useOrders } from "@/hooks/useOrders"
-import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import Link from "next/link"
 import { cn, formatOrderId } from "@/lib/utils"
 import { RoleGate } from "@/components/role-gate"
@@ -150,9 +149,6 @@ function CheckoutPageInner() {
   }
 
   const subtotal = total
-  const serviceFee = +(subtotal * SERVICE_FEE_RATE).toFixed(2)
-  const bond = RESERVATION_BOND
-  const totalDue = subtotal + serviceFee + bond
 
   // Compute pickup deadline: today at 5PM, or tomorrow at 5PM if past 5PM
   const pickupDeadline = new Date()
@@ -412,22 +408,6 @@ function CheckoutPageInner() {
                   ₱{subtotal.toFixed(2)}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Service Fee (1%)
-                </span>
-                <span className="font-mono text-sm text-foreground">
-                  ₱{serviceFee.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Reservation Bond
-                </span>
-                <span className="font-mono text-sm text-foreground">
-                  ₱{bond.toFixed(2)}
-                </span>
-              </div>
             </div>
 
             {/* Total */}
@@ -436,7 +416,7 @@ function CheckoutPageInner() {
                 <span className="font-bold text-foreground">Total Due</span>
                 <div className="text-right">
                   <span className="text-2xl font-bold text-primary">
-                    ₱{totalDue.toFixed(2)}
+                    ₱{subtotal.toFixed(2)}
                   </span>
                 </div>
               </div>

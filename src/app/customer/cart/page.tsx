@@ -3,19 +3,11 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import {
-  Minus,
-  Plus,
-  Trash2,
-  HelpCircle,
-  ShoppingCart,
-  Loader2,
-} from "lucide-react"
+import { Minus, Plus, Trash2, ShoppingCart, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
 import { useCartStore } from "@/stores/cartStore"
-import { SERVICE_FEE_RATE, RESERVATION_BOND } from "@/lib/fees"
 import { MAX_ITEM_QUANTITY } from "@/lib/cart"
 import { cn } from "@/lib/utils"
 import { RoleGate } from "@/components/role-gate"
@@ -108,9 +100,6 @@ function CartPageInner() {
   }
 
   const subtotal = Number(total) || 0
-  const serviceFee = +(subtotal * SERVICE_FEE_RATE).toFixed(2)
-  const bond = RESERVATION_BOND
-  const totalDue = subtotal + serviceFee + bond
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -245,25 +234,6 @@ function CartPageInner() {
                     ₱{subtotal.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm text-muted-foreground">
-                      Service Fee
-                    </span>
-                    <HelpCircle className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
-                  </div>
-                  <span className="font-mono text-foreground">
-                    ₱{serviceFee.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Reservation Bond
-                  </span>
-                  <span className="font-mono text-foreground">
-                    ₱{bond.toFixed(2)}
-                  </span>
-                </div>
               </div>
               <div className="mb-8 border-t border-border pt-4">
                 <div className="flex items-center justify-between">
@@ -271,7 +241,7 @@ function CartPageInner() {
                     Total Due
                   </span>
                   <span className="text-2xl font-bold text-primary">
-                    ₱{totalDue.toFixed(2)}
+                    ₱{subtotal.toFixed(2)}
                   </span>
                 </div>
               </div>
