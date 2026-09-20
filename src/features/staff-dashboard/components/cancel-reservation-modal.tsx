@@ -78,10 +78,6 @@ export function CancelReservationModal({
                 placeholder="e.g., Item out of stock"
                 className="w-full resize-none rounded-lg border border-border bg-background p-2.5 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
-              <p className="text-[11px] text-muted-foreground">
-                This reason will be shown to the customer and saved on the
-                order.
-              </p>
             </div>
           )}
         </div>
