@@ -57,10 +57,13 @@ export function useCartActions() {
   const pendingRemovesRef = useRef<Set<string>>(new Set())
 
   /**
-   * Fetch cart from backend
+   * Fetch cart from backend.
+   *
+   * The cart API only accepts "customer" tokens, so other roles (admin,
+   * staff, cashier) browsing the public catalog must never trigger it.
    */
   const fetchCart = useCallback(async () => {
-    if (!user || !token) return
+    if (!user || !token || user.role !== "customer") return
     if (fetchingRef.current) return
     fetchingRef.current = true
     try {
@@ -72,7 +75,15 @@ export function useCartActions() {
         method: "GET",
         headers: authHeaders(token),
       })
-      if (!response.ok) throw new Error("Failed to fetch cart")
+      if (!response.ok) {
+        const serverMessage = await response
+          .json()
+          .then((body: { message?: string }) => body?.message ?? null)
+          .catch(() => null)
+        throw new Error(
+          serverMessage ?? `Failed to fetch cart (HTTP ${response.status})`
+        )
+      }
 
       const data = await response.json()
       const items: CartItem[] = data.data.items.map(

@@ -3,8 +3,11 @@ import { renderHook, act, cleanup } from "@testing-library/react"
 import { useCartActions, type CartItemSnapshot } from "./useCart"
 import { useCartStore, type CartItem } from "@/stores/cartStore"
 
-let mockAuth: { user: { userId: string } | null; token: string | null } = {
-  user: { userId: "user-1" },
+let mockAuth: {
+  user: { userId: string; role: string } | null
+  token: string | null
+} = {
+  user: { userId: "user-1", role: "customer" },
   token: "test-token",
 }
 
@@ -61,7 +64,10 @@ describe("useCartActions quantity sync", () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockAuth = { user: { userId: "user-1" }, token: "test-token" }
+    mockAuth = {
+      user: { userId: "user-1", role: "customer" },
+      token: "test-token",
+    }
     useCartStore.setState({
       items: [],
       itemCount: 0,
@@ -363,7 +369,10 @@ describe("useCartActions add / fetch merge / remove-during-add", () => {
 
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    mockAuth = { user: { userId: "user-1" }, token: "test-token" }
+    mockAuth = {
+      user: { userId: "user-1", role: "customer" },
+      token: "test-token",
+    }
     useCartStore.setState({
       items: [],
       itemCount: 0,
