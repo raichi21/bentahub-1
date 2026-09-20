@@ -97,14 +97,14 @@ export default function ReservationsPage() {
     }
   }
 
-  const handleCancel = async (orderId: string) => {
+  const handleCancel = async (orderId: string, reason?: string) => {
     if (!token) return
     setActionLoading(orderId)
     try {
       const res = await fetch("/api/staff/reservations", {
         method: "PATCH",
         headers: authHeaders(token),
-        body: JSON.stringify({ orderId, action: "cancel" }),
+        body: JSON.stringify({ orderId, action: "cancel", reason }),
       })
       const json = await res.json()
       if (!json.success) {
@@ -203,7 +203,10 @@ export default function ReservationsPage() {
       <CancelReservationModal
         isOpen={!!cancelModal}
         onClose={() => setCancelModal(null)}
-        onCancel={() => cancelModal && handleCancel(cancelModal.id)}
+        onCancel={(reason) =>
+          cancelModal && handleCancel(cancelModal.id, reason)
+        }
+        requireReason
         reservation={
           cancelModal
             ? {

@@ -18,6 +18,7 @@ export interface Order {
   totalAmount: number
   branch: string
   notes: string
+  cancelledReason?: string | null
   isPaid: boolean
   paidAt: Date | null
   pickupDeadline: Date | null

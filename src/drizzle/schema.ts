@@ -403,6 +403,7 @@ export const orders = pgTable("orders", {
   pickupDeadline: timestamp("pickup_deadline", { withTimezone: true }),
   gcashRef: varchar("gcash_ref", { length: 255 }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  cancelledReason: varchar("cancelled_reason", { length: 500 }),
   createdAt,
   updatedAt,
 })

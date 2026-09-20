@@ -117,7 +117,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { orderId, action } = body
+    const { orderId, action, reason } = body
 
     if (!orderId || !action) {
       return NextResponse.json(
@@ -195,9 +195,11 @@ export async function PATCH(request: NextRequest) {
         )
       }
 
+      const cancelReason = reason?.trim() || "Pickup deadline exceeded"
+
       await db
         .update(orders)
-        .set({ status: "cancelled" })
+        .set({ status: "cancelled", cancelledReason: cancelReason })
         .where(eq(orders.id, orderId))
 
       await db.insert(notifications).values({
@@ -205,7 +207,7 @@ export async function PATCH(request: NextRequest) {
         userId: order.userId,
         type: "order-status",
         title: "Reservation Cancelled",
-        message: `Your reservation at ${order.branch} has been cancelled — pickup deadline has passed.`,
+        message: `Your reservation at ${order.branch} has been cancelled. Reason: ${cancelReason}`,
         relatedOrderId: orderId,
         isRead: false,
         readAt: null,
@@ -223,7 +225,7 @@ export async function PATCH(request: NextRequest) {
           userId: a.id,
           type: "order-status" as const,
           title: "Reservation Cancelled",
-          message: `Order ${orderId} at ${order.branch} was cancelled by ${staff.fullName} — pickup deadline has passed.`,
+          message: `Order ${orderId} at ${order.branch} was cancelled by ${staff.fullName}. Reason: ${cancelReason}`,
           relatedOrderId: orderId,
           isRead: false,
           readAt: null,

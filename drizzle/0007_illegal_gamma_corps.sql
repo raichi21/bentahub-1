@@ -1,0 +1,1 @@
+ALTER TABLE "orders" ADD COLUMN "cancelled_reason" varchar(500);

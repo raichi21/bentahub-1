@@ -155,6 +155,17 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
         />
       </ContentCard>
 
+      {order.status === "cancelled" && order.cancelledReason && (
+        <ContentCard title="Cancellation Reason">
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/40">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">
+              {order.cancelledReason}
+            </p>
+          </div>
+        </ContentCard>
+      )}
+
       {/* Order Info */}
       <ContentCard title="Order Information">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

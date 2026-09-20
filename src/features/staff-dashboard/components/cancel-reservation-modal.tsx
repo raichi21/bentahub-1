@@ -1,16 +1,18 @@
 "use client"
 
+import { useState } from "react"
 import { X, Trash2 } from "lucide-react"
 
 interface CancelReservationModalProps {
   isOpen: boolean
   onClose: () => void
-  onCancel: () => void
+  onCancel: (reason: string) => void
   reservation: {
     customerName: string
     totalAmount: number
   } | null
   loading: boolean
+  requireReason?: boolean
 }
 
 export function CancelReservationModal({
@@ -19,7 +21,11 @@ export function CancelReservationModal({
   onCancel,
   reservation,
   loading,
+  requireReason = false,
 }: CancelReservationModalProps) {
+  const [reason, setReason] = useState("")
+  const canSubmit = !requireReason || reason.trim().length > 0
+
   if (!isOpen || !reservation) return null
 
   return (
@@ -59,6 +65,25 @@ export function CancelReservationModal({
               </span>
             </div>
           </div>
+
+          {requireReason && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground uppercase">
+                Reason for cancellation
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                placeholder="e.g., Item out of stock"
+                className="w-full resize-none rounded-lg border border-border bg-background p-2.5 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                This reason will be shown to the customer and saved on the
+                order.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 border-t border-border bg-muted/20 px-5 py-4">
@@ -70,8 +95,8 @@ export function CancelReservationModal({
             Keep
           </button>
           <button
-            onClick={onCancel}
-            disabled={loading}
+            onClick={() => onCancel(reason)}
+            disabled={loading || !canSubmit}
             className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors hover:bg-red-700 disabled:pointer-events-none disabled:opacity-40"
           >
             {loading ? "Cancelling..." : "Cancel"}
