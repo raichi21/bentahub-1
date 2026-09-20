@@ -26,14 +26,15 @@ export function HeroSection() {
         <div className="max-w-2xl text-white">
           {/* Headline */}
           <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            {storeName}, <span className="text-accent">Now Digital</span>
+            {storeName} Your Neighborhood Sari-Sari Store,{" "}
+            <span className="text-accent">Are now online store</span>
           </h1>
 
           {/* Subtitle */}
           <p className="mb-8 max-w-xl text-lg text-gray-300">
-            BentaHub brings your local stores online. Browse real-time
-            inventory, reserve items, and pick them up when ready. Convenient,
-            and easy to use.
+            BentaHub is a platform that helps you to reserve items from your
+            Sari-Sari Store you can reserve items, and pick them up at your
+            convenient time.
           </p>
         </div>
       </div>
