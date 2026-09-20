@@ -11,7 +11,7 @@ export function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/landing/hero.png"
+          src="/images/landing/hero2.webp"
           alt="Filipino Sari-Sari Store"
           fill
           className="object-cover"
