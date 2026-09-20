@@ -59,6 +59,10 @@ export function AdminTopbar({
     title = "Notifications"
     subtitle =
       "Manage and review recent system, inventory, and user activities."
+  } else if (pathname.includes("/admin/cash-drawer")) {
+    title = "Cash Drawer"
+    subtitle =
+      "Monitor cash shift sessions and track network totals across branches."
   } else if (pathname.includes("/admin/settings")) {
     title = "Settings"
     subtitle = "Configure system settings and branches"
