@@ -102,7 +102,7 @@ export default function CashDrawerPage() {
           value: data.metrics.totalNetworkCashDisplay,
         },
         {
-          label: "Total Discrepancy",
+          label: "Total Difference",
           value: data.metrics.totalDiscrepancyDisplay,
         },
       ],
@@ -182,7 +182,7 @@ export default function CashDrawerPage() {
           icon={Wallet}
         />
         <KPICard
-          title="Total Discrepancy"
+          title="Total Difference"
           value={metrics?.totalDiscrepancyDisplay ?? "₱0.00"}
           trend={
             metrics
