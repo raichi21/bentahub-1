@@ -25,6 +25,7 @@ const ROUTE_TITLES: Record<string, string> = {
   "/customer/checkout": "Checkout",
   "/customer/reservations": "Pickups",
   "/customer/orders": "Transaction History",
+  "/customer/orders/[id]": "Pickups",
   "/customer/notifications": "Notifications",
   "/customer/profile": "Profile",
 }
@@ -37,9 +38,15 @@ const ROUTE_DESCRIPTIONS: Record<string, string> = {
   "/customer/checkout": "Complete your reservation",
   "/customer/reservations": "Track your scheduled pickups",
   "/customer/orders": "View your completed and past orders",
+  "/customer/orders/[id]": "Track your reservation status",
   "/customer/notifications": "Stay updated with your latest activities",
   "/customer/profile": "Manage your personal information",
 }
+
+const DYNAMIC_ROUTE_PREFIXES = [
+  { prefix: "/customer/orders/", key: "/customer/orders/[id]" },
+  { prefix: "/customer/catalog/", key: "/customer/catalog/[id]" },
+]
 
 export function DashboardTopbar() {
   const router = useRouter()
@@ -49,8 +56,12 @@ export function DashboardTopbar() {
   const displayName = user?.fullName || ""
   const initials = displayName ? getInitials(displayName) : "U"
 
-  const title = ROUTE_TITLES[pathname] || "Dashboard"
-  const description = ROUTE_DESCRIPTIONS[pathname] || ""
+  const routeKey =
+    ROUTE_TITLES[pathname] !== undefined
+      ? pathname
+      : DYNAMIC_ROUTE_PREFIXES.find((r) => pathname.startsWith(r.prefix))?.key
+  const title = (routeKey && ROUTE_TITLES[routeKey]) || "Dashboard"
+  const description = (routeKey && ROUTE_DESCRIPTIONS[routeKey]) || ""
 
   return (
     <header className="sticky top-0 z-30 flex h-[80px] w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 dark:border-slate-800 dark:bg-[#090e1a]">
