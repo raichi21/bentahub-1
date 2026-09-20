@@ -136,7 +136,7 @@ export function CashDrawerModal({
                   <div className="flex items-center justify-between text-xs">
                     <span className="flex items-center gap-1.5 font-semibold text-muted-foreground">
                       <History className="h-3.5 w-3.5 text-primary" />
-                      Huling Naiwang Benta / Turnover
+                      Turnover
                     </span>
                     {lastClosedSession.closedAt && (
                       <span className="font-mono text-[11px] text-muted-foreground">
@@ -185,7 +185,7 @@ export function CashDrawerModal({
                       }}
                       className="flex shrink-0 items-center gap-1 rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
                     >
-                      Gamitin Ito
+                      Use This
                       <ArrowRight className="h-3 w-3" />
                     </button>
                   </div>
@@ -212,9 +212,6 @@ export function CashDrawerModal({
                     className="w-full rounded-lg border border-border bg-background py-3 pr-4 pl-9 font-mono text-lg font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  (= mga bills mula sa counter + karagdagang halaga)
-                </p>
               </div>
 
               {/* Bill Counter */}
