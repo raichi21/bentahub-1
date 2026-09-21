@@ -29,8 +29,6 @@ export function AddUserModal({
   const [confirmPassword, setConfirmPassword] = useState("")
   const [role, setRole] = useState("cashier")
   const [branch, setBranch] = useState("")
-  const [canManageUnits, setCanManageUnits] = useState(false)
-  const [canManageCategories, setCanManageCategories] = useState(false)
   const [canManageProducts, setCanManageProducts] = useState(false)
   const [branches, setBranches] = useState<BranchOption[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -60,13 +58,9 @@ export function AddUserModal({
     setRole(newRole)
     if (newRole === "admin") {
       setBranch("")
-      setCanManageUnits(true)
-      setCanManageCategories(true)
       setCanManageProducts(true)
     } else if (newRole !== "staff") {
       if (!branch) setBranch(branches[0]?.name || "")
-      setCanManageUnits(false)
-      setCanManageCategories(false)
       setCanManageProducts(false)
     } else if (!branch) {
       setBranch(branches[0]?.name || "")
@@ -95,8 +89,6 @@ export function AddUserModal({
           password,
           role,
           branch,
-          canManageUnits,
-          canManageCategories,
           canManageProducts,
         }),
       })
@@ -108,8 +100,6 @@ export function AddUserModal({
         setConfirmPassword("")
         setRole("cashier")
         setBranch(branches[0]?.name || "")
-        setCanManageUnits(false)
-        setCanManageCategories(false)
         setCanManageProducts(false)
         onSuccess()
       } else {
@@ -282,20 +272,6 @@ export function AddUserModal({
                   </p>
                   <div className="space-y-3">
                     {[
-                      {
-                        key: "units",
-                        label: "Manage Units",
-                        desc: "Create and edit unit types",
-                        value: canManageUnits,
-                        set: setCanManageUnits,
-                      },
-                      {
-                        key: "categories",
-                        label: "Manage Categories",
-                        desc: "Create and edit product categories",
-                        value: canManageCategories,
-                        set: setCanManageCategories,
-                      },
                       {
                         key: "products",
                         label: "Manage Products",

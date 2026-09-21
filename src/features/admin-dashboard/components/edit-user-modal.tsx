@@ -28,8 +28,6 @@ export function EditUserModal({
   const [email, setEmail] = useState("")
   const [role, setRole] = useState("cashier")
   const [branch, setBranch] = useState("")
-  const [canManageUnits, setCanManageUnits] = useState(false)
-  const [canManageCategories, setCanManageCategories] = useState(false)
   const [canManageProducts, setCanManageProducts] = useState(false)
   const [branches, setBranches] = useState<BranchOption[]>([])
   const [newPassword, setNewPassword] = useState("")
@@ -46,10 +44,6 @@ export function EditUserModal({
       setEmail(user.email)
       setRole(user.role)
       setBranch(user.branch || "")
-      setCanManageUnits(user.role === "admin" || !!user.canManageUnits)
-      setCanManageCategories(
-        user.role === "admin" || !!user.canManageCategories
-      )
       setCanManageProducts(user.role === "admin" || !!user.canManageProducts)
       setNewPassword("")
       setConfirmPassword("")
@@ -78,13 +72,9 @@ export function EditUserModal({
     setRole(newRole)
     if (newRole === "admin") {
       setBranch("")
-      setCanManageUnits(true)
-      setCanManageCategories(true)
       setCanManageProducts(true)
     } else if (newRole !== "staff") {
       if (!branch) setBranch(branches[0]?.name || "")
-      setCanManageUnits(false)
-      setCanManageCategories(false)
       setCanManageProducts(false)
     } else {
       if (!branch) setBranch(branches[0]?.name || "")
@@ -113,8 +103,9 @@ export function EditUserModal({
           role,
           branch: branch || null,
           password: newPassword || undefined,
-          canManageUnits,
-          canManageCategories,
+          // Grandfathered flags pass through untouched so existing staff keep them.
+          canManageUnits: role === "admin" || !!user.canManageUnits,
+          canManageCategories: role === "admin" || !!user.canManageCategories,
           canManageProducts,
         }),
       })
@@ -229,20 +220,6 @@ export function EditUserModal({
                 </p>
                 <div className="space-y-3">
                   {[
-                    {
-                      key: "units",
-                      label: "Manage Units",
-                      desc: "Create and edit unit types",
-                      value: canManageUnits,
-                      set: setCanManageUnits,
-                    },
-                    {
-                      key: "categories",
-                      label: "Manage Categories",
-                      desc: "Create and edit product categories",
-                      value: canManageCategories,
-                      set: setCanManageCategories,
-                    },
                     {
                       key: "products",
                       label: "Manage Products",

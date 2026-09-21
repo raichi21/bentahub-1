@@ -56,8 +56,6 @@ export function UserTable({
   }
 
   const getPermissions = (u: UserRowData) => [
-    { label: "Units", has: u.role === "admin" || u.canManageUnits },
-    { label: "Categories", has: u.role === "admin" || u.canManageCategories },
     { label: "Products", has: u.role === "admin" || u.canManageProducts },
   ]
 
