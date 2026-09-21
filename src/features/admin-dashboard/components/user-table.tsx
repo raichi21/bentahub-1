@@ -55,9 +55,10 @@ export function UserTable({
       "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20",
   }
 
-  const getPermissions = (u: UserRowData) => [
-    { label: "Products", has: u.role === "admin" || u.canManageProducts },
-  ]
+  const getPermissions = (u: UserRowData) => {
+    if (u.role === "admin") return [{ label: "All Permissions", has: true }]
+    return [{ label: "Products", has: !!u.canManageProducts }]
+  }
 
   const getInitials = (name: string) =>
     name
