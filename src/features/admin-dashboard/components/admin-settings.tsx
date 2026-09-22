@@ -38,6 +38,7 @@ interface SettingsData {
   storeAddress: string | null
   storeContact: string | null
   storeEmail: string | null
+  mfaRequired: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsData = {
@@ -46,6 +47,7 @@ const DEFAULT_SETTINGS: SettingsData = {
   storeAddress: null,
   storeContact: null,
   storeEmail: null,
+  mfaRequired: true,
 }
 
 export function AdminSettings() {
@@ -84,6 +86,7 @@ export function AdminSettings() {
           storeAddress: s.storeAddress ?? null,
           storeContact: s.storeContact ?? null,
           storeEmail: s.storeEmail ?? null,
+          mfaRequired: s.mfaRequired ?? true,
         })
         setLogo(s.logo ?? null)
       }
@@ -165,6 +168,7 @@ export function AdminSettings() {
           storeAddress: settings.storeAddress,
           storeContact: settings.storeContact,
           storeEmail: settings.storeEmail,
+          mfaRequired: settings.mfaRequired,
         }),
       })
       const data = await res.json()
@@ -511,8 +515,40 @@ export function AdminSettings() {
       {/* ── Account Security ── */}
       <ContentCard
         title="Account Security"
-        subtitle="Protect your admin account with two-factor authentication."
+        subtitle="Control login verification for admin and customer accounts, plus your own two-factor authentication."
       >
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              Require MFA for admin and customer logins
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {settings.mfaRequired
+                ? "On — a verification code is emailed at every sign-in."
+                : "Off — accounts sign in with email and password only."}
+            </p>
+          </div>
+          <label className="relative inline-flex shrink-0 cursor-pointer items-center">
+            <input
+              type="checkbox"
+              className="peer sr-only"
+              checked={settings.mfaRequired}
+              onChange={(e) =>
+                setSettings({ ...settings, mfaRequired: e.target.checked })
+              }
+            />
+            <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
+          </label>
+        </div>
+        <Button
+          onClick={handleSaveConfig}
+          disabled={savingConfig}
+          className="mb-6 gap-2"
+        >
+          {savingConfig && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Save className="h-4 w-4" />
+          Save Security Setting
+        </Button>
         <MfaPanel />
       </ContentCard>
 

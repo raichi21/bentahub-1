@@ -757,6 +757,7 @@ export const storeSettings = pgTable("store_settings", {
   storeAddress: varchar("store_address", { length: 255 }),
   storeContact: varchar("store_contact", { length: 50 }),
   storeEmail: varchar("store_email", { length: 255 }),
+  mfaRequired: boolean("mfa_required").default(true).notNull(),
   updatedAt,
 })
 

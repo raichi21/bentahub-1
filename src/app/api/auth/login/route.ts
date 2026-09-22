@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { users } from "@/servers/schemas"
+import { users, storeSettings } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import {
   verifyPassword,
@@ -13,6 +13,23 @@ import type {
   LoginResponseData,
   LoginChallengeData,
 } from "@/types/auth"
+
+/**
+ * Whether MFA enforcement is active: production builds enforce it unless the
+ * admin has explicitly switched it off in Admin Settings (store_settings).
+ * Missing row / null flag preserves the previous default (enforced).
+ */
+async function isMfaRequiredGlobally(): Promise<boolean> {
+  if (!isMfaEnforced()) return false
+  try {
+    const s = await db.query.storeSettings.findFirst({
+      where: eq(storeSettings.id, "default"),
+    })
+    return s?.mfaRequired ?? true
+  } catch {
+    return true
+  }
+}
 
 /**
  * POST /api/auth/login
@@ -100,9 +117,13 @@ export async function POST(
     // Shared staff/cashier accounts are exempt so password login at the
     // workstation completes without a personal email code. Admin and customer
     // accounts that already enrolled MFA are always challenged; the rest are
-    // forced to enroll in production (in development the challenge is skipped
-    // so seeded accounts aren't locked).
-    if (mfaAppliesToRole(user.role) && (user.mfaEnabled || isMfaEnforced())) {
+    // forced to enroll when MFA is required globally (production builds,
+    // unless the admin switched it off in Admin Settings). In development
+    // the challenge is skipped so seeded accounts aren't locked.
+    if (
+      mfaAppliesToRole(user.role) &&
+      (user.mfaEnabled || (await isMfaRequiredGlobally()))
+    ) {
       const mfaToken = generateMfaToken(user.id)
       const data: LoginChallengeData = {
         requiresMfa: true,

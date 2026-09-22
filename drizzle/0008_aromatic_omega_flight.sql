@@ -1,0 +1,1 @@
+ALTER TABLE "store_settings" ADD COLUMN "mfa_required" boolean DEFAULT true NOT NULL;

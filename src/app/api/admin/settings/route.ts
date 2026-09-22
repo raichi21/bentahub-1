@@ -13,6 +13,7 @@ const updateSettingsSchema = z.object({
   storeAddress: z.string().max(255).nullable().optional(),
   storeContact: z.string().max(50).nullable().optional(),
   storeEmail: z.string().max(255).nullable().optional(),
+  mfaRequired: z.boolean().optional(),
 })
 
 function defaultSettings() {
@@ -23,6 +24,7 @@ function defaultSettings() {
     storeAddress: null,
     storeContact: null,
     storeEmail: null,
+    mfaRequired: true,
     updatedAt: null,
   }
 }
@@ -82,8 +84,14 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const { storeName, logo, storeAddress, storeContact, storeEmail } =
-      parsed.data
+    const {
+      storeName,
+      logo,
+      storeAddress,
+      storeContact,
+      storeEmail,
+      mfaRequired,
+    } = parsed.data
 
     await db
       .insert(storeSettings)
@@ -94,6 +102,7 @@ export async function PUT(request: NextRequest) {
         storeAddress: storeAddress ?? null,
         storeContact: storeContact ?? null,
         storeEmail: storeEmail ?? null,
+        mfaRequired: mfaRequired ?? true,
       })
       .onConflictDoUpdate({
         target: storeSettings.id,
@@ -103,6 +112,7 @@ export async function PUT(request: NextRequest) {
           storeAddress: storeAddress ?? null,
           storeContact: storeContact ?? null,
           storeEmail: storeEmail ?? null,
+          ...(mfaRequired !== undefined ? { mfaRequired } : {}),
         },
       })
 
