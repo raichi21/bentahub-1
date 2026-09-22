@@ -8,6 +8,7 @@ import {
 import type { OAuthProvider } from "@/lib/oauth"
 import { generateMfaToken } from "@/lib/auth-utils"
 import { isMfaEnforced } from "@/lib/mfa"
+import { isMfaRequiredGlobally } from "@/servers/mfa-settings"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -85,9 +86,13 @@ export async function GET(
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
-    // MFA gate: users with MFA enabled (any env) or who must enroll (production)
-    // are redirected to the challenge/setup screen carrying an mfa-scoped token.
-    if (user.mfaEnabled || isMfaEnforced()) {
+    // MFA gate: when globally required, users with MFA enabled (any env) or
+    // who must enroll (production) are redirected to the challenge/setup
+    // screen carrying an mfa-scoped token.
+    if (
+      (await isMfaRequiredGlobally()) &&
+      (user.mfaEnabled || isMfaEnforced())
+    ) {
       const mode = user.mfaEnabled ? "verify" : "setup"
       const mfaToken = generateMfaToken(user.id)
       const result = clearOAuthCookies(

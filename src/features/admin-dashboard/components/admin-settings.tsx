@@ -62,6 +62,11 @@ export function AdminSettings() {
     type: "success" | "error"
     text: string
   } | null>(null)
+  const [mfaSaving, setMfaSaving] = useState(false)
+  const [mfaMessage, setMfaMessage] = useState<{
+    type: "success" | "error"
+    text: string
+  } | null>(null)
 
   const [branches, setBranches] = useState<Branch[]>([])
   const [branchesLoading, setBranchesLoading] = useState(true)
@@ -188,6 +193,46 @@ export function AdminSettings() {
       setConfigMessage({ type: "error", text: "An error occurred" })
     } finally {
       setSavingConfig(false)
+    }
+  }
+
+  const handleMfaToggle = async (checked: boolean) => {
+    if (!token || mfaSaving) return
+    const ok = window.confirm(
+      checked
+        ? "Turn ON the MFA requirement? Admin and customer logins will ask for an emailed verification code."
+        : "Turn OFF the MFA requirement? Admin and customer accounts will sign in with email and password only."
+    )
+    if (!ok) return
+    setMfaSaving(true)
+    setMfaMessage(null)
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          storeName: settings.storeName,
+          logo,
+          storeAddress: settings.storeAddress,
+          storeContact: settings.storeContact,
+          storeEmail: settings.storeEmail,
+          mfaRequired: checked,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSettings((s) => ({ ...s, mfaRequired: checked }))
+        setMfaMessage({ type: "success", text: "Security setting saved" })
+      } else {
+        setMfaMessage({
+          type: "error",
+          text: data.message || "Failed to save security setting",
+        })
+      }
+    } catch {
+      setMfaMessage({ type: "error", text: "An error occurred" })
+    } finally {
+      setMfaSaving(false)
     }
   }
 
@@ -517,7 +562,7 @@ export function AdminSettings() {
         title="Account Security"
         subtitle="Control login verification for admin and customer accounts, plus your own two-factor authentication."
       >
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-4">
+        <div className="mb-2 flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-4">
           <div>
             <p className="text-sm font-semibold text-foreground">
               Require MFA for admin and customer logins
@@ -533,22 +578,19 @@ export function AdminSettings() {
               type="checkbox"
               className="peer sr-only"
               checked={settings.mfaRequired}
-              onChange={(e) =>
-                setSettings({ ...settings, mfaRequired: e.target.checked })
-              }
+              disabled={mfaSaving}
+              onChange={(e) => handleMfaToggle(e.target.checked)}
             />
             <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
           </label>
         </div>
-        <Button
-          onClick={handleSaveConfig}
-          disabled={savingConfig}
-          className="mb-6 gap-2"
-        >
-          {savingConfig && <Loader2 className="h-4 w-4 animate-spin" />}
-          <Save className="h-4 w-4" />
-          Save Security Setting
-        </Button>
+        {mfaMessage && (
+          <p
+            className={`mb-6 text-sm font-medium ${mfaMessage.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
+          >
+            {mfaMessage.text}
+          </p>
+        )}
         <MfaPanel />
       </ContentCard>
 

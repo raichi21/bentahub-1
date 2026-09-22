@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/servers/db"
-import { users, storeSettings } from "@/servers/schemas"
+import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import {
   verifyPassword,
@@ -8,28 +8,12 @@ import {
   generateMfaToken,
 } from "@/lib/auth-utils"
 import { isMfaEnforced, mfaAppliesToRole } from "@/lib/mfa"
+import { isMfaRequiredGlobally } from "@/servers/mfa-settings"
 import type {
   AuthResponse,
   LoginResponseData,
   LoginChallengeData,
 } from "@/types/auth"
-
-/**
- * Whether MFA enforcement is active: production builds enforce it unless the
- * admin has explicitly switched it off in Admin Settings (store_settings).
- * Missing row / null flag preserves the previous default (enforced).
- */
-async function isMfaRequiredGlobally(): Promise<boolean> {
-  if (!isMfaEnforced()) return false
-  try {
-    const s = await db.query.storeSettings.findFirst({
-      where: eq(storeSettings.id, "default"),
-    })
-    return s?.mfaRequired ?? true
-  } catch {
-    return true
-  }
-}
 
 /**
  * POST /api/auth/login
@@ -115,14 +99,16 @@ export async function POST(
     // --- MFA gate ----------------------------------------------------------
 
     // Shared staff/cashier accounts are exempt so password login at the
-    // workstation completes without a personal email code. Admin and customer
-    // accounts that already enrolled MFA are always challenged; the rest are
-    // forced to enroll when MFA is required globally (production builds,
-    // unless the admin switched it off in Admin Settings). In development
-    // the challenge is skipped so seeded accounts aren't locked.
+    // workstation completes without a personal email code. When MFA is
+    // required globally (production builds, unless the admin switched it off
+    // in Admin Settings), enrolled admin/customer accounts are challenged and
+    // the rest are forced to enroll. When the global switch is off, no MFA
+    // challenge is issued at all. In development the challenge is skipped so
+    // seeded accounts aren't locked.
     if (
       mfaAppliesToRole(user.role) &&
-      (user.mfaEnabled || (await isMfaRequiredGlobally()))
+      (await isMfaRequiredGlobally()) &&
+      (user.mfaEnabled || isMfaEnforced())
     ) {
       const mfaToken = generateMfaToken(user.id)
       const data: LoginChallengeData = {
