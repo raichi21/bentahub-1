@@ -610,11 +610,51 @@ describe("useCartActions add / fetch merge / remove-during-add", () => {
     })
     expect(useCartStore.getState().items).toHaveLength(0)
 
-    // The DELETEs land — the sweep keeps any resurrected copy gone
+    // The DELETEs land — the tombstones keep any resurrected copy gone
     await act(async () => {
       deleteResponse.resolve(okResponse({}))
       await p1
       await p2
+    })
+    expect(useCartStore.getState().items).toHaveLength(0)
+    expect(useCartStore.getState().error).toBeNull()
+  })
+
+  it("does not resurrect rows when a stale fetch dispatched before the remove resolves after it", async () => {
+    useCartStore
+      .getState()
+      .setItems([makeItem({ id: "server-1", productId: "prod-1" })])
+    const { result } = renderHook(() => useCartActions())
+
+    const getResponse = deferred<Response>()
+    const deleteResponse = deferred<Response>()
+    const fetchMock = vi.fn((_url: unknown, init?: RequestInit) => {
+      const method = init?.method ?? "GET"
+      if (method === "DELETE") return deleteResponse.promise
+      if (method === "GET") return getResponse.promise
+      throw new Error(`unexpected ${method}`)
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const rowA = { ...serverData, id: "server-1", productId: "prod-1" }
+
+    let fp!: Promise<void>
+    let p1!: Promise<void>
+    await act(async () => {
+      // Slow fetch dispatched first (e.g. page mount on a slow network)
+      fp = result.current.fetchCart()
+      // User removes the item while the fetch is still in flight
+      p1 = result.current.removeFromCart("server-1")
+    })
+    expect(useCartStore.getState().items).toHaveLength(0)
+
+    // The DELETE commits, then the stale fetch resolves with the
+    // pre-delete snapshot — the tombstone must keep the row gone
+    await act(async () => {
+      deleteResponse.resolve(okResponse({}))
+      await p1
+      getResponse.resolve(okResponse({ data: { items: [rowA] } }))
+      await fp
     })
     expect(useCartStore.getState().items).toHaveLength(0)
     expect(useCartStore.getState().error).toBeNull()

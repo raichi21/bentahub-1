@@ -31,6 +31,30 @@ function createTempId(): string {
 }
 
 /**
+ * Cross-consumer coordination state (module scope, NOT useRef).
+ *
+ * Several components can hold a useCartActions() instance at once (cart
+ * page, catalog view, badges...), and any of them may call fetchCart().
+ * This state must be shared so a fetch from one consumer still respects
+ * in-flight operations started by another. Keys are product ids and a
+ * browser tab holds a single user's cart, so sharing is safe.
+ */
+/** productIds with an add-to-cart POST still in flight. */
+const pendingAdds = new Map<string, number>()
+/** productIds removed while their add was still in flight — the add's reconcile cleans up the server row and stays out of the store. */
+const pendingRemoves = new Set<string>()
+/**
+ * Delete tombstones: productId -> timestamp of the user's remove tap.
+ * A fetch merging server rows must skip tombstoned products: the server
+ * response may predate the tap (slow fetch dispatched before it) or the
+ * DELETE may still be in flight. Tombstones older than the TTL are pruned
+ * on every merge. Starting a fresh add clears the tombstone so a re-added
+ * product becomes visible again.
+ */
+const deleteTombstones = new Map<string, number>()
+const DELETE_TOMBSTONE_TTL_MS = 60_000
+
+/**
  * Cart actions only — consumers that only need to mutate the cart
  * (e.g. ProductCard) subscribe to no cart state, so they don't
  * re-render when the cart changes.
@@ -50,17 +74,6 @@ export function useCartActions() {
     lastGoodSubtotal: number
   }
   const quantitySyncsRef = useRef<Map<string, PendingQuantitySync>>(new Map())
-
-  /** productIds with an add-to-cart POST still in flight. */
-  const pendingAddsRef = useRef<Map<string, number>>(new Map())
-  /** productIds removed while their add was still in flight — the add's reconcile cleans up the server row and stays out of the store. */
-  const pendingRemovesRef = useRef<Set<string>>(new Set())
-  /**
-   * itemIds AND productIds with a DELETE still in flight. fetchCart must not
-   * resurrect these rows if it runs before the server commits the deletes,
-   * and a successful DELETE sweeps any resurrected copy out of the store.
-   */
-  const pendingDeletesRef = useRef<Set<string>>(new Set())
 
   /**
    * Fetch cart from backend.
@@ -111,17 +124,21 @@ export function useCartActions() {
       const current = useCartStore.getState()
       const preserved = current.items.filter((i) => {
         if (!serverProducts.has(i.productId)) return true
-        return (pendingAddsRef.current.get(i.productId) ?? 0) > 0
+        return (pendingAdds.get(i.productId) ?? 0) > 0
       })
       const preservedProducts = new Set(preserved.map((i) => i.productId))
-      // Never resurrect rows with a DELETE still in flight — the server
-      // hasn't committed the delete yet, so they still appear in its
-      // response. They stay gone locally until their DELETE finishes.
+      // Never resurrect tombstoned products: the server response may predate
+      // the user's remove tap (slow fetch dispatched before it) or the
+      // DELETE may still be in flight. Stale tombstones are pruned so
+      // re-added products become visible again.
+      const now = Date.now()
+      for (const [key, ts] of deleteTombstones) {
+        if (now - ts > DELETE_TOMBSTONE_TTL_MS) deleteTombstones.delete(key)
+      }
       const serverItems = items.filter(
         (i) =>
           !preservedProducts.has(i.productId) &&
-          !pendingDeletesRef.current.has(i.id) &&
-          !pendingDeletesRef.current.has(i.productId)
+          !deleteTombstones.has(i.productId)
       )
       useCartStore.getState().setItems([...preserved, ...serverItems])
     } catch (error) {
@@ -194,11 +211,10 @@ export function useCartActions() {
       }
 
       // Track the in-flight add so fetchCart won't wipe the optimistic row
-      // and a remove during the round-trip is honored.
-      pendingAddsRef.current.set(
-        productId,
-        (pendingAddsRef.current.get(productId) ?? 0) + 1
-      )
+      // and a remove during the round-trip is honored. A fresh add also
+      // clears any delete tombstone so the product becomes visible again.
+      deleteTombstones.delete(productId)
+      pendingAdds.set(productId, (pendingAdds.get(productId) ?? 0) + 1)
 
       try {
         const response = await fetch("/api/customer/cart", {
@@ -222,7 +238,7 @@ export function useCartActions() {
           updatedAt: new Date(data.data.updatedAt),
         }
 
-        if (pendingRemovesRef.current.has(productId)) {
+        if (pendingRemoves.has(productId)) {
           // The user removed this item before the add landed — clean up the
           // server row silently instead of re-adding it to the store.
           void fetch(`/api/customer/cart/${serverItem.id}`, {
@@ -252,7 +268,7 @@ export function useCartActions() {
       } catch (error) {
         // Rollback optimistic changes — unless the user removed the row while
         // the add was in flight, in which case keep it gone.
-        if (snapshot && !pendingRemovesRef.current.has(productId)) {
+        if (snapshot && !pendingRemoves.has(productId)) {
           const state = useCartStore.getState()
           if (previous) {
             state.updateItem(previous.id, {
@@ -268,10 +284,10 @@ export function useCartActions() {
         console.error("Failed to add to cart:", error)
         throw error
       } finally {
-        const remaining = (pendingAddsRef.current.get(productId) ?? 1) - 1
-        if (remaining <= 0) pendingAddsRef.current.delete(productId)
-        else pendingAddsRef.current.set(productId, remaining)
-        pendingRemovesRef.current.delete(productId)
+        const remaining = (pendingAdds.get(productId) ?? 1) - 1
+        if (remaining <= 0) pendingAdds.delete(productId)
+        else pendingAdds.set(productId, remaining)
+        pendingRemoves.delete(productId)
       }
     },
     [user, token]
@@ -399,15 +415,15 @@ export function useCartActions() {
       // If this row is a pending add (its POST is still in flight), the
       // add's reconcile cleans up the server row and keeps it out of the
       // store — no DELETE needed here (the temp row has no server id).
-      if ((pendingAddsRef.current.get(previous.productId) ?? 0) > 0) {
-        pendingRemovesRef.current.add(previous.productId)
+      if ((pendingAdds.get(previous.productId) ?? 0) > 0) {
+        pendingRemoves.add(previous.productId)
         return
       }
 
-      // Track the in-flight DELETE so a fetchCart that lands before the
-      // server commits doesn't resurrect this row.
-      pendingDeletesRef.current.add(itemId)
-      pendingDeletesRef.current.add(previous.productId)
+      // Leave a delete tombstone so no fetch — however it was triggered,
+      // whenever it was dispatched, or whichever consumer runs it —
+      // resurrects this product. A fresh add clears it (see addToCart).
+      deleteTombstones.set(previous.productId, Date.now())
 
       try {
         const response = await fetch(`/api/customer/cart/${itemId}`, {
@@ -430,10 +446,6 @@ export function useCartActions() {
           }
           throw new Error(message)
         }
-
-        // Success — sweep any copy the fetch-merge may have resurrected
-        // while this DELETE was in flight.
-        useCartStore.getState().removeItem(itemId)
       } catch (error) {
         // Restore the item on failure
         const current = useCartStore.getState()
@@ -443,9 +455,6 @@ export function useCartActions() {
         const message = error instanceof Error ? error.message : "Unknown error"
         current.setError(message)
         console.error("Failed to remove from cart:", error)
-      } finally {
-        pendingDeletesRef.current.delete(itemId)
-        pendingDeletesRef.current.delete(previous.productId)
       }
     },
     [user, token, fetchCart]
