@@ -7,7 +7,7 @@ import {
   generateToken,
   generateMfaToken,
 } from "@/lib/auth-utils"
-import { isMfaEnforced, mfaAppliesToRole } from "@/lib/mfa"
+import { mfaAppliesToRole, mfaEnforcedForRole } from "@/lib/mfa"
 import { isMfaRequiredGlobally } from "@/servers/mfa-settings"
 import type {
   AuthResponse,
@@ -99,16 +99,15 @@ export async function POST(
     // --- MFA gate ----------------------------------------------------------
 
     // Shared staff/cashier accounts are exempt so password login at the
-    // workstation completes without a personal email code. When MFA is
-    // required globally (production builds, unless the admin switched it off
-    // in Admin Settings), enrolled admin/customer accounts are challenged and
-    // the rest are forced to enroll. When the global switch is off, no MFA
-    // challenge is issued at all. In development the challenge is skipped so
-    // seeded accounts aren't locked.
+    // workstation completes without a personal email code. Enrolled
+    // admin/customer accounts are always challenged on their own opt-in.
+    // Forced enrollment applies to admin logins only, gated by the global
+    // switch in Admin Settings (production builds). Customer logins are
+    // self-managed and never forced. In development the challenge is skipped
+    // so seeded accounts aren't locked.
     if (
-      mfaAppliesToRole(user.role) &&
-      (await isMfaRequiredGlobally()) &&
-      (user.mfaEnabled || isMfaEnforced())
+      (mfaAppliesToRole(user.role) && user.mfaEnabled) ||
+      (mfaEnforcedForRole(user.role) && (await isMfaRequiredGlobally()))
     ) {
       const mfaToken = generateMfaToken(user.id)
       const data: LoginChallengeData = {

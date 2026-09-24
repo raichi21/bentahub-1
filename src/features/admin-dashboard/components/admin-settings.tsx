@@ -200,8 +200,8 @@ export function AdminSettings() {
     if (!token || mfaSaving) return
     const ok = window.confirm(
       checked
-        ? "Turn ON the MFA requirement? Admin and customer logins will ask for an emailed verification code."
-        : "Turn OFF the MFA requirement? Admin and customer accounts will sign in with email and password only."
+        ? "Turn ON the MFA requirement? Admin logins will ask for an emailed verification code."
+        : "Turn OFF the MFA requirement? Admin accounts will sign in with email and password only. Customer logins always stay self-managed."
     )
     if (!ok) return
     setMfaSaving(true)
@@ -560,17 +560,17 @@ export function AdminSettings() {
       {/* ── Account Security ── */}
       <ContentCard
         title="Account Security"
-        subtitle="Control login verification for admin and customer accounts, plus your own two-factor authentication."
+        subtitle="Email code verification for admin logins. Customer accounts self-manage verification in their own profile."
       >
         <div className="mb-2 flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-4">
           <div>
             <p className="text-sm font-semibold text-foreground">
-              Require MFA for admin and customer logins
+              Require MFA for admin logins
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {settings.mfaRequired
-                ? "On — a verification code is emailed at every sign-in."
-                : "Off — accounts sign in with email and password only."}
+                ? "On — a verification code is emailed at every admin sign-in."
+                : "Off — admin accounts sign in with email and password only. Customer logins stay self-managed in their own profile."}
             </p>
           </div>
           <label className="relative inline-flex shrink-0 cursor-pointer items-center">

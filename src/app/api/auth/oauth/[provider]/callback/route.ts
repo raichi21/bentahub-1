@@ -7,7 +7,7 @@ import {
 } from "@/lib/oauth"
 import type { OAuthProvider } from "@/lib/oauth"
 import { generateMfaToken } from "@/lib/auth-utils"
-import { isMfaEnforced } from "@/lib/mfa"
+import { mfaAppliesToRole, mfaEnforcedForRole } from "@/lib/mfa"
 import { isMfaRequiredGlobally } from "@/servers/mfa-settings"
 
 export const runtime = "nodejs"
@@ -86,12 +86,12 @@ export async function GET(
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
-    // MFA gate: when globally required, users with MFA enabled (any env) or
-    // who must enroll (production) are redirected to the challenge/setup
-    // screen carrying an mfa-scoped token.
+    // MFA gate: enrolled admin/customer accounts are challenged on their own
+    // opt-in; forced enrollment applies to admin logins only, gated by the
+    // global switch. Customer OAuth logins are self-managed, never forced.
     if (
-      (await isMfaRequiredGlobally()) &&
-      (user.mfaEnabled || isMfaEnforced())
+      (mfaAppliesToRole(user.role) && user.mfaEnabled) ||
+      (mfaEnforcedForRole(user.role) && (await isMfaRequiredGlobally()))
     ) {
       const mode = user.mfaEnabled ? "verify" : "setup"
       const mfaToken = generateMfaToken(user.id)

@@ -23,6 +23,18 @@ export function mfaAppliesToRole(role: string): boolean {
 }
 
 /**
+ * Roles the admin global switch may force into MFA. Customer logins are
+ * self-managed (opt-in via their own profile) and are never forced by the
+ * admin; only admin logins fall under the global requirement flag.
+ */
+export const MFA_ENFORCED_ROLES = ["admin"] as const
+
+/** Whether a given role is subject to the admin global MFA requirement. */
+export function mfaEnforcedForRole(role: string): boolean {
+  return (MFA_ENFORCED_ROLES as readonly string[]).includes(role)
+}
+
+/**
  * Whether MFA is currently enforced for eligible roles (production only).
  */
 export function isMfaEnforced(): boolean {
