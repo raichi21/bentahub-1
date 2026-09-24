@@ -3,6 +3,7 @@ import {
   isMfaEnforced,
   mfaAppliesToRole,
   mfaEnforcedForRole,
+  mfaAutomaticForRole,
   maskEmail,
 } from "./mfa"
 
@@ -50,6 +51,18 @@ describe("mfaEnforcedForRole", () => {
     expect(mfaEnforcedForRole("customer")).toBe(false)
     expect(mfaEnforcedForRole("staff")).toBe(false)
     expect(mfaEnforcedForRole("cashier")).toBe(false)
+  })
+})
+
+describe("mfaAutomaticForRole", () => {
+  it("always issues a code for customer logins", () => {
+    expect(mfaAutomaticForRole("customer")).toBe(true)
+  })
+
+  it("does not auto-challenge other roles", () => {
+    expect(mfaAutomaticForRole("admin")).toBe(false)
+    expect(mfaAutomaticForRole("staff")).toBe(false)
+    expect(mfaAutomaticForRole("cashier")).toBe(false)
   })
 })
 

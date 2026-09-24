@@ -7,7 +7,12 @@ import {
   generateToken,
   generateMfaToken,
 } from "@/lib/auth-utils"
-import { mfaAppliesToRole, mfaEnforcedForRole } from "@/lib/mfa"
+import {
+  isMfaEnforced,
+  mfaAppliesToRole,
+  mfaEnforcedForRole,
+  mfaAutomaticForRole,
+} from "@/lib/mfa"
 import { isMfaRequiredGlobally } from "@/servers/mfa-settings"
 import type {
   AuthResponse,
@@ -103,11 +108,13 @@ export async function POST(
     // admin/customer accounts are always challenged on their own opt-in.
     // Forced enrollment applies to admin logins only, gated by the global
     // switch in Admin Settings (production builds). Customer logins are
-    // self-managed and never forced. In development the challenge is skipped
-    // so seeded accounts aren't locked.
+    // automatic in production: every login is issued an email code, with no
+    // settings UI and no opt-out. In development the challenge is skipped so
+    // seeded accounts aren't locked.
     if (
       (mfaAppliesToRole(user.role) && user.mfaEnabled) ||
-      (mfaEnforcedForRole(user.role) && (await isMfaRequiredGlobally()))
+      (mfaEnforcedForRole(user.role) && (await isMfaRequiredGlobally())) ||
+      (mfaAutomaticForRole(user.role) && isMfaEnforced())
     ) {
       const mfaToken = generateMfaToken(user.id)
       const data: LoginChallengeData = {

@@ -35,6 +35,15 @@ export function mfaEnforcedForRole(role: string): boolean {
 }
 
 /**
+ * Roles that are always issued an email code at login, with no settings UI
+ * and no opt-out. Customer logins are automatic: the first login runs the
+ * setup flow and every later login is a verification challenge.
+ */
+export function mfaAutomaticForRole(role: string): boolean {
+  return role === "customer"
+}
+
+/**
  * Whether MFA is currently enforced for eligible roles (production only).
  */
 export function isMfaEnforced(): boolean {

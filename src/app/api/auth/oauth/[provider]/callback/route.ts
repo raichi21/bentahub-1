@@ -7,7 +7,12 @@ import {
 } from "@/lib/oauth"
 import type { OAuthProvider } from "@/lib/oauth"
 import { generateMfaToken } from "@/lib/auth-utils"
-import { mfaAppliesToRole, mfaEnforcedForRole } from "@/lib/mfa"
+import {
+  isMfaEnforced,
+  mfaAppliesToRole,
+  mfaEnforcedForRole,
+  mfaAutomaticForRole,
+} from "@/lib/mfa"
 import { isMfaRequiredGlobally } from "@/servers/mfa-settings"
 
 export const runtime = "nodejs"
@@ -88,10 +93,12 @@ export async function GET(
 
     // MFA gate: enrolled admin/customer accounts are challenged on their own
     // opt-in; forced enrollment applies to admin logins only, gated by the
-    // global switch. Customer OAuth logins are self-managed, never forced.
+    // global switch. Customer OAuth logins are automatic in production
+    // (every login gets a code); self-managed, never forced by the admin.
     if (
       (mfaAppliesToRole(user.role) && user.mfaEnabled) ||
-      (mfaEnforcedForRole(user.role) && (await isMfaRequiredGlobally()))
+      (mfaEnforcedForRole(user.role) && (await isMfaRequiredGlobally())) ||
+      (mfaAutomaticForRole(user.role) && isMfaEnforced())
     ) {
       const mode = user.mfaEnabled ? "verify" : "setup"
       const mfaToken = generateMfaToken(user.id)
