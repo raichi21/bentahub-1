@@ -55,6 +55,12 @@ export function useCartActions() {
   const pendingAddsRef = useRef<Map<string, number>>(new Map())
   /** productIds removed while their add was still in flight — the add's reconcile cleans up the server row and stays out of the store. */
   const pendingRemovesRef = useRef<Set<string>>(new Set())
+  /**
+   * itemIds AND productIds with a DELETE still in flight. fetchCart must not
+   * resurrect these rows if it runs before the server commits the deletes,
+   * and a successful DELETE sweeps any resurrected copy out of the store.
+   */
+  const pendingDeletesRef = useRef<Set<string>>(new Set())
 
   /**
    * Fetch cart from backend.
@@ -108,8 +114,14 @@ export function useCartActions() {
         return (pendingAddsRef.current.get(i.productId) ?? 0) > 0
       })
       const preservedProducts = new Set(preserved.map((i) => i.productId))
+      // Never resurrect rows with a DELETE still in flight — the server
+      // hasn't committed the delete yet, so they still appear in its
+      // response. They stay gone locally until their DELETE finishes.
       const serverItems = items.filter(
-        (i) => !preservedProducts.has(i.productId)
+        (i) =>
+          !preservedProducts.has(i.productId) &&
+          !pendingDeletesRef.current.has(i.id) &&
+          !pendingDeletesRef.current.has(i.productId)
       )
       useCartStore.getState().setItems([...preserved, ...serverItems])
     } catch (error) {
@@ -392,6 +404,11 @@ export function useCartActions() {
         return
       }
 
+      // Track the in-flight DELETE so a fetchCart that lands before the
+      // server commits doesn't resurrect this row.
+      pendingDeletesRef.current.add(itemId)
+      pendingDeletesRef.current.add(previous.productId)
+
       try {
         const response = await fetch(`/api/customer/cart/${itemId}`, {
           method: "DELETE",
@@ -413,6 +430,10 @@ export function useCartActions() {
           }
           throw new Error(message)
         }
+
+        // Success — sweep any copy the fetch-merge may have resurrected
+        // while this DELETE was in flight.
+        useCartStore.getState().removeItem(itemId)
       } catch (error) {
         // Restore the item on failure
         const current = useCartStore.getState()
@@ -422,6 +443,9 @@ export function useCartActions() {
         const message = error instanceof Error ? error.message : "Unknown error"
         current.setError(message)
         console.error("Failed to remove from cart:", error)
+      } finally {
+        pendingDeletesRef.current.delete(itemId)
+        pendingDeletesRef.current.delete(previous.productId)
       }
     },
     [user, token, fetchCart]
