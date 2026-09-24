@@ -18,7 +18,6 @@ import {
   Phone,
   LogOut,
 } from "lucide-react"
-import { MfaPanel } from "@/features/mfa"
 
 const MAX_IMAGE_SIZE = 2_000_000
 
@@ -242,10 +241,6 @@ export function CustomerProfile() {
             )}
           </div>
         </div>
-      </ContentCard>
-
-      <ContentCard subtitle="Two-factor authentication for your account">
-        <MfaPanel />
       </ContentCard>
 
       <ContentCard subtitle="Sign out of your account">
