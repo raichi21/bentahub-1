@@ -560,7 +560,7 @@ export function AdminSettings() {
       {/* ── Account Security ── */}
       <ContentCard
         title="Account Security"
-        subtitle="Email code verification for admin logins. Customer accounts self-manage verification in their own profile."
+        subtitle="Email code verification for admin logins."
       >
         <div className="mb-2 flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-4">
           <div>
