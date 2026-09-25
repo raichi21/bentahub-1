@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
 import { transactions } from "@/servers/schemas"
-import { eq, and, gte, lte, desc } from "drizzle-orm"
+import { eq, and, gte, lte, lt, desc, sql } from "drizzle-orm"
 
 const MONTH_NAMES = [
   "Jan",
@@ -94,51 +94,72 @@ export async function getSalesData(
 
   const where = and(...baseConditions)
 
-  const allMatched = (await db.query.transactions.findMany({
-    where,
-    orderBy: [desc(transactions.createdAt)],
-    with: {
-      items: true,
-      cashier: {
-        columns: { fullName: true },
-      },
-    },
-  })) as Array<{
-    id: string
-    branchId: string
-    totalAmount: string
-    paymentMethod: string
-    status: string
-    createdAt: Date
-    receiptNumber: number | null
-    gcashRef: string | null
-    cashier: { fullName: string } | null
-    items: Array<{
-      productName: string
-      quantity: number
-      price: string
-      subtotal: string
-    }>
-  }>
+  // --- Aggregates (no row hydration: count/sum only) -----------------------
+  const metricsQuery = db
+    .select({
+      n: sql<number>`count(*)::int`,
+      total: sql<string>`coalesce(sum(${transactions.totalAmount}), 0)`,
+    })
+    .from(transactions)
+    .where(where)
+  const currentMonthQuery = db
+    .select({
+      total: sql<string>`coalesce(sum(${transactions.totalAmount}), 0)`,
+    })
+    .from(transactions)
+    .where(and(where, gte(transactions.createdAt, currentMonthStart)))
+  const lastMonthQuery = db
+    .select({
+      total: sql<string>`coalesce(sum(${transactions.totalAmount}), 0)`,
+    })
+    .from(transactions)
+    .where(
+      and(
+        where,
+        gte(transactions.createdAt, lastMonthStart),
+        lt(transactions.createdAt, currentMonthStart)
+      )
+    )
 
-  const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
-
-  const totalSales = allMatched.reduce(
-    (sum, t) => sum + parseFloat(t.totalAmount),
-    0
+  const monthBounds: Array<{ start: Date; end: Date }> = []
+  for (let i = 11; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const end =
+      i === 0
+        ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+        : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59)
+    monthBounds.push({ start, end })
+  }
+  const trendQueries = monthBounds.map(({ start, end }) =>
+    db
+      .select({
+        total: sql<string>`coalesce(sum(${transactions.totalAmount}), 0)`,
+      })
+      .from(transactions)
+      .where(
+        and(
+          where,
+          gte(transactions.createdAt, start),
+          lte(transactions.createdAt, end)
+        )
+      )
   )
-  const transactionCount = allMatched.length
+
+  const [metricRows, currentMonthRows, lastMonthRows, trendTotals] =
+    await Promise.all([
+      metricsQuery,
+      currentMonthQuery,
+      lastMonthQuery,
+      Promise.all(trendQueries),
+    ])
+
+  const transactionCount = metricRows[0]?.n ?? 0
+  const totalSales = parseFloat(metricRows[0]?.total ?? "0")
   const avgPerTransaction =
     transactionCount > 0 ? totalSales / transactionCount : 0
 
-  const currentMonthRevenue = allMatched
-    .filter((t) => t.createdAt >= currentMonthStart)
-    .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
-  const lastMonthRevenue = allMatched
-    .filter(
-      (t) => t.createdAt >= lastMonthStart && t.createdAt < currentMonthStart
-    )
-    .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
+  const currentMonthRevenue = parseFloat(currentMonthRows[0]?.total ?? "0")
+  const lastMonthRevenue = parseFloat(lastMonthRows[0]?.total ?? "0")
 
   let trend = "0%"
   if (lastMonthRevenue > 0) {
@@ -149,11 +170,26 @@ export async function getSalesData(
     trend = "+100%"
   }
 
+  // --- Page rows only (limit/offset, same join shape as before) ------------
   const offset = (filters.page - 1) * filters.pageSize
-  const pageRows = allMatched.slice(offset, offset + filters.pageSize)
+  const pageRows = await db.query.transactions.findMany({
+    where,
+    orderBy: [desc(transactions.createdAt)],
+    limit: filters.pageSize,
+    offset,
+    with: {
+      items: true,
+      cashier: {
+        columns: { fullName: true },
+      },
+    },
+  })
+
+  const branchMap = new Map(allBranches.map((b) => [b.id, b.name]))
+
   const transactionsList: SalesTransactionRow[] = pageRows.map((t, idx) => ({
     id: t.id,
-    displayId: `SAL-${String(allMatched.length - offset - idx).padStart(4, "0")}`,
+    displayId: `SAL-${String(transactionCount - offset - idx).padStart(4, "0")}`,
     branchName: branchMap.get(t.branchId) || "Unknown",
     createdAt: t.createdAt,
     totalAmount: t.totalAmount,
@@ -170,21 +206,10 @@ export async function getSalesData(
     })),
   }))
 
-  const salesTrend: SalesTrendPoint[] = []
-  for (let i = 11; i >= 0; i--) {
-    const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const end =
-      i === 0
-        ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-        : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59)
-    const revenue = allMatched
-      .filter((t) => t.createdAt >= start && t.createdAt <= end)
-      .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
-    salesTrend.push({
-      month: MONTH_NAMES[start.getMonth()],
-      revenue,
-    })
-  }
+  const salesTrend: SalesTrendPoint[] = monthBounds.map(({ start }, i) => ({
+    month: MONTH_NAMES[start.getMonth()],
+    revenue: parseFloat(trendTotals[i]?.[0]?.total ?? "0"),
+  }))
 
   return {
     overview: {
@@ -196,7 +221,7 @@ export async function getSalesData(
       trend,
     },
     transactions: transactionsList,
-    totalCount: allMatched.length,
+    totalCount: transactionCount,
     branches: allBranches.map((b) => ({ id: b.id, name: b.name })),
     salesTrend,
   }
