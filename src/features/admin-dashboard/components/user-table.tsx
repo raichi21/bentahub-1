@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Pencil, Trash2, Users } from "lucide-react"
+import { Plus, Pencil, Trash2, Users, RotateCcw } from "lucide-react"
 import { AddUserModal } from "./add-user-modal"
 import { EditUserModal } from "./edit-user-modal"
 import { DeleteUserModal } from "./delete-user-modal"
+import { RestoreUserModal } from "./restore-user-modal"
+import { PermanentDeleteUserModal } from "./permanent-delete-user-modal"
 import type { UserRowData } from "@/types/admin"
 import { TablePagination, TableSearchInput } from "@/components/data-table"
 
@@ -18,6 +20,8 @@ interface UserTableProps {
   onRefresh: () => void
   loading: boolean
   token: string | null
+  /** "archived" lists deactivated accounts with restore/permanent-delete actions. */
+  mode?: "active" | "archived"
 }
 
 export function UserTable({
@@ -30,10 +34,16 @@ export function UserTable({
   onRefresh,
   loading,
   token,
+  mode = "active",
 }: UserTableProps) {
+  const isArchived = mode === "archived"
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserRowData | null>(null)
   const [deletingUser, setDeletingUser] = useState<UserRowData | null>(null)
+  const [restoringUser, setRestoringUser] = useState<UserRowData | null>(null)
+  const [permDeletingUser, setPermDeletingUser] = useState<UserRowData | null>(
+    null
+  )
 
   const roleStyles: Record<string, string> = {
     admin: "bg-primary/10 text-primary border border-primary/20",
@@ -67,19 +77,23 @@ export function UserTable({
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
-        <h4 className="text-lg font-bold text-foreground">User Management</h4>
+        <h4 className="text-lg font-bold text-foreground">
+          {isArchived ? "Archived Users" : "User Management"}
+        </h4>
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
           <TableSearchInput
             placeholder="Search by name or email..."
             onSearch={onSearch}
           />
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:opacity-95 active:scale-[0.98] md:w-auto"
-          >
-            <Plus className="h-[18px] w-[18px]" />
-            Add User
-          </button>
+          {!isArchived && (
+            <button
+              onClick={() => setIsAddOpen(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:opacity-95 active:scale-[0.98] md:w-auto"
+            >
+              <Plus className="h-[18px] w-[18px]" />
+              Add User
+            </button>
+          )}
         </div>
       </div>
 
@@ -120,7 +134,9 @@ export function UserTable({
                     </div>
                     <div>
                       <p className="font-bold text-foreground">
-                        No users found.
+                        {isArchived
+                          ? "No archived users found."
+                          : "No users found."}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         Try adjusting your search.
@@ -195,7 +211,24 @@ export function UserTable({
                     {formatDate(u.createdAt)}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {u.role === "customer" ? (
+                    {isArchived ? (
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setRestoringUser(u)}
+                          title="Restore user"
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setPermDeletingUser(u)}
+                          title="Delete permanently"
+                          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : u.role === "customer" ? (
                       <span className="text-[10px] text-muted-foreground italic">
                         —
                       </span>
@@ -261,6 +294,28 @@ export function UserTable({
         token={token}
         onSuccess={() => {
           setDeletingUser(null)
+          onRefresh()
+        }}
+      />
+      <RestoreUserModal
+        isOpen={restoringUser !== null}
+        onClose={() => setRestoringUser(null)}
+        userId={restoringUser?.id || ""}
+        userName={restoringUser?.fullName || ""}
+        token={token}
+        onSuccess={() => {
+          setRestoringUser(null)
+          onRefresh()
+        }}
+      />
+      <PermanentDeleteUserModal
+        isOpen={permDeletingUser !== null}
+        onClose={() => setPermDeletingUser(null)}
+        userId={permDeletingUser?.id || ""}
+        userName={permDeletingUser?.fullName || ""}
+        token={token}
+        onSuccess={() => {
+          setPermDeletingUser(null)
           onRefresh()
         }}
       />

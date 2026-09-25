@@ -8,6 +8,7 @@ import {
   Bell,
   Tag,
   Users,
+  Archive,
   CreditCard,
   History,
   Truck,
@@ -57,6 +58,11 @@ export function AdminSidebar({
         { label: "Notifications", icon: Bell, path: "/admin/notifications" },
         { label: "Sales", icon: Tag, path: "/admin/sales" },
         { label: "User Management", icon: Users, path: "/admin/users" },
+        {
+          label: "Archived Users",
+          icon: Archive,
+          path: "/admin/archived-users",
+        },
       ],
     },
     {

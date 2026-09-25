@@ -83,8 +83,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const search = searchParams.get("search") || undefined
     const page = parseInt(searchParams.get("page") || "1", 10)
     const pageSize = parseInt(searchParams.get("pageSize") || "15", 10)
+    const status =
+      searchParams.get("status") === "archived" ? "archived" : undefined
 
-    const data = await getUsers({ role, search, page, pageSize })
+    const data = await getUsers({ role, search, page, pageSize, status })
 
     return NextResponse.json({
       success: true,

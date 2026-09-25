@@ -8,6 +8,8 @@ export interface UserFilterOptions {
   search?: string
   page: number
   pageSize: number
+  /** "archived" lists deactivated accounts; defaults to active. */
+  status?: "active" | "archived"
 }
 
 export interface UsersPageData {
@@ -19,7 +21,11 @@ export interface UsersPageData {
 export async function getUsers(
   filters: UserFilterOptions = { page: 1, pageSize: 15 }
 ): Promise<UsersPageData> {
-  const baseConditions = [eq(users.isActive, true)]
+  const baseConditions = [
+    filters.status === "archived"
+      ? eq(users.isActive, false)
+      : eq(users.isActive, true),
+  ]
   if (filters.role) {
     baseConditions.push(
       eq(users.role, filters.role as "admin" | "cashier" | "staff" | "customer")

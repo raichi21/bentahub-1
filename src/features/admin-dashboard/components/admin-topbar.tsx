@@ -42,6 +42,9 @@ export function AdminTopbar({
     title = "Product Management"
     subtitle =
       "Manage product categories, unit types, and the master product catalog."
+  } else if (pathname.includes("/admin/archived-users")) {
+    title = "Archived Users"
+    subtitle = "Restore deactivated accounts or delete them permanently"
   } else if (pathname.includes("/admin/users")) {
     title = "User Management"
     subtitle = "The admin allow to Add, Edit, Remove, and manage users"
