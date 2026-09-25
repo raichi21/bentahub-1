@@ -21,6 +21,7 @@ import {
 import { QuickStockModal } from "./quick-stock-modal"
 import { AddStockModal } from "./add-stock-modal"
 import { ProductBatchesModal } from "./product-batches-modal"
+import { TablePagination } from "@/components/data-table"
 import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 6
@@ -504,31 +505,16 @@ export function InventoryUpdateTable({
         </table>
       </div>
 
-      <div className="mt-auto flex items-center justify-between border-t border-border bg-muted/5 px-6 py-4">
-        <p className="text-xs font-medium text-muted-foreground">
-          Showing {Math.min(totalItems, (safePage - 1) * ITEMS_PER_PAGE + 1)} to{" "}
-          {Math.min(totalItems, safePage * ITEMS_PER_PAGE)} of {totalItems}{" "}
-          entries
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            disabled={safePage === 1}
-            onClick={() => setCurrentPage((c) => c - 1)}
-            className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
-            Page {safePage} of {totalPages}
-          </span>
-          <button
-            disabled={safePage === totalPages}
-            onClick={() => setCurrentPage((c) => c + 1)}
-            className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+      <div className="mt-auto">
+        <TablePagination
+          page={safePage}
+          pageSize={ITEMS_PER_PAGE}
+          totalCount={totalItems}
+          currentCount={paginatedProducts.length}
+          onPageChange={setCurrentPage}
+          unit="entries"
+          variant="compact"
+        />
       </div>
     </div>
   )

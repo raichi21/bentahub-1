@@ -106,4 +106,22 @@ describe("TablePagination", () => {
     )
     expect(screen.getByText("Showing 1 to 15 of 20 entries")).toBeDefined()
   })
+
+  it("renders the compact staff variant with identical math", () => {
+    const { container } = render(
+      <TablePagination
+        page={2}
+        pageSize={10}
+        totalCount={25}
+        currentCount={10}
+        onPageChange={() => {}}
+        unit="entries"
+        variant="compact"
+      />
+    )
+    expect(screen.getByText("Showing 11 to 20 of 25 entries")).toBeDefined()
+    expect(screen.getByText("Page 2 of 3")).toBeDefined()
+    const footer = container.firstChild as HTMLElement
+    expect(footer.className).toContain("bg-muted/5")
+  })
 })

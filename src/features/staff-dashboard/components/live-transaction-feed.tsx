@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef } from "react"
 import { Search, Eye, CreditCard, Banknote, X } from "lucide-react"
 import type { StaffTransactionItem } from "@/types/staff"
+import { TablePagination } from "@/components/data-table"
 import { cn } from "@/lib/utils"
 
 interface LiveTransactionFeedProps {
@@ -44,9 +45,6 @@ export function LiveTransactionFeed({
     Math.ceil(filteredTransactions.length / PAGE_SIZE)
   )
   const currentPage = Math.min(page, totalPages)
-  const start =
-    filteredTransactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
-  const end = Math.min(currentPage * PAGE_SIZE, filteredTransactions.length)
   const paginatedTransactions = filteredTransactions.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
@@ -391,30 +389,15 @@ export function LiveTransactionFeed({
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t border-border bg-muted/5 px-6 py-4">
-          <p className="text-xs font-medium text-muted-foreground">
-            Showing {start} to {end} of {filteredTransactions.length} entries
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage(currentPage - 1)}
-              disabled={currentPage <= 1}
-              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <TablePagination
+          page={currentPage}
+          pageSize={PAGE_SIZE}
+          totalCount={filteredTransactions.length}
+          currentCount={paginatedTransactions.length}
+          onPageChange={setPage}
+          unit="entries"
+          variant="compact"
+        />
       </div>
     </>
   )

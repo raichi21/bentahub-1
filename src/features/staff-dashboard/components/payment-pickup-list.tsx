@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { VerifyPickupModal } from "./verify-pickup-modal"
 import { CancelReservationModal } from "./cancel-reservation-modal"
+import { TablePagination } from "@/components/data-table"
 import { cn } from "@/lib/utils"
 
 type Tab = "payments" | "pickups"
@@ -91,11 +92,6 @@ export function PaymentPickupList({
     Math.ceil(filteredPayments.length / PAYMENTS_PER_PAGE)
   )
   const currentPaymentPage = Math.min(paymentPage, paymentTotalPages)
-  const paymentStart = (currentPaymentPage - 1) * PAYMENTS_PER_PAGE + 1
-  const paymentEnd = Math.min(
-    currentPaymentPage * PAYMENTS_PER_PAGE,
-    filteredPayments.length
-  )
   const paginatedPayments = filteredPayments.slice(
     (currentPaymentPage - 1) * PAYMENTS_PER_PAGE,
     currentPaymentPage * PAYMENTS_PER_PAGE
@@ -106,11 +102,6 @@ export function PaymentPickupList({
     Math.ceil(filteredPickups.length / PICKUPS_PER_PAGE)
   )
   const currentPickupPage = Math.min(pickupPage, pickupTotalPages)
-  const pickupStart = (currentPickupPage - 1) * PICKUPS_PER_PAGE + 1
-  const pickupEnd = Math.min(
-    currentPickupPage * PICKUPS_PER_PAGE,
-    filteredPickups.length
-  )
   const paginatedPickups = filteredPickups.slice(
     (currentPickupPage - 1) * PICKUPS_PER_PAGE,
     currentPickupPage * PICKUPS_PER_PAGE
@@ -355,31 +346,15 @@ export function PaymentPickupList({
           </div>
 
           {filteredPayments.length > PAYMENTS_PER_PAGE && (
-            <div className="flex items-center justify-between border-t border-border bg-muted/5 px-6 py-4">
-              <p className="text-xs font-medium text-muted-foreground">
-                Showing {paymentStart} to {paymentEnd} of{" "}
-                {filteredPayments.length} entries
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPaymentPage(currentPaymentPage - 1)}
-                  disabled={currentPaymentPage <= 1}
-                  className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
-                  Page {currentPaymentPage} of {paymentTotalPages}
-                </span>
-                <button
-                  onClick={() => setPaymentPage(currentPaymentPage + 1)}
-                  disabled={currentPaymentPage >= paymentTotalPages}
-                  className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+            <TablePagination
+              page={currentPaymentPage}
+              pageSize={PAYMENTS_PER_PAGE}
+              totalCount={filteredPayments.length}
+              currentCount={paginatedPayments.length}
+              onPageChange={setPaymentPage}
+              unit="entries"
+              variant="compact"
+            />
           )}
         </div>
       )}
@@ -515,31 +490,15 @@ export function PaymentPickupList({
           </div>
 
           {filteredPickups.length > PICKUPS_PER_PAGE && (
-            <div className="flex items-center justify-between border-t border-border bg-muted/5 px-6 py-4">
-              <p className="text-xs font-medium text-muted-foreground">
-                Showing {pickupStart} to {pickupEnd} of {filteredPickups.length}{" "}
-                entries
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPickupPage(currentPickupPage - 1)}
-                  disabled={currentPickupPage <= 1}
-                  className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
-                  Page {currentPickupPage} of {pickupTotalPages}
-                </span>
-                <button
-                  onClick={() => setPickupPage(currentPickupPage + 1)}
-                  disabled={currentPickupPage >= pickupTotalPages}
-                  className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+            <TablePagination
+              page={currentPickupPage}
+              pageSize={PICKUPS_PER_PAGE}
+              totalCount={filteredPickups.length}
+              currentCount={paginatedPickups.length}
+              onPageChange={setPickupPage}
+              unit="entries"
+              variant="compact"
+            />
           )}
         </div>
       )}

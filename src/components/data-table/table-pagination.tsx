@@ -9,6 +9,11 @@ interface TablePaginationProps {
   onPageChange: (page: number) => void
   /** Trailing unit word. Defaults to "results". */
   unit?: string
+  /**
+   * Visual density: "default" matches the admin report tables, "compact"
+   * matches the staff list footers. Same math, different markup.
+   */
+  variant?: "default" | "compact"
 }
 
 /**
@@ -22,10 +27,40 @@ export function TablePagination({
   currentCount,
   onPageChange,
   unit = "results",
+  variant = "default",
 }: TablePaginationProps) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const start = (page - 1) * pageSize + 1
   const end = Math.min(page * pageSize, totalCount)
+
+  if (variant === "compact") {
+    return (
+      <div className="flex items-center justify-between border-t border-border bg-muted/5 px-6 py-4">
+        <p className="text-xs font-medium text-muted-foreground">
+          Showing {currentCount > 0 ? start : 0} to {end} of {totalCount} {unit}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
