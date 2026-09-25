@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
-import { Search, Eye, CreditCard, Banknote, X } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Eye, CreditCard, Banknote, X } from "lucide-react"
 import type { StaffTransactionItem } from "@/types/staff"
+import { TableSearchInput } from "@/components/data-table"
 import { TablePagination } from "@/components/data-table"
 import { cn } from "@/lib/utils"
 
@@ -22,9 +23,6 @@ export function LiveTransactionFeed({
     null
   )
   const [page, setPage] = useState(1)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
-  )
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
@@ -49,14 +47,6 @@ export function LiveTransactionFeed({
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   )
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => {
-      setSearchQuery(e.target.value)
-      setPage(1)
-    }, 300)
-  }
 
   const dotColors: Record<string, string> = {
     cash: "bg-amber-500",
@@ -251,16 +241,13 @@ export function LiveTransactionFeed({
             Transaction Monitoring
           </h4>
           <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search by transaction ID..."
-                defaultValue={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
-              />
-            </div>
+            <TableSearchInput
+              placeholder="Search by transaction ID..."
+              onSearch={(q) => {
+                setSearchQuery(q)
+                setPage(1)
+              }}
+            />
             <select
               value={paymentFilter}
               onChange={(e) => {

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import {
-  Search,
   CreditCard,
   Package,
   CheckCircle2,
@@ -12,7 +11,7 @@ import {
 } from "lucide-react"
 import { VerifyPickupModal } from "./verify-pickup-modal"
 import { CancelReservationModal } from "./cancel-reservation-modal"
-import { TablePagination } from "@/components/data-table"
+import { TablePagination, TableSearchInput } from "@/components/data-table"
 import { cn } from "@/lib/utils"
 
 type Tab = "payments" | "pickups"
@@ -207,19 +206,15 @@ export function PaymentPickupList({
       {activeTab === "payments" && (
         <div className="flex flex-1 flex-col">
           <div className="border-b border-border bg-muted/20 p-6">
-            <div className="relative w-full">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search payments by reference or customer..."
-                value={paymentSearch}
-                onChange={(e) => {
-                  setPaymentSearch(e.target.value)
-                  setPaymentPage(1)
-                }}
-                className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
-              />
-            </div>
+            <TableSearchInput
+              placeholder="Search payments by reference or customer..."
+              debounceMs={0}
+              wrapperClassName="relative w-full"
+              onSearch={(q) => {
+                setPaymentSearch(q)
+                setPaymentPage(1)
+              }}
+            />
           </div>
 
           <div className="flex-1 overflow-x-auto">
@@ -362,19 +357,15 @@ export function PaymentPickupList({
       {activeTab === "pickups" && (
         <div className="flex flex-1 flex-col">
           <div className="border-b border-border bg-muted/20 p-6">
-            <div className="relative w-full">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search pickups by customer or code..."
-                value={pickupSearch}
-                onChange={(e) => {
-                  setPickupSearch(e.target.value)
-                  setPickupPage(1)
-                }}
-                className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
-              />
-            </div>
+            <TableSearchInput
+              placeholder="Search pickups by customer or code..."
+              debounceMs={0}
+              wrapperClassName="relative w-full"
+              onSearch={(q) => {
+                setPickupSearch(q)
+                setPickupPage(1)
+              }}
+            />
           </div>
 
           <div className="flex-1 overflow-x-auto">

@@ -2,15 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import Image from "next/image"
-import {
-  Search,
-  Edit3,
-  Plus,
-  Package,
-  Clock,
-  Layers,
-  MoreVertical,
-} from "lucide-react"
+import { Edit3, Plus, Package, Clock, Layers, MoreVertical } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import {
   getStockStatus,
@@ -21,7 +13,7 @@ import {
 import { QuickStockModal } from "./quick-stock-modal"
 import { AddStockModal } from "./add-stock-modal"
 import { ProductBatchesModal } from "./product-batches-modal"
-import { TablePagination } from "@/components/data-table"
+import { TablePagination, TableSearchInput } from "@/components/data-table"
 import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 6
@@ -216,19 +208,14 @@ export function InventoryUpdateTable({
       <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
         <h4 className="text-lg font-bold text-foreground">Inventory Stock</h4>
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by product name, SKU, or barcode..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setCurrentPage(1)
-              }}
-              className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
-            />
-          </div>
+          <TableSearchInput
+            placeholder="Search by product name, SKU, or barcode..."
+            debounceMs={0}
+            onSearch={(q) => {
+              setSearchQuery(q)
+              setCurrentPage(1)
+            }}
+          />
           <select
             value={categoryFilter}
             onChange={(e) => {
