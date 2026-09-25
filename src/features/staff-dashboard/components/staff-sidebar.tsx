@@ -104,7 +104,7 @@ export function StaffSidebar({ isOpen, onClose }: StaffSidebarProps) {
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-4">
+        <div className="no-scrollbar flex-1 space-y-6 overflow-y-auto px-4">
           {NAV_ITEMS.map((group) => (
             <div key={group.category} className="space-y-2">
               <p className="px-3 text-[11px] font-bold tracking-wider text-slate-500 uppercase">

@@ -185,4 +185,14 @@
 input::-ms-reveal,
 input::-ms-clear {
   display: none !important;
+}
+
+/* Hide the visual scrollbar while keeping scrollability (wheel/touch/drag).
+ * Used by the panel sidebars so their layout stays consistent. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

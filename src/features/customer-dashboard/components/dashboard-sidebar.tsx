@@ -77,7 +77,7 @@ export function DashboardSidebar({ activePath }: DashboardSidebarProps) {
       </div>
 
       {/* Navigation */}
-      <div className="custom-scrollbar flex-1 overflow-y-auto px-4">
+      <div className="no-scrollbar flex-1 overflow-y-auto px-4">
         {sections.map((section) => (
           <div key={section.title} className="mb-6">
             <p className="mb-2 px-4 text-[11px] font-bold tracking-wider text-slate-500 uppercase">
