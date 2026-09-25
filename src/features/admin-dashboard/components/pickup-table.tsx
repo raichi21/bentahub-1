@@ -5,7 +5,7 @@ import { Search, CheckCircle2, Eye } from "lucide-react"
 import { ConfirmPickupModal } from "./confirm-pickup-modal"
 import { PickupDetailsModal } from "./pickup-details-modal"
 import type { PickupRowData } from "@/types/admin"
-import { ExportMenu } from "@/components/data-table"
+import { ExportMenu, TablePagination } from "@/components/data-table"
 
 interface BranchOption {
   id: string
@@ -49,10 +49,6 @@ export function PickupTable({
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   )
-
-  const totalPages = Math.ceil(totalCount / pageSize)
-  const start = (page - 1) * pageSize + 1
-  const end = Math.min(page * pageSize, totalCount)
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     clearTimeout(searchTimer.current)
@@ -211,30 +207,14 @@ export function PickupTable({
         </div>
 
         {totalCount > 0 && (
-          <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
-            <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
-              Showing {start} to {end} of {totalCount} entries
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page <= 1}
-                className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page >= totalPages}
-                className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            currentCount={pickups.length}
+            onPageChange={onPageChange}
+            unit="entries"
+          />
         )}
       </section>
 

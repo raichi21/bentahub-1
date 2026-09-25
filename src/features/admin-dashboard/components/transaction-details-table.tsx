@@ -5,7 +5,7 @@ import { FileX, Loader2, Eye } from "lucide-react"
 import type { SalesTransactionRowData } from "@/types/admin"
 import { DateRangeFilter } from "./date-range-filter"
 import { TransactionDetailsModal } from "./transaction-details-modal"
-import { ExportMenu } from "@/components/data-table"
+import { ExportMenu, TablePagination } from "@/components/data-table"
 
 interface TransactionDetailsTableProps {
   transactions: SalesTransactionRowData[]
@@ -38,7 +38,6 @@ export function TransactionDetailsTable({
   dateValue,
   onDateValueChange,
 }: TransactionDetailsTableProps) {
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const [viewingTransaction, setViewingTransaction] =
     useState<SalesTransactionRowData | null>(null)
 
@@ -167,31 +166,13 @@ export function TransactionDetailsTable({
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
-          <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
-            Showing {transactions.length > 0 ? (page - 1) * pageSize + 1 : 0} to{" "}
-            {Math.min(page * pageSize, totalCount)} of {totalCount} results
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages}
-              className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={totalCount}
+          currentCount={transactions.length}
+          onPageChange={onPageChange}
+        />
       </section>
 
       <TransactionDetailsModal

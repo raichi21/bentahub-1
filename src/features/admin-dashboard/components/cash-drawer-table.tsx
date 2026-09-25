@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { FileX, Eye } from "lucide-react"
 import { CashDrawerDetailsModal } from "./cash-drawer-details-modal"
-import { ExportMenu } from "@/components/data-table"
+import { ExportMenu, TablePagination } from "@/components/data-table"
 import { downloadCsv } from "@/lib/export-csv"
 import { DateRangeFilter } from "./date-range-filter"
 
@@ -99,10 +99,6 @@ export function CashDrawerTable({
       ])
     )
   }
-
-  const totalPages = Math.ceil(totalCount / pageSize)
-  const start = (page - 1) * pageSize + 1
-  const end = Math.min(page * pageSize, totalCount)
 
   return (
     <>
@@ -261,31 +257,13 @@ export function CashDrawerTable({
         </div>
 
         {totalCount > 0 && (
-          <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
-            <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
-              Showing {sessions.length > 0 ? start : 0} to {end} of {totalCount}{" "}
-              results
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page <= 1}
-                className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1 text-sm font-medium text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page >= totalPages}
-                className="rounded border border-border px-3 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            currentCount={sessions.length}
+            onPageChange={onPageChange}
+          />
         )}
       </section>
 
