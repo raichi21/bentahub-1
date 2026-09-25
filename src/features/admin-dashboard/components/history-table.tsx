@@ -1,9 +1,14 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Search, Eye } from "lucide-react"
+import { useState } from "react"
+import { Eye } from "lucide-react"
 import { TransactionHistoryModal } from "./transaction-history-modal"
-import { ExportMenu, TablePagination } from "@/components/data-table"
+import {
+  ExportMenu,
+  TablePagination,
+  TableSearchInput,
+  BranchSelect,
+} from "@/components/data-table"
 import { downloadCsv } from "@/lib/export-csv"
 import type { HistoryTransactionRowData } from "@/types/admin"
 
@@ -36,15 +41,6 @@ export function HistoryTable({
 }: HistoryTableProps) {
   const [selectedTransaction, setSelectedTransaction] =
     useState<HistoryTransactionRowData | null>(null)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
-  )
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => onSearch(e.target.value), 300)
-  }
-
   const handleExport = () => {
     downloadCsv(
       `history-${new Date().toISOString().split("T")[0]}.csv`,
@@ -95,27 +91,17 @@ export function HistoryTable({
             </h3>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <div className="relative w-full md:w-auto">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search ID, Branch..."
-                className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary/20 md:w-64"
-                onChange={handleSearchChange}
-              />
-            </div>
-            <select
+            <TableSearchInput
+              placeholder="Search ID, Branch..."
+              onSearch={onSearch}
+              wrapperClassName="relative w-full md:w-auto"
+              inputClassName="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary/20 md:w-64"
+            />
+            <BranchSelect
+              options={branches}
               value={branchId}
-              onChange={(e) => onBranchChange(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary md:w-auto"
-            >
-              <option value="">All Branches</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+              onChange={onBranchChange}
+            />
             <ExportMenu onExportCSV={handleExport} onExportPDF={onExportPDF} />
           </div>
         </div>

@@ -1,11 +1,16 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Search, CheckCircle2, Eye } from "lucide-react"
+import { useState } from "react"
+import { CheckCircle2, Eye } from "lucide-react"
 import { ConfirmPickupModal } from "./confirm-pickup-modal"
 import { PickupDetailsModal } from "./pickup-details-modal"
 import type { PickupRowData } from "@/types/admin"
-import { ExportMenu, TablePagination } from "@/components/data-table"
+import {
+  ExportMenu,
+  TablePagination,
+  TableSearchInput,
+  BranchSelect,
+} from "@/components/data-table"
 
 interface BranchOption {
   id: string
@@ -46,14 +51,6 @@ export function PickupTable({
   const [confirmingPickup, setConfirmingPickup] =
     useState<PickupRowData | null>(null)
   const [viewingPickup, setViewingPickup] = useState<PickupRowData | null>(null)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
-  )
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => onSearch(e.target.value), 300)
-  }
 
   const statusStyles: Record<string, string> = {
     ready: "bg-accent/50 text-primary border border-primary/20",
@@ -80,27 +77,16 @@ export function PickupTable({
         <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
           <h4 className="text-lg font-bold text-foreground">Pickup Orders</h4>
           <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search order ID or customer..."
-                className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
-                onChange={handleSearchChange}
-              />
-            </div>
-            <select
+            <TableSearchInput
+              placeholder="Search order ID or customer..."
+              onSearch={onSearch}
+            />
+            <BranchSelect
+              options={branches}
               value={branch}
-              onChange={(e) => onBranchChange(e.target.value)}
+              onChange={onBranchChange}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
-            >
-              <option value="">All Branches</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+            />
             <ExportMenu onExportCSV={onExportCSV} onExportPDF={onExportPDF} />
           </div>
         </div>

@@ -5,7 +5,11 @@ import { FileX, Loader2, Eye } from "lucide-react"
 import type { SalesTransactionRowData } from "@/types/admin"
 import { DateRangeFilter } from "./date-range-filter"
 import { TransactionDetailsModal } from "./transaction-details-modal"
-import { ExportMenu, TablePagination } from "@/components/data-table"
+import {
+  ExportMenu,
+  TablePagination,
+  BranchSelect,
+} from "@/components/data-table"
 
 interface TransactionDetailsTableProps {
   transactions: SalesTransactionRowData[]
@@ -49,18 +53,11 @@ export function TransactionDetailsTable({
             Transaction Details
           </h4>
           <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-            <select
+            <BranchSelect
+              options={branches}
               value={branchId}
-              onChange={(e) => onBranchChange(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary md:w-auto"
-            >
-              <option value="">All Branches</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+              onChange={onBranchChange}
+            />
             <ExportMenu onExportCSV={onExportCSV} onExportPDF={onExportPDF} />
             <DateRangeFilter
               value={dateValue ?? ""}

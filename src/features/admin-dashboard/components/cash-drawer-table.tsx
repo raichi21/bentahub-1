@@ -3,7 +3,11 @@
 import { useState } from "react"
 import { FileX, Eye } from "lucide-react"
 import { CashDrawerDetailsModal } from "./cash-drawer-details-modal"
-import { ExportMenu, TablePagination } from "@/components/data-table"
+import {
+  ExportMenu,
+  TablePagination,
+  BranchSelect,
+} from "@/components/data-table"
 import { downloadCsv } from "@/lib/export-csv"
 import { DateRangeFilter } from "./date-range-filter"
 
@@ -110,30 +114,17 @@ export function CashDrawerTable({
             </h4>
           </div>
           <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-            <select
+            <BranchSelect
+              options={branches}
               value={branchId}
-              onChange={(e) => onBranchChange(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary md:w-auto"
-            >
-              <option value="">All Branches</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-            <select
+              onChange={onBranchChange}
+            />
+            <BranchSelect
+              options={cashiers}
               value={cashierId}
-              onChange={(e) => onCashierChange(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary md:w-auto"
-            >
-              <option value="">All Cashiers</option>
-              {cashiers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              onChange={onCashierChange}
+              allLabel="All Cashiers"
+            />
             <DateRangeFilter
               value={dateFrom}
               label="From"

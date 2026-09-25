@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Search, Plus, Pencil, Trash2, Users } from "lucide-react"
+import { useState } from "react"
+import { Plus, Pencil, Trash2, Users } from "lucide-react"
 import { AddUserModal } from "./add-user-modal"
 import { EditUserModal } from "./edit-user-modal"
 import { DeleteUserModal } from "./delete-user-modal"
 import type { UserRowData } from "@/types/admin"
-import { TablePagination } from "@/components/data-table"
+import { TablePagination, TableSearchInput } from "@/components/data-table"
 
 interface UserTableProps {
   users: UserRowData[]
@@ -34,14 +34,6 @@ export function UserTable({
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserRowData | null>(null)
   const [deletingUser, setDeletingUser] = useState<UserRowData | null>(null)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
-  )
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => onSearch(e.target.value), 300)
-  }
 
   const roleStyles: Record<string, string> = {
     admin: "bg-primary/10 text-primary border border-primary/20",
@@ -77,15 +69,10 @@ export function UserTable({
       <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
         <h4 className="text-lg font-bold text-foreground">User Management</h4>
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              onChange={handleSearchChange}
-              className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
-            />
-          </div>
+          <TableSearchInput
+            placeholder="Search by name or email..."
+            onSearch={onSearch}
+          />
           <button
             onClick={() => setIsAddOpen(true)}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:opacity-95 active:scale-[0.98] md:w-auto"

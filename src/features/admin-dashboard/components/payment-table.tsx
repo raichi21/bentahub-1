@@ -3,7 +3,11 @@
 import { useState } from "react"
 import { Search, Eye, FileX } from "lucide-react"
 import { PaymentDetailsModal } from "./payment-details-modal"
-import { ExportMenu, TablePagination } from "@/components/data-table"
+import {
+  ExportMenu,
+  TablePagination,
+  BranchSelect,
+} from "@/components/data-table"
 import { downloadCsv } from "@/lib/export-csv"
 import type { PaymentRowData } from "@/types/admin"
 
@@ -99,18 +103,12 @@ export function PaymentTable({
                 className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
               />
             </form>
-            <select
+            <BranchSelect
+              options={branches}
               value={branchId}
-              onChange={(e) => onBranchChange(e.target.value)}
+              onChange={onBranchChange}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
-            >
-              <option value="">All Branches</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+            />
             <ExportMenu onExportCSV={handleExport} onExportPDF={onExportPDF} />
           </div>
         </div>

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { Search } from "lucide-react"
 import type { InventoryStatusItem } from "@/types/admin"
-import { ExportMenu } from "@/components/data-table"
+import { ExportMenu, BranchSelect } from "@/components/data-table"
 import { DateRangeFilter } from "./date-range-filter"
 
 interface InventoryStatusTableProps {
@@ -104,21 +104,15 @@ export function InventoryStatusTable({
               className="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-sm outline-none focus:border-primary focus:ring-primary"
             />
           </div>
-          <select
+          <BranchSelect
+            options={branches}
             value={selectedBranch}
-            onChange={(e) => {
+            allValue="all"
+            onChange={(v) => {
               setPage(1)
-              onBranchChange?.(e.target.value)
+              onBranchChange?.(v)
             }}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary md:w-auto"
-          >
-            <option value="all">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+          />
           <DateRangeFilter
             value={dateValue ?? ""}
             onChange={(v) => {
