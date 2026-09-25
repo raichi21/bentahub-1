@@ -10,6 +10,7 @@ import {
   FileText,
 } from "lucide-react"
 import { PaymentDetailsModal } from "./payment-details-modal"
+import { downloadCsv } from "@/lib/export-csv"
 import type { PaymentRowData } from "@/types/admin"
 
 interface PaymentTableProps {
@@ -61,32 +62,27 @@ export function PaymentTable({
   }
 
   const handleExport = () => {
-    const headers = [
-      "Payment ID",
-      "Transaction",
-      "Amount",
-      "Method",
-      "Date & Time",
-      "Branch",
-      "Status",
-    ]
-    const rows = payments.map((p) => [
-      p.displayId,
-      p.transactionDisplayId,
-      p.amountDisplay,
-      p.methodDisplay,
-      p.dateTimeDisplay,
-      p.branchName,
-      p.statusDisplay,
-    ])
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `payments-export-${new Date().toISOString().split("T")[0]}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadCsv(
+      `payments-export-${new Date().toISOString().split("T")[0]}.csv`,
+      [
+        "Payment ID",
+        "Transaction",
+        "Amount",
+        "Method",
+        "Date & Time",
+        "Branch",
+        "Status",
+      ],
+      payments.map((p) => [
+        p.displayId,
+        p.transactionDisplayId,
+        p.amountDisplay,
+        p.methodDisplay,
+        p.dateTimeDisplay,
+        p.branchName,
+        p.statusDisplay,
+      ])
+    )
   }
 
   const totalPages = Math.ceil(totalCount / pageSize)

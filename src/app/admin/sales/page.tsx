@@ -5,6 +5,7 @@ import { TransactionDetailsTable, KPICard } from "@/features/admin-dashboard"
 import { TrendingUp, Receipt, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { exportTableAsPdf } from "@/lib/export-pdf"
+import { downloadCsv } from "@/lib/export-csv"
 import type { SalesApiData } from "@/types/admin"
 
 export default function SalesPage() {
@@ -67,7 +68,8 @@ export default function SalesPage() {
   function exportCSV() {
     const transactions = data?.transactions || []
     if (transactions.length === 0) return
-    const rows = [
+    downloadCsv(
+      `sales-export-${new Date().toISOString().slice(0, 10)}.csv`,
       [
         "Transaction ID",
         "Branch",
@@ -76,23 +78,15 @@ export default function SalesPage() {
         "Payment Method",
         "Status",
       ],
-      ...transactions.map((t) => [
+      transactions.map((t) => [
         t.id,
         t.branchName,
         new Date(t.createdAt).toISOString(),
         t.totalAmount,
         t.paymentMethod,
         t.status,
-      ]),
-    ]
-    const csv = rows.map((r) => r.join(",")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `sales-export-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+      ])
+    )
   }
 
   function exportPDF() {

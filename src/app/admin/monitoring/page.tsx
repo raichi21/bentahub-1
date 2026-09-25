@@ -11,6 +11,7 @@ import type {
 } from "@/types/admin"
 import { useAuth } from "@/hooks/useAuth"
 import { exportTableAsPdf } from "@/lib/export-pdf"
+import { downloadCsv } from "@/lib/export-csv"
 import { cn } from "@/lib/utils"
 
 export default function MonitoringPage() {
@@ -84,8 +85,19 @@ export default function MonitoringPage() {
   // ── Helper functions ──
   function exportCSV() {
     if (!data) return
-    const rows = data.inventoryStatus.map((i: InventoryStatusItem) =>
+    downloadCsv(
+      `monitoring-${new Date().toISOString().slice(0, 10)}.csv`,
       [
+        "Product",
+        "Category",
+        "Branch",
+        "Quantity",
+        "Reorder Level",
+        "Nearest Expiry",
+        "Status",
+        "Last Updated",
+      ],
+      data.inventoryStatus.map((i: InventoryStatusItem) => [
         i.productName,
         i.category,
         i.branchName,
@@ -96,19 +108,8 @@ export default function MonitoringPage() {
           : "",
         i.status,
         i.lastUpdated,
-      ].join(",")
+      ])
     )
-    const csv = [
-      "Product,Category,Branch,Quantity,Reorder Level,Nearest Expiry,Status,Last Updated",
-      ...rows,
-    ].join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `monitoring-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   function exportPDF() {

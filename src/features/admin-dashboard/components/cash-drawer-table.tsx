@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Download, FileSpreadsheet, FileText, FileX, Eye } from "lucide-react"
 import { CashDrawerDetailsModal } from "./cash-drawer-details-modal"
+import { downloadCsv } from "@/lib/export-csv"
 import { DateRangeFilter } from "./date-range-filter"
 
 export interface CashDrawerRow {
@@ -76,42 +77,37 @@ export function CashDrawerTable({
   }, [])
 
   const handleExportCsv = () => {
-    const headers = [
-      "Cash Drawer ID",
-      "Branch",
-      "Cashier",
-      "Opened",
-      "Closed",
-      "Starting",
-      "Expected",
-      "Actual",
-      "Net Impact",
-      "Difference",
-      "Status",
-      "Notes",
-    ]
-    const rows = sessions.map((s) => [
-      s.displayId,
-      s.branchName,
-      s.cashierName,
-      s.openedAtDisplay,
-      s.closedAtDisplay || "",
-      s.startingCashDisplay,
-      s.expectedEndingCashDisplay,
-      s.actualEndingCashDisplay,
-      s.netCashImpactDisplay,
-      s.diffDisplay,
-      s.statusDisplay,
-      (s.notes || "").replace(/,/g, " "),
-    ])
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `cash-drawer-export-${new Date().toISOString().split("T")[0]}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadCsv(
+      `cash-drawer-export-${new Date().toISOString().split("T")[0]}.csv`,
+      [
+        "Cash Drawer ID",
+        "Branch",
+        "Cashier",
+        "Opened",
+        "Closed",
+        "Starting",
+        "Expected",
+        "Actual",
+        "Net Impact",
+        "Difference",
+        "Status",
+        "Notes",
+      ],
+      sessions.map((s) => [
+        s.displayId,
+        s.branchName,
+        s.cashierName,
+        s.openedAtDisplay,
+        s.closedAtDisplay || "",
+        s.startingCashDisplay,
+        s.expectedEndingCashDisplay,
+        s.actualEndingCashDisplay,
+        s.netCashImpactDisplay,
+        s.diffDisplay,
+        s.statusDisplay,
+        (s.notes || "").replace(/,/g, " "),
+      ])
+    )
   }
 
   const totalPages = Math.ceil(totalCount / pageSize)

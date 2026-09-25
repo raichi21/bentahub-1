@@ -5,6 +5,7 @@ import { PickupTable, KPICard } from "@/features/admin-dashboard"
 import { TrendingUp, CheckCircle2, Clock, AlertTriangle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { exportTableAsPdf } from "@/lib/export-pdf"
+import { downloadCsv } from "@/lib/export-csv"
 import type { PickupApiData } from "@/types/admin"
 
 export default function PickupsPage() {
@@ -67,25 +68,18 @@ export default function PickupsPage() {
   function exportCSV() {
     const pickups = data?.pickups || []
     if (pickups.length === 0) return
-    const rows = [
+    downloadCsv(
+      `pickups-export-${new Date().toISOString().slice(0, 10)}.csv`,
       ["Order ID", "Customer", "Branch", "Items", "Scheduled Date", "Status"],
-      ...pickups.map((p) => [
+      pickups.map((p) => [
         p.displayId,
         p.customerName,
         p.branch,
         String(p.itemsCount),
         p.pickupDeadline ?? "",
         p.status,
-      ]),
-    ]
-    const csv = rows.map((r) => r.join(",")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `pickups-export-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+      ])
+    )
   }
 
   function exportPDF() {

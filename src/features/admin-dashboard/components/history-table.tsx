@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Search, Download, Eye, FileSpreadsheet, FileText } from "lucide-react"
 import { TransactionHistoryModal } from "./transaction-history-modal"
+import { downloadCsv } from "@/lib/export-csv"
 import type { HistoryTransactionRowData } from "@/types/admin"
 
 interface HistoryTableProps {
@@ -59,34 +60,29 @@ export function HistoryTable({
   }
 
   const handleExport = () => {
-    const headers = [
-      "Date",
-      "Transaction ID",
-      "Branch",
-      "Items",
-      "Subtotal",
-      "Total",
-      "Payment",
-      "Status",
-    ]
-    const rows = transactions.map((t) => [
-      t.dateDisplay,
-      t.displayId,
-      t.branchName,
-      String(t.itemsCount),
-      t.subtotalDisplay,
-      t.totalAmountDisplay,
-      t.paymentMethodDisplay,
-      t.statusDisplay,
-    ])
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `history-${new Date().toISOString().split("T")[0]}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadCsv(
+      `history-${new Date().toISOString().split("T")[0]}.csv`,
+      [
+        "Date",
+        "Transaction ID",
+        "Branch",
+        "Items",
+        "Subtotal",
+        "Total",
+        "Payment",
+        "Status",
+      ],
+      transactions.map((t) => [
+        t.dateDisplay,
+        t.displayId,
+        t.branchName,
+        String(t.itemsCount),
+        t.subtotalDisplay,
+        t.totalAmountDisplay,
+        t.paymentMethodDisplay,
+        t.statusDisplay,
+      ])
+    )
   }
 
   const paymentStyles: Record<string, string> = {
