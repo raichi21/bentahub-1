@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import Image from "next/image"
-import { Edit3, Plus, Package, Clock, Layers, MoreVertical } from "lucide-react"
+import { Package, Clock } from "lucide-react"
 import type { Product } from "@/types/cashier"
 import {
   getStockStatus,
@@ -13,7 +13,9 @@ import {
 import { QuickStockModal } from "./quick-stock-modal"
 import { AddStockModal } from "./add-stock-modal"
 import { ProductBatchesModal } from "./product-batches-modal"
-import { TablePagination, TableSearchInput } from "@/components/data-table"
+import { TablePagination } from "@/components/data-table"
+import { InventoryToolbar } from "./inventory-toolbar"
+import { InventoryRowMenu } from "./inventory-row-menu"
 import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 6
@@ -205,63 +207,30 @@ export function InventoryUpdateTable({
         </div>
       )}
 
-      <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
-        <h4 className="text-lg font-bold text-foreground">Inventory Stock</h4>
-        <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
-          <TableSearchInput
-            placeholder="Search by product name, SKU, or barcode..."
-            debounceMs={0}
-            onSearch={(q) => {
-              setSearchQuery(q)
-              setCurrentPage(1)
-            }}
-          />
-          <select
-            value={categoryFilter}
-            onChange={(e) => {
-              setCategoryFilter(e.target.value)
-              setCurrentPage(1)
-            }}
-            className="h-10 rounded-lg border border-border bg-background px-4 text-sm outline-none focus:border-primary focus:ring-primary"
-          >
-            <option value="All">All Categories</option>
-            {categories
-              .filter((cat) => cat !== "All")
-              .map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value)
-              setCurrentPage(1)
-            }}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-primary"
-          >
-            <option value="All">Status: All</option>
-            <option value="In Stock">In Stock</option>
-            <option value="Low Stock">Low Stock</option>
-            <option value="Out of Stock">Out of Stock</option>
-            <option value="Expiring Soon">Expiring Soon (30d)</option>
-          </select>
-          <button
-            onClick={() => {
-              if (canEdit) {
-                setShowAddModal(true)
-              } else {
-                showPermissionNotice()
-              }
-            }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs transition-colors hover:bg-primary/95"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Stock
-          </button>
-        </div>
-      </div>
+      <InventoryToolbar
+        categories={categories}
+        categoryFilter={categoryFilter}
+        onCategoryChange={(v) => {
+          setCategoryFilter(v)
+          setCurrentPage(1)
+        }}
+        statusFilter={statusFilter}
+        onStatusChange={(v) => {
+          setStatusFilter(v)
+          setCurrentPage(1)
+        }}
+        onAdd={() => {
+          if (canEdit) {
+            setShowAddModal(true)
+          } else {
+            showPermissionNotice()
+          }
+        }}
+        onSearch={(q) => {
+          setSearchQuery(q)
+          setCurrentPage(1)
+        }}
+      />
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
@@ -431,58 +400,26 @@ export function InventoryUpdateTable({
                       {p.reorderLevel} {p.unit}
                     </td>
                     <td className="relative px-6 py-4 text-right">
-                      <div data-action-menu className="inline-flex">
-                        <button
-                          onClick={() =>
-                            setOpenMenuId(openMenuId === p.id ? null : p.id)
+                      <InventoryRowMenu
+                        product={p}
+                        open={openMenuId === p.id}
+                        onToggle={() =>
+                          setOpenMenuId(openMenuId === p.id ? null : p.id)
+                        }
+                        onEdit={() => {
+                          if (canEdit) {
+                            setEditingProduct(p)
+                          } else {
+                            showPermissionNotice()
                           }
-                          className="inline-flex items-center justify-center rounded-lg border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-                          aria-label="Actions"
-                          aria-haspopup="menu"
-                          aria-expanded={openMenuId === p.id}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                        {openMenuId === p.id && (
-                          <div
-                            className="absolute top-14 right-4 z-20 w-44 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
-                            role="menu"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              role="menuitem"
-                              onClick={() => {
-                                if (canEdit) {
-                                  setEditingProduct(p)
-                                } else {
-                                  showPermissionNotice()
-                                }
-                                setOpenMenuId(null)
-                              }}
-                              disabled={savingId === p.id}
-                              className="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
-                            >
-                              <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
-                              {savingId === p.id ? "Saving..." : "Edit Stock"}
-                            </button>
-                            <div className="border-t border-border/40" />
-                            <button
-                              role="menuitem"
-                              onClick={() => {
-                                setBatchProduct(p)
-                                setOpenMenuId(null)
-                              }}
-                              className="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
-                            >
-                              <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                              {(p.activeBatchCount ?? 0) > 0
-                                ? `${p.activeBatchCount ?? 0} ${(p.activeBatchCount ?? 0) === 1 ? "Batch" : "Batches"}`
-                                : "View Batches"}
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                          setOpenMenuId(null)
+                        }}
+                        onViewBatches={() => {
+                          setBatchProduct(p)
+                          setOpenMenuId(null)
+                        }}
+                        saving={savingId === p.id}
+                      />
                     </td>
                   </tr>
                 )
