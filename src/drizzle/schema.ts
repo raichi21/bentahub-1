@@ -406,7 +406,11 @@ export const orders = pgTable("orders", {
   cancelledReason: varchar("cancelled_reason", { length: 500 }),
   createdAt,
   updatedAt,
-})
+},
+(table) => ({
+  userIdx: index("orders_user_id_idx").on(table.userId),
+  createdAtIdx: index("orders_created_at_idx").on(table.createdAt),
+}))
 
 export const orderItems = pgTable("order_items", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -509,7 +513,11 @@ export const transactions = pgTable("transactions", {
     }
   ),
   createdAt,
-})
+},
+(table) => ({
+  branchIdx: index("transactions_branch_id_idx").on(table.branchId),
+  createdAtIdx: index("transactions_created_at_idx").on(table.createdAt),
+}))
 
 export const transactionItems = pgTable("transaction_items", {
   id: varchar("id", { length: 36 }).primaryKey(),
