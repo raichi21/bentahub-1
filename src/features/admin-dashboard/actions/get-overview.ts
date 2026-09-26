@@ -249,9 +249,13 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       }
     })
 
-  // --- Payment Breakdown ---
+  // --- Payment Breakdown (current month only, same scope as the Revenue
+  // KPI above, so Cash + GCash always equals Total Revenue) ---
   const completedTransactions = allTransactions.filter(
-    (t) => t.status === "completed"
+    (t: RawTransaction) => {
+      const d = new Date(t.createdAt)
+      return t.status === "completed" && d >= currentMonthStart
+    }
   )
 
   const cashTotal = completedTransactions
@@ -267,7 +271,7 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     totalPaymentRevenue > 0
       ? Math.round((cashTotal / totalPaymentRevenue) * 100)
       : 0
-  const gcashPct = 100 - cashPct
+  const gcashPct = totalPaymentRevenue > 0 ? 100 - cashPct : 0
 
   return {
     kpis: {
