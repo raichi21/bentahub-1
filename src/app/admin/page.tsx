@@ -127,6 +127,14 @@ export default function AdminPage() {
         />
       </div>
 
+      {data?.revenueChannels && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          MTD Revenue split — Walk-in (POS){" "}
+          {data.revenueChannels.posDisplay} · Reservations{" "}
+          {data.revenueChannels.reservationsDisplay}
+        </p>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-12">
           <SalesChart

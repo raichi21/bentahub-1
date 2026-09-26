@@ -50,6 +50,12 @@ export interface AdminOverviewData {
   dailyTrend: SalesTrendDailyData[]
   branchStock: BranchStockData[]
   paymentBreakdown: PaymentBreakdownData
+  revenueChannels: {
+    pos: number
+    posDisplay: string
+    reservations: number
+    reservationsDisplay: string
+  }
 }
 
 export interface MonitoringMetricsData {

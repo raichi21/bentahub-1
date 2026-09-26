@@ -17,12 +17,20 @@ interface RawTransaction {
 }
 
 interface RawInventory {
-  id: string
-  branchId: string
-  productId: string
-  quantity: number
-  lowStockThreshold: number
-  updatedAt: Date
+  id: string;
+  branchId: string;
+  productId: string;
+  quantity: number;
+  lowStockThreshold: number;
+  updatedAt: Date;
+}
+
+interface RawOrder {
+  id: string;
+  totalAmount: string;
+  paymentMethod: string;
+  status: string;
+  createdAt: Date;
 }
 
 interface RawBranch {
@@ -95,13 +103,14 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
     (await db.query.transactions.findMany()) as RawTransaction[]
   const allInventory =
     (await db.query.branchInventory.findMany()) as RawInventory[]
+  const allOrders = (await db.query.orders.findMany()) as RawOrder[]
 
   // --- Revenue KPI ---
   const now = new Date()
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
-  const currentMonthRevenue = allTransactions
+  const posCurrentMonthRevenue = allTransactions
     .filter(
       (t: RawTransaction) =>
         t.status === "completed" && new Date(t.createdAt) >= currentMonthStart
@@ -111,7 +120,7 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       0
     )
 
-  const lastMonthRevenue = allTransactions
+  const posLastMonthRevenue = allTransactions
     .filter((t: RawTransaction) => {
       const d = new Date(t.createdAt)
       return (
@@ -122,6 +131,27 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       (sum: number, t: RawTransaction) => sum + parseFloat(t.totalAmount),
       0
     )
+
+  // Reservations channel: completed (picked-up) orders under the same month
+  // scopes, so the combined Revenue KPI always equals POS + Reservations.
+  const resCurrentMonthRevenue = allOrders
+    .filter(
+      (o: RawOrder) =>
+        o.status === "completed" && new Date(o.createdAt) >= currentMonthStart
+    )
+    .reduce((sum: number, o: RawOrder) => sum + parseFloat(o.totalAmount), 0)
+
+  const resLastMonthRevenue = allOrders
+    .filter((o: RawOrder) => {
+      const d = new Date(o.createdAt)
+      return (
+        o.status === "completed" && d >= lastMonthStart && d < currentMonthStart
+      )
+    })
+    .reduce((sum: number, o: RawOrder) => sum + parseFloat(o.totalAmount), 0)
+
+  const currentMonthRevenue = posCurrentMonthRevenue + resCurrentMonthRevenue
+  const lastMonthRevenue = posLastMonthRevenue + resLastMonthRevenue
 
   const revenueTrend = computeTrend(currentMonthRevenue, lastMonthRevenue)
 
@@ -249,22 +279,34 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       }
     })
 
-  // --- Payment Breakdown (current month only, same scope as the Revenue
-  // KPI above, so Cash + GCash always equals Total Revenue) ---
+  // --- Payment Breakdown (current month, both channels: walk-in
+  // transactions + completed reservations) ---
   const completedTransactions = allTransactions.filter(
     (t: RawTransaction) => {
       const d = new Date(t.createdAt)
       return t.status === "completed" && d >= currentMonthStart
     }
   )
+  const completedOrders = allOrders.filter((o: RawOrder) => {
+    const d = new Date(o.createdAt)
+    return o.status === "completed" && d >= currentMonthStart
+  })
 
-  const cashTotal = completedTransactions
-    .filter((t) => t.paymentMethod === "cash")
-    .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
+  const cashTotal =
+    completedTransactions
+      .filter((t) => t.paymentMethod === "cash")
+      .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0) +
+    completedOrders
+      .filter((o) => o.paymentMethod === "cash")
+      .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0)
 
-  const gcashTotal = completedTransactions
-    .filter((t) => t.paymentMethod === "gcash")
-    .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0)
+  const gcashTotal =
+    completedTransactions
+      .filter((t) => t.paymentMethod === "gcash")
+      .reduce((sum, t) => sum + parseFloat(t.totalAmount), 0) +
+    completedOrders
+      .filter((o) => o.paymentMethod === "gcash")
+      .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0)
 
   const totalPaymentRevenue = cashTotal + gcashTotal
   const cashPct =
@@ -301,6 +343,12 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       cashPercentage: cashPct,
       gcashPercentage: gcashPct,
       totalDisplay: formatCurrency(totalPaymentRevenue),
+    },
+    revenueChannels: {
+      pos: posCurrentMonthRevenue,
+      posDisplay: formatCurrency(posCurrentMonthRevenue),
+      reservations: resCurrentMonthRevenue,
+      reservationsDisplay: formatCurrency(resCurrentMonthRevenue),
     },
   }
 }
