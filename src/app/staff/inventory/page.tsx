@@ -191,6 +191,37 @@ export default function InventoryPage() {
     }
   }
 
+  const handleWasteProduct = async (
+    productId: string,
+    quantity: number,
+    reason: string,
+    notes?: string
+  ): Promise<number | null> => {
+    if (!token) return null
+
+    try {
+      const res = await fetch("/api/staff/waste", {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ productId, quantity, reason, notes }),
+      })
+
+      const json = await res.json()
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Failed to report waste")
+      }
+
+      await fetchProducts(token)
+      return json.data?.newStock ?? null
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "An error occurred"
+      setSaveError(msg)
+      setTimeout(() => setSaveError(null), 4000)
+      return null
+    }
+  }
+
   const stockSummary = useMemo(() => {
     const inStock = products.filter(
       (p) => getStockStatus(p) === "in-stock"
@@ -262,6 +293,7 @@ export default function InventoryPage() {
           products={products}
           onStockUpdate={handleStockUpdate}
           onAddProduct={handleAddProduct}
+          onWasteProduct={handleWasteProduct}
           savingId={savingId}
           units={units}
           categories={masterCategories}

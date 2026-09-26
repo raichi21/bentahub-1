@@ -26,6 +26,7 @@ export const ACTIVITY_LOG_ACTIONS = [
   "product.create",
   "product.update",
   "stock.update",
+  "stock.waste",
   "category.create",
   "category.update",
   "category.delete",

@@ -85,6 +85,13 @@
       "when": 1790462086532,
       "tag": "0011_hard_thanos",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1790464086430,
+      "tag": "0012_robust_guardsmen",
+      "breakpoints": true
     }
   ]
 }

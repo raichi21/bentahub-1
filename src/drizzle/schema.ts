@@ -784,6 +784,49 @@ export const selectStoreSettingsSchema = createSelectSchema(storeSettings)
 export type StoreSettings = typeof storeSettings.$inferSelect
 export type InsertStoreSettings = typeof storeSettings.$inferInsert
 
+// ── Stock Waste Logs ──
+export const wasteReasonEnum = pgEnum("waste_reason", [
+  "damaged",
+  "expired",
+  "lost",
+  "other",
+])
+
+export const stockWasteLogs = pgTable(
+  "stock_waste_logs",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    productId: varchar("product_id", { length: 36 }).references(
+      () => products.id,
+      { onDelete: "set null" }
+    ),
+    productName: varchar("product_name", { length: 255 }).notNull(),
+    branch: varchar("branch", { length: 100 }).notNull(),
+    quantity: integer("quantity").notNull(),
+    unit: varchar("unit", { length: 50 }).default("pcs").notNull(),
+    reason: wasteReasonEnum("reason").notNull(),
+    notes: varchar("notes", { length: 500 }),
+    reportedBy: varchar("reported_by", { length: 36 }).references(
+      () => users.id,
+      { onDelete: "set null" }
+    ),
+    createdAt,
+  },
+  (table) => ({
+    productIdx: index("stock_waste_logs_product_id_idx").on(table.productId),
+    createdAtIdx: index("stock_waste_logs_created_at_idx").on(
+      table.createdAt
+    ),
+  })
+)
+
+export const insertStockWasteLogSchema = createInsertSchema(
+  stockWasteLogs
+).omit({ id: true, createdAt: true })
+export const selectStockWasteLogSchema = createSelectSchema(stockWasteLogs)
+export type StockWasteLog = typeof stockWasteLogs.$inferSelect
+export type InsertStockWasteLog = typeof stockWasteLogs.$inferInsert
+
 // ── User Activity Logs ──
 export const activityLogs = pgTable(
   "activity_logs",
