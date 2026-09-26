@@ -3,7 +3,8 @@ import { orders } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 
 export async function confirmPickup(
-  orderId: string
+  orderId: string,
+  actorId?: string
 ): Promise<{ success: boolean; message: string }> {
   try {
     const existing = await db.query.orders.findFirst({
@@ -18,7 +19,13 @@ export async function confirmPickup(
 
     await db
       .update(orders)
-      .set({ status: "completed", updatedAt: new Date() })
+      .set({
+        status: "completed",
+        updatedAt: new Date(),
+        ...(actorId
+          ? { processedBy: actorId, processedAt: new Date() }
+          : {}),
+      })
       .where(eq(orders.id, orderId))
 
     return { success: true, message: "Pickup confirmed successfully" }

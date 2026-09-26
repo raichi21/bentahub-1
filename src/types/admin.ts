@@ -338,6 +338,7 @@ export interface PickupRowData {
   status: string
   statusDisplay: string
   createdAt: Date
+  processorName: string | null
 }
 
 export interface PickupApiData {

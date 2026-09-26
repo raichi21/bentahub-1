@@ -12,7 +12,7 @@ export async function PATCH(
     if (auth.error) return auth.error
 
     const { orderId } = await params
-    const result = await confirmPickup(orderId)
+    const result = await confirmPickup(orderId, auth.userId)
 
     if (result.success) {
       return NextResponse.json({ success: true, message: result.message })

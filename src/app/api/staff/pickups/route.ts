@@ -137,12 +137,18 @@ export async function PATCH(request: NextRequest) {
           isPaid: true,
           paidAt: new Date(),
           status: "ready",
+          processedBy: auth.userId,
+          processedAt: new Date(),
         })
         .where(eq(orders.id, orderId))
     } else if (action === "complete") {
       await db
         .update(orders)
-        .set({ status: "completed" })
+        .set({
+          status: "completed",
+          processedBy: auth.userId,
+          processedAt: new Date(),
+        })
         .where(eq(orders.id, orderId))
     } else if (action === "cancel") {
       await db

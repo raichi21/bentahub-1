@@ -123,6 +123,9 @@ export function PickupTable({
                     Status
                   </th>
                   <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
+                    Processed By
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold tracking-wider uppercase">
                     Actions
                   </th>
                 </tr>
@@ -164,6 +167,9 @@ export function PickupTable({
                         />
                         {order.statusDisplay}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-foreground">
+                      {order.processorName || "—"}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">

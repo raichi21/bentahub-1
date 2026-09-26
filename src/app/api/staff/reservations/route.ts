@@ -150,7 +150,11 @@ export async function PATCH(request: NextRequest) {
 
       await db
         .update(orders)
-        .set({ status: "processing" })
+        .set({
+          status: "processing",
+          processedBy: auth.userId,
+          processedAt: new Date(),
+        })
         .where(eq(orders.id, orderId))
 
       await db.insert(notifications).values({
@@ -246,7 +250,11 @@ export async function PATCH(request: NextRequest) {
 
       await db
         .update(orders)
-        .set({ status: "ready" })
+        .set({
+          status: "ready",
+          processedBy: auth.userId,
+          processedAt: new Date(),
+        })
         .where(eq(orders.id, orderId))
 
       await db.insert(notifications).values({

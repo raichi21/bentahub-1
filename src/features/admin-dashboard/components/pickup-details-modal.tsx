@@ -93,6 +93,12 @@ export function PickupDetailsModal({
                     {order.branch}
                   </span>
                 </p>
+                <p className="text-muted-foreground">
+                  Processed By:{" "}
+                  <span className="font-semibold text-foreground">
+                    {order.processorName || "—"}
+                  </span>
+                </p>
               </div>
             </div>
             <div className="space-y-2">

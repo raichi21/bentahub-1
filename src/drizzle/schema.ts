@@ -405,6 +405,13 @@ export const orders = pgTable("orders", {
   gcashRef: varchar("gcash_ref", { length: 255 }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   cancelledReason: varchar("cancelled_reason", { length: 500 }),
+  processedBy: varchar("processed_by", { length: 36 }).references(
+    () => users.id,
+    {
+      onDelete: "set null",
+    }
+  ),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
   createdAt,
   updatedAt,
 },

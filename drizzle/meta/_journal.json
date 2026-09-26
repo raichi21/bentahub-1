@@ -78,6 +78,13 @@
       "when": 1790460569317,
       "tag": "0010_dry_harpoon",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1790462086532,
+      "tag": "0011_hard_thanos",
+      "breakpoints": true
     }
   ]
 }

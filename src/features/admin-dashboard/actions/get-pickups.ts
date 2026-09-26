@@ -1,6 +1,6 @@
 import { db } from "@/servers/db"
-import { orders } from "@/servers/schemas"
-import { eq, and, gte, lte, desc, type SQL } from "drizzle-orm"
+import { orders, users } from "@/servers/schemas"
+import { eq, and, gte, lte, desc, inArray, type SQL } from "drizzle-orm"
 import { formatPHDateTime, startOfManilaDay, endOfManilaDay } from "@/lib/date"
 
 export interface PickupFilterOptions {
@@ -99,6 +99,7 @@ export async function getPickups(
     phone: string | null
     createdAt: Date
     updatedAt: Date
+    processedBy: string | null
     user: { id: string; fullName: string; email: string }
     items: Array<{
       id: string
@@ -156,6 +157,22 @@ export async function getPickups(
   const offset = (filters.page - 1) * filters.pageSize
   const pageRows = filtered.slice(offset, offset + filters.pageSize)
 
+  const processorIds = [
+    ...new Set(
+      pageRows
+        .map((o) => o.processedBy)
+        .filter((id): id is string => !!id)
+    ),
+  ]
+  const processorMap = new Map<string, string>()
+  if (processorIds.length > 0) {
+    const processors = await db.query.users.findMany({
+      where: inArray(users.id, processorIds),
+      columns: { id: true, fullName: true },
+    })
+    for (const p of processors) processorMap.set(p.id, p.fullName)
+  }
+
   const pickups = pageRows.map((o, idx) => {
     const totalAmount = Number(o.totalAmount)
     return {
@@ -187,6 +204,9 @@ export async function getPickups(
                 ? "Completed"
                 : "Cancelled",
       createdAt: o.createdAt,
+      processorName: o.processedBy
+        ? (processorMap.get(o.processedBy) ?? null)
+        : null,
     }
   })
 
