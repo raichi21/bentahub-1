@@ -189,7 +189,7 @@ export function InventoryUpdateTable({
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <QuickStockModal
-        key={editingProduct?.id ?? "none"}
+        key={editingProduct ? `edit-${editingProduct.id}` : "edit-none"}
         isOpen={!!editingProduct}
         onClose={() => setEditingProduct(null)}
         product={editingProduct}
@@ -201,7 +201,7 @@ export function InventoryUpdateTable({
         product={batchProduct}
       />
       <WasteStockModal
-        key={wasteProduct?.id ?? "none"}
+        key={wasteProduct ? `waste-${wasteProduct.id}` : "waste-none"}
         isOpen={!!wasteProduct}
         onClose={() => setWasteProduct(null)}
         product={wasteProduct}
