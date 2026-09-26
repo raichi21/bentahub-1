@@ -121,9 +121,6 @@ export function ManageProducts({ canManage }: ManageProductsProps) {
       <div className="flex flex-col gap-4 border-b border-border bg-muted/20 p-6">
         <div>
           <h4 className="text-lg font-bold text-foreground">Product List</h4>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Master catalog across all branches. Stock counts live in Monitoring.
-          </p>
         </div>
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
           <div className="relative w-full md:w-64">

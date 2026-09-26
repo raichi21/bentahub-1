@@ -165,10 +165,6 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
       <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
         <div>
           <h4 className="text-lg font-bold text-foreground">Categories</h4>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Master product categories used across the catalog and SKU
-            generation.
-          </p>
         </div>
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
           <div className="relative w-full md:w-64">

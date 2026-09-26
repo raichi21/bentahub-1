@@ -156,10 +156,6 @@ export function ManageUnits({ canManage }: ManageUnitsProps) {
       <div className="flex flex-col justify-between gap-4 border-b border-border bg-muted/20 p-6 sm:flex-row sm:items-center">
         <div>
           <h4 className="text-lg font-bold text-foreground">Unit Types</h4>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Measurement units staff can pick when adding products (pcs, kg,
-            box...).
-          </p>
         </div>
         <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-center">
           <div className="relative w-full md:w-64">
