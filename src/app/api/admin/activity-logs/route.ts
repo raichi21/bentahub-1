@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get("action") || undefined
     const entity = searchParams.get("entity") || undefined
     const entityId = searchParams.get("entityId") || undefined
+    const branch = searchParams.get("branch") || undefined
     const dateFrom = searchParams.get("dateFrom") || undefined
     const dateTo = searchParams.get("dateTo") || undefined
     const page = parseInt(searchParams.get("page") || "1", 10)
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     if (action) conditions.push(eq(activityLogs.action, action))
     if (entity) conditions.push(eq(activityLogs.entity, entity))
     if (entityId) conditions.push(eq(activityLogs.entityId, entityId))
+    if (branch) conditions.push(eq(activityLogs.branch, branch))
     if (dateFrom)
       conditions.push(gte(activityLogs.createdAt, new Date(dateFrom)))
     if (dateTo) {
