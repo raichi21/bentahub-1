@@ -9,6 +9,7 @@ import {
   boolean,
   index,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { createInsertSchema, createSelectSchema } from "drizzle-zod"
@@ -775,3 +776,36 @@ export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit(
 export const selectStoreSettingsSchema = createSelectSchema(storeSettings)
 export type StoreSettings = typeof storeSettings.$inferSelect
 export type InsertStoreSettings = typeof storeSettings.$inferInsert
+
+// ── User Activity Logs ──
+export const activityLogs = pgTable(
+  "activity_logs",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    actorId: varchar("actor_id", { length: 36 }).references(() => users.id, {
+      onDelete: "set null",
+    }),
+    actorName: varchar("actor_name", { length: 255 }),
+    actorRole: varchar("actor_role", { length: 50 }),
+    action: varchar("action", { length: 100 }).notNull(),
+    entity: varchar("entity", { length: 100 }).notNull(),
+    entityId: varchar("entity_id", { length: 36 }),
+    entityName: varchar("entity_name", { length: 255 }),
+    details: jsonb("details"),
+    branch: varchar("branch", { length: 100 }),
+    createdAt,
+  },
+  (table) => ({
+    actorIdx: index("activity_logs_actor_id_idx").on(table.actorId),
+    createdAtIdx: index("activity_logs_created_at_idx").on(table.createdAt),
+    actionIdx: index("activity_logs_action_idx").on(table.action),
+  })
+)
+
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true,
+})
+export const selectActivityLogSchema = createSelectSchema(activityLogs)
+export type ActivityLog = typeof activityLogs.$inferSelect
+export type InsertActivityLog = typeof activityLogs.$inferInsert

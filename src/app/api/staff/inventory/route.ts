@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requirePermission, generateId } from "@/lib/auth-utils"
+import { logActivity } from "@/lib/activity-log"
 import { db } from "@/servers/db"
 import {
   users,
@@ -146,6 +147,25 @@ export async function PATCH(request: NextRequest) {
         supplier: supplier || null,
       })
     }
+
+    const loggedProduct = await db.query.products.findFirst({
+      where: eq(products.id, productId),
+      columns: { name: true },
+    })
+    logActivity({
+      actorId: auth.userId,
+      action: "stock.update",
+      entity: "product",
+      entityId: productId,
+      entityName: loggedProduct?.name ?? null,
+      details: {
+        from: currentQty,
+        to: stockQty,
+        reorderLevel: reorderLevel ?? null,
+        branch: branchName,
+      },
+      branch: branchName,
+    })
 
     return NextResponse.json({
       success: true,
@@ -338,6 +358,22 @@ export async function POST(request: NextRequest) {
         }))
       )
     }
+
+    logActivity({
+      actorId: auth.userId,
+      action: "product.create",
+      entity: "product",
+      entityId: productId,
+      entityName: name,
+      details: {
+        sku,
+        category: categoryRecord.name,
+        price,
+        stock: stockQty,
+        branch: branchName,
+      },
+      branch: branchName,
+    })
 
     return NextResponse.json({
       success: true,

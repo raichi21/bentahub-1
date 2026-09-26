@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { sql } from "drizzle-orm"
+import { logActivity } from "@/lib/activity-log"
 import { getUsers } from "@/features/admin-dashboard/actions/get-users"
 
 const ADMIN_DOMAIN = "@bentahub.com"
@@ -176,6 +177,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       console.log("[POST] Reactivation done for:", existing.id)
 
+      logActivity({
+        actorId: auth.userId,
+        action: "user.reactivate",
+        entity: "user",
+        entityId: String(existing.id),
+        entityName: fullName,
+        details: { email, role },
+        branch: branch || null,
+      })
+
       return NextResponse.json({
         success: true,
         message: `${role.charAt(0).toUpperCase() + role.slice(1)} account reactivated successfully`,
@@ -194,6 +205,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await db.execute(
       sql`INSERT INTO users (id, email, password, full_name, role, branch, can_manage_units, can_manage_categories, can_manage_products, is_active, is_email_verified, created_at, updated_at) VALUES (${userId}, ${email}, ${hashedPassword}, ${fullName}, ${role}, ${branch || null}, ${permissions.canManageUnits}, ${permissions.canManageCategories}, ${permissions.canManageProducts}, true, true, NOW(), NOW())`
     )
+
+    logActivity({
+      actorId: auth.userId,
+      action: "user.create",
+      entity: "user",
+      entityId: userId,
+      entityName: fullName,
+      details: { email, role },
+      branch: branch || null,
+    })
 
     return NextResponse.json(
       {

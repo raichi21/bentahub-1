@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { products, categories, unitTypes } from "@/servers/schemas"
+import { logActivity } from "@/lib/activity-log"
 import { eq, desc, sql } from "drizzle-orm"
 
 const updateProductSchema = z.object({
@@ -144,6 +145,15 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       .set(updateData)
       .where(eq(products.id, id))
       .returning()
+
+    logActivity({
+      actorId: auth.userId,
+      action: "product.update",
+      entity: "product",
+      entityId: id,
+      entityName: updated.name,
+      details: { changedFields: Object.keys(updateData) },
+    })
 
     return NextResponse.json(
       { success: true, message: "Product updated successfully", data: updated },

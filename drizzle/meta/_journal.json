@@ -71,6 +71,13 @@
       "when": 1790311200491,
       "tag": "0009_nifty_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1790460569317,
+      "tag": "0010_dry_harpoon",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { categories } from "@/servers/schemas"
+import { logActivity } from "@/lib/activity-log"
 import { eq, desc, sql } from "drizzle-orm"
 
 const createCategorySchema = z.object({
@@ -118,6 +119,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning()
 
+    logActivity({
+      actorId: auth.userId,
+      action: "category.create",
+      entity: "category",
+      entityId: created.id,
+      entityName: created.name,
+      details: { code: created.code },
+    })
+
     return NextResponse.json(
       {
         success: true,
@@ -215,6 +225,15 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       .where(eq(categories.id, id))
       .returning()
 
+    logActivity({
+      actorId: auth.userId,
+      action: "category.update",
+      entity: "category",
+      entityId: id,
+      entityName: updated.name,
+      details: { changedFields: Object.keys(updateData) },
+    })
+
     return NextResponse.json(
       {
         success: true,
@@ -260,6 +279,14 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     // Permanent delete. Soft-hide/unhide (deactivate/reactivate) is done via
     // PUT { isActive }.
     await db.delete(categories).where(eq(categories.id, id))
+
+    logActivity({
+      actorId: auth.userId,
+      action: "category.delete",
+      entity: "category",
+      entityId: id,
+      entityName: existing.name,
+    })
 
     return NextResponse.json({
       success: true,

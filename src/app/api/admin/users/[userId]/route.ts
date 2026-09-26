@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { verifyToken, extractToken, hashPassword } from "@/lib/auth-utils"
+import { logActivity } from "@/lib/activity-log"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
@@ -139,6 +140,20 @@ export async function PATCH(
 
     await db.update(users).set(updateData).where(eq(users.id, userId))
 
+    const wasInactiveRestore = !existing.isActive && rest.isActive === true
+    logActivity({
+      actorId: auth.userId,
+      action: wasInactiveRestore ? "user.restore" : "user.update",
+      entity: "user",
+      entityId: userId,
+      entityName: rest.fullName ?? existing.fullName,
+      details: {
+        email: rest.email ?? existing.email,
+        changedFields: Object.keys(rest),
+      },
+      branch: rest.branch ?? existing.branch,
+    })
+
     return NextResponse.json({
       success: true,
       message: "User updated successfully",
@@ -178,6 +193,16 @@ export async function DELETE(
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, userId))
+
+    logActivity({
+      actorId: auth.userId,
+      action: "user.deactivate",
+      entity: "user",
+      entityId: userId,
+      entityName: existing.fullName,
+      details: { email: existing.email, role: existing.role },
+      branch: existing.branch,
+    })
 
     return NextResponse.json({
       success: true,

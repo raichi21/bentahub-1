@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyToken, extractToken } from "@/lib/auth-utils"
+import { logActivity } from "@/lib/activity-log"
 import { db } from "@/servers/db"
 import { users, orders } from "@/servers/schemas"
 import { eq, and, sql } from "drizzle-orm"
@@ -110,6 +111,16 @@ export async function DELETE(
     // Hard delete. Dependent auth/cart/notification rows cascade; cash
     // drawer and transaction records are set to null and survive.
     await db.delete(users).where(eq(users.id, userId))
+
+    logActivity({
+      actorId: auth.userId,
+      action: "user.permanent-delete",
+      entity: "user",
+      entityId: userId,
+      entityName: existing.fullName,
+      details: { email: existing.email, role: existing.role },
+      branch: existing.branch,
+    })
 
     return NextResponse.json({
       success: true,

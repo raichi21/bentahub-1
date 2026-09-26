@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { unitTypes } from "@/servers/schemas"
+import { logActivity } from "@/lib/activity-log"
 import { eq, desc, sql } from "drizzle-orm"
 
 const createUnitSchema = z.object({
@@ -95,6 +96,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning()
 
+    logActivity({
+      actorId: auth.userId,
+      action: "unit.create",
+      entity: "unit",
+      entityId: created.id,
+      entityName: created.name,
+    })
+
     return NextResponse.json(
       { success: true, message: "Unit created successfully", data: created },
       { status: 201 }
@@ -169,6 +178,15 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       .where(eq(unitTypes.id, id))
       .returning()
 
+    logActivity({
+      actorId: auth.userId,
+      action: "unit.update",
+      entity: "unit",
+      entityId: id,
+      entityName: updated.name,
+      details: { changedFields: Object.keys(updateData) },
+    })
+
     return NextResponse.json(
       { success: true, message: "Unit updated successfully", data: updated },
       { status: 200 }
@@ -210,6 +228,14 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     // Permanent delete. Soft-hide/unhide (deactivate/reactivate) is done via
     // PUT { isActive }.
     await db.delete(unitTypes).where(eq(unitTypes.id, id))
+
+    logActivity({
+      actorId: auth.userId,
+      action: "unit.delete",
+      entity: "unit",
+      entityId: id,
+      entityName: existing.name,
+    })
 
     return NextResponse.json({
       success: true,

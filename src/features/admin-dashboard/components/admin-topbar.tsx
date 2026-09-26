@@ -45,6 +45,9 @@ export function AdminTopbar({
   } else if (pathname.includes("/admin/archived-users")) {
     title = "Archived Users"
     subtitle = "Restore deactivated accounts or delete them permanently"
+  } else if (pathname.includes("/admin/activity-logs")) {
+    title = "Activity Logs"
+    subtitle = "Audit trail of who did what across the system"
   } else if (pathname.includes("/admin/users")) {
     title = "User Management"
     subtitle = "The admin allow to Add, Edit, Remove, and manage users"
