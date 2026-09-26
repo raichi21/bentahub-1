@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search } from "lucide-react"
+import { Search, Eye } from "lucide-react"
 import type { InventoryStatusItem } from "@/types/admin"
 import { ExportMenu, BranchSelect } from "@/components/data-table"
+import { ProductHistoryModal } from "./product-history-modal"
 import { DateRangeFilter } from "./date-range-filter"
 
 interface InventoryStatusTableProps {
@@ -64,6 +65,10 @@ export function InventoryStatusTable({
 }: InventoryStatusTableProps) {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
+  const [viewingProduct, setViewingProduct] = useState<{
+    id: string
+    name: string
+  } | null>(null)
 
   const filtered = useMemo(() => {
     if (!search.trim()) return data
@@ -138,6 +143,9 @@ export function InventoryStatusTable({
               <th className="px-6 py-4 whitespace-nowrap">Nearest Expiry</th>
               <th className="px-6 py-4 whitespace-nowrap">Status</th>
               <th className="px-6 py-4 whitespace-nowrap">Last Updated</th>
+              <th className="px-6 py-4 text-right whitespace-nowrap">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -193,6 +201,20 @@ export function InventoryStatusTable({
                   <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-foreground">
                     {formatDate(item.lastUpdated)}
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() =>
+                        setViewingProduct({
+                          id: item.productId,
+                          name: item.productName,
+                        })
+                      }
+                      className="inline-flex items-center justify-center rounded-lg p-1.5 text-primary transition-colors hover:bg-muted"
+                      title="View history"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </td>
                 </tr>
               )
             })}
@@ -225,6 +247,12 @@ export function InventoryStatusTable({
           </div>
         </div>
       )}
+      <ProductHistoryModal
+        isOpen={viewingProduct !== null}
+        onClose={() => setViewingProduct(null)}
+        productId={viewingProduct?.id || ""}
+        productName={viewingProduct?.name || ""}
+      />
     </section>
   )
 }

@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search") || undefined
     const action = searchParams.get("action") || undefined
+    const entity = searchParams.get("entity") || undefined
+    const entityId = searchParams.get("entityId") || undefined
     const dateFrom = searchParams.get("dateFrom") || undefined
     const dateTo = searchParams.get("dateTo") || undefined
     const page = parseInt(searchParams.get("page") || "1", 10)
@@ -21,6 +23,8 @@ export async function GET(request: NextRequest) {
 
     const conditions: SQL[] = []
     if (action) conditions.push(eq(activityLogs.action, action))
+    if (entity) conditions.push(eq(activityLogs.entity, entity))
+    if (entityId) conditions.push(eq(activityLogs.entityId, entityId))
     if (dateFrom)
       conditions.push(gte(activityLogs.createdAt, new Date(dateFrom)))
     if (dateTo) {

@@ -75,7 +75,7 @@ function summarizeDetails(details: Record<string, unknown> | null): string {
   return parts.length > 0 ? parts.join(" · ") : "—"
 }
 
-function actionLabel(action: string): string {
+export function actionLabel(action: string): string {
   return action.replace(".", ": ").replace(/-/g, " ")
 }
 
