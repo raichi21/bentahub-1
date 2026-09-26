@@ -29,6 +29,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search")?.toLowerCase() || ""
     const category = searchParams.get("category") || ""
+    const branch = searchParams.get("branch") || ""
 
     const list = await db.query.products.findMany({
       orderBy: desc(products.createdAt),
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const filtered = list.filter((p) => {
       if (category && p.category !== category) return false
+      if (branch && p.branch !== branch) return false
       if (
         search &&
         !(

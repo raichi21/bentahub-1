@@ -30,6 +30,8 @@ export function ManageProducts({ canManage }: ManageProductsProps) {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("")
+  const [branchFilter, setBranchFilter] = useState("")
+  const [branches, setBranches] = useState<string[]>([])
   const [editing, setEditing] = useState<ProductRowData | null>(null)
 
   const isAdmin = user?.role === "admin"
@@ -42,6 +44,7 @@ export function ManageProducts({ canManage }: ManageProductsProps) {
       const params = new URLSearchParams()
       if (search.trim()) params.set("search", search.trim())
       if (categoryFilter) params.set("category", categoryFilter)
+      if (branchFilter) params.set("branch", branchFilter)
       const res = await fetch(`/api/admin/products?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -54,25 +57,37 @@ export function ManageProducts({ canManage }: ManageProductsProps) {
     } finally {
       setLoading(false)
     }
-  }, [token, search, categoryFilter])
+  }, [token, search, categoryFilter, branchFilter])
 
   const fetchOptions = useCallback(async () => {
     if (!token) return
     try {
-      const [catRes, unitRes] = await Promise.all([
+      const [catRes, unitRes, branchRes] = await Promise.all([
         fetch("/api/admin/categories", {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch("/api/admin/units", {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch("/api/branches", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ])
       const catData = await catRes.json()
       const unitData = await unitRes.json()
+      const branchData = await branchRes.json().catch(() => null)
       if (catData.success)
         setCategories(Array.isArray(catData.data) ? catData.data : [])
       if (unitData.success)
         setUnits(Array.isArray(unitData.data) ? unitData.data : [])
+      const branchList: Array<{ name: string }> = Array.isArray(branchData)
+        ? branchData
+        : branchData?.data && Array.isArray(branchData.data)
+          ? branchData.data
+          : []
+      setBranches(
+        branchList.map((b) => b.name).sort((a, b) => a.localeCompare(b))
+      )
     } catch {
       // no-op
     }
@@ -130,6 +145,18 @@ export function ManageProducts({ canManage }: ManageProductsProps) {
             {distinctCategories.map((c) => (
               <option key={c} value={c}>
                 {c}
+              </option>
+            ))}
+          </select>
+          <select
+            value={branchFilter}
+            onChange={(e) => setBranchFilter(e.target.value)}
+            className="h-10 rounded-lg border border-border bg-background px-4 text-sm outline-none focus:border-primary focus:ring-primary"
+          >
+            <option value="">All Branches</option>
+            {branches.map((b) => (
+              <option key={b} value={b}>
+                {b}
               </option>
             ))}
           </select>
