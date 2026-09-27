@@ -104,6 +104,7 @@ export interface CashDrawerSession {
   startingCash: string
   expectedEndingCash: string | null
   actualEndingCash: string | null
+  gcashTotal: string | null
   notes: string | null
   status: CashDrawerStatus
   verifiedByAdminId: string | null
@@ -114,6 +115,7 @@ export interface LastClosedSessionInfo {
   id: string
   actualEndingCash: string | null
   expectedEndingCash: string | null
+  gcashTotal: string | null
   startingCash: string
   closedAt: string | null
   notes: string | null

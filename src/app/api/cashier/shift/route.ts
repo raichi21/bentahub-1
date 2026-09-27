@@ -49,7 +49,9 @@ export async function GET(request: NextRequest) {
       ),
     })
 
-    let sessionPayload = openSession ?? null
+    let sessionPayload:
+      | (NonNullable<typeof openSession> & { gcashTotal?: string })
+      | null = openSession ?? null
     if (openSession) {
       const netAgg = await db
         .select({
@@ -65,12 +67,27 @@ export async function GET(request: NextRequest) {
         )
       const netCash = Number(netAgg[0]?.netCash) || 0
       const expected = (Number(openSession.startingCash) || 0) + netCash
+      const gcashAgg = await db
+        .select({
+          gcashTotal: sql<number>`coalesce(sum(${transactions.totalAmount}), 0)`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.sessionId, openSession.id),
+            eq(transactions.paymentMethod, "gcash"),
+            eq(transactions.status, "completed")
+          )
+        )
+      const gcashTotal = Number(gcashAgg[0]?.gcashTotal) || 0
       sessionPayload = {
         ...openSession,
         expectedEndingCash: expected.toFixed(2),
+        gcashTotal: gcashTotal.toFixed(2),
       }
     }
 
+    let lastClosedGcashTotal: string | null = null
     const lastClosed = await db.query.cashDrawerSessions.findFirst({
       where: and(
         eq(cashDrawerSessions.branchId, branchRecord.id),
@@ -90,6 +107,22 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    if (lastClosed) {
+      const agg = await db
+        .select({
+          gcashTotal: sql<number>`coalesce(sum(${transactions.totalAmount}), 0)`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.sessionId, lastClosed.id),
+            eq(transactions.paymentMethod, "gcash"),
+            eq(transactions.status, "completed")
+          )
+        )
+      lastClosedGcashTotal = (Number(agg[0]?.gcashTotal) || 0).toFixed(2)
+    }
+
     const lastClosedSession = lastClosed
       ? {
           id: lastClosed.id,
@@ -101,6 +134,7 @@ export async function GET(request: NextRequest) {
             : null,
           notes: lastClosed.notes,
           cashierName: lastClosed.cashier?.fullName ?? null,
+          gcashTotal: lastClosedGcashTotal,
         }
       : null
 

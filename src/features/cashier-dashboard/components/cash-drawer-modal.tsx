@@ -172,6 +172,14 @@ export function CashDrawerModal({
                           ? ` • "${lastClosedSession.notes}"`
                           : ""}
                       </p>
+                      {lastClosedSession.gcashTotal != null && (
+                        <p className="text-[11px] text-muted-foreground">
+                          GCash:{" "}
+                          <span className="font-mono font-semibold text-foreground">
+                            {formatPeso(lastClosedSession.gcashTotal)}
+                          </span>
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -311,7 +319,17 @@ export function CashDrawerModal({
                     {formatPeso(session.expectedEndingCash)}
                   </span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">GCash Total</span>
+                  <span className="font-mono font-semibold">
+                    {formatPeso(session.gcashTotal)}
+                  </span>
+                </div>
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                GCash sales are shown for reference only and are not included in
+                the cash difference.
+              </p>
 
               {!confirming ? (
                 <>
@@ -445,6 +463,12 @@ export function CashDrawerModal({
                         <span>Actual Ending Cash</span>
                         <span className="font-mono font-bold">
                           {formatPeso(actualVal)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>GCash Total</span>
+                        <span className="font-mono font-bold">
+                          {formatPeso(session.gcashTotal)}
                         </span>
                       </div>
                       {difference !== null && Math.abs(difference) >= 0.005 && (
