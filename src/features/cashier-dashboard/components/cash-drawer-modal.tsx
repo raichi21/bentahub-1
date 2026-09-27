@@ -20,6 +20,9 @@ const DENOMINATIONS = [
   { value: 100, label: "₱100" },
   { value: 50, label: "₱50" },
   { value: 20, label: "₱20" },
+  { value: 10, label: "₱10" },
+  { value: 5, label: "₱5" },
+  { value: 1, label: "₱1" },
 ]
 
 interface CashDrawerModalProps {
@@ -47,12 +50,23 @@ export function CashDrawerModal({
   const [confirming, setConfirming] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [counts, setCounts] = useState([0, 0, 0, 0, 0])
+  const [counts, setCounts] = useState<number[]>(() =>
+    DENOMINATIONS.map(() => 0)
+  )
 
   const updateCount = (index: number, delta: number) =>
     setCounts((prev) =>
       prev.map((c, i) => (i === index ? Math.max(0, c + delta) : c))
     )
+
+  const setCount = (index: number, raw: string) => {
+    const parsed = parseInt(raw.replace(/[^\d]/g, ""), 10)
+    setCounts((prev) =>
+      prev.map((c, i) =>
+        i === index ? (Number.isFinite(parsed) ? Math.max(0, parsed) : 0) : c
+      )
+    )
+  }
 
   const total = useMemo(
     () => DENOMINATIONS.reduce((sum, d, i) => sum + d.value * counts[i], 0),
@@ -60,7 +74,7 @@ export function CashDrawerModal({
   )
 
   useEffect(() => {
-    const t = setTimeout(() => setCounts([0, 0, 0, 0, 0]), 0)
+    const t = setTimeout(() => setCounts(DENOMINATIONS.map(() => 0)), 0)
     return () => clearTimeout(t)
   }, [mode])
 
@@ -240,9 +254,14 @@ export function CashDrawerModal({
                       >
                         −
                       </button>
-                      <span className="w-12 text-center font-mono text-sm font-bold">
-                        {counts[i]}
-                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={counts[i]}
+                        onChange={(e) => setCount(i, e.target.value)}
+                        aria-label={`${denom.label} count`}
+                        className="w-12 rounded-md border border-border bg-background py-0.5 text-center font-mono text-sm font-bold outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+                      />
                       <button
                         type="button"
                         onClick={() => updateCount(i, 1)}
@@ -270,7 +289,7 @@ export function CashDrawerModal({
                     setStartingCash(
                       String(total + (parseFloat(startingCash) || 0))
                     )
-                    setCounts([0, 0, 0, 0, 0])
+                    setCounts(DENOMINATIONS.map(() => 0))
                   }}
                   className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
                 >
@@ -403,7 +422,7 @@ export function CashDrawerModal({
                           setActualCash(
                             String(total + (parseFloat(actualCash) || 0))
                           )
-                          setCounts([0, 0, 0, 0, 0])
+                          setCounts(DENOMINATIONS.map(() => 0))
                         }}
                         className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
                       >
