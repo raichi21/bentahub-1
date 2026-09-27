@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
+import { deductStock } from "@/features/cashier-dashboard/actions/finalize-transaction"
 import { db } from "@/servers/db"
-import { users, orders, notifications } from "@/servers/schemas"
+import { users, orders, orderItems, branches, branchInventory, notifications } from "@/servers/schemas"
 import { eq, and, or, desc } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
@@ -148,12 +149,51 @@ export async function PATCH(request: NextRequest) {
         )
       }
 
+      // Reserve stock first: every ordered line must be fully available in
+      // this branch, otherwise the reservation cannot be confirmed. This
+      // keeps branch inventory exactly matching committed reservations.
+      const branchRecord = await db.query.branches.findFirst({
+        where: eq(branches.name, staff.branch || "Lourdes Main Branch"),
+      })
+      if (!branchRecord) {
+        return NextResponse.json(
+          { success: false, message: "Branch not found" },
+          { status: 404 }
+        )
+      }
+      const orderLines = await db.query.orderItems.findMany({
+        where: eq(orderItems.orderId, orderId),
+      })
+      for (const line of orderLines) {
+        const inv = await db.query.branchInventory.findFirst({
+          where: and(
+            eq(branchInventory.branchId, branchRecord.id),
+            eq(branchInventory.productId, line.productId)
+          ),
+        })
+        const have = inv?.quantity ?? 0
+        if (have < line.quantity) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: `Insufficient stock for ${line.productName} (have ${have}, need ${line.quantity})`,
+            },
+            { status: 400 }
+          )
+        }
+      }
+      await deductStock(
+        branchRecord.id,
+        orderLines.map((l) => ({ productId: l.productId, quantity: l.quantity }))
+      )
+
       await db
         .update(orders)
         .set({
           status: "processing",
           processedBy: auth.userId,
           processedAt: new Date(),
+          stockDeducted: true,
         })
         .where(eq(orders.id, orderId))
 
