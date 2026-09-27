@@ -4,8 +4,7 @@ import {
   type Notification,
 } from "@/stores/notificationsStore"
 import { useAuth } from "./useAuth"
-
-const POLL_INTERVAL = 30000 // 30 seconds
+import { usePolling, POLL_INTERVAL_MS } from "./use-polling"
 
 function authHeaders(token: string): HeadersInit {
   return {
@@ -80,18 +79,14 @@ export function useNotifications() {
     [user, token]
   )
 
-  // Poll for new notifications every 30s
+  // Poll for new notifications (skipped while the tab is hidden)
   useEffect(() => {
     if (!user || !token) return
 
     fetchNotifications()
-
-    const interval = setInterval(() => {
-      fetchNotifications()
-    }, POLL_INTERVAL)
-
-    return () => clearInterval(interval)
   }, [user, token, fetchNotifications])
+
+  usePolling(fetchNotifications, user && token ? POLL_INTERVAL_MS : null)
 
   /**
    * Mark a notification as read

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { PaymentPickupList } from "@/features/staff-dashboard/components/payment-pickup-list"
 import { useAuth } from "@/hooks/useAuth"
+import { usePolling, POLL_INTERVAL_MS } from "@/hooks/use-polling"
 import type {
   PaymentItem,
   PickupItem,
@@ -51,13 +52,12 @@ export default function PickupPage() {
     if (authLoading || !token) return
 
     const timer = setTimeout(() => fetchData(), 0)
-
-    const interval = setInterval(() => fetchData(), 30000)
     return () => {
       clearTimeout(timer)
-      clearInterval(interval)
     }
   }, [token, authLoading, fetchData])
+
+  usePolling(fetchData, token && !authLoading ? POLL_INTERVAL_MS : null)
 
   const isLoading = authLoading || (token !== null && !fetched && !error)
 

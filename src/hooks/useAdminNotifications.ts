@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "./useAuth"
+import { usePolling, POLL_INTERVAL_MS } from "./use-polling"
 import type { AdminNotificationItem } from "@/features/admin-dashboard/actions/get-admin-notifications"
 
 function authHeaders(token: string): HeadersInit {
@@ -12,7 +13,7 @@ function authHeaders(token: string): HeadersInit {
 }
 
 export function useAdminNotifications({
-  pollInterval = 30000,
+  pollInterval = POLL_INTERVAL_MS,
 }: { pollInterval?: number } = {}) {
   const { token } = useAuth()
   const [notifications, setNotifications] = useState<AdminNotificationItem[]>(
@@ -80,19 +81,10 @@ export function useAdminNotifications({
 
     const timer = setTimeout(() => fetchNotifications(), 0)
 
-    if (pollInterval > 0) {
-      const interval = setInterval(() => {
-        fetchNotifications()
-      }, pollInterval)
-
-      return () => {
-        clearTimeout(timer)
-        clearInterval(interval)
-      }
-    }
-
     return () => clearTimeout(timer)
   }, [token, fetchNotifications, pollInterval])
+
+  usePolling(fetchNotifications, token ? pollInterval : null)
 
   const markAsRead = useCallback(
     async (notificationId: string) => {

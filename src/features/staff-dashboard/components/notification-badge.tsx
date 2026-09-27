@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/hooks/useAuth"
+import { usePolling, POLL_INTERVAL_MS } from "@/hooks/use-polling"
 
 export function NotificationBadge() {
   const { token } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval>>(null)
 
   const fetchUnreadCount = useCallback(async () => {
     if (!token) return
@@ -30,17 +30,17 @@ export function NotificationBadge() {
     if (!token) return
 
     const timer = setTimeout(fetchUnreadCount, 0)
-    intervalRef.current = setInterval(fetchUnreadCount, 30000)
 
     const handleRefresh = () => fetchUnreadCount()
     window.addEventListener("notifications-read", handleRefresh)
 
     return () => {
       clearTimeout(timer)
-      if (intervalRef.current) clearInterval(intervalRef.current)
       window.removeEventListener("notifications-read", handleRefresh)
     }
   }, [token, fetchUnreadCount])
+
+  usePolling(fetchUnreadCount, token ? POLL_INTERVAL_MS : null)
 
   if (unreadCount === 0) return null
 
