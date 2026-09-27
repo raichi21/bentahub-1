@@ -21,6 +21,12 @@ export interface CartItemSnapshot {
   category?: string | null
   /** Branch stock limit for this product (from the catalog's per-branch quantity). */
   availableStock?: number | null
+  /** Pack size for products sold in packs (e.g., 12 for dozen) */
+  packSize?: number
+  /** Whether the product is sold by pack (e.g., per dozen) */
+  sellByPack?: boolean
+  /** Pack price for display purposes */
+  packPrice?: number
 }
 
 function createTempId(): string {
@@ -191,17 +197,21 @@ export function useCartActions() {
           })
         } else {
           const price = Number(snapshot.price)
+          const packSize = snapshot.sellByPack ? (snapshot.packSize ?? 1) : 1
+          const quantityToAdd = snapshot.sellByPack ? (snapshot.packSize ?? 1) : 1
           const optimisticItem: CartItem = {
             id: createTempId(),
             productId,
             productName: snapshot.productName,
-            price,
-            quantity,
-            subtotal: Number((price * quantity).toFixed(2)),
+            price: Number(snapshot.price),
+            quantity: quantityToAdd,
+            subtotal: Number((price * quantityToAdd).toFixed(2)),
             image: snapshot.image ?? "",
             category: snapshot.category ?? "",
             branch,
             availableStock: snapshot.availableStock ?? null,
+            packSize: snapshot.sellByPack ? (snapshot.packSize ?? 1) : 1,
+            sellByPack: snapshot.sellByPack ?? false,
             addedAt: new Date(),
             updatedAt: new Date(),
           }
