@@ -159,9 +159,7 @@ export async function getPickups(
 
   const processorIds = [
     ...new Set(
-      pageRows
-        .map((o) => o.processedBy)
-        .filter((id): id is string => !!id)
+      pageRows.map((o) => o.processedBy).filter((id): id is string => !!id)
     ),
   ]
   const processorMap = new Map<string, string>()

@@ -22,9 +22,7 @@ export async function confirmPickup(
       .set({
         status: "completed",
         updatedAt: new Date(),
-        ...(actorId
-          ? { processedBy: actorId, processedAt: new Date() }
-          : {}),
+        ...(actorId ? { processedBy: actorId, processedAt: new Date() } : {}),
       })
       .where(eq(orders.id, orderId))
 

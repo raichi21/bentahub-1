@@ -17,20 +17,20 @@ interface RawTransaction {
 }
 
 interface RawInventory {
-  id: string;
-  branchId: string;
-  productId: string;
-  quantity: number;
-  lowStockThreshold: number;
-  updatedAt: Date;
+  id: string
+  branchId: string
+  productId: string
+  quantity: number
+  lowStockThreshold: number
+  updatedAt: Date
 }
 
 interface RawOrder {
-  id: string;
-  totalAmount: string;
-  paymentMethod: string;
-  status: string;
-  createdAt: Date;
+  id: string
+  totalAmount: string
+  paymentMethod: string
+  status: string
+  createdAt: Date
 }
 
 interface RawBranch {
@@ -281,12 +281,10 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
 
   // --- Payment Breakdown (current month, both channels: walk-in
   // transactions + completed reservations) ---
-  const completedTransactions = allTransactions.filter(
-    (t: RawTransaction) => {
-      const d = new Date(t.createdAt)
-      return t.status === "completed" && d >= currentMonthStart
-    }
-  )
+  const completedTransactions = allTransactions.filter((t: RawTransaction) => {
+    const d = new Date(t.createdAt)
+    return t.status === "completed" && d >= currentMonthStart
+  })
   const completedOrders = allOrders.filter((o: RawOrder) => {
     const d = new Date(o.createdAt)
     return o.status === "completed" && d >= currentMonthStart

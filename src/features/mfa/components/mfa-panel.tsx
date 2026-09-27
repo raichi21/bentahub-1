@@ -26,7 +26,8 @@ type JsonResponse = {
  * to the account) and disable (via a fresh emailed code).
  */
 export function MfaPanel() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
+  const isAdmin = user?.role === "admin"
   const [status, setStatus] = React.useState<MfaStatusData | null>(null)
   const [loadingStatus, setLoadingStatus] = React.useState(true)
 
@@ -231,16 +232,22 @@ export function MfaPanel() {
       )}
 
       {enabled && pendingAction === null && (
-        <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-          <Button
-            variant="destructive"
-            onClick={() => requestCode("disable")}
-            disabled={busy}
-            className="gap-2"
-          >
-            <Trash2 className="size-4" />
-            Disable MFA
-          </Button>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
+          {isAdmin ? (
+            <p className="text-xs text-muted-foreground">
+              MFA is mandatory for admin accounts and cannot be disabled.
+            </p>
+          ) : (
+            <Button
+              variant="destructive"
+              onClick={() => requestCode("disable")}
+              disabled={busy}
+              className="gap-2"
+            >
+              <Trash2 className="size-4" />
+              Disable MFA
+            </Button>
+          )}
         </div>
       )}
 

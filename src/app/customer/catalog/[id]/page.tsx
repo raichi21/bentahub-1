@@ -10,10 +10,7 @@ export default function CustomerProductDetailPage() {
 
   return (
     <RoleGate allow={["customer"]}>
-      <CatalogProductDetail
-        key={productId}
-        basePath="/customer/catalog"
-      />
+      <CatalogProductDetail key={productId} basePath="/customer/catalog" />
     </RoleGate>
   )
 }

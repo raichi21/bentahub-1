@@ -84,9 +84,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
     // Fire-and-forget instant add: the store updates synchronously (button
     // flips to "In Cart · N" immediately), the server call reconciles in the
     // background, and the store rolls back on failure.
-    const packSize = product.sellByPack
-      ? (product.packSize ?? 1)
-      : 1
+    const packSize = product.sellByPack ? (product.packSize ?? 1) : 1
     const quantityToAdd = packSize
     addToCart(product.id, quantityToAdd, product.branch, {
       productName: product.name,
@@ -141,8 +139,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
   }
 
   const isOutOfStock = product.stockStatus === "out-of-stock"
-  const atMax =
-    product.quantity != null && inCartQty >= product.quantity
+  const atMax = product.quantity != null && inCartQty >= product.quantity
   // The public landing detail page is browse-only (no Add to Cart).
   const isPublic = basePath === "/catalog"
 
@@ -168,10 +165,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
         {/* Left: Product Image */}
         <div className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
           <Image
-            src={
-              product.image ||
-              "/images/dashboard/kopiko-blanca-twin-v2.png"
-            }
+            src={product.image || "/images/dashboard/kopiko-blanca-twin-v2.png"}
             alt={product.name}
             fill
             className={cn(
@@ -231,25 +225,24 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
                 ₱{Number(product.bulkPrice).toFixed(2)}
               </span>
             )}
-            {product.sellByPack &&
-              (product.packSize ?? 0) > 1 && (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    Per pack ({product.packSize} pcs):{" "}
-                    <span className="font-semibold">
-                      ₱
-                      {Number(
-                        product.packPrice ||
-                          product.price * (product.packSize ?? 1)
-                      ).toFixed(2)}
-                    </span>
+            {product.sellByPack && (product.packSize ?? 0) > 1 && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Per pack ({product.packSize} pcs):{" "}
+                  <span className="font-semibold">
+                    ₱
+                    {Number(
+                      product.packPrice ||
+                        product.price * (product.packSize ?? 1)
+                    ).toFixed(2)}
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">
-                    <Package className="h-3 w-3" />
-                    Pack of {product.packSize}
-                  </span>
-                </div>
-              )}
+                </span>
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">
+                  <Package className="h-3 w-3" />
+                  Pack of {product.packSize}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Product Details Grid */}

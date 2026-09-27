@@ -55,12 +55,12 @@ describe("mfaEnforcedForRole", () => {
 })
 
 describe("mfaAutomaticForRole", () => {
-  it("always issues a code for customer logins", () => {
+  it("always issues a code for customer and admin logins", () => {
     expect(mfaAutomaticForRole("customer")).toBe(true)
+    expect(mfaAutomaticForRole("admin")).toBe(true)
   })
 
-  it("does not auto-challenge other roles", () => {
-    expect(mfaAutomaticForRole("admin")).toBe(false)
+  it("does not auto-challenge staff or cashier logins", () => {
     expect(mfaAutomaticForRole("staff")).toBe(false)
     expect(mfaAutomaticForRole("cashier")).toBe(false)
   })

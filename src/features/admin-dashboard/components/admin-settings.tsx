@@ -62,11 +62,6 @@ export function AdminSettings() {
     type: "success" | "error"
     text: string
   } | null>(null)
-  const [mfaSaving, setMfaSaving] = useState(false)
-  const [mfaMessage, setMfaMessage] = useState<{
-    type: "success" | "error"
-    text: string
-  } | null>(null)
 
   const [branches, setBranches] = useState<Branch[]>([])
   const [branchesLoading, setBranchesLoading] = useState(true)
@@ -173,7 +168,6 @@ export function AdminSettings() {
           storeAddress: settings.storeAddress,
           storeContact: settings.storeContact,
           storeEmail: settings.storeEmail,
-          mfaRequired: settings.mfaRequired,
         }),
       })
       const data = await res.json()
@@ -193,46 +187,6 @@ export function AdminSettings() {
       setConfigMessage({ type: "error", text: "An error occurred" })
     } finally {
       setSavingConfig(false)
-    }
-  }
-
-  const handleMfaToggle = async (checked: boolean) => {
-    if (!token || mfaSaving) return
-    const ok = window.confirm(
-      checked
-        ? "Turn ON the MFA requirement? Admin logins will ask for an emailed verification code."
-        : "Turn OFF the MFA requirement? Admin accounts will sign in with email and password only. Customer logins always stay self-managed."
-    )
-    if (!ok) return
-    setMfaSaving(true)
-    setMfaMessage(null)
-    try {
-      const res = await fetch("/api/admin/settings", {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          storeName: settings.storeName,
-          logo,
-          storeAddress: settings.storeAddress,
-          storeContact: settings.storeContact,
-          storeEmail: settings.storeEmail,
-          mfaRequired: checked,
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setSettings((s) => ({ ...s, mfaRequired: checked }))
-        setMfaMessage({ type: "success", text: "Security setting saved" })
-      } else {
-        setMfaMessage({
-          type: "error",
-          text: data.message || "Failed to save security setting",
-        })
-      }
-    } catch {
-      setMfaMessage({ type: "error", text: "An error occurred" })
-    } finally {
-      setMfaSaving(false)
     }
   }
 
@@ -560,37 +514,8 @@ export function AdminSettings() {
       {/* ── Account Security ── */}
       <ContentCard
         title="Account Security"
-        subtitle="Email code verification for admin logins."
+        subtitle="Email code verification is mandatory for all admin logins."
       >
-        <div className="mb-2 flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-4">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              Require MFA for admin logins
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {settings.mfaRequired
-                ? "On — a verification code is emailed at every admin sign-in."
-                : "Off — admin accounts sign in with email and password only. Customer logins stay self-managed in their own profile."}
-            </p>
-          </div>
-          <label className="relative inline-flex shrink-0 cursor-pointer items-center">
-            <input
-              type="checkbox"
-              className="peer sr-only"
-              checked={settings.mfaRequired}
-              disabled={mfaSaving}
-              onChange={(e) => handleMfaToggle(e.target.checked)}
-            />
-            <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
-          </label>
-        </div>
-        {mfaMessage && (
-          <p
-            className={`mb-6 text-sm font-medium ${mfaMessage.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
-          >
-            {mfaMessage.text}
-          </p>
-        )}
         <MfaPanel />
       </ContentCard>
 

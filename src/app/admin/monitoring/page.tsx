@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { InventoryStatusTable, KPICard, actionLabel } from "@/features/admin-dashboard"
+import {
+  InventoryStatusTable,
+  KPICard,
+  actionLabel,
+} from "@/features/admin-dashboard"
 import { Package, AlertTriangle, Clock, ExternalLink } from "lucide-react"
 import type {
   MonitoringData,
@@ -103,9 +107,7 @@ export default function MonitoringPage() {
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {
-          setRecentActivity(
-            Array.isArray(json.data.logs) ? json.data.logs : []
-          )
+          setRecentActivity(Array.isArray(json.data.logs) ? json.data.logs : [])
         }
       })
       .catch(() => {})
@@ -368,9 +370,7 @@ export default function MonitoringPage() {
       {/* Recent Activity Section */}
       <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex items-center justify-between border-b border-border bg-muted/20 p-6">
-          <h4 className="text-lg font-bold text-foreground">
-            Recent Activity
-          </h4>
+          <h4 className="text-lg font-bold text-foreground">Recent Activity</h4>
           <Link
             href="/admin/activity-logs"
             className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
