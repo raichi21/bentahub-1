@@ -42,6 +42,9 @@ export async function GET(request: NextRequest) {
         sku: products.sku,
         barcode: products.barcode,
         isActive: products.isActive,
+        sellByPack: products.sellByPack,
+        packSize: products.packSize,
+        packPrice: products.packPrice,
         createdAt: products.createdAt,
         updatedAt: products.updatedAt,
         // Stock info from branchInventory
@@ -77,6 +80,9 @@ export async function GET(request: NextRequest) {
       sku: p.sku,
       barcode: p.barcode,
       isActive: p.isActive,
+      sellByPack: p.sellByPack ?? false,
+      packSize: p.packSize ?? 1,
+      packPrice: p.packPrice ? Number(p.packPrice) : undefined,
       quantity: p.quantity,
       branch: p.branchName,
       stockStatus: (p.quantity === 0

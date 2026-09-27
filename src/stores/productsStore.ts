@@ -16,6 +16,12 @@ export interface Product {
   barcode: string
   isActive: boolean
   nearestExpiry?: string | null
+  /** Whether the product is sold by pack (e.g., per dozen) */
+  sellByPack?: boolean
+  /** Pack size for products sold in packs (e.g., 12 for dozen) */
+  packSize?: number
+  /** Pack price for display purposes */
+  packPrice?: number
   createdAt: Date
   updatedAt: Date
 }

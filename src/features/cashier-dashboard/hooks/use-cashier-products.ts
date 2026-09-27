@@ -46,6 +46,9 @@ export function useCashierProducts(): UseCashierProductsResult {
           image: p.image || "",
           unit: p.unit || "pcs",
           nearestExpiry: p.nearestExpiry,
+          sellByPack: p.sellByPack ?? false,
+          packSize: p.packSize ?? 1,
+          packPrice: p.packPrice ?? undefined,
         })
       )
       setProducts(mapped)

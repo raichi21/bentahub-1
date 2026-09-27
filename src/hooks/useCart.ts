@@ -198,7 +198,7 @@ export function useCartActions() {
         } else {
           const price = Number(snapshot.price)
           const packSize = snapshot.sellByPack ? (snapshot.packSize ?? 1) : 1
-          const quantityToAdd = snapshot.sellByPack ? (snapshot.packSize ?? 1) : 1
+          const quantityToAdd = packSize
           const optimisticItem: CartItem = {
             id: createTempId(),
             productId,
@@ -210,7 +210,7 @@ export function useCartActions() {
             category: snapshot.category ?? "",
             branch,
             availableStock: snapshot.availableStock ?? null,
-            packSize: snapshot.sellByPack ? (snapshot.packSize ?? 1) : 1,
+            packSize,
             sellByPack: snapshot.sellByPack ?? false,
             addedAt: new Date(),
             updatedAt: new Date(),

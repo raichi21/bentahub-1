@@ -13,6 +13,7 @@ import {
   FileText,
   ShoppingBag,
   Phone,
+  Package,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
@@ -375,8 +376,14 @@ function CheckoutPageInner() {
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">
+                      <p className="flex items-center gap-1 truncate text-sm font-medium text-foreground">
                         {item.productName}
+                        {item.sellByPack && (item.packSize ?? 0) > 1 && (
+                          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary uppercase">
+                            <Package className="h-2.5 w-2.5" />
+                            Pack of {item.packSize}
+                          </span>
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         ₱{Number(item.price).toFixed(2)} each

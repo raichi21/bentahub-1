@@ -35,6 +35,11 @@ export async function GET(request: NextRequest) {
         // Per-branch stock so the client can cap the quantity stepper at the
         // real available units instead of relying on a server-side rejection.
         availableStock: branchInventory.quantity,
+        // Display-only pack info sourced from the product so cart rows can
+        // render "Pack of N" badges for sell-by-pack products.
+        sellByPack: products.sellByPack,
+        packSize: products.packSize,
+        packPrice: products.packPrice,
       })
       .from(cartItems)
       .leftJoin(branches, eq(branches.name, cartItems.branch))
@@ -45,6 +50,7 @@ export async function GET(request: NextRequest) {
           eq(branchInventory.branchId, branches.id)
         )
       )
+      .leftJoin(products, eq(products.id, cartItems.productId))
       .where(eq(cartItems.userId, userId))
 
     const total = items.reduce((sum, item) => sum + Number(item.subtotal), 0)
@@ -114,6 +120,9 @@ export async function POST(request: NextRequest) {
           image: products.image,
           category: products.category,
           isActive: products.isActive,
+          sellByPack: products.sellByPack,
+          packSize: products.packSize,
+          packPrice: products.packPrice,
           productBranch: products.branch,
           cartId: cartItems.id,
           cartQuantity: cartItems.quantity,
@@ -217,7 +226,13 @@ export async function POST(request: NextRequest) {
         {
           success: true,
           message: "Cart item updated",
-          data: { ...updated[0], availableStock },
+          data: {
+            ...updated[0],
+            availableStock,
+            sellByPack: row.sellByPack ?? false,
+            packSize: row.packSize ?? 1,
+            packPrice: row.packPrice ? Number(row.packPrice) : undefined,
+          },
         },
         { status: 200 }
       )
@@ -259,7 +274,13 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: "Item added to cart",
-        data: { ...created[0], availableStock },
+        data: {
+          ...created[0],
+          availableStock,
+          sellByPack: row.sellByPack ?? false,
+          packSize: row.packSize ?? 1,
+          packPrice: row.packPrice ? Number(row.packPrice) : undefined,
+        },
       },
       { status: 201 }
     )

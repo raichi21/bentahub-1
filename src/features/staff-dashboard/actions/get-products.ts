@@ -32,6 +32,9 @@ interface InventoryWithProduct {
     isActive: boolean
     createdAt: Date
     updatedAt: Date
+    sellByPack: boolean | null
+    packSize: number | null
+    packPrice: string | null
   }
 }
 
@@ -175,6 +178,12 @@ export async function getStaffProducts(
       stockStatus,
       nearestExpiry: getNearestExpiry(inv.id, allBatches),
       activeBatchCount: invBatches.length,
+      sellByPack: inv.product.sellByPack ?? false,
+      packSize: inv.product.packSize ?? 1,
+      packPrice:
+        inv.product.packPrice !== null && inv.product.packPrice !== undefined
+          ? parseFloat(inv.product.packPrice)
+          : null,
       batches,
     }
   })

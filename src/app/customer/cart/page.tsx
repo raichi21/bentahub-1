@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Minus, Plus, Trash2, ShoppingCart, Loader2 } from "lucide-react"
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingCart,
+  Loader2,
+  Package,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
@@ -165,6 +172,12 @@ function CartPageInner() {
                         <p className="text-sm text-muted-foreground">
                           {item.category}
                         </p>
+                        {item.sellByPack && (item.packSize ?? 0) > 1 && (
+                          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">
+                            <Package className="h-3 w-3" />
+                            Pack of {item.packSize}
+                          </span>
+                        )}
                         <p className="mt-2 font-mono font-bold text-primary">
                           ₱{Number(item.price).toFixed(2)}
                         </p>
