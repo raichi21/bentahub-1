@@ -286,6 +286,8 @@ export const products = pgTable("products", {
   category: varchar("category", { length: 100 }).notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   bulkPrice: numeric("bulk_price", { precision: 10, scale: 2 }),
+  packSize: integer("pack_size").default(1).notNull(),
+  packPrice: numeric("pack_price", { precision: 10, scale: 2 }),
   unit: varchar("unit", { length: 50 }).default("pcs").notNull(),
   weight: varchar("weight", { length: 50 }),
   image: text("image"),
@@ -412,6 +414,7 @@ export const orders = pgTable("orders", {
     }
   ),
   processedAt: timestamp("processed_at", { withTimezone: true }),
+  stockDeducted: boolean("stock_deducted").default(false).notNull(),
   createdAt,
   updatedAt,
 },
