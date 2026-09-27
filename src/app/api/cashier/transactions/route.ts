@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
@@ -10,7 +10,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(
+    const auth = await checkRoleAuthActive(
       extractToken(request),
       ["cashier"],
       "Cashier area"

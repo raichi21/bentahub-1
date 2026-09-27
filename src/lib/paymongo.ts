@@ -38,6 +38,35 @@ export interface PayMongoPaymentIntent {
 
 // ── Checkout Sessions (for GCash QR) ──
 
+export interface CheckoutLineItem {
+  name: string
+  /** Per-unit amount in centavos. PayMongo charges amount × quantity. */
+  amount: number
+  quantity: number
+}
+
+/**
+ * Build PayMongo line items from order items.
+ *
+ * The `amount` MUST be the per-unit price (already converted to centavos).
+ * Passing the subtotal here while also sending a `quantity` makes PayMongo
+ * double-charge (subtotal × quantity), which overcharges any item bought in
+ * quantities greater than one.
+ */
+export function toCheckoutLineItems(
+  items: Array<{
+    productName: string
+    price: string | number
+    quantity: number
+  }>
+): CheckoutLineItem[] {
+  return items.map((item) => ({
+    name: item.productName,
+    amount: Math.round(Number(item.price) * 100),
+    quantity: item.quantity,
+  }))
+}
+
 export interface CheckoutSessionResult {
   id: string
   checkoutUrl: string

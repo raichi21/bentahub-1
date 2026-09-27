@@ -7,6 +7,47 @@ import {
 import { eq, and, asc, sql, gt } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 
+/** Raised when a product's available stock cannot cover the requested amount. */
+export class InsufficientStockError extends Error {
+  constructor(productId: string, requested: number, available: number) {
+    super(
+      `Insufficient stock for product ${productId}: need ${requested}, available ${available}`
+    )
+    this.name = "InsufficientStockError"
+  }
+}
+
+export interface BatchAllocation {
+  batchId: string
+  quantity: number
+}
+
+/**
+ * Pure FEFO/FIFO allocator: consumes the given batches (already ordered oldest
+ * expiry first) until `requested` units are covered. Expired batches are
+ * skipped. Returns what was allocated per batch plus any remaining shortfall.
+ */
+export function allocateBatches(
+  batches: Array<{
+    id: string
+    quantity: number
+    expiryDate: Date | null
+  }>,
+  requested: number
+): { allocations: BatchAllocation[]; remaining: number } {
+  let remaining = requested
+  const allocations: BatchAllocation[] = []
+  for (const batch of batches) {
+    if (remaining <= 0) break
+    // Skip expired batches (expiry in the past) - never sell expired stock.
+    if (batch.expiryDate && new Date(batch.expiryDate) <= new Date()) continue
+    const qty = Math.min(batch.quantity, remaining)
+    remaining -= qty
+    allocations.push({ batchId: batch.id, quantity: qty })
+  }
+  return { allocations, remaining }
+}
+
 /**
  * FIFO/FEFO stock deduction for a list of cart items.
  *
@@ -21,82 +62,117 @@ import { generateId } from "@/lib/auth-utils"
  *
  * Runs inside a DB transaction so stock and batch deductions stay atomic.
  * No longer writes to the deprecated `products.quantity` column.
+ *
+ * Throws `InsufficientStockError` when any line cannot be fully fulfilled —
+ * the caller's transaction (or this function's own) rolls back, so a sale is
+ * never partially stocked.
  */
 export async function deductStock(
   branchId: string,
   items: { productId: string; quantity: number }[]
 ) {
   await db.transaction(async (tx) => {
-    for (const item of items) {
-      const requested = item.quantity
-      if (requested <= 0) continue
-
-      const invRows = await tx
-        .select()
-        .from(branchInventory)
-        .where(
-          and(
-            eq(branchInventory.branchId, branchId),
-            eq(branchInventory.productId, item.productId)
-          )
-        )
-        .limit(1)
-
-      const inv = invRows[0]
-      if (!inv || inv.quantity <= 0) continue
-
-      // Backfill: ensure legacy stock that predates batching has a default batch.
-      await ensureDefaultBatch(tx, inv.id, inv.quantity)
-
-      // Active batches ordered FEFO first (expiry ASC, nulls last), then FIFO
-      // (receivedDate ASC, createdAt ASC).
-      const batches = await tx
-        .select()
-        .from(inventoryBatches)
-        .where(
-          and(
-            eq(inventoryBatches.branchInventoryId, inv.id),
-            gt(inventoryBatches.quantity, 0)
-          )
-        )
-        .orderBy(
-          asc(inventoryBatches.expiryDate),
-          asc(inventoryBatches.receivedDate),
-          asc(inventoryBatches.createdAt)
-        )
-
-      let remaining = requested
-      for (const batch of batches) {
-        if (remaining <= 0) break
-        // Skip expired batches (expiry in the past) - never sell expired stock.
-        if (batch.expiryDate && new Date(batch.expiryDate) <= new Date())
-          continue
-
-        const qty = Math.min(batch.quantity, remaining)
-        remaining -= qty
-
-        await tx
-          .update(inventoryBatches)
-          .set({ quantity: batch.quantity - qty })
-          .where(eq(inventoryBatches.id, batch.id))
-      }
-
-      // Deduct the branch inventory barrel by the full requested amount,
-      // clamped at zero.
-      await tx
-        .update(branchInventory)
-        .set({
-          quantity: sql`GREATEST(0, ${branchInventory.quantity} - ${requested})`,
-        })
-        .where(eq(branchInventory.id, inv.id))
-    }
+    await deductStockIn(tx, branchId, items)
   })
 }
 
 /**
- * If a product has positive stock but no remaining active batches (stock that
- * was restocked before batching existed), create a single catch-all default
- * batch so the stock stays consistent with the batch ledger.
+ * Transaction-scoped variant of `deductStock`. Run this from inside an
+ * existing `db.transaction` so the status flip and the stock deduction commit
+ * together (no split between two independent transactions).
+ */
+export async function deductStockIn(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  branchId: string,
+  items: { productId: string; quantity: number }[]
+) {
+  for (const item of items) {
+    const requested = item.quantity
+    if (requested <= 0) continue
+
+    const invRows = await tx
+      .select()
+      .from(branchInventory)
+      .where(
+        and(
+          eq(branchInventory.branchId, branchId),
+          eq(branchInventory.productId, item.productId)
+        )
+      )
+      .limit(1)
+
+    const inv = invRows[0]
+    if (!inv || inv.quantity <= 0) {
+      throw new InsufficientStockError(
+        item.productId,
+        requested,
+        inv?.quantity ?? 0
+      )
+    }
+
+    // Backfill: ensure legacy stock that predates batching has a default batch.
+    await ensureDefaultBatch(tx, inv.id, inv.quantity)
+
+    // Active batches ordered FEFO first (expiry ASC, nulls last), then FIFO
+    // (receivedDate ASC, createdAt ASC).
+    const batches = await tx
+      .select()
+      .from(inventoryBatches)
+      .where(
+        and(
+          eq(inventoryBatches.branchInventoryId, inv.id),
+          gt(inventoryBatches.quantity, 0)
+        )
+      )
+      .orderBy(
+        asc(inventoryBatches.expiryDate),
+        asc(inventoryBatches.receivedDate),
+        asc(inventoryBatches.createdAt)
+      )
+
+    // Allocate FEFO first (expiry ASC, nulls last), then FIFO (receivedDate
+    // ASC, createdAt ASC) — batches are returned from SQL already ordered.
+    const { allocations, remaining } = allocateBatches(batches, requested)
+
+    for (const allocation of allocations) {
+      await tx
+        .update(inventoryBatches)
+        .set({
+          quantity: sql`${inventoryBatches.quantity} - ${allocation.quantity}`,
+        })
+        .where(eq(inventoryBatches.id, allocation.batchId))
+    }
+
+    // Never partially fulfill: if any demand is left unsatisfied, roll back
+    // the whole deduction (the enclosing transaction aborts).
+    if (remaining > 0) {
+      throw new InsufficientStockError(
+        item.productId,
+        requested,
+        requested - remaining
+      )
+    }
+
+    // Deduct the branch inventory barrel by the amount actually consumed
+    // (== requested on success), keeping the barrel in sync with the ledger.
+    if (allocations.length > 0) {
+      const consumed = allocations.reduce((sum, a) => sum + a.quantity, 0)
+      await tx
+        .update(branchInventory)
+        .set({
+          quantity: sql`${branchInventory.quantity} - ${consumed}`,
+        })
+        .where(eq(branchInventory.id, inv.id))
+    }
+  }
+}
+
+/**
+ * If a product has positive stock but no batches with remaining quantity
+ * (stock that was restocked before batching existed, or a batch ledger that
+ * was fully consumed), create a single catch-all default batch so the stock
+ * stays consistent with the batch ledger. The check must test for remaining
+ * quantity — a completely exhausted legacy batch must not suppress backfill.
  */
 async function ensureDefaultBatch(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -106,7 +182,12 @@ async function ensureDefaultBatch(
   const active = await tx
     .select({ id: inventoryBatches.id })
     .from(inventoryBatches)
-    .where(eq(inventoryBatches.branchInventoryId, branchInventoryId))
+    .where(
+      and(
+        eq(inventoryBatches.branchInventoryId, branchInventoryId),
+        gt(inventoryBatches.quantity, 0)
+      )
+    )
     .limit(1)
 
   if (active.length > 0 || quantity <= 0) return
@@ -158,7 +239,10 @@ export async function completeGcashTransaction(transactionId: string) {
       return { completed: true, deducted: false }
     }
 
-    await deductStock(
+    // Deduct stock on the SAME transaction that flipped the status, so the
+    // flip and the deduction commit atomically (no split transactions).
+    await deductStockIn(
+      tx,
       txn.branchId,
       txn.items.map((item) => ({
         productId: item.productId,

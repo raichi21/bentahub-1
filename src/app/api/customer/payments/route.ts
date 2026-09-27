@@ -4,7 +4,7 @@ import { users, orders, orderItems } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
 import { getRoleScopedUserId } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
-import { createCheckoutSession } from "@/lib/paymongo"
+import { createCheckoutSession, toCheckoutLineItems } from "@/lib/paymongo"
 
 export async function POST(request: NextRequest) {
   const userId = getRoleScopedUserId(request, ["customer"])
@@ -77,11 +77,7 @@ export async function POST(request: NextRequest) {
     const checkout = await createCheckoutSession({
       amount: totalAmountInCentavos,
       description: `Order #${orderId.substring(0, 8)} - ${order.branch}`,
-      lineItems: items.map((item) => ({
-        name: item.productName,
-        amount: Math.round(Number(item.subtotal) * 100),
-        quantity: item.quantity,
-      })),
+      lineItems: toCheckoutLineItems(items),
       successUrl: `${baseUrl}/customer/orders?gcash_success=${orderId}`,
       cancelUrl: `${baseUrl}/customer/orders?gcash_cancelled=${orderId}`,
       billing: user

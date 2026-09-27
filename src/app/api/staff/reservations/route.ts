@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server"
-import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
-import { deductStock } from "@/features/cashier-dashboard/actions/finalize-transaction"
+import { extractToken, checkRoleAuthActive, generateId } from "@/lib/auth-utils"
+import { deductStockIn } from "@/features/cashier-dashboard/actions/finalize-transaction"
 import { db } from "@/servers/db"
-import { users, orders, orderItems, branches, branchInventory, notifications } from "@/servers/schemas"
+import {
+  users,
+  orders,
+  orderItems,
+  branches,
+  branchInventory,
+  notifications,
+} from "@/servers/schemas"
 import { eq, and, or, desc } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    const auth = await checkRoleAuthActive(
+      extractToken(request),
+      ["staff"],
+      "Staff area"
+    )
     if (auth.error) {
       return auth.error
     }
@@ -102,7 +113,11 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    const auth = await checkRoleAuthActive(
+      extractToken(request),
+      ["staff"],
+      "Staff area"
+    )
     if (auth.error) {
       return auth.error
     }
@@ -138,6 +153,18 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    // Staff may only act on reservations belonging to their own branch.
+    const staffBranchName = staff.branch || "Lourdes Main Branch"
+    if (order.branch !== staffBranchName) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "You can only manage reservations for your own branch",
+        },
+        { status: 403 }
+      )
+    }
+
     if (action === "confirm") {
       if (order.status !== "pending") {
         return NextResponse.json(
@@ -153,7 +180,7 @@ export async function PATCH(request: NextRequest) {
       // this branch, otherwise the reservation cannot be confirmed. This
       // keeps branch inventory exactly matching committed reservations.
       const branchRecord = await db.query.branches.findFirst({
-        where: eq(branches.name, staff.branch || "Lourdes Main Branch"),
+        where: eq(branches.name, staffBranchName),
       })
       if (!branchRecord) {
         return NextResponse.json(
@@ -182,20 +209,29 @@ export async function PATCH(request: NextRequest) {
           )
         }
       }
-      await deductStock(
-        branchRecord.id,
-        orderLines.map((l) => ({ productId: l.productId, quantity: l.quantity }))
-      )
 
-      await db
-        .update(orders)
-        .set({
-          status: "processing",
-          processedBy: auth.userId,
-          processedAt: new Date(),
-          stockDeducted: true,
-        })
-        .where(eq(orders.id, orderId))
+      // Deduct stock and flip the order status in ONE transaction so the
+      // reservation can never be confirmed without its stock being reserved.
+      await db.transaction(async (tx) => {
+        await deductStockIn(
+          tx,
+          branchRecord.id,
+          orderLines.map((l) => ({
+            productId: l.productId,
+            quantity: l.quantity,
+          }))
+        )
+
+        await tx
+          .update(orders)
+          .set({
+            status: "processing",
+            processedBy: auth.userId,
+            processedAt: new Date(),
+            stockDeducted: true,
+          })
+          .where(eq(orders.id, orderId))
+      })
 
       await db.insert(notifications).values({
         id: generateId(),

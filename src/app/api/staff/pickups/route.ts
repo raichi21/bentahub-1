@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
 import { users, branches, orders } from "@/servers/schemas"
 import { eq, and, or, desc } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    const auth = await checkRoleAuthActive(
+      extractToken(request),
+      ["staff"],
+      "Staff area"
+    )
     if (auth.error) {
       return auth.error
     }
@@ -115,7 +119,11 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = checkRoleAuth(extractToken(request), ["staff"], "Staff area")
+    const auth = await checkRoleAuthActive(
+      extractToken(request),
+      ["staff"],
+      "Staff area"
+    )
     if (auth.error) {
       return auth.error
     }

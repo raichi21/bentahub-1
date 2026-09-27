@@ -1,16 +1,16 @@
 import { NextRequest } from "next/server"
-import { retrievePaymentIntent } from "@/lib/paymongo"
+import { retrievePaymentIntent, isPaymentSuccessful } from "@/lib/paymongo"
 import { db } from "@/servers/db"
 import { transactions } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
-import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { completeGcashTransaction } from "@/features/cashier-dashboard/actions/finalize-transaction"
 
 export async function GET(request: NextRequest) {
   try {
     // Auth check
-    const auth = checkRoleAuth(
+    const auth = await checkRoleAuthActive(
       extractToken(request),
       ["cashier"],
       "Cashier area"
@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
 
     const paymentIntent = await retrievePaymentIntent(paymentIntentId)
 
-    const isPaid = ["succeeded", "processing"].includes(paymentIntent.status)
+    // Only "succeeded" is a finalized payment. "processing" may still fail,
+    // so it must not release stock or treat the order as paid.
+    const isPaid = isPaymentSuccessful(paymentIntent.status)
 
     console.log(
       "[check] paymentIntentId:",

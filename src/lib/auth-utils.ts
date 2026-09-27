@@ -247,6 +247,39 @@ export function checkRoleAuth(
   return { userId: payload.userId }
 }
 
+/**
+ * Async variant of `checkRoleAuth` that additionally verifies the account is
+ * still active in the database. `checkRoleAuth` only trusts JWT claims, so a
+ * deactivated user keeps access (and permissions) until the token expires;
+ * routes that mutate money or stock must call this instead.
+ */
+export async function checkRoleAuthActive(
+  token: string | null,
+  allowedRoles: readonly string[],
+  label?: string
+): Promise<
+  { userId: string; error?: never } | { userId?: never; error: NextResponse }
+> {
+  const auth = checkRoleAuth(token, allowedRoles, label)
+  if (auth.error) return auth
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, auth.userId),
+  })
+  if (!user || user.isActive === false) {
+    return {
+      error: NextResponse.json(
+        {
+          success: false,
+          message: "This account is no longer active",
+        },
+        { status: 403 }
+      ),
+    }
+  }
+  return { userId: auth.userId }
+}
+
 // ---------------------------------------------------------------------------
 // Per-user management permissions
 // ---------------------------------------------------------------------------
@@ -298,6 +331,23 @@ export async function requirePermission(
     }
   }
   if (payload.role === "admin") {
+    // Do not trust the JWT claims alone: an admin who was deactivated or
+    // demoted must lose access immediately, not 7 days later when the token
+    // naturally expires. Look the account up so isActive is checked fresh.
+    const admin = await db.query.users.findFirst({
+      where: eq(users.id, payload.userId),
+    })
+    if (!admin || admin.isActive === false) {
+      return {
+        error: NextResponse.json(
+          {
+            success: false,
+            message: "This account is no longer active",
+          },
+          { status: 403 }
+        ),
+      }
+    }
     return { userId: payload.userId }
   }
   if (payload.role !== "staff") {

@@ -5,6 +5,7 @@ import { orders } from "@/drizzle/schema"
 import { transactions } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import { completeGcashTransaction } from "@/features/cashier-dashboard/actions/finalize-transaction"
+import { isPaymentSuccessful } from "@/lib/paymongo"
 
 /**
  * PayMongo webhook handler for async payment notifications.
@@ -56,11 +57,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    if (
-      eventType === "payment.paid" ||
-      ["paid", "processing"].includes(paymentStatus)
-    ) {
-      // Try to update orders table (customer flow)
+    if (eventType === "payment.paid" || isPaymentSuccessful(paymentStatus)) {
+      // Only definitively settled payments (succeeded / payment.paid) may
+      // mark an order/transaction as paid. "processing" is NOT final — the
+      // payment may still fail, so it must not release stock or flip status.
       try {
         const orderResult = await db
           .update(orders)
