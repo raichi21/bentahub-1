@@ -40,6 +40,12 @@ export interface Product {
   nearestExpiry: string | null
   activeBatchCount?: number
   batches?: InventoryBatchItem[]
+  /** Whether the product is sold by pack (e.g., per dozen) */
+  sellByPack?: boolean
+  /** Pack size for products sold in packs (e.g., 12 for dozen) */
+  packSize?: number
+  /** Pack price for display purposes */
+  packPrice?: number
 }
 
 // ── Cart ─────────────────────────────────────────────────────────────

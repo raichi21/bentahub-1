@@ -18,6 +18,10 @@ export interface CartItem {
    * server-side validation stays as the backstop in that case.
    */
   availableStock?: number | null
+  /** Pack size for products sold in packs (e.g., 12 for dozen) */
+  packSize?: number
+  /** Whether the product is sold by pack (e.g., per dozen) */
+  sellByPack?: boolean
 }
 
 export interface CartState {

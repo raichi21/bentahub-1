@@ -18,12 +18,16 @@ import {
   Minus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AuthHeader } from "@/features/user-mgmt"
+import { useAuth } from "@/hooks/useAuth"
 import { useProducts } from "@/hooks/useProducts"
 import { useCartActions } from "@/hooks/useCart"
-import { useAuth } from "@/hooks/useAuth"
 import { useCartStore } from "@/stores/cartStore"
-import { formatExpiryDate, getExpiryDays } from "@/lib/staff-utils"
+import { PageHeader, ContentCard } from "@/components/layouts"
+import { RoleGate } from "@/components/role-gate"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { getExpiryDays, formatExpiryDate } from "@/lib/staff-utils"
 
 interface CatalogProductDetailProps {
   /** Base route for links (e.g. "/catalog" or "/customer/catalog"). */
@@ -70,12 +74,17 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
     // Fire-and-forget instant add: the store updates synchronously (button
     // flips to "In Cart · N" immediately), the server call reconciles in the
     // background, and the store rolls back on failure.
-    addToCart(currentProduct.id, 1, currentProduct.branch, {
+    const packSize = currentProduct.sellByPack ? currentProduct.packSize : 1
+    const quantityToAdd = currentProduct.sellByPack ? currentProduct.packSize : 1
+    addToCart(currentProduct.id, quantityToAdd, currentProduct.branch, {
       productName: currentProduct.name,
       price: Number(currentProduct.price),
       image: currentProduct.image,
       category: currentProduct.category,
       availableStock: currentProduct.quantity ?? null,
+      packSize: currentProduct.sellByPack ? currentProduct.packSize : 1,
+      sellByPack: currentProduct.sellByPack,
+      packPrice: currentProduct.packPrice,
     }).catch((err) => {
       const message =
         err instanceof Error ? err.message : "Failed to add to cart"
@@ -210,6 +219,17 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
                 ₱{Number(currentProduct.bulkPrice).toFixed(2)}
               </span>
             )}
+{currentProduct.sellByPack && currentProduct.packSize > 1 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Per pack ({currentProduct.packSize} pcs): <span className="font-semibold">₱{Number(currentProduct.packPrice || currentProduct.price * currentProduct.packSize).toFixed(2)}</span>
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">
+                    <Package className="h-3 w-3" />
+                    Pack of {currentProduct.packSize}
+                  </span>
+                </div>
+              )}
           </div>
 
           {/* Product Details Grid */}

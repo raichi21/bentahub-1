@@ -30,8 +30,14 @@ export function CartItem({ item, onUpdateQty, onRemove }: CartItemProps) {
 
       {/* Info */}
       <div className="min-w-0 flex-1">
-        <h4 className="truncate text-sm leading-snug font-bold text-card-foreground">
+        <h4 className="flex items-center gap-1 truncate text-sm leading-snug font-bold text-card-foreground">
           {product.name}
+          {product.sellByPack && product.packSize > 1 && (
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary uppercase">
+              <Package className="h-2.5 w-2.5" />
+              Pack of {product.packSize}
+            </span>
+          )}
         </h4>
         <span className="font-mono text-[11px] text-muted-foreground">
           SKU: {product.sku}
