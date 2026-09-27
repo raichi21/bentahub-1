@@ -248,8 +248,6 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   }, [onScan, onClose])
 
   useEffect(() => {
-    let cancelled = false
-
     const init = async () => {
       await startCamera()
     }
@@ -257,7 +255,6 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     init()
 
     return () => {
-      cancelled = true
       const s = html5QrCodeRef.current as { stop: () => Promise<void> } | null
       if (s && !stoppedRef.current) {
         try {

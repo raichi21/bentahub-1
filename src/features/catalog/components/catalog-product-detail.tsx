@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useProducts } from "@/hooks/useProducts"
 import { useCartActions } from "@/hooks/useCart"
 import { useCartStore } from "@/stores/cartStore"
+import type { Product } from "@/stores/productsStore"
 import { cn } from "@/lib/utils"
 import { getExpiryDays, formatExpiryDate } from "@/lib/staff-utils"
 
@@ -34,10 +35,13 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { currentProduct, fetchProductById, isLoading, error } = useProducts()
+  const { fetchProductById } = useProducts()
   const { addToCart, updateCartItem, removeFromCart } = useCartActions()
   const { user } = useAuth()
   const [addError, setAddError] = useState<string | null>(null)
+  const [product, setProduct] = useState<Product | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const productId = params.id as string
   const branch = searchParams.get("branch")
@@ -50,15 +54,25 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
   const inCartQty = cartItem?.quantity ?? 0
 
   useEffect(() => {
-    if (productId) {
-      fetchProductById(productId, branch ?? undefined).catch(() => {
-        // Product not found — handled via error state
+    if (!productId) return
+    // Keep the fetched product in LOCAL state, not the shared store: the
+    // store's currentProduct is global, so navigating from product A to
+    // product B could briefly flash A's data while B is loading. Local state
+    // is scoped to this page instance. The `key={productId}` on the parent
+    // forces a remount when the product changes, so initial state is always
+    // fresh — no need to reset here.
+    fetchProductById(productId, branch ?? undefined)
+      .then((fetched) => {
+        if (fetched) setProduct(fetched)
       })
-    }
+      .catch(() => {
+        setError("Failed to load product details")
+      })
+      .finally(() => setIsLoading(false))
   }, [productId, branch, fetchProductById])
 
   const handleAddToCart = () => {
-    if (!currentProduct) return
+    if (!product) return
     // Guests sign in first — return them to this product after login
     if (!user) {
       router.push(
@@ -70,19 +84,19 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
     // Fire-and-forget instant add: the store updates synchronously (button
     // flips to "In Cart · N" immediately), the server call reconciles in the
     // background, and the store rolls back on failure.
-    const packSize = currentProduct.sellByPack
-      ? (currentProduct.packSize ?? 1)
+    const packSize = product.sellByPack
+      ? (product.packSize ?? 1)
       : 1
     const quantityToAdd = packSize
-    addToCart(currentProduct.id, quantityToAdd, currentProduct.branch, {
-      productName: currentProduct.name,
-      price: Number(currentProduct.price),
-      image: currentProduct.image,
-      category: currentProduct.category,
-      availableStock: currentProduct.quantity ?? null,
+    addToCart(product.id, quantityToAdd, product.branch, {
+      productName: product.name,
+      price: Number(product.price),
+      image: product.image,
+      category: product.category,
+      availableStock: product.quantity ?? null,
       packSize,
-      sellByPack: currentProduct.sellByPack,
-      packPrice: currentProduct.packPrice,
+      sellByPack: product.sellByPack,
+      packPrice: product.packPrice,
     }).catch((err) => {
       const message =
         err instanceof Error ? err.message : "Failed to add to cart"
@@ -92,7 +106,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
   }
 
   const handleDecrement = () => {
-    if (!cartItem || !currentProduct) return
+    if (!cartItem || !product) return
     if (inCartQty <= 1) {
       removeFromCart(cartItem.id).catch(() => {})
     } else {
@@ -111,7 +125,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
     )
   }
 
-  if (error || !currentProduct) {
+  if (error || !product) {
     return (
       <div className="mx-auto max-w-2xl py-20 text-center">
         <Package className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
@@ -126,14 +140,14 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
     )
   }
 
-  const isOutOfStock = currentProduct.stockStatus === "out-of-stock"
+  const isOutOfStock = product.stockStatus === "out-of-stock"
   const atMax =
-    currentProduct.quantity != null && inCartQty >= currentProduct.quantity
+    product.quantity != null && inCartQty >= product.quantity
   // The public landing detail page is browse-only (no Add to Cart).
   const isPublic = basePath === "/catalog"
 
-  const expiryDays = getExpiryDays(currentProduct.nearestExpiry ?? null)
-  const formattedExpiry = formatExpiryDate(currentProduct.nearestExpiry ?? null)
+  const expiryDays = getExpiryDays(product.nearestExpiry ?? null)
+  const formattedExpiry = formatExpiryDate(product.nearestExpiry ?? null)
   const isExpiryUrgent = expiryDays !== null && expiryDays <= 7
   const isExpiryWarning = expiryDays !== null && expiryDays <= 30
 
@@ -155,10 +169,10 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
         <div className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
           <Image
             src={
-              currentProduct.image ||
+              product.image ||
               "/images/dashboard/kopiko-blanca-twin-v2.png"
             }
-            alt={currentProduct.name}
+            alt={product.name}
             fill
             className={cn(
               "object-cover",
@@ -169,13 +183,13 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
 
           {/* Stock Badge */}
           <div className="absolute top-4 left-4">
-            {currentProduct.stockStatus === "in-stock" && (
+            {product.stockStatus === "in-stock" && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 <CheckCircle className="h-3 w-3" />
                 In Stock
               </span>
             )}
-            {currentProduct.stockStatus === "low-stock" && (
+            {product.stockStatus === "low-stock" && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                 Low Stock
               </span>
@@ -192,47 +206,47 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
         <div className="flex flex-col">
           {/* Category */}
           <span className="mb-2 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-            {currentProduct.category}
+            {product.category}
           </span>
 
           {/* Name */}
           <h1 className="mb-4 text-3xl font-bold text-foreground lg:text-4xl">
-            {currentProduct.name}
+            {product.name}
           </h1>
 
           {/* Description */}
-          {currentProduct.description && (
+          {product.description && (
             <p className="mb-6 leading-relaxed text-muted-foreground">
-              {currentProduct.description}
+              {product.description}
             </p>
           )}
 
           {/* Price */}
           <div className="mb-6">
             <span className="text-4xl font-bold text-primary">
-              ₱{Number(currentProduct.price).toFixed(2)}
+              ₱{Number(product.price).toFixed(2)}
             </span>
-            {currentProduct.bulkPrice && (
+            {product.bulkPrice && (
               <span className="ml-3 text-sm text-muted-foreground line-through">
-                ₱{Number(currentProduct.bulkPrice).toFixed(2)}
+                ₱{Number(product.bulkPrice).toFixed(2)}
               </span>
             )}
-            {currentProduct.sellByPack &&
-              (currentProduct.packSize ?? 0) > 1 && (
+            {product.sellByPack &&
+              (product.packSize ?? 0) > 1 && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    Per pack ({currentProduct.packSize} pcs):{" "}
+                    Per pack ({product.packSize} pcs):{" "}
                     <span className="font-semibold">
                       ₱
                       {Number(
-                        currentProduct.packPrice ||
-                          currentProduct.price * (currentProduct.packSize ?? 1)
+                        product.packPrice ||
+                          product.price * (product.packSize ?? 1)
                       ).toFixed(2)}
                     </span>
                   </span>
                   <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">
                     <Package className="h-3 w-3" />
-                    Pack of {currentProduct.packSize}
+                    Pack of {product.packSize}
                   </span>
                 </div>
               )}
@@ -245,28 +259,28 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
               <div>
                 <p className="text-xs text-muted-foreground">Category</p>
                 <p className="text-sm font-medium text-foreground">
-                  {currentProduct.category}
+                  {product.category}
                 </p>
               </div>
             </div>
-            {currentProduct.weight && (
+            {product.weight && (
               <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
                 <Weight className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <div>
                   <p className="text-xs text-muted-foreground">Weight</p>
                   <p className="text-sm font-medium text-foreground">
-                    {currentProduct.weight}
+                    {product.weight}
                   </p>
                 </div>
               </div>
             )}
-            {currentProduct.branch && (
+            {product.branch && (
               <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
                 <Store className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <div>
                   <p className="text-xs text-muted-foreground">Branch</p>
                   <p className="text-sm font-medium text-foreground">
-                    {currentProduct.branch}
+                    {product.branch}
                   </p>
                 </div>
               </div>
@@ -306,7 +320,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
               <div>
                 <p className="text-xs text-muted-foreground">Stock</p>
                 <p className="text-sm font-medium text-foreground">
-                  {currentProduct.quantity} available
+                  {product.quantity} available
                 </p>
               </div>
             </div>

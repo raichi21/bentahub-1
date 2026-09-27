@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requirePermission, generateId } from "@/lib/auth-utils"
 import { logActivity } from "@/lib/activity-log"
+import { notifyAdmins } from "@/lib/notifications"
 import { db } from "@/servers/db"
 import {
   users,
@@ -8,7 +9,6 @@ import {
   products,
   branchInventory,
   inventoryBatches,
-  notifications,
   categories,
   unitTypes,
 } from "@/servers/schemas"
@@ -363,26 +363,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const adminUsers = await db.query.users.findMany({
-      where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+    await notifyAdmins({
+      type: "new-product",
+      title: `New Product Added: ${name}`,
+      message: `${name} (SKU: ${sku}) was added to ${branchName} by ${user.fullName}. Price: ₱${price}.`,
+      relatedProductId: productId,
     })
-
-    if (adminUsers.length > 0) {
-      await db.insert(notifications).values(
-        adminUsers.map((a) => ({
-          id: generateId(),
-          userId: a.id,
-          type: "new-product" as const,
-          title: `New Product Added: ${name}`,
-          message: `${name} (SKU: ${sku}) was added to ${branchName} by ${user.fullName}. Price: ₱${price}.`,
-          relatedProductId: productId,
-          isRead: false,
-          readAt: null,
-          expiresAt: null,
-          relatedOrderId: null,
-        }))
-      )
-    }
 
     logActivity({
       actorId: auth.userId,

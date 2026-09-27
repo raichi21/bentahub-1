@@ -4,6 +4,10 @@ import { useProductsStore, type Product } from "@/stores/productsStore"
 export function useProducts() {
   const productsStore = useProductsStore()
   const inflightRef = useRef(0)
+  // Tracks the latest requested product detail so a stale in-flight response
+  // (e.g. the user opened product A, then product B) can never overwrite the
+  // store with the previously-requested product.
+  const detailRequestRef = useRef(0)
 
   /**
    * Fetch all products from backend
@@ -72,6 +76,7 @@ export function useProducts() {
    */
   const fetchProductById = useCallback(
     async (id: string, branch?: string) => {
+      const requestId = ++detailRequestRef.current
       inflightRef.current++
       try {
         productsStore.setLoading(true)
@@ -89,9 +94,15 @@ export function useProducts() {
           updatedAt: new Date(payload.updatedAt),
         }
 
-        productsStore.setCurrentProduct(product)
+        // Ignore if a newer request superseded this one — the page may have
+        // navigated to another product while this response was in flight.
+        if (requestId === detailRequestRef.current) {
+          productsStore.setCurrentProduct(product)
+        }
         return product
       } catch (error) {
+        // A superseded request — ignore silently (the newer request owns the store).
+        if (requestId !== detailRequestRef.current) return undefined
         const message = error instanceof Error ? error.message : "Unknown error"
         productsStore.setError(message)
         console.error("Failed to fetch product:", error)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { extractToken, checkRoleAuthActive, generateId } from "@/lib/auth-utils"
+import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
 import { deductStockIn } from "@/features/cashier-dashboard/actions/finalize-transaction"
+import { notifyUser, notifyAdmins } from "@/lib/notifications"
 import { db } from "@/servers/db"
 import {
   users,
@@ -8,7 +9,6 @@ import {
   orderItems,
   branches,
   branchInventory,
-  notifications,
 } from "@/servers/schemas"
 import { eq, and, or, desc } from "drizzle-orm"
 
@@ -233,37 +233,19 @@ export async function PATCH(request: NextRequest) {
           .where(eq(orders.id, orderId))
       })
 
-      await db.insert(notifications).values({
-        id: generateId(),
-        userId: order.userId,
+      await notifyUser(order.userId, {
         type: "order-status",
         title: "Reservation Confirmed",
         message: `Your reservation at ${order.branch} has been confirmed by our staff. We are now preparing your order.`,
         relatedOrderId: orderId,
-        isRead: false,
-        readAt: null,
-        expiresAt: null,
-        relatedProductId: null,
       })
 
-      const adminUsers = await db.query.users.findMany({
-        where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+      await notifyAdmins({
+        type: "order-status",
+        title: "Reservation Confirmed",
+        message: `Order ${orderId} at ${order.branch} was confirmed by ${staff.fullName}.`,
+        relatedOrderId: orderId,
       })
-
-      await db.insert(notifications).values(
-        adminUsers.map((a) => ({
-          id: generateId(),
-          userId: a.id,
-          type: "order-status" as const,
-          title: "Reservation Confirmed",
-          message: `Order ${orderId} at ${order.branch} was confirmed by ${staff.fullName}.`,
-          relatedOrderId: orderId,
-          isRead: false,
-          readAt: null,
-          expiresAt: null,
-          relatedProductId: null,
-        }))
-      )
     } else if (action === "cancel") {
       if (order.status !== "pending") {
         return NextResponse.json(
@@ -282,37 +264,19 @@ export async function PATCH(request: NextRequest) {
         .set({ status: "cancelled", cancelledReason: cancelReason })
         .where(eq(orders.id, orderId))
 
-      await db.insert(notifications).values({
-        id: generateId(),
-        userId: order.userId,
+      await notifyUser(order.userId, {
         type: "order-status",
         title: "Reservation Cancelled",
         message: `Your reservation at ${order.branch} has been cancelled. Reason: ${cancelReason}`,
         relatedOrderId: orderId,
-        isRead: false,
-        readAt: null,
-        expiresAt: null,
-        relatedProductId: null,
       })
 
-      const adminUsersCancel = await db.query.users.findMany({
-        where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+      await notifyAdmins({
+        type: "order-status",
+        title: "Reservation Cancelled",
+        message: `Order ${orderId} at ${order.branch} was cancelled by ${staff.fullName}. Reason: ${cancelReason}`,
+        relatedOrderId: orderId,
       })
-
-      await db.insert(notifications).values(
-        adminUsersCancel.map((a) => ({
-          id: generateId(),
-          userId: a.id,
-          type: "order-status" as const,
-          title: "Reservation Cancelled",
-          message: `Order ${orderId} at ${order.branch} was cancelled by ${staff.fullName}. Reason: ${cancelReason}`,
-          relatedOrderId: orderId,
-          isRead: false,
-          readAt: null,
-          expiresAt: null,
-          relatedProductId: null,
-        }))
-      )
     } else if (action === "ready") {
       if (order.status !== "processing") {
         return NextResponse.json(
@@ -333,37 +297,19 @@ export async function PATCH(request: NextRequest) {
         })
         .where(eq(orders.id, orderId))
 
-      await db.insert(notifications).values({
-        id: generateId(),
-        userId: order.userId,
+      await notifyUser(order.userId, {
         type: "order-ready",
         title: "Order Ready for Pickup",
         message: `Your order at ${order.branch} is now ready for pickup. Please claim it before the pickup deadline.`,
         relatedOrderId: orderId,
-        isRead: false,
-        readAt: null,
-        expiresAt: null,
-        relatedProductId: null,
       })
 
-      const adminUsersReady = await db.query.users.findMany({
-        where: and(eq(users.role, "admin"), eq(users.isActive, true)),
+      await notifyAdmins({
+        type: "order-ready",
+        title: "Order Ready for Pickup",
+        message: `Order ${orderId} at ${order.branch} was marked as ready for pickup by ${staff.fullName}.`,
+        relatedOrderId: orderId,
       })
-
-      await db.insert(notifications).values(
-        adminUsersReady.map((a) => ({
-          id: generateId(),
-          userId: a.id,
-          type: "order-ready" as const,
-          title: "Order Ready for Pickup",
-          message: `Order ${orderId} at ${order.branch} was marked as ready for pickup by ${staff.fullName}.`,
-          relatedOrderId: orderId,
-          isRead: false,
-          readAt: null,
-          expiresAt: null,
-          relatedProductId: null,
-        }))
-      )
     } else {
       return NextResponse.json(
         {

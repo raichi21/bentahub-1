@@ -112,9 +112,17 @@ export async function GET(
     // products.quantity (which goes stale after sales). Mirrors the catalog
     // listing route so the detail page shows the same availability as the
     // listing, cart, and checkout.
-    const branchRecord = p.branch
+    //
+    // The `branch` query param (the branch the customer is browsing) takes
+    // precedence over the product's own `branch` column — the product may be
+    // listed under a different branch than the one it belongs to, and
+    // quantity/stockStatus must match what that branch's inventory actually
+    // holds. Expiry resolution uses the same branch so the detail page is
+    // internally consistent.
+    const resolvedBranch = branch ?? p.branch
+    const branchRecord = resolvedBranch
       ? await db.query.branches.findFirst({
-          where: eq(branches.name, p.branch),
+          where: eq(branches.name, resolvedBranch),
         })
       : null
     const inv = branchRecord
@@ -140,7 +148,7 @@ export async function GET(
       stockStatus,
       price: Number(p.price),
       bulkPrice: p.bulkPrice ? Number(p.bulkPrice) : undefined,
-      nearestExpiry: await getNearestExpiry(id, branch),
+      nearestExpiry: await getNearestExpiry(id, resolvedBranch),
     }
 
     return apiResponse({ success: true, data: formatted })

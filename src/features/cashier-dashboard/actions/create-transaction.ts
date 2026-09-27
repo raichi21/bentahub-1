@@ -2,13 +2,12 @@ import { db } from "@/servers/db"
 import {
   transactions,
   transactionItems,
-  users,
-  notifications,
   branches,
   cashDrawerSessions,
 } from "@/servers/schemas"
 import { eq, max, and } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
+import { notifyAdmins } from "@/lib/notifications"
 import { deductStockIn } from "./finalize-transaction"
 import type { CartItem } from "@/types/cashier"
 
@@ -106,30 +105,15 @@ export async function createTransaction(input: CreateTransactionInput) {
       }))
     )
 
-    const adminUsers = await db.query.users.findMany({
-      where: and(eq(users.role, "admin"), eq(users.isActive, true)),
-    })
-
     const branchRecord = await db.query.branches.findFirst({
       where: eq(branches.id, branchId),
     })
 
-    if (adminUsers.length > 0) {
-      await db.insert(notifications).values(
-        adminUsers.map((a) => ({
-          id: generateId(),
-          userId: a.id,
-          type: "payment-received" as const,
-          title: `Payment Received: ${paymentMethod === "cash" ? "Cash" : "GCash"}`,
-          message: `A payment of ₱${totalAmount.toFixed(2)} was received via ${paymentMethod} at ${branchRecord?.name || "Unknown Branch"}. Receipt #${nextReceiptNumber}`,
-          relatedOrderId: null,
-          isRead: false,
-          readAt: null,
-          expiresAt: null,
-          relatedProductId: null,
-        }))
-      )
-    }
+    await notifyAdmins({
+      type: "payment-received",
+      title: `Payment Received: ${paymentMethod === "cash" ? "Cash" : "GCash"}`,
+      message: `A payment of ₱${totalAmount.toFixed(2)} was received via ${paymentMethod} at ${branchRecord?.name || "Unknown Branch"}. Receipt #${nextReceiptNumber}`,
+    })
 
     return { id: transactionId, receiptNumber: nextReceiptNumber }
   })

@@ -43,7 +43,9 @@ export interface ProductsState {
 export const useProductsStore = create<ProductsState>((set, get) => ({
   products: [],
   currentProduct: null,
-  isLoading: false,
+  // Default to loading: a cold-loaded catalog/detail page has no data yet and
+  // must show a spinner instead of flashing "Not Found" or an empty grid.
+  isLoading: true,
   error: null,
 
   setProducts: (products) => set({ products }),
