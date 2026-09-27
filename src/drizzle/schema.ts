@@ -288,6 +288,7 @@ export const products = pgTable("products", {
   bulkPrice: numeric("bulk_price", { precision: 10, scale: 2 }),
   packSize: integer("pack_size").default(1).notNull(),
   packPrice: numeric("pack_price", { precision: 10, scale: 2 }),
+  sellByPack: boolean("sell_by_pack").default(false).notNull(),
   unit: varchar("unit", { length: 50 }).default("pcs").notNull(),
   weight: varchar("weight", { length: 50 }),
   image: text("image"),
