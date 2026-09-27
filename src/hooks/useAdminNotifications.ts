@@ -86,6 +86,17 @@ export function useAdminNotifications({
 
   usePolling(fetchNotifications, token ? pollInterval : null)
 
+  // Cross-instance sync (same pattern as staff): any mark/clear action
+  // anywhere dispatches "notifications-read", so every hook consumer
+  // (topbar badge, feed) refetches instantly without a page reload.
+  useEffect(() => {
+    const handleRefresh = () => fetchNotifications()
+    window.addEventListener("notifications-read", handleRefresh)
+    return () => {
+      window.removeEventListener("notifications-read", handleRefresh)
+    }
+  }, [fetchNotifications])
+
   const markAsRead = useCallback(
     async (notificationId: string) => {
       if (!token) return
@@ -108,6 +119,7 @@ export function useAdminNotifications({
           )
         )
         setUnreadCount((prev) => Math.max(0, prev - 1))
+        window.dispatchEvent(new CustomEvent("notifications-read"))
       } catch (err) {
         console.error("Failed to mark notification as read:", err)
       }
@@ -129,6 +141,7 @@ export function useAdminNotifications({
 
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
       setUnreadCount(0)
+      window.dispatchEvent(new CustomEvent("notifications-read"))
     } catch (err) {
       console.error("Failed to mark all notifications as read:", err)
     }
@@ -147,6 +160,7 @@ export function useAdminNotifications({
 
       setNotifications([])
       setUnreadCount(0)
+      window.dispatchEvent(new CustomEvent("notifications-read"))
     } catch (err) {
       console.error("Failed to clear notifications:", err)
     }
