@@ -314,14 +314,39 @@ export async function POST(request: NextRequest) {
       isActive: true,
     })
 
-    const branchInventoryId = generateId()
-    await db.insert(branchInventory).values({
-      id: branchInventoryId,
-      branchId: branchRecord.id,
-      productId,
-      quantity: stockQty,
-      lowStockThreshold: threshold,
+    let branchInventoryId = generateId()
+    // Upsert on (branch_id, product_id): a concurrent request may have just
+    // created an inventory row for this product, and the unique index
+    // backstop folds this one in instead of multiplying cart/product JOINs.
+    await db
+      .insert(branchInventory)
+      .values({
+        id: branchInventoryId,
+        branchId: branchRecord.id,
+        productId,
+        quantity: stockQty,
+        lowStockThreshold: threshold,
+      })
+      .onConflictDoUpdate({
+        target: [branchInventory.branchId, branchInventory.productId],
+        set: {
+          quantity: sql`${branchInventory.quantity} + ${stockQty}`,
+          lowStockThreshold: threshold,
+          updatedAt: new Date(),
+        },
+      })
+
+    // When the conflict above folded into an existing row, its id differs
+    // from the one we generated — resolve the real row so the batch ledger
+    // below stays attached to it.
+    const resolvedInventory = await db.query.branchInventory.findFirst({
+      where: and(
+        eq(branchInventory.branchId, branchRecord.id),
+        eq(branchInventory.productId, productId)
+      ),
+      columns: { id: true },
     })
+    if (resolvedInventory) branchInventoryId = resolvedInventory.id
 
     if (stockQty > 0) {
       await db.insert(inventoryBatches).values({

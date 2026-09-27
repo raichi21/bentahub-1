@@ -55,7 +55,27 @@ export const useCartStore = create<CartState>((set, get) => ({
       price: Number(item.price),
       subtotal: Number(item.subtotal),
     }))
-    set({ items: coerced })
+    // Backstop: cart_items and branch_inventory are unique-keyed so a server
+    // response should never contain the same product twice. If a duplicate
+    // ever slips through (legacy data, a stale cache, a just-resolved race),
+    // collapse it to a single row — latest updatedAt wins, ties break on the
+    // larger quantity — so the cart can never render the product twice.
+    const byProduct = new Map<string, CartItem>()
+    for (const item of coerced) {
+      const existing = byProduct.get(item.productId)
+      if (!existing) {
+        byProduct.set(item.productId, item)
+        continue
+      }
+      const existingUpdated = new Date(existing.updatedAt).getTime()
+      const incomingUpdated = new Date(item.updatedAt).getTime()
+      const keep =
+        incomingUpdated > existingUpdated ||
+        (incomingUpdated === existingUpdated &&
+          item.quantity > existing.quantity)
+      if (keep) byProduct.set(item.productId, item)
+    }
+    set({ items: [...byProduct.values()] })
     get().calculateTotals()
   },
 

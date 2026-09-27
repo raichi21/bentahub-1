@@ -55,6 +55,24 @@ describe("cartStore", () => {
     expect(state.items[0].subtotal).toBe(10.5)
   })
 
+  it("setItems collapses duplicate product rows to a single row", () => {
+    useCartStore.getState().setItems([
+      makeItem({ id: "a", quantity: 1, subtotal: 10 }),
+      makeItem({
+        id: "b",
+        quantity: 3,
+        subtotal: 30,
+        updatedAt: new Date("2026-01-02T00:00:00Z"),
+      }),
+    ])
+
+    const items = useCartStore.getState().items
+    expect(items).toHaveLength(1)
+    expect(items[0].id).toBe("b")
+    expect(useCartStore.getState().itemCount).toBe(3)
+    expect(useCartStore.getState().total).toBe(30)
+  })
+
   it("addItem merges by productId and recomputes totals", () => {
     const state = useCartStore.getState()
     state.addItem(makeItem())

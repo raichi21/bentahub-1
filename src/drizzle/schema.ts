@@ -356,18 +356,29 @@ export type Category = typeof categories.$inferSelect
 export type InsertCategory = typeof categories.$inferInsert
 
 // ── Branch Inventory ──
-export const branchInventory = pgTable("branch_inventory", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  branchId: varchar("branch_id", { length: 36 })
-    .notNull()
-    .references(() => branches.id, { onDelete: "cascade" }),
-  productId: varchar("product_id", { length: 36 })
-    .notNull()
-    .references(() => products.id, { onDelete: "cascade" }),
-  quantity: integer("quantity").default(0).notNull(),
-  lowStockThreshold: integer("low_stock_threshold").default(10).notNull(),
-  updatedAt,
-})
+export const branchInventory = pgTable(
+  "branch_inventory",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    branchId: varchar("branch_id", { length: 36 })
+      .notNull()
+      .references(() => branches.id, { onDelete: "cascade" }),
+    productId: varchar("product_id", { length: 36 })
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    quantity: integer("quantity").default(0).notNull(),
+    lowStockThreshold: integer("low_stock_threshold").default(10).notNull(),
+    updatedAt,
+  },
+  (table) => ({
+    // One inventory row per product per branch. Without this, a duplicate
+    // row would multiply every cart/product JOIN and show one product twice
+    // in the customer cart.
+    branchProductUnique: uniqueIndex(
+      "branch_inventory_branch_product_unique"
+    ).on(table.branchId, table.productId),
+  })
+)
 
 export const branchInventoryRelations = relations(
   branchInventory,
@@ -391,38 +402,41 @@ export type BranchInventory = typeof branchInventory.$inferSelect
 export type InsertBranchInventory = typeof branchInventory.$inferInsert
 
 // ── Orders ──
-export const orders = pgTable("orders", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  userId: varchar("user_id", { length: 36 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  status: orderStatusEnum("status").default("pending").notNull(),
-  paymentMethod: paymentMethodEnum("payment_method").notNull(),
-  totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
-  branch: varchar("branch", { length: 100 }).notNull(),
-  notes: varchar("notes", { length: 500 }),
-  phone: varchar("phone", { length: 20 }),
-  isPaid: boolean("is_paid").default(false).notNull(),
-  paidAt: timestamp("paid_at", { withTimezone: true }),
-  pickupDeadline: timestamp("pickup_deadline", { withTimezone: true }),
-  gcashRef: varchar("gcash_ref", { length: 255 }),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  cancelledReason: varchar("cancelled_reason", { length: 500 }),
-  processedBy: varchar("processed_by", { length: 36 }).references(
-    () => users.id,
-    {
-      onDelete: "set null",
-    }
-  ),
-  processedAt: timestamp("processed_at", { withTimezone: true }),
-  stockDeducted: boolean("stock_deducted").default(false).notNull(),
-  createdAt,
-  updatedAt,
-},
-(table) => ({
-  userIdx: index("orders_user_id_idx").on(table.userId),
-  createdAtIdx: index("orders_created_at_idx").on(table.createdAt),
-}))
+export const orders = pgTable(
+  "orders",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: orderStatusEnum("status").default("pending").notNull(),
+    paymentMethod: paymentMethodEnum("payment_method").notNull(),
+    totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
+    branch: varchar("branch", { length: 100 }).notNull(),
+    notes: varchar("notes", { length: 500 }),
+    phone: varchar("phone", { length: 20 }),
+    isPaid: boolean("is_paid").default(false).notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    pickupDeadline: timestamp("pickup_deadline", { withTimezone: true }),
+    gcashRef: varchar("gcash_ref", { length: 255 }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    cancelledReason: varchar("cancelled_reason", { length: 500 }),
+    processedBy: varchar("processed_by", { length: 36 }).references(
+      () => users.id,
+      {
+        onDelete: "set null",
+      }
+    ),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    stockDeducted: boolean("stock_deducted").default(false).notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => ({
+    userIdx: index("orders_user_id_idx").on(table.userId),
+    createdAtIdx: index("orders_created_at_idx").on(table.createdAt),
+  })
+)
 
 export const orderItems = pgTable("order_items", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -469,22 +483,35 @@ export type OrderItem = typeof orderItems.$inferSelect
 export type InsertOrderItem = typeof orderItems.$inferInsert
 
 // ── Cart Items ──
-export const cartItems = pgTable("cart_items", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  userId: varchar("user_id", { length: 36 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  productId: varchar("product_id", { length: 36 }).notNull(),
-  productName: varchar("product_name", { length: 255 }).notNull(),
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  quantity: integer("quantity").notNull().default(1),
-  subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
-  image: text("image"),
-  category: varchar("category", { length: 100 }),
-  branch: varchar("branch", { length: 100 }).notNull(),
-  addedAt: timestamp("added_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt,
-})
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    productId: varchar("product_id", { length: 36 }).notNull(),
+    productName: varchar("product_name", { length: 255 }).notNull(),
+    price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
+    image: text("image"),
+    category: varchar("category", { length: 100 }),
+    branch: varchar("branch", { length: 100 }).notNull(),
+    addedAt: timestamp("added_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt,
+  },
+  (table) => ({
+    // Hard stop on duplicate cart rows: the client upserts on this key, and
+    // any legacy/race duplicates are collapsed before this index is created.
+    userProductUnique: uniqueIndex("cart_items_user_product_unique").on(
+      table.userId,
+      table.productId
+    ),
+  })
+)
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   user: one(users, {
@@ -503,33 +530,39 @@ export type CartItem = typeof cartItems.$inferSelect
 export type InsertCartItem = typeof cartItems.$inferInsert
 
 // ── Transactions ──
-export const transactions = pgTable("transactions", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  branchId: varchar("branch_id", { length: 36 })
-    .notNull()
-    .references(() => branches.id, { onDelete: "cascade" }),
-  cashierId: varchar("cashier_id", { length: 36 }).references(() => users.id, {
-    onDelete: "set null",
-  }),
-  receiptNumber: integer("receipt_number"),
-  totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: paymentMethodEnum("payment_method").notNull(),
-  status: transactionStatusEnum("status").default("completed").notNull(),
-  gcashRef: varchar("gcash_ref", { length: 255 }),
-  amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }),
-  change: numeric("change", { precision: 10, scale: 2 }),
-  sessionId: varchar("session_id", { length: 36 }).references(
-    () => cashDrawerSessions.id,
-    {
-      onDelete: "set null",
-    }
-  ),
-  createdAt,
-},
-(table) => ({
-  branchIdx: index("transactions_branch_id_idx").on(table.branchId),
-  createdAtIdx: index("transactions_created_at_idx").on(table.createdAt),
-}))
+export const transactions = pgTable(
+  "transactions",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    branchId: varchar("branch_id", { length: 36 })
+      .notNull()
+      .references(() => branches.id, { onDelete: "cascade" }),
+    cashierId: varchar("cashier_id", { length: 36 }).references(
+      () => users.id,
+      {
+        onDelete: "set null",
+      }
+    ),
+    receiptNumber: integer("receipt_number"),
+    totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
+    paymentMethod: paymentMethodEnum("payment_method").notNull(),
+    status: transactionStatusEnum("status").default("completed").notNull(),
+    gcashRef: varchar("gcash_ref", { length: 255 }),
+    amountPaid: numeric("amount_paid", { precision: 10, scale: 2 }),
+    change: numeric("change", { precision: 10, scale: 2 }),
+    sessionId: varchar("session_id", { length: 36 }).references(
+      () => cashDrawerSessions.id,
+      {
+        onDelete: "set null",
+      }
+    ),
+    createdAt,
+  },
+  (table) => ({
+    branchIdx: index("transactions_branch_id_idx").on(table.branchId),
+    createdAtIdx: index("transactions_created_at_idx").on(table.createdAt),
+  })
+)
 
 export const transactionItems = pgTable("transaction_items", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -818,9 +851,7 @@ export const stockWasteLogs = pgTable(
   },
   (table) => ({
     productIdx: index("stock_waste_logs_product_id_idx").on(table.productId),
-    createdAtIdx: index("stock_waste_logs_created_at_idx").on(
-      table.createdAt
-    ),
+    createdAtIdx: index("stock_waste_logs_created_at_idx").on(table.createdAt),
   })
 )
 

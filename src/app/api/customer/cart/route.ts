@@ -254,7 +254,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Add new item to cart
+    // Add new item to cart.
+    // Upsert on (user_id, product_id): two adds racing past the read above
+    // can both reach this insert, and the unique index backstop makes the
+    // second one fold into the first row instead of creating a duplicate.
     const newCartItem = {
       id: generateId(),
       userId,
@@ -268,7 +271,19 @@ export async function POST(request: NextRequest) {
       branch: effectiveBranch,
     }
 
-    const created = await db.insert(cartItems).values(newCartItem).returning()
+    const created = await db
+      .insert(cartItems)
+      .values(newCartItem)
+      .onConflictDoUpdate({
+        target: [cartItems.userId, cartItems.productId],
+        set: {
+          quantity: sql`${cartItems.quantity} + ${requestedQuantity}`,
+          subtotal: sql`(${cartItems.quantity} + ${requestedQuantity}) * ${unitPrice}`,
+          branch: effectiveBranch,
+          updatedAt: new Date(),
+        },
+      })
+      .returning()
 
     return NextResponse.json(
       {

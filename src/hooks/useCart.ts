@@ -47,7 +47,7 @@ function createTempId(): string {
  */
 /** productIds with an add-to-cart POST still in flight. */
 const pendingAdds = new Map<string, number>()
-/** productIds removed while their add was still in flight — the add's reconcile cleans up the server row and stays out of the store. */
+/** productIds removed while their add was still in flight — the add's reconcile cleans up the server row and stays out of the store. Held until every in-flight add for the product resolves. */
 const pendingRemoves = new Set<string>()
 /**
  * Delete tombstones: productId -> timestamp of the user's remove tap.
@@ -295,9 +295,16 @@ export function useCartActions() {
         throw error
       } finally {
         const remaining = (pendingAdds.get(productId) ?? 1) - 1
-        if (remaining <= 0) pendingAdds.delete(productId)
-        else pendingAdds.set(productId, remaining)
-        pendingRemoves.delete(productId)
+        if (remaining <= 0) {
+          pendingAdds.delete(productId)
+          // Only lift the remove marker once every in-flight add for this
+          // product has resolved — a sibling add landing later would
+          // otherwise recreate the server row and re-add the product the
+          // customer just removed.
+          pendingRemoves.delete(productId)
+        } else {
+          pendingAdds.set(productId, remaining)
+        }
       }
     },
     [user, token]
@@ -422,18 +429,21 @@ export function useCartActions() {
       // ── Optimistic: remove instantly ──
       state.removeItem(itemId)
 
-      // If this row is a pending add (its POST is still in flight), the
-      // add's reconcile cleans up the server row and keeps it out of the
-      // store — no DELETE needed here (the temp row has no server id).
-      if ((pendingAdds.get(previous.productId) ?? 0) > 0) {
-        pendingRemoves.add(previous.productId)
-        return
-      }
-
       // Leave a delete tombstone so no fetch — however it was triggered,
       // whenever it was dispatched, or whichever consumer runs it —
       // resurrects this product. A fresh add clears it (see addToCart).
       deleteTombstones.set(previous.productId, Date.now())
+
+      // If this row is a pending add (its POST is still in flight), the
+      // add's reconcile cleans up the server row and keeps it out of the
+      // store — no DELETE needed here (the temp row has no server id).
+      // The tombstone above still guards against a swallowed cleanup DELETE
+      // or a sibling in-flight add leaking the server row back in via a
+      // later fetch.
+      if ((pendingAdds.get(previous.productId) ?? 0) > 0) {
+        pendingRemoves.add(previous.productId)
+        return
+      }
 
       try {
         const response = await fetch(`/api/customer/cart/${itemId}`, {
