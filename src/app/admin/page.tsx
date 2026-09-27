@@ -129,9 +129,8 @@ export default function AdminPage() {
 
       {data?.revenueChannels && (
         <p className="-mt-2 text-xs text-muted-foreground">
-          MTD Revenue split — Walk-in (POS){" "}
-          {data.revenueChannels.posDisplay} · Reservations{" "}
-          {data.revenueChannels.reservationsDisplay}
+          Kita ngayong buwan: Walk-in {data.revenueChannels.posDisplay} |
+          Reservations {data.revenueChannels.reservationsDisplay}
         </p>
       )}
 
