@@ -38,13 +38,11 @@ export function Footer() {
               </h4>
               <ul className="space-y-2 text-sm text-zinc-400">
                 <li>
-                  <Link href="#" className="transition-colors hover:text-white">
-                    Browse Catalog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="transition-colors hover:text-white">
-                    Branches
+                  <Link
+                    href="/catalog"
+                    className="transition-colors hover:text-white"
+                  >
+                    Browse Products
                   </Link>
                 </li>
               </ul>
