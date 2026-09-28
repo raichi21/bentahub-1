@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { Globe, MessageCircle, Share2 } from "lucide-react"
 import { StoreLogo } from "@/components/store-logo"
 import { useStoreSettings } from "@/hooks/useStoreSettings"
 
@@ -29,26 +28,6 @@ export function Footer() {
               Your neighborhood digital community store. Reserve essentials
               online and pick up at your convenience.
             </p>
-            <div className="flex gap-4">
-              <Link
-                href="#"
-                className="text-zinc-400 transition-colors hover:text-white"
-              >
-                <Globe className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-zinc-400 transition-colors hover:text-white"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-zinc-400 transition-colors hover:text-white"
-              >
-                <Share2 className="h-5 w-5" />
-              </Link>
-            </div>
           </div>
 
           {/* Links Columns */}
@@ -66,33 +45,6 @@ export function Footer() {
                 <li>
                   <Link href="#" className="transition-colors hover:text-white">
                     Branches
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="transition-colors hover:text-white">
-                    Featured Products
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-4 text-sm font-bold tracking-wider text-white uppercase">
-                Support
-              </h4>
-              <ul className="space-y-2 text-sm text-zinc-400">
-                <li>
-                  <Link href="#" className="transition-colors hover:text-white">
-                    FAQs
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="transition-colors hover:text-white">
-                    Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="transition-colors hover:text-white">
-                    Contact Us
                   </Link>
                 </li>
               </ul>
