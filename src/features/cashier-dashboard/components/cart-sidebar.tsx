@@ -6,7 +6,6 @@ import {
   QrCode,
   Coins,
   CheckCircle,
-  Percent,
   X,
   Loader2,
 } from "lucide-react"
@@ -41,17 +40,13 @@ export function CartSidebar({
     setPaymentMethod,
     amountPaid,
     setAmountPaid,
-    discountPercent,
-    setDiscountPercent,
     subtotal,
-    discountAmount,
     total,
     changeDue,
   } = cart
 
   const [checkoutSuccess, setCheckoutSuccess] = useState(false)
   const [successMsg, setSuccessMsg] = useState("")
-  const [showPromoInput, setShowPromoInput] = useState(discountPercent > 0)
   const [submitting, setSubmitting] = useState(false)
   const [lastTransaction, setLastTransaction] = useState<Transaction | null>(
     null
@@ -93,7 +88,6 @@ export function CartSidebar({
           body: JSON.stringify({
             items,
             totalAmount: total,
-            discountPercent,
           }),
         })
 
@@ -139,7 +133,6 @@ export function CartSidebar({
           paymentMethod,
           amountPaid: amountPaid || "0",
           changeDue,
-          discountPercent,
         }),
       })
 
@@ -160,7 +153,7 @@ export function CartSidebar({
           price: item.product.price,
         })),
         subtotal,
-        discount: discountAmount,
+        discount: 0,
         total,
         paymentMethod,
         amountPaid: paidVal,
@@ -184,8 +177,6 @@ export function CartSidebar({
     amountPaid,
     total,
     paymentMethod,
-    discountPercent,
-    discountAmount,
     subtotal,
     changeDue,
     token,
@@ -253,7 +244,7 @@ export function CartSidebar({
                 price: item.product.price,
               })),
               subtotal,
-              discount: discountAmount,
+              discount: 0,
               total,
               paymentMethod: "gcash",
               amountPaid: total,
@@ -333,45 +324,11 @@ export function CartSidebar({
 
       {/* Checkout Panel */}
       <div className="flex flex-col gap-3 border-t border-border bg-muted/80 p-4">
-        {/* Subtotal & Discount info */}
+        {/* Subtotal & Total */}
         <div className="space-y-1 rounded-xl border border-border/60 bg-card p-3 shadow-2xs">
           <div className="flex justify-between text-xs font-medium text-muted-foreground">
             <span>Subtotal</span>
             <span className="font-mono">₱{subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex min-h-[28px] items-center justify-between text-xs font-medium text-muted-foreground">
-            <span>Discount</span>
-            {showPromoInput ? (
-              <div className="animate-fade-in flex items-center gap-1.5">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={discountPercent || ""}
-                  onChange={(e) => {
-                    const val = Math.min(
-                      100,
-                      Math.max(0, parseInt(e.target.value) || 0)
-                    )
-                    setDiscountPercent(val)
-                  }}
-                  onBlur={() => {
-                    if (!discountPercent) setShowPromoInput(false)
-                  }}
-                  className="w-12 rounded border border-border px-1 py-0.5 text-center font-mono text-xs focus:ring-1 focus:ring-primary focus:outline-none"
-                  placeholder="0"
-                  autoFocus
-                />
-                <Percent className="h-3 w-3 text-muted-foreground" />
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowPromoInput(true)}
-                className="text-xs font-bold text-primary hover:underline"
-              >
-                {discountPercent > 0 ? `${discountPercent}% Off` : "Add Promo"}
-              </button>
-            )}
           </div>
           <div className="mt-2 flex items-baseline justify-between border-t border-border pt-2">
             <span className="text-xs font-bold text-card-foreground">

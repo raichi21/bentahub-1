@@ -7,7 +7,6 @@ export function useCart() {
   const [items, setItems] = useState<CartItem[]>([])
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
   const [amountPaid, setAmountPaid] = useState<string>("")
-  const [discountPercent, setDiscountPercent] = useState<number>(0)
 
   const addItem = (product: Product) => {
     if (product.stock <= 0) return
@@ -52,7 +51,6 @@ export function useCart() {
   const clearCart = () => {
     setItems([])
     setAmountPaid("")
-    setDiscountPercent(0)
   }
 
   // Computed totals
@@ -60,8 +58,7 @@ export function useCart() {
     (sum, item) => sum + item.product.price * item.quantity,
     0
   )
-  const discountAmount = (subtotal * discountPercent) / 100
-  const total = Math.max(0, subtotal - discountAmount)
+  const total = subtotal
 
   const paidNum = parseFloat(amountPaid) || 0
   const changeDue = paidNum >= total ? paidNum - total : 0
@@ -76,10 +73,7 @@ export function useCart() {
     setPaymentMethod,
     amountPaid,
     setAmountPaid,
-    discountPercent,
-    setDiscountPercent,
     subtotal,
-    discountAmount,
     total,
     changeDue,
   }
