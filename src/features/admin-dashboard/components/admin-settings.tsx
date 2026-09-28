@@ -10,8 +10,6 @@ import {
   Store,
   Plus,
   Pencil,
-  Power,
-  PowerOff,
   Camera,
   X,
   Store as StoreIcon,
@@ -69,7 +67,6 @@ export function AdminSettings() {
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editBranch, setEditBranch] = useState<Branch | null>(null)
-  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const fetchSettings = useCallback(async () => {
     if (!token) return
@@ -187,35 +184,6 @@ export function AdminSettings() {
       setConfigMessage({ type: "error", text: "An error occurred" })
     } finally {
       setSavingConfig(false)
-    }
-  }
-
-  const handleToggleBranch = async (branch: Branch) => {
-    if (!token) return
-    setTogglingId(branch.id)
-    try {
-      const res = await fetch(`/api/admin/branches?id=${branch.id}`, {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          name: branch.name,
-          location: branch.location,
-          capacity: branch.capacity ?? 500,
-          isActive: !branch.isActive,
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setBranches((prev) =>
-          prev.map((b) =>
-            b.id === branch.id ? { ...b, isActive: !branch.isActive } : b
-          )
-        )
-      }
-    } catch {
-      setBranchesError("Failed to update branch status")
-    } finally {
-      setTogglingId(null)
     }
   }
 
@@ -475,29 +443,6 @@ export function AdminSettings() {
                               aria-label={`Edit ${branch.name}`}
                             >
                               <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              className={`rounded-lg p-2 transition-colors ${
-                                branch.isActive
-                                  ? "text-destructive hover:bg-destructive/10"
-                                  : "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
-                              }`}
-                              onClick={() => handleToggleBranch(branch)}
-                              disabled={togglingId === branch.id}
-                              aria-label={
-                                branch.isActive
-                                  ? `Deactivate ${branch.name}`
-                                  : `Activate ${branch.name}`
-                              }
-                            >
-                              {togglingId === branch.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : branch.isActive ? (
-                                <PowerOff className="h-4 w-4" />
-                              ) : (
-                                <Power className="h-4 w-4" />
-                              )}
                             </button>
                           </div>
                         </td>
