@@ -68,14 +68,6 @@ function formatDateTime(value: string | Date): string {
   })
 }
 
-function summarizeDetails(details: Record<string, unknown> | null): string {
-  if (!details || typeof details !== "object") return "—"
-  const parts = Object.entries(details)
-    .slice(0, 3)
-    .map(([k, v]) => `${k}: ${String(v)}`)
-  return parts.length > 0 ? parts.join(" · ") : "—"
-}
-
 export function actionLabel(action: string): string {
   return action.replace(".", ": ").replace(/-/g, " ")
 }
@@ -162,7 +154,6 @@ export function ActivityLogsTable({
                   <th className="px-6 py-4 whitespace-nowrap">Action</th>
                   <th className="px-6 py-4 whitespace-nowrap">Target</th>
                   <th className="px-6 py-4 whitespace-nowrap">Branch</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Details</th>
                   <th className="px-6 py-4 text-right whitespace-nowrap">
                     Actions
                   </th>
@@ -202,9 +193,6 @@ export function ActivityLogsTable({
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">
                       {log.branch || "—"}
-                    </td>
-                    <td className="max-w-[240px] truncate px-6 py-4 text-xs text-muted-foreground">
-                      {summarizeDetails(log.details)}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
