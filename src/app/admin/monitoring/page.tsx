@@ -5,7 +5,6 @@ import Link from "next/link"
 import {
   InventoryStatusTable,
   KPICard,
-  actionLabel,
 } from "@/features/admin-dashboard"
 import { Package, AlertTriangle, Clock, ExternalLink } from "lucide-react"
 import type {
@@ -27,16 +26,6 @@ export default function MonitoringPage() {
   )
   const [selectedBranch, setSelectedBranch] = useState("all")
   const [selectedDate, setSelectedDate] = useState("")
-  const [recentActivity, setRecentActivity] = useState<
-    Array<{
-      id: string
-      actorName: string | null
-      action: string
-      entityName: string | null
-      branch: string | null
-      createdAt: string
-    }>
-  >([])
   const [error, setError] = useState<string | null>(null)
   const [fetched, setFetched] = useState(false)
   const [branchesFetched, setBranchesFetched] = useState(false)
@@ -92,26 +81,6 @@ export default function MonitoringPage() {
       .catch(() => {})
       .finally(() => setBranchesFetched(true))
   }, [branchesFetched])
-
-  // Fetch recent activity for the on-page preview (respects branch filter)
-  useEffect(() => {
-    if (!token) return
-    const params = new URLSearchParams({ page: "1", pageSize: "8" })
-    if (selectedBranch !== "all") {
-      const branchName = branches.find((b) => b.id === selectedBranch)?.name
-      if (branchName) params.set("branch", branchName)
-    }
-    fetch(`/api/admin/activity-logs?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setRecentActivity(Array.isArray(json.data.logs) ? json.data.logs : [])
-        }
-      })
-      .catch(() => {})
-  }, [token, selectedBranch, branches])
 
   // ── Derived state ──
   const isLoading = authLoading || (!authLoading && token && !fetched && !error)
@@ -367,54 +336,6 @@ export default function MonitoringPage() {
         onDateValueChange={setSelectedDate}
       />
 
-      {/* Recent Activity Section */}
-      <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex items-center justify-between border-b border-border bg-muted/20 p-6">
-          <h4 className="text-lg font-bold text-foreground">Recent Activity</h4>
-          <Link
-            href="/admin/activity-logs"
-            className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-          >
-            View all logs
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-        {recentActivity.length === 0 ? (
-          <p className="p-6 text-sm text-muted-foreground">
-            No recent activity yet. Actions from now on will appear here.
-          </p>
-        ) : (
-          <ul className="divide-y divide-border/30">
-            {recentActivity.map((log) => (
-              <li
-                key={log.id}
-                className="flex items-center justify-between gap-4 px-6 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {log.actorName || "Unknown"}
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {actionLabel(log.action)}
-                    </span>
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {log.entityName || ""}
-                    {log.branch ? ` · ${log.branch}` : ""}
-                  </p>
-                </div>
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {new Date(log.createdAt).toLocaleDateString("en-PH", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
+      </div>
   )
 }
