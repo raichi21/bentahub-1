@@ -123,120 +123,64 @@ const termsSections = [
 
 const privacySections = [
   {
-    title: "1. Information We Collect",
+    title: "Information We Collect",
     items: [
       <>
-        <strong>You provide:</strong> name, email, password (hashed),
-        branch/merchant info, role, transaction records, and communications.
+        We collect your name, email, password (secured), branch info, role,
+        transaction records, and communications.
       </>,
       <>
-        <strong>Automatically collected:</strong> device data, IP address,
-        cookies, and logs.
+        We also get device data, IP address, cookies, and logs automatically.
       </>,
       <>
-        <strong>Payment data:</strong> processed by third-party providers
-        (PayMongo, GCash). We do not store full card or wallet details.
+        Payments are handled by providers like PayMongo and GCash — we
+        don&rsquo;t store full card or wallet details.
       </>,
       <>
-        <strong>Third-party sign-in:</strong> basic profile info from Google or
-        Facebook (name, email).
+        If you sign in with Google or Facebook, we only get basic info like your
+        name and email.
       </>,
     ],
   },
   {
-    title: "2. How We Use Data",
+    title: "How We Use Your Data",
     items: [
       <>
-        To create and manage accounts, process transactions, provide support,
-        improve security, and comply with legal obligations.
+        We use your data to create and manage accounts, process transactions,
+        provide support, improve security, and follow legal requirements.
       </>,
     ],
   },
   {
-    title: "3. Legal Basis",
+    title: "Sharing",
     items: [
       <>
-        Processing is based on consent, contract performance, legal compliance,
-        or legitimate interests.
+        We don&rsquo;t sell your data. We may share it with service providers,
+        authorities when required, or within your organization for operations.
       </>,
     ],
   },
   {
-    title: "4. Cookies",
+    title: "Security",
     items: [
       <>
-        Used to maintain sessions and preferences. You may disable them via
-        browser settings, but some features may not work properly.
+        We apply safeguards to protect your data, but no system is 100% secure.
       </>,
     ],
   },
   {
-    title: "5. Sharing",
+    title: "Your Rights",
     items: [
       <>
-        We do not sell data. We may share it with service providers, authorities
-        (when required), or within your organization for operations.
-      </>,
-    ],
-  },
-  {
-    title: "6. Retention",
-    items: [
-      <>
-        Data is kept only as long as necessary for legitimate purposes, then
-        securely deleted or anonymized.
-      </>,
-    ],
-  },
-  {
-    title: "7. Security",
-    items: [
-      <>
-        We apply reasonable safeguards to protect data, though no system is
-        completely secure.
-      </>,
-    ],
-  },
-  {
-    title: "8. Your Rights",
-    items: [
-      <>
-        You may request access, correction, deletion, or portability of your
-        data, and file complaints with the NPC. Contact{" "}
+        You can request access, correction, deletion, or transfer of your data.
+        You can also file complaints with the NPC. For help, email us at{" "}
         <a
           href="mailto:bentahubstore@gmail.com"
           className="text-primary underline"
         >
           bentahubstore@gmail.com
-        </a>{" "}
-        for assistance.
-      </>,
-    ],
-  },
-  {
-    title: "9. Children's Privacy",
-    items: [
-      <>
-        Not intended for users under 18. We do not knowingly collect data from
-        minors.
-      </>,
-    ],
-  },
-  {
-    title: "10. International Transfers",
-    items: [
-      <>
-        Data may be stored or processed outside the Philippines, with adequate
-        protection measures.
-      </>,
-    ],
-  },
-  {
-    title: "11. Updates",
-    items: [
-      <>
-        We may revise this Policy; changes will be posted with a new &ldquo;Last
-        Updated&rdquo; date.
+        </a>
+        .
       </>,
     ],
   },
@@ -311,11 +255,10 @@ export function PrivacyContent() {
   return (
     <div className="space-y-8">
       <p className="text-sm leading-relaxed text-muted-foreground">
-        <strong>Lourdes Sari Sari Store</strong> values your privacy. This
-        Policy explains how we collect, use, and protect your personal data in
-        compliance with the Data Privacy Act of 2012 (RA 10173) and the
-        guidelines of the National Privacy Commission (NPC). By using BentaHub,
-        you consent to this Policy.
+        At Lourdes Sari-Sari Store, we value your privacy. This Policy explains
+        how we handle your personal data in line with the Data Privacy Act of
+        2012 (RA 10173) and the rules of the National Privacy Commission (NPC).
+        By using BentaHub, you agree to this Policy.
       </p>
 
       <SectionList sections={privacySections} />
