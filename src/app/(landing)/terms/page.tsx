@@ -15,9 +15,6 @@ export default function TermsPage() {
       <main className="flex-1 bg-background">
         <div className="container mx-auto max-w-3xl px-4 py-12">
           <div className="mb-8">
-            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Last Updated: 18/09/2026
-            </p>
             <h1 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">
               Terms and Conditions
             </h1>

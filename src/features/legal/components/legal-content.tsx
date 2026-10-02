@@ -1,6 +1,6 @@
 const termsSections = [
   {
-    title: "1. Definitions",
+    title: "Definitions",
     items: [
       <>
         <strong>Account</strong> — your profile used to log in.
@@ -15,7 +15,7 @@ const termsSections = [
     ],
   },
   {
-    title: "2. Account Rules",
+    title: "Account Rules",
     items: [
       <>Register with correct information.</>,
       <>Keep your password safe.</>,
@@ -33,7 +33,7 @@ const termsSections = [
     ],
   },
   {
-    title: "3. Proper Use",
+    title: "Proper Use",
     items: [
       <>Do not use the system for illegal or dishonest activities.</>,
       <>Do not hack or break into the system.</>,
@@ -45,7 +45,7 @@ const termsSections = [
     ],
   },
   {
-    title: "4. Payments",
+    title: "Payments",
     items: [
       <>
         We only accept <strong>Cash</strong> or <strong>GCash</strong>.
@@ -57,7 +57,7 @@ const termsSections = [
     ],
   },
   {
-    title: "5. Ownership",
+    title: "Ownership",
     items: [
       <>
         All content in the system belongs to Lourdes Sari-Sari Store. You can
@@ -66,7 +66,7 @@ const termsSections = [
     ],
   },
   {
-    title: "6. Third-Party Services",
+    title: "Third-Party Services",
     items: [
       <>
         We may connect with services like PayMongo, GCash, Google, or Facebook.
@@ -75,7 +75,7 @@ const termsSections = [
     ],
   },
   {
-    title: "7. Privacy",
+    title: "Privacy",
     items: [
       <>
         We follow the Data Privacy Act of 2012 (RA 10173). By using BentaHub,
@@ -85,16 +85,16 @@ const termsSections = [
     ],
   },
   {
-    title: "8. Disclaimer",
+    title: "Disclaimer",
     items: [
       <>
-        The system is provided &ldquo;as is.&rdquo; We don&rsquo;t guarantee it will
-        always be error-free or available.
+        The system is provided &ldquo;as is.&rdquo; We don&rsquo;t guarantee it
+        will always be error-free or available.
       </>,
     ],
   },
   {
-    title: "9. Liability",
+    title: "Liability",
     items: [
       <>
         We are not responsible for indirect damages like lost profits or data.
@@ -102,7 +102,7 @@ const termsSections = [
     ],
   },
   {
-    title: "10. Indemnity",
+    title: "Indemnity",
     items: [
       <>
         You agree to protect Lourdes Sari-Sari Store and its staff from claims
@@ -111,26 +111,7 @@ const termsSections = [
     ],
   },
   {
-    title: "11. Termination",
-    items: [
-      <>
-        We may suspend or terminate your account if you break these rules or
-        cause harm.
-      </>,
-    ],
-  },
-  {
-    title: "12. Updates",
-    items: [
-      <>
-        We may change these Terms from time to time. The &ldquo;Last
-        Updated&rdquo; date will show the latest version. Using the system after
-        changes means you accept them.
-      </>,
-    ],
-  },
-  {
-    title: "13. Governing Law",
+    title: "Governing Law",
     items: [
       <>
         These Terms follow the laws of the Republic of the Philippines. Any
@@ -290,16 +271,11 @@ function SectionList({ sections }: { sections: typeof termsSections }) {
           <h3 className="font-heading text-lg font-semibold text-foreground">
             {section.title}
           </h3>
-          <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
+          <div className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
             {section.items.map((item, i) => (
-              <li
-                key={i}
-                className="list-disc pl-5 marker:text-muted-foreground"
-              >
-                {item}
-              </li>
+              <div key={i}>{item}</div>
             ))}
-          </ul>
+          </div>
         </section>
       ))}
     </div>
