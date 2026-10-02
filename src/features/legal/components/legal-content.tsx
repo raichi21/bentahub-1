@@ -297,7 +297,7 @@ export function TermsContent() {
 
       <section>
         <h3 className="font-heading text-lg font-semibold text-foreground">
-          14. Contact
+          Contact
         </h3>
         <div className="mt-3">
           <ContactBox />
@@ -322,7 +322,7 @@ export function PrivacyContent() {
 
       <section>
         <h3 className="font-heading text-lg font-semibold text-foreground">
-          12. Contact
+          Contact
         </h3>
         <div className="mt-3">
           <ContactBox />

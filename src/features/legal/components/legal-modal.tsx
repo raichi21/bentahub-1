@@ -40,9 +40,6 @@ export function LegalModal({ kind, open, onClose }: LegalModalProps) {
             <h2 className="font-heading text-base font-semibold text-foreground">
               {title}
             </h2>
-            <p className="mt-0.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Last Updated: 18/09/2026
-            </p>
           </div>
           <button
             onClick={onClose}
