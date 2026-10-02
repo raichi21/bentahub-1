@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import {
-  InventoryStatusTable,
-  KPICard,
-} from "@/features/admin-dashboard"
+import { InventoryStatusTable, KPICard } from "@/features/admin-dashboard"
 import { Package, AlertTriangle, Clock, ExternalLink } from "lucide-react"
 import type {
   MonitoringData,
@@ -335,7 +332,6 @@ export default function MonitoringPage() {
         dateValue={selectedDate}
         onDateValueChange={setSelectedDate}
       />
-
-      </div>
+    </div>
   )
 }

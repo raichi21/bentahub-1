@@ -3,37 +3,25 @@ const termsSections = [
     title: "1. Definitions",
     items: [
       <>
-        <strong>Account</strong> — your registered profile used to access the
-        Platform.
+        <strong>Account</strong> — your profile used to log in.
       </>,
       <>
-        <strong>Customer</strong> — an end user who purchases goods through a
-        merchant using the Platform.
+        <strong>Customer</strong> — someone who buys or reserves items.
       </>,
       <>
-        <strong>Merchant</strong> — a business or individual using the Platform
-        to reserve items.
+        <strong>Merchant</strong> — Lourdes Sari-Sari Store and its staff who
+        manage reservations and sales.
       </>,
     ],
   },
   {
-    title: "2. Eligibility",
+    title: "2. Account Rules",
     items: [
+      <>Register with correct information.</>,
+      <>Keep your password safe.</>,
+      <>You&rsquo;re responsible for everything done under your account.</>,
       <>
-        You must be at least eighteen (18) years old and legally capable of
-        entering into a binding contract to create an Account. By using the
-        Platform, you represent and warrant that you meet these requirements.
-      </>,
-    ],
-  },
-  {
-    title: "3. Account Registration and Security",
-    items: [
-      <>Provide accurate and complete information when registering.</>,
-      <>Keep your login credentials confidential.</>,
-      <>You are responsible for all activities under your Account.</>,
-      <>
-        Report unauthorized access immediately at{" "}
+        Report any unauthorized access to{" "}
         <a
           href="mailto:bentahubstore@gmail.com"
           className="text-primary underline"
@@ -45,48 +33,54 @@ const termsSections = [
     ],
   },
   {
-    title: "4. Acceptable Use",
+    title: "3. Proper Use",
     items: [
-      <>Use the Platform for unlawful or fraudulent purposes;</>,
-      <>Attempt unauthorized access or interfere with system operations;</>,
+      <>Do not use the system for illegal or dishonest activities.</>,
+      <>Do not hack or break into the system.</>,
       <>
-        Copy, resell, or reverse-engineer the Platform without written consent;
+        Do not copy, resell, or reverse-engineer the system without permission.
       </>,
-      <>Upload malicious code or disrupt functionality;</>,
-      <>Violate intellectual property or privacy rights.</>,
+      <>Do not upload harmful files.</>,
+      <>Do not violate privacy or intellectual property rights.</>,
     ],
   },
   {
-    title: "5. Payments",
+    title: "4. Payments",
     items: [
       <>
-        The system only supports payment via <strong>cash</strong> or{" "}
-        <strong>GCash</strong>. Any other digital payment methods, such as
-        cards, are not included.
+        We only accept <strong>Cash</strong> or <strong>GCash</strong>.
       </>,
       <>
-        Unless stated otherwise, fees are non-refundable, subject to applicable
-        law.
-      </>,
-    ],
-  },
-  {
-    title: "6. Intellectual Property",
-    items: [
-      <>
-        All content and materials on the Platform are owned or licensed by
-        Lourdes Sari Sari Store. You are granted a limited, non-exclusive
-        license to use the Platform for its intended purpose.
+        Payments for reserved items are final and non-refundable unless required
+        by law.
       </>,
     ],
   },
   {
-    title: "7. Third-Party Services",
+    title: "5. Ownership",
     items: [
       <>
-        Integrations with services like PayMongo, GCash, Google, and Facebook
-        are provided for convenience. We are not responsible for their content
-        or policies.
+        All content in the system belongs to Lourdes Sari-Sari Store. You can
+        only use it for its intended purpose.
+      </>,
+    ],
+  },
+  {
+    title: "6. Third-Party Services",
+    items: [
+      <>
+        We may connect with services like PayMongo, GCash, Google, or Facebook.
+        We are not responsible for their policies or issues.
+      </>,
+    ],
+  },
+  {
+    title: "7. Privacy",
+    items: [
+      <>
+        We follow the Data Privacy Act of 2012 (RA 10173). By using BentaHub,
+        you allow us to collect and use your information as explained in our
+        Privacy Policy.
       </>,
     ],
   },
@@ -94,29 +88,25 @@ const termsSections = [
     title: "8. Disclaimer",
     items: [
       <>
-        The Platform is provided &ldquo;as is&rdquo; and &ldquo;as
-        available.&rdquo; We do not guarantee uninterrupted or error-free
-        service.
+        The system is provided &ldquo;as is.&rdquo; We don&rsquo;t guarantee it will
+        always be error-free or available.
       </>,
     ],
   },
   {
-    title: "9. Limitation of Liability",
+    title: "9. Liability",
     items: [
       <>
-        To the fullest extent permitted by law, Lourdes Sari Sari Store shall
-        not be liable for indirect or consequential damages, including loss of
-        profits or data.
+        We are not responsible for indirect damages like lost profits or data.
       </>,
     ],
   },
   {
-    title: "10. Indemnification",
+    title: "10. Indemnity",
     items: [
       <>
-        You agree to indemnify and hold harmless Lourdes Sari Sari Store, its
-        officers, and employees from any claims arising from your use of the
-        Platform.
+        You agree to protect Lourdes Sari-Sari Store and its staff from claims
+        related to your use of the system.
       </>,
     ],
   },
@@ -124,18 +114,18 @@ const termsSections = [
     title: "11. Termination",
     items: [
       <>
-        We may suspend or terminate access at any time for violations of these
-        Terms or harmful conduct.
+        We may suspend or terminate your account if you break these rules or
+        cause harm.
       </>,
     ],
   },
   {
-    title: "12. Changes",
+    title: "12. Updates",
     items: [
       <>
-        We may update these Terms periodically. Material changes will be posted
-        with a new &ldquo;Last Updated&rdquo; date. Continued use means
-        acceptance.
+        We may change these Terms from time to time. The &ldquo;Last
+        Updated&rdquo; date will show the latest version. Using the system after
+        changes means you accept them.
       </>,
     ],
   },
@@ -143,9 +133,8 @@ const termsSections = [
     title: "13. Governing Law",
     items: [
       <>
-        These Terms are governed by the laws of the Republic of the Philippines.
-        Disputes shall be resolved exclusively in the courts of C. De Guzman
-        St., Hortaleza, Poblacion, Santa Maria, Bulacan, Philippines.
+        These Terms follow the laws of the Republic of the Philippines. Any
+        disputes will be handled in the proper courts of Bulacan, Philippines.
       </>,
     ],
   },
@@ -321,13 +310,11 @@ export function TermsContent() {
   return (
     <div className="space-y-8">
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Good day users! Welcome to the services operated by{" "}
-        <strong>Lourdes Sari Sari Store</strong>. These Terms govern your access
-        to and use of our system, the BentaHub, where you can reserve your items
-        or products in your preferred branches, accessible on mobile, tablet,
-        and computer through websites. By creating an account or using the
-        Platform, you agree to these Terms. If you do not agree, please do not
-        use the Service.
+        Welcome to Lourdes Sari-Sari Store&rsquo;s BentaHub system. These Terms
+        explain how you can use our platform to reserve items in your preferred
+        branch. By creating an account or using BentaHub, you agree to follow
+        these rules. If you don&rsquo;t agree, please don&rsquo;t use this
+        platform.
       </p>
 
       <SectionList sections={termsSections} />
