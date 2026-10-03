@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/cleanup",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/cancel-reservations",
+      "schedule": "10 9 * * *"
     }
   ]
 }

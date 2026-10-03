@@ -168,6 +168,60 @@ export async function deductStockIn(
 }
 
 /**
+ * Transaction-scoped inverse of `deductStockIn`. Returns committed stock back
+ * to a branch when a reservation is cancelled after stock was reserved.
+ *
+ * Per item: increments the branch inventory barrel and appends a fresh batch
+ * row to the batch ledger so the ledger always balances with the barrel.
+ * Missing inventory rows are skipped — nothing was deducted there, so there
+ * is nothing to restore.
+ *
+ * Must run inside the same transaction as the status flip so the cancel and
+ * the stock return commit atomically.
+ */
+export async function restoreStockIn(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  branchId: string,
+  items: { productId: string; quantity: number }[]
+) {
+  for (const item of items) {
+    const quantity = item.quantity
+    if (quantity <= 0) continue
+
+    const invRows = await tx
+      .select()
+      .from(branchInventory)
+      .where(
+        and(
+          eq(branchInventory.branchId, branchId),
+          eq(branchInventory.productId, item.productId)
+        )
+      )
+      .limit(1)
+
+    const inv = invRows[0]
+    if (!inv) continue
+
+    await tx
+      .update(branchInventory)
+      .set({
+        quantity: sql`${branchInventory.quantity} + ${quantity}`,
+      })
+      .where(eq(branchInventory.id, inv.id))
+
+    await tx.insert(inventoryBatches).values({
+      id: generateId(),
+      branchInventoryId: inv.id,
+      batchNumber: null,
+      quantity,
+      originalQuantity: quantity,
+      expiryDate: null,
+      supplier: null,
+    })
+  }
+}
+
+/**
  * If a product has positive stock but no batches with remaining quantity
  * (stock that was restocked before batching existed, or a batch ledger that
  * was fully consumed), create a single catch-all default batch so the stock
