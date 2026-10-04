@@ -12,7 +12,7 @@ interface ProductCatalogProps {
   products: Product[]
   isLoading?: boolean
   error?: string | null
-  onAddProduct: (product: Product) => void
+  onAddProduct: (product: Product) => void | Promise<boolean>
 }
 
 export function ProductCatalog({
@@ -37,12 +37,18 @@ export function ProductCatalog({
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   const handleBarcodeScan = useCallback(
-    (barcode: string) => {
+    async (barcode: string) => {
       const product = findProductByBarcode(products, barcode)
 
       if (product) {
-        onAddProduct(product)
-        setScanFeedback({ type: "success", message: `${product.name} added!` })
+        const result = await onAddProduct(product)
+        const added = result !== false
+        setScanFeedback({
+          type: added ? "success" : "error",
+          message: added
+            ? `${product.name} added!`
+            : `${product.name} is out of stock`,
+        })
       } else {
         setScanFeedback({
           type: "error",

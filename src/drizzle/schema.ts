@@ -139,6 +139,7 @@ export const oauthAccountsRelations = relations(oauthAccounts, ({ one }) => ({
 export const usersRelations = relations(users, ({ many }) => ({
   oauthAccounts: many(oauthAccounts),
   mfaCodes: many(mfaCodes),
+  cashierCartItems: many(cashierCartItems),
 }))
 
 export const insertOauthAccountSchema = createInsertSchema(oauthAccounts).omit({
@@ -528,6 +529,55 @@ export const insertCartItemSchema = createInsertSchema(cartItems).omit({
 export const selectCartItemSchema = createSelectSchema(cartItems)
 export type CartItem = typeof cartItems.$inferSelect
 export type InsertCartItem = typeof cartItems.$inferInsert
+
+// ── Cashier Cart Items ──
+// The POS "current sale" cart, persisted server-side so the barcode scan
+// performed on a phone (cashier account) shows up on the register/computer
+// screen within the polling interval. One row per product per cashier.
+export const cashierCartItems = pgTable(
+  "cashier_cart_items",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    productId: varchar("product_id", { length: 36 })
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    quantity: integer("quantity").default(1).notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => ({
+    // One line per product per cashier — two devices (or two quick scans)
+    // racing the same code must fold into a single row, never a duplicate.
+    cashierProductUnique: uniqueIndex(
+      "cashier_cart_items_user_product_unique"
+    ).on(table.userId, table.productId),
+    userIdIdx: index("cashier_cart_items_user_id_idx").on(table.userId),
+  })
+)
+
+export const cashierCartItemsRelations = relations(
+  cashierCartItems,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [cashierCartItems.userId],
+      references: [users.id],
+    }),
+    product: one(products, {
+      fields: [cashierCartItems.productId],
+      references: [products.id],
+    }),
+  })
+)
+
+export const insertCashierCartItemSchema = createInsertSchema(
+  cashierCartItems
+).omit({ id: true, createdAt: true, updatedAt: true })
+export const selectCashierCartItemSchema = createSelectSchema(cashierCartItems)
+export type CashierCartItem = typeof cashierCartItems.$inferSelect
+export type InsertCashierCartItem = typeof cashierCartItems.$inferInsert
 
 // ── Transactions ──
 export const transactions = pgTable(

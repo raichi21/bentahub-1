@@ -1,59 +1,149 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useAuth } from "@/hooks/useAuth"
+import { usePolling } from "@/hooks/use-polling"
 import type { Product, CartItem } from "@/types/cashier"
 
+/** How often every connected cashier device refreshes the shared cart, so a
+ *  barcode scanned on a phone appears on the register within this window. */
+export const CART_POLL_INTERVAL_MS = 3000
+
+/**
+ * The cashier "current sale" cart. No longer local-only: it is persisted
+ * server-side and polled, so the phone (scanner) and the computer (display +
+ * checkout) share one cart as long as both are signed into the same cashier.
+ * The `UseCartReturn` shape is unchanged so every renderer keeps working.
+ */
 export function useCart() {
+  const { token } = useAuth()
   const [items, setItems] = useState<CartItem[]>([])
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
   const [amountPaid, setAmountPaid] = useState<string>("")
 
-  const addItem = (product: Product) => {
-    if (product.stock <= 0) return
+  // Latest request wins — a slow GET resolving after a newer one must not
+  // overwrite fresher state during quick consecutive actions.
+  const loadSeqRef = useRef(0)
+  // While a clear is in flight (DELETE /api/cashier/cart), ignore poll
+  // responses so the stale pre-clear cart can't flicker back in right after
+  // CANCEL ORDER or a completed sale.
+  const pendingClearRef = useRef(false)
 
-    setItems((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id)
-      if (existing) {
-        // Guard against stock limit
-        if (existing.quantity >= product.stock) return prev
-        return prev.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      }
-      return [...prev, { product, quantity: 1 }]
-    })
-  }
-
-  const removeItem = (productId: string) => {
-    setItems((prev) => prev.filter((item) => item.product.id !== productId))
-  }
-
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(productId)
-      return
-    }
-
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.product.id === productId) {
-          const maxStock = item.product.stock
-          const targetQty = Math.min(quantity, maxStock)
-          return { ...item, quantity: targetQty }
-        }
-        return item
+  const loadCart = useCallback(async () => {
+    if (!token) return
+    const seq = ++loadSeqRef.current
+    try {
+      const res = await fetch("/api/cashier/cart", {
+        headers: { Authorization: `Bearer ${token}` },
       })
-    )
-  }
+      if (!res.ok) return
+      const json = await res.json()
+      if (seq !== loadSeqRef.current) return
+      if (pendingClearRef.current) return
+      setItems(Array.isArray(json.data?.items) ? json.data.items : [])
+    } catch {
+      // Keep the last known cart; the next poll tick retries.
+    }
+  }, [token])
 
-  const clearCart = () => {
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    // Load in a microtask so no setState happens synchronously in the effect.
+    void Promise.resolve().then(() => {
+      if (!cancelled) return loadCart()
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [token, loadCart])
+
+  usePolling(loadCart, CART_POLL_INTERVAL_MS)
+
+  const addItem = useCallback(
+    async (product: Product): Promise<boolean> => {
+      if (product.stock <= 0) return false
+      try {
+        const res = await fetch("/api/cashier/cart", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ productId: product.id }),
+        })
+        if (!res.ok) return false
+        await loadCart()
+        return true
+      } catch {
+        return false
+      }
+    },
+    [token, loadCart]
+  )
+
+  const removeItem = useCallback(
+    (productId: string) => {
+      void (async () => {
+        if (!token) return
+        try {
+          await fetch(`/api/cashier/cart/${productId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        } catch {
+          // Ignore — the next poll reconciles.
+        } finally {
+          await loadCart()
+        }
+      })()
+    },
+    [token, loadCart]
+  )
+
+  const updateQuantity = useCallback(
+    (productId: string, quantity: number) => {
+      const item = items.find((i) => i.product.id === productId)
+      if (!item) return
+      const effective = Math.max(1, Math.min(quantity, item.product.stock))
+      if (effective === item.quantity) return
+      void (async () => {
+        if (!token) return
+        try {
+          await fetch(`/api/cashier/cart/${productId}`, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ quantity: effective }),
+          })
+        } catch {
+          // Ignore — the next poll reconciles.
+        } finally {
+          await loadCart()
+        }
+      })()
+    },
+    [items, token, loadCart]
+  )
+
+  const clearCart = useCallback(() => {
     setItems([])
     setAmountPaid("")
-  }
+    if (!token) return
+    pendingClearRef.current = true
+    void fetch("/api/cashier/cart", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .catch(() => {})
+      .finally(() => {
+        pendingClearRef.current = false
+        void loadCart()
+      })
+  }, [token, loadCart])
 
-  // Computed totals
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
