@@ -7,7 +7,7 @@ import { CashDrawerModal } from "@/features/cashier-dashboard/components/cash-dr
 import { useCart } from "@/features/cashier-dashboard/hooks/use-cart"
 import { useCashierProducts } from "@/features/cashier-dashboard/hooks/use-cashier-products"
 import { useCashDrawer } from "@/features/cashier-dashboard/hooks/use-cash-drawer"
-import { Wallet, ShoppingCart } from "lucide-react"
+import { Wallet, ShoppingCart, ChevronRight } from "lucide-react"
 
 export default function CashierPage() {
   const { products, isLoading, error, refetch } = useCashierProducts()
@@ -61,17 +61,39 @@ export default function CashierPage() {
         />
       )}
 
+      {/* Prominent Mobile Bottom Cart Bar */}
       {!isCartOpen && cart.items.length > 0 && (
-        <button
-          onClick={() => setIsCartOpen(true)}
-          className="fixed right-4 bottom-6 z-20 flex items-center gap-2 rounded-full bg-primary p-4 text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:brightness-110 lg:hidden"
-        >
-          <ShoppingCart className="h-5 w-5" />
-          <span className="text-sm font-bold">{cart.items.length}</span>
-        </button>
+        <div className="fixed bottom-3 left-3 right-3 z-30 flex items-center justify-between rounded-2xl border border-primary/20 bg-card/95 p-3 shadow-2xl backdrop-blur-md transition-all lg:hidden">
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="flex flex-1 items-center gap-3 text-left"
+          >
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-sm">
+                {cart.items.reduce((sum, i) => sum + i.quantity, 0)}
+              </span>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                Current Cart ({cart.items.reduce((sum, i) => sum + i.quantity, 0)})
+              </p>
+              <p className="font-mono text-base font-black text-primary">
+                ₱{cart.total.toFixed(2)}
+              </p>
+            </div>
+          </button>
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-md transition-transform active:scale-95"
+          >
+            View Cart
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       )}
 
-      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden pb-16 lg:pb-0">
         <div className="flex items-center justify-end p-4 pb-0">
           <button
             onClick={() => setDrawerMode(hasOpenSession ? "close" : "open")}
@@ -92,6 +114,7 @@ export default function CashierPage() {
           isLoading={isLoading}
           error={error}
           onAddProduct={cart.addItem}
+          onScanSuccess={() => setIsCartOpen(true)}
         />
       </div>
 

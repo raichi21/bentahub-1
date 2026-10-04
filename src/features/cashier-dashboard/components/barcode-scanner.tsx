@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 
 interface BarcodeScannerProps {
-  onScan: (code: string) => void
+  onScan: (code: string) => void | Promise<void>
   onClose: () => void
 }
 
@@ -206,10 +206,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       await scanner.start(
         { facingMode: "environment" },
         { fps: 5, qrbox: { width: 300, height: 200 } },
-        (decodedText: string) => {
+        async (decodedText: string) => {
           stoppedRef.current = true
           scanner.stop().catch(() => {})
-          onScan(decodedText)
+          await onScan(decodedText)
           onClose()
         },
         () => {}
@@ -228,10 +228,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           await scanner.start(
             { facingMode: "user" },
             { fps: 5, qrbox: { width: 300, height: 200 } },
-            (decodedText: string) => {
+            async (decodedText: string) => {
               stoppedRef.current = true
               scanner.stop().catch(() => {})
-              onScan(decodedText)
+              await onScan(decodedText)
               onClose()
             },
             () => {}
@@ -282,10 +282,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     startCamera()
   }, [startCamera])
 
-  const handleManualSubmit = useCallback(() => {
+  const handleManualSubmit = useCallback(async () => {
     const code = manualCode.trim()
     if (code) {
-      onScan(code)
+      await onScan(code)
       onClose()
     }
   }, [manualCode, onScan, onClose])

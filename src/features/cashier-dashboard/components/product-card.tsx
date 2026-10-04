@@ -1,3 +1,5 @@
+"use client"
+
 import { getStockStatus } from "@/lib/staff-utils"
 import type { Product } from "@/types/cashier"
 import { cn } from "@/lib/utils"
@@ -5,7 +7,7 @@ import { Package } from "lucide-react"
 
 interface ProductCardProps {
   product: Product
-  onAdd: (product: Product) => void
+  onAdd: (product: Product) => void | boolean | Promise<boolean>
   disabled?: boolean
 }
 
@@ -14,17 +16,24 @@ export function ProductCard({ product, onAdd, disabled }: ProductCardProps) {
   const isOutOfStock = stockStatus === "out-of-stock"
   const isLowStock = stockStatus === "low-stock"
 
+  const handleClick = () => {
+    if (isOutOfStock || disabled) return
+    onAdd(product)
+  }
+
   return (
     <button
-      onClick={() => onAdd(product)}
+      onClick={handleClick}
       disabled={isOutOfStock || disabled}
+      type="button"
       className={cn(
-        "group relative flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md",
-        isOutOfStock && "cursor-not-allowed opacity-60"
+        "group relative flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all duration-100 select-none",
+        "hover:border-primary hover:shadow-md active:scale-[0.97] active:border-primary",
+        isOutOfStock && "cursor-not-allowed opacity-60 hover:border-border active:scale-100"
       )}
     >
       {/* Product Image Panel */}
-      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-muted">
+      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-muted pointer-events-none">
         {product.image ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -56,7 +65,7 @@ export function ProductCard({ product, onAdd, disabled }: ProductCardProps) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-1 flex-col justify-between">
+      <div className="flex flex-1 flex-col justify-between pointer-events-none">
         <h3 className="mb-2 line-clamp-2 text-sm leading-snug font-bold text-card-foreground transition-colors group-hover:text-primary">
           {product.name}
         </h3>

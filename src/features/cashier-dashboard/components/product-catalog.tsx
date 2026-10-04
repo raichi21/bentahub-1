@@ -12,7 +12,8 @@ interface ProductCatalogProps {
   products: Product[]
   isLoading?: boolean
   error?: string | null
-  onAddProduct: (product: Product) => void | Promise<boolean>
+  onAddProduct: (product: Product) => void | boolean | Promise<boolean>
+  onScanSuccess?: (product: Product) => void
 }
 
 export function ProductCatalog({
@@ -20,6 +21,7 @@ export function ProductCatalog({
   isLoading,
   error,
   onAddProduct,
+  onScanSuccess,
 }: ProductCatalogProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
@@ -49,6 +51,9 @@ export function ProductCatalog({
             ? `${product.name} added!`
             : `${product.name} is out of stock`,
         })
+        if (added) {
+          onScanSuccess?.(product)
+        }
       } else {
         setScanFeedback({
           type: "error",
@@ -59,7 +64,7 @@ export function ProductCatalog({
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
       feedbackTimeoutRef.current = setTimeout(() => setScanFeedback(null), 3000)
     },
-    [products, onAddProduct]
+    [products, onAddProduct, onScanSuccess]
   )
 
   useEffect(() => {

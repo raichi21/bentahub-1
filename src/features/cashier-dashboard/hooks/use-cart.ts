@@ -7,13 +7,13 @@ import type { Product, CartItem } from "@/types/cashier"
 
 /** How often every connected cashier device refreshes the shared cart, so a
  *  barcode scanned on a phone appears on the register within this window. */
-export const CART_POLL_INTERVAL_MS = 3000
+export const CART_POLL_INTERVAL_MS = 1500
 
 /**
- * The cashier "current sale" cart. No longer local-only: it is persisted
- * server-side and polled, so the phone (scanner) and the computer (display +
- * checkout) share one cart as long as both are signed into the same cashier.
- * The `UseCartReturn` shape is unchanged so every renderer keeps working.
+ * The cashier "current sale" cart with rock-solid optimistic updates.
+ * - Prevents flicker / disappearing items: in-flight mutations invalidate stale
+ *   background polling requests so old GET responses cannot wipe out new items.
+ * - Synchronizes with the database in the background without blocking the UI.
  */
 export function useCart() {
   const { token } = useAuth()
@@ -21,16 +21,22 @@ export function useCart() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
   const [amountPaid, setAmountPaid] = useState<string>("")
 
-  // Latest request wins — a slow GET resolving after a newer one must not
-  // overwrite fresher state during quick consecutive actions.
+  // Sequence counter: bumped on every poll AND every mutation.
+  // Stale GET responses resolving after a newer action are discarded.
   const loadSeqRef = useRef(0)
-  // While a clear is in flight (DELETE /api/cashier/cart), ignore poll
-  // responses so the stale pre-clear cart can't flicker back in right after
-  // CANCEL ORDER or a completed sale.
+
+  // Track active in-flight user mutations (addItem, removeItem, updateQuantity).
+  // While > 0, background polling will NOT overwrite local optimistic state.
+  const pendingMutationsRef = useRef(0)
+
+  // While a clear is in flight (DELETE /api/cashier/cart), ignore poll responses.
   const pendingClearRef = useRef(false)
 
   const loadCart = useCallback(async () => {
     if (!token) return
+    // If a mutation or clear is currently in flight, don't overwrite optimistic UI with a stale server snapshot
+    if (pendingMutationsRef.current > 0 || pendingClearRef.current) return
+
     const seq = ++loadSeqRef.current
     try {
       const res = await fetch("/api/cashier/cart", {
@@ -38,9 +44,14 @@ export function useCart() {
       })
       if (!res.ok) return
       const json = await res.json()
+
+      // If a mutation happened while this request was in flight, abort!
       if (seq !== loadSeqRef.current) return
-      if (pendingClearRef.current) return
-      setItems(Array.isArray(json.data?.items) ? json.data.items : [])
+      if (pendingMutationsRef.current > 0 || pendingClearRef.current) return
+
+      if (Array.isArray(json.data?.items)) {
+        setItems(json.data.items)
+      }
     } catch {
       // Keep the last known cart; the next poll tick retries.
     }
@@ -49,7 +60,6 @@ export function useCart() {
   useEffect(() => {
     if (!token) return
     let cancelled = false
-    // Load in a microtask so no setState happens synchronously in the effect.
     void Promise.resolve().then(() => {
       if (!cancelled) return loadCart()
     })
@@ -61,10 +71,34 @@ export function useCart() {
   usePolling(loadCart, CART_POLL_INTERVAL_MS)
 
   const addItem = useCallback(
-    async (product: Product): Promise<boolean> => {
+    (product: Product): boolean => {
       if (product.stock <= 0) return false
-      try {
-        const res = await fetch("/api/cashier/cart", {
+
+      // 1. Immediately invalidate any pending GET requests so they cannot overwrite this add
+      loadSeqRef.current++
+      pendingMutationsRef.current++
+
+      // 2. Instant optimistic update (0ms)
+      setItems((prev) => {
+        const existingIdx = prev.findIndex((i) => i.product.id === product.id)
+        if (existingIdx >= 0) {
+          const existing = prev[existingIdx]
+          if (product.stock > 0 && existing.quantity >= product.stock) {
+            return prev
+          }
+          const next = [...prev]
+          next[existingIdx] = {
+            ...existing,
+            quantity: existing.quantity + 1,
+          }
+          return next
+        }
+        return [...prev, { product, quantity: 1 }]
+      })
+
+      // 3. Persist to server in background
+      if (token) {
+        void fetch("/api/cashier/cart", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -72,63 +106,123 @@ export function useCart() {
           },
           body: JSON.stringify({ productId: product.id }),
         })
-        if (!res.ok) return false
-        await loadCart()
-        return true
-      } catch {
-        return false
+          .then(async (res) => {
+            if (!res.ok) {
+              if (pendingMutationsRef.current <= 1) {
+                void loadCart()
+              }
+              return
+            }
+            const json = await res.json()
+            // Only sync server state if this is the last in-flight mutation
+            if (
+              pendingMutationsRef.current <= 1 &&
+              !pendingClearRef.current &&
+              Array.isArray(json?.data?.items)
+            ) {
+              setItems(json.data.items)
+            }
+          })
+          .catch(() => {
+            if (pendingMutationsRef.current <= 1) {
+              void loadCart()
+            }
+          })
+          .finally(() => {
+            pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
+          })
+      } else {
+        pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
       }
+
+      return true
     },
     [token, loadCart]
   )
 
   const removeItem = useCallback(
     (productId: string) => {
-      void (async () => {
-        if (!token) return
-        try {
-          await fetch(`/api/cashier/cart/${productId}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        } catch {
-          // Ignore — the next poll reconciles.
-        } finally {
-          await loadCart()
-        }
-      })()
+      loadSeqRef.current++
+      pendingMutationsRef.current++
+
+      // Instant optimistic state update
+      setItems((prev) => prev.filter((i) => i.product.id !== productId))
+
+      if (!token) {
+        pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
+        return
+      }
+
+      void fetch(`/api/cashier/cart/${productId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => {
+          if (!res.ok && pendingMutationsRef.current <= 1) {
+            void loadCart()
+          }
+        })
+        .catch(() => {
+          if (pendingMutationsRef.current <= 1) {
+            void loadCart()
+          }
+        })
+        .finally(() => {
+          pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
+        })
     },
     [token, loadCart]
   )
 
   const updateQuantity = useCallback(
     (productId: string, quantity: number) => {
-      const item = items.find((i) => i.product.id === productId)
-      if (!item) return
-      const effective = Math.max(1, Math.min(quantity, item.product.stock))
-      if (effective === item.quantity) return
-      void (async () => {
-        if (!token) return
-        try {
-          await fetch(`/api/cashier/cart/${productId}`, {
-            method: "PATCH",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ quantity: effective }),
-          })
-        } catch {
-          // Ignore — the next poll reconciles.
-        } finally {
-          await loadCart()
-        }
-      })()
+      loadSeqRef.current++
+      pendingMutationsRef.current++
+
+      let effective = quantity
+      setItems((prev) => {
+        const item = prev.find((i) => i.product.id === productId)
+        if (!item) return prev
+        effective = Math.max(1, Math.min(quantity, item.product.stock))
+        if (effective === item.quantity) return prev
+
+        return prev.map((i) =>
+          i.product.id === productId ? { ...i, quantity: effective } : i
+        )
+      })
+
+      if (!token) {
+        pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
+        return
+      }
+
+      void fetch(`/api/cashier/cart/${productId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ quantity: effective }),
+      })
+        .then((res) => {
+          if (!res.ok && pendingMutationsRef.current <= 1) {
+            void loadCart()
+          }
+        })
+        .catch(() => {
+          if (pendingMutationsRef.current <= 1) {
+            void loadCart()
+          }
+        })
+        .finally(() => {
+          pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
+        })
     },
-    [items, token, loadCart]
+    [token, loadCart]
   )
 
   const clearCart = useCallback(() => {
+    loadSeqRef.current++
     setItems([])
     setAmountPaid("")
     if (!token) return
@@ -140,9 +234,9 @@ export function useCart() {
       .catch(() => {})
       .finally(() => {
         pendingClearRef.current = false
-        void loadCart()
+        loadSeqRef.current++
       })
-  }, [token, loadCart])
+  }, [token])
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
