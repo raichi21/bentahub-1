@@ -252,13 +252,18 @@ export function checkRoleAuth(
  * still active in the database. `checkRoleAuth` only trusts JWT claims, so a
  * deactivated user keeps access (and permissions) until the token expires;
  * routes that mutate money or stock must call this instead.
+ *
+ * The looked-up user row is returned as well so callers that need profile
+ * fields (e.g. the cashier's branch) don't have to query `users` a second
+ * time — every extra lookup is a paid round-trip to the cloud database.
  */
 export async function checkRoleAuthActive(
   token: string | null,
   allowedRoles: readonly string[],
   label?: string
 ): Promise<
-  { userId: string; error?: never } | { userId?: never; error: NextResponse }
+  | { userId: string; user: typeof users.$inferSelect; error?: never }
+  | { userId?: never; user?: never; error: NextResponse }
 > {
   const auth = checkRoleAuth(token, allowedRoles, label)
   if (auth.error) return auth
@@ -277,7 +282,7 @@ export async function checkRoleAuthActive(
       ),
     }
   }
-  return { userId: auth.userId }
+  return { userId: auth.userId, user }
 }
 
 // ---------------------------------------------------------------------------

@@ -7,19 +7,34 @@ import type { Product, CartItem } from "@/types/cashier"
 
 /** How often every connected cashier device refreshes the shared cart, so a
  *  barcode scanned on a phone appears on the register within this window. */
-export const CART_POLL_INTERVAL_MS = 1500
+export const CART_POLL_INTERVAL_MS = 3000
 
 /**
- * The cashier "current sale" cart with rock-solid optimistic updates.
- * - Prevents flicker / disappearing items: in-flight mutations invalidate stale
- *   background polling requests so old GET responses cannot wipe out new items.
- * - Synchronizes with the database in the background without blocking the UI.
+ * Poll interval once the cart has been idle for a while. An untouched POS
+ * (e.g. left open overnight) must not keep hammering the database every 3s —
+ * every poll is paid Supabase egress.
+ */
+const CART_IDLE_POLL_INTERVAL_MS = 15000
+
+/** How long without any cart action before the poll backs off. */
+const CART_IDLE_AFTER_MS = 60000
+
+/**
+ * The cashier "current sale" cart. No longer local-only: it is persisted
+ * server-side and polled, so the phone (scanner) and the computer (display +
+ * checkout) share one cart as long as both are signed into the same cashier.
+ * The `UseCartReturn` shape is unchanged so every renderer keeps working.
+ *
+ * Mutations are optimistic — the UI updates instantly from the action itself
+ * and reconciles with the server in the background (fire-and-forget reload +
+ * the regular poll), instead of freezing for several seconds per click.
  */
 export function useCart() {
   const { token } = useAuth()
   const [items, setItems] = useState<CartItem[]>([])
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
   const [amountPaid, setAmountPaid] = useState<string>("")
+  const [pollMs, setPollMs] = useState(CART_POLL_INTERVAL_MS)
 
   // Sequence counter: bumped on every poll AND every mutation.
   // Stale GET responses resolving after a newer action are discarded.
@@ -31,6 +46,24 @@ export function useCart() {
 
   // While a clear is in flight (DELETE /api/cashier/cart), ignore poll responses.
   const pendingClearRef = useRef(false)
+
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Any cart action resets the poll to fast mode; after a minute of silence
+  // it backs off so idle devices stop burning paid DB egress.
+  const markActive = useCallback(() => {
+    setPollMs(CART_POLL_INTERVAL_MS)
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    idleTimerRef.current = setTimeout(() => {
+      setPollMs(CART_IDLE_POLL_INTERVAL_MS)
+    }, CART_IDLE_AFTER_MS)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    }
+  }, [])
 
   const loadCart = useCallback(async () => {
     if (!token) return
@@ -68,11 +101,12 @@ export function useCart() {
     }
   }, [token, loadCart])
 
-  usePolling(loadCart, CART_POLL_INTERVAL_MS)
+  usePolling(loadCart, pollMs)
 
   const addItem = useCallback(
     (product: Product): boolean => {
       if (product.stock <= 0) return false
+      markActive()
 
       // 1. Immediately invalidate any pending GET requests so they cannot overwrite this add
       loadSeqRef.current++
@@ -114,13 +148,21 @@ export function useCart() {
               return
             }
             const json = await res.json()
-            // Only sync server state if this is the last in-flight mutation
+            // Reconcile with the exact server quantity (light POST response).
+            // Only when this is the last in-flight mutation.
             if (
               pendingMutationsRef.current <= 1 &&
               !pendingClearRef.current &&
-              Array.isArray(json?.data?.items)
+              typeof json?.data?.quantity === "number"
             ) {
-              setItems(json.data.items)
+              const serverQty = json.data.quantity as number
+              setItems((prev) =>
+                prev.map((i) =>
+                  i.product.id === product.id
+                    ? { ...i, quantity: serverQty }
+                    : i
+                )
+              )
             }
           })
           .catch(() => {
@@ -137,11 +179,12 @@ export function useCart() {
 
       return true
     },
-    [token, loadCart]
+    [token, loadCart, markActive]
   )
 
   const removeItem = useCallback(
     (productId: string) => {
+      markActive()
       loadSeqRef.current++
       pendingMutationsRef.current++
 
@@ -171,11 +214,12 @@ export function useCart() {
           pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
         })
     },
-    [token, loadCart]
+    [token, loadCart, markActive]
   )
 
   const updateQuantity = useCallback(
     (productId: string, quantity: number) => {
+      markActive()
       loadSeqRef.current++
       pendingMutationsRef.current++
 
@@ -218,10 +262,11 @@ export function useCart() {
           pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
         })
     },
-    [token, loadCart]
+    [token, loadCart, markActive]
   )
 
   const clearCart = useCallback(() => {
+    markActive()
     loadSeqRef.current++
     setItems([])
     setAmountPaid("")
@@ -236,7 +281,7 @@ export function useCart() {
         pendingClearRef.current = false
         loadSeqRef.current++
       })
-  }, [token])
+  }, [token, markActive])
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,

@@ -98,12 +98,46 @@ function computeTrend(
 }
 
 export async function getAdminOverview(): Promise<AdminOverviewData> {
-  const allBranches = (await db.query.branches.findMany()) as RawBranch[]
-  const allTransactions =
-    (await db.query.transactions.findMany()) as RawTransaction[]
-  const allInventory =
-    (await db.query.branchInventory.findMany()) as RawInventory[]
-  const allOrders = (await db.query.orders.findMany()) as RawOrder[]
+  // Fetch only the columns the KPIs and charts actually use — full rows
+  // (notes, gcash refs, timestamps per row, …) would multiply paid egress
+  // on every dashboard load.
+  const allBranches = (await db.query.branches.findMany({
+    columns: {
+      id: true,
+      name: true,
+      location: true,
+      capacity: true,
+      isActive: true,
+    },
+  })) as RawBranch[]
+  const allTransactions = (await db.query.transactions.findMany({
+    columns: {
+      id: true,
+      branchId: true,
+      totalAmount: true,
+      paymentMethod: true,
+      status: true,
+      createdAt: true,
+    },
+  })) as RawTransaction[]
+  const allInventory = (await db.query.branchInventory.findMany({
+    columns: {
+      id: true,
+      branchId: true,
+      productId: true,
+      quantity: true,
+      lowStockThreshold: true,
+    },
+  })) as unknown as RawInventory[]
+  const allOrders = (await db.query.orders.findMany({
+    columns: {
+      id: true,
+      totalAmount: true,
+      paymentMethod: true,
+      status: true,
+      createdAt: true,
+    },
+  })) as RawOrder[]
 
   // --- Revenue KPI ---
   const now = new Date()

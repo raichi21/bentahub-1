@@ -160,15 +160,18 @@ export async function getCashierCart(
   userId: string,
   branchName: string
 ): Promise<CashierCartLine[]> {
-  const lines = await db.query.cashierCartItems.findMany({
-    where: eq(cashierCartItems.userId, userId),
-    with: { product: true },
-    orderBy: (cart, { asc }) => [asc(cart.createdAt)],
-  })
+  // The cart lines and the branch lookup are independent — run them together
+  // instead of one after the other (one fewer sequential round-trip).
+  const [lines, branch] = await Promise.all([
+    db.query.cashierCartItems.findMany({
+      where: eq(cashierCartItems.userId, userId),
+      with: { product: true },
+      orderBy: (cart, { asc }) => [asc(cart.createdAt)],
+    }),
+    getBranchByName(branchName),
+  ])
 
   if (lines.length === 0) return []
-
-  const branch = await getBranchByName(branchName)
   let stockByProduct = new Map<string, StockInfo>()
   if (branch) {
     const inventory = await db.query.branchInventory.findMany({
@@ -198,7 +201,7 @@ export async function getCashierCart(
 }
 
 export type CartAddResult =
-  | { ok: true; data: CashierCartData }
+  | { ok: true; data: { productId: string; quantity: number } }
   | {
       ok: false
       reason: "product-not-found" | "not-available" | "out-of-stock"
@@ -209,28 +212,44 @@ export type CartAddResult =
  * The upsert increments atomically on `(user_id, product_id)`, so two devices
  * (e.g. a phone scanner + the register) adding the same code concurrently fold
  * into one line instead of duplicating it.
+ *
+ * Returns only the touched line — not the whole cart — so a single scan costs
+ * a few concurrent lookups + one write instead of a full cart re-read. The
+ * client reconciles the full cart via its regular poll.
  */
 export async function addCashierCartItem(
   userId: string,
   productId: string,
   branchName: string
 ): Promise<CartAddResult> {
-  const product = await db.query.products.findFirst({
-    where: eq(products.id, productId),
-  })
+  // Independent reads — run them together, not one after another.
+  const [product, branch, existing] = await Promise.all([
+    db.query.products.findFirst({
+      where: eq(products.id, productId),
+    }),
+    getBranchByName(branchName),
+    db.query.cashierCartItems.findFirst({
+      where: and(
+        eq(cashierCartItems.userId, userId),
+        eq(cashierCartItems.productId, productId)
+      ),
+    }),
+  ])
   if (!product) return { ok: false, reason: "product-not-found" }
   if (product.isActive === false) return { ok: false, reason: "not-available" }
 
-  const stock = await getAvailableStock(branchName, productId)
-  const existing = await db.query.cashierCartItems.findFirst({
-    where: and(
-      eq(cashierCartItems.userId, userId),
-      eq(cashierCartItems.productId, productId)
-    ),
-  })
+  const inv = branch
+    ? await db.query.branchInventory.findFirst({
+        where: and(
+          eq(branchInventory.branchId, branch.id),
+          eq(branchInventory.productId, productId)
+        ),
+      })
+    : null
+  const stock = inv?.quantity ?? 0
   const existingQuantity = existing?.quantity ?? 0
 
-  const resolved = resolveAddQuantity(existingQuantity, stock ?? 0)
+  const resolved = resolveAddQuantity(existingQuantity, stock)
   if (!resolved.ok) return { ok: false, reason: "out-of-stock" }
 
   await db
@@ -249,12 +268,11 @@ export async function addCashierCartItem(
       },
     })
 
-  const items = await getCashierCart(userId, branchName)
-  return { ok: true, data: toCartData(items) }
+  return { ok: true, data: { productId, quantity: resolved.quantity } }
 }
 
 export type CartSetResult =
-  | { ok: true; data: CashierCartData }
+  | { ok: true; data: { productId: string; quantity: number; removed: boolean } }
   | { ok: false; reason: "invalid" }
 
 /** Set an exact quantity for a cart line, clamping to the branch stock. */
@@ -272,8 +290,7 @@ export async function setCashierCartQuantity(
   })
 
   if (!line) {
-    const items = await getCashierCart(userId, branchName)
-    return { ok: true, data: toCartData(items) }
+    return { ok: true, data: { productId, quantity: 0, removed: true } }
   }
 
   const stock = (await getAvailableStock(branchName, productId)) ?? 0
@@ -289,20 +306,23 @@ export async function setCashierCartQuantity(
           eq(cashierCartItems.productId, productId)
         )
       )
-  } else {
-    await db
-      .update(cashierCartItems)
-      .set({ quantity: resolved.quantity, updatedAt: new Date() })
-      .where(
-        and(
-          eq(cashierCartItems.userId, userId),
-          eq(cashierCartItems.productId, productId)
-        )
-      )
+    return { ok: true, data: { productId, quantity: 0, removed: true } }
   }
 
-  const items = await getCashierCart(userId, branchName)
-  return { ok: true, data: toCartData(items) }
+  await db
+    .update(cashierCartItems)
+    .set({ quantity: resolved.quantity, updatedAt: new Date() })
+    .where(
+      and(
+        eq(cashierCartItems.userId, userId),
+        eq(cashierCartItems.productId, productId)
+      )
+    )
+
+  return {
+    ok: true,
+    data: { productId, quantity: resolved.quantity, removed: false },
+  }
 }
 
 /** Remove a single line from the cashier's cart. */

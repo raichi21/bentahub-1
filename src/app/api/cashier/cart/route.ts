@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
-import { db } from "@/servers/db"
-import { users } from "@/servers/schemas"
-import { eq } from "drizzle-orm"
 import {
   getCashierCart,
   addCashierCartItem,
@@ -18,21 +15,11 @@ async function resolveCashier(request: NextRequest) {
   )
   if (auth.error) return { error: auth.error }
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, auth.userId),
-  })
-  if (!user) {
-    return {
-      error: NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      ),
-    }
-  }
-
+  // checkRoleAuthActive already looked the user up — reuse it instead of
+  // querying `users` a second time (one fewer paid DB round-trip).
   return {
     userId: auth.userId,
-    branchName: user.branch || "Lourdes Main Branch",
+    branchName: auth.user.branch || "Lourdes Main Branch",
   }
 }
 
