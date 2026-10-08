@@ -32,24 +32,26 @@ export async function createTransaction(input: CreateTransactionInput) {
   const { branchId, cashierId, items, totalAmount, paymentMethod } = input
   const transactionId = generateId()
 
-  let sessionId: string | null = null
+  // Every sale — cash or GCash — belongs to an open drawer session so the
+  // shift totals (cash expected + GCash) stay complete. No open drawer means
+  // no sale, regardless of payment method.
+  const openSession = await db.query.cashDrawerSessions.findFirst({
+    where: and(
+      eq(cashDrawerSessions.cashierId, cashierId),
+      eq(cashDrawerSessions.branchId, branchId),
+      eq(cashDrawerSessions.status, "open")
+    ),
+  })
+
+  if (!openSession) {
+    throw new NoOpenCashDrawerError()
+  }
+
+  const sessionId: string = openSession.id
   let amountPaid: string | null = null
   let change: string | null = null
 
   if (paymentMethod === "cash") {
-    const openSession = await db.query.cashDrawerSessions.findFirst({
-      where: and(
-        eq(cashDrawerSessions.cashierId, cashierId),
-        eq(cashDrawerSessions.branchId, branchId),
-        eq(cashDrawerSessions.status, "open")
-      ),
-    })
-
-    if (!openSession) {
-      throw new NoOpenCashDrawerError()
-    }
-
-    sessionId = openSession.id
     amountPaid = (input.amountPaid ?? totalAmount).toFixed(2)
     change = (input.change ?? 0).toFixed(2)
   } else {

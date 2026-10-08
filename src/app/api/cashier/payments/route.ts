@@ -6,8 +6,9 @@ import {
   branches,
   transactions,
   transactionItems,
+  cashDrawerSessions,
 } from "@/servers/schemas"
-import { eq, max } from "drizzle-orm"
+import { eq, and, max } from "drizzle-orm"
 import { createCheckoutSession } from "@/lib/paymongo"
 import { apiResponse, apiError } from "@/lib/api-response"
 
@@ -44,6 +45,20 @@ export async function POST(request: NextRequest) {
       return apiError("No items provided", 400)
     }
 
+    // GCash sales belong to the open drawer session, exactly like cash sales —
+    // otherwise the shift's GCash total can never see them (session_id NULL).
+    const openSession = await db.query.cashDrawerSessions.findFirst({
+      where: and(
+        eq(cashDrawerSessions.cashierId, auth.userId),
+        eq(cashDrawerSessions.branchId, branchRecord.id),
+        eq(cashDrawerSessions.status, "open")
+      ),
+    })
+
+    if (!openSession) {
+      return apiError("Please open a cash drawer session first.", 400)
+    }
+
     // Create transaction with pending status
     const transactionId = generateId()
     const maxResult = await db
@@ -61,6 +76,7 @@ export async function POST(request: NextRequest) {
       totalAmount: totalAmount.toString(),
       paymentMethod: "gcash",
       status: "pending",
+      sessionId: openSession.id,
     })
 
     const transactionItemsData = items.map(

@@ -1,6 +1,7 @@
 import { db } from "@/servers/db"
 import {
   branchInventory,
+  cashDrawerSessions,
   inventoryBatches,
   transactions,
 } from "@/servers/schemas"
@@ -291,6 +292,27 @@ export async function completeGcashTransaction(transactionId: string) {
 
     if (!txn || txn.items.length === 0) {
       return { completed: true, deducted: false }
+    }
+
+    // Belt-and-suspenders: rows created before the drawer requirement (or in
+    // the race where the drawer opened after initiation) carry a NULL
+    // sessionId, which would hide them from the shift's GCash total. Attach
+    // the currently-open session now, in the same atomic transaction.
+    // (A NULL cashierId means nobody can own a drawer session — skip.)
+    if (!txn.sessionId && txn.cashierId) {
+      const openSession = await tx.query.cashDrawerSessions.findFirst({
+        where: and(
+          eq(cashDrawerSessions.cashierId, txn.cashierId),
+          eq(cashDrawerSessions.branchId, txn.branchId),
+          eq(cashDrawerSessions.status, "open")
+        ),
+      })
+      if (openSession) {
+        await tx
+          .update(transactions)
+          .set({ sessionId: openSession.id })
+          .where(eq(transactions.id, transactionId))
+      }
     }
 
     // Deduct stock on the SAME transaction that flipped the status, so the
