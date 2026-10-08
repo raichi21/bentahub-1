@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { usePolling, POLL_INTERVAL_MS } from "@/hooks/use-polling"
+import { useNotificationsStream } from "@/hooks/use-notifications-stream"
 
 export function NotificationBadge() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
 
   const fetchUnreadCount = useCallback(async () => {
@@ -39,6 +40,14 @@ export function NotificationBadge() {
       window.removeEventListener("notifications-read", handleRefresh)
     }
   }, [token, fetchUnreadCount])
+
+  // Shares the `notifications:<userId>` realtime channel with the feed hook
+  // (Supabase multiplexes over one socket). Poll below is a safety net.
+  useNotificationsStream(
+    fetchUnreadCount,
+    token ?? null,
+    user?.userId ?? null
+  )
 
   usePolling(fetchUnreadCount, token ? POLL_INTERVAL_MS : null)
 

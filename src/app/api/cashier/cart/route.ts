@@ -34,8 +34,9 @@ const ADD_ERRORS: Record<
 
 /**
  * GET /api/cashier/cart
- * Current sale cart for the authenticated cashier. Polled by every connected
- * cashier device so a scan made on one shows up on the register.
+ * Current sale cart for the authenticated cashier. Served on initial load,
+ * on Supabase Realtime change events, and on the slow fallback poll, so a
+ * scan made on one device shows up on the register.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -60,6 +61,8 @@ export async function GET(request: NextRequest) {
  * POST /api/cashier/cart
  * Add one unit of a product. Body: { productId: string }
  * Server-side stock validation + atomic increment on (user_id, product_id).
+ * Other devices learn about the change via Supabase Realtime (WAL-driven) —
+ * no explicit publish needed.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -103,6 +106,8 @@ export async function POST(request: NextRequest) {
 /**
  * DELETE /api/cashier/cart
  * Clear the entire cart (CANCEL ORDER, or right after a completed sale).
+ * Other devices learn about the change via Supabase Realtime (WAL-driven) —
+ * no explicit publish needed.
  */
 export async function DELETE(request: NextRequest) {
   try {

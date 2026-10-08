@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "./useAuth"
 import { usePolling, POLL_INTERVAL_MS } from "./use-polling"
+import { useNotificationsStream } from "./use-notifications-stream"
 
 interface StaffNotificationItem {
   id: string
@@ -27,7 +28,7 @@ function authHeaders(token: string): HeadersInit {
 export function useStaffNotifications({
   pollInterval = POLL_INTERVAL_MS,
 }: { pollInterval?: number } = {}) {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [notifications, setNotifications] = useState<StaffNotificationItem[]>(
     []
   )
@@ -94,6 +95,14 @@ export function useStaffNotifications({
 
     return () => clearTimeout(timer)
   }, [token, fetchNotifications, pollInterval])
+
+  // Primary update path: Supabase Realtime pushes the moment a notification
+  // is inserted or its read state changes. The poll below is a safety net.
+  useNotificationsStream(
+    fetchNotifications,
+    token ?? null,
+    user?.userId ?? null
+  )
 
   usePolling(fetchNotifications, token ? pollInterval : null)
 

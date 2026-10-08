@@ -53,6 +53,8 @@ export async function PATCH(
       )
     }
 
+    // Other devices learn about the change via Supabase Realtime (WAL-driven).
+
     return NextResponse.json(
       { success: true, message: "Cart updated", data: setResult.data },
       { status: 200 }
@@ -82,6 +84,7 @@ export async function DELETE(
 
     await removeCashierCartItem(current.userId, productId)
 
+    // Other devices learn about the change via Supabase Realtime (WAL-driven).
     return NextResponse.json(
       { success: true, message: "Item removed from cart" },
       { status: 200 }

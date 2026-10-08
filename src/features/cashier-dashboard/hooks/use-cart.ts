@@ -3,67 +3,48 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { usePolling } from "@/hooks/use-polling"
+import { useCartStream } from "@/hooks/use-cart-stream"
 import type { Product, CartItem } from "@/types/cashier"
 
-/** How often every connected cashier device refreshes the shared cart, so a
- *  barcode scanned on a phone appears on the register within this window. */
-export const CART_POLL_INTERVAL_MS = 3000
-
 /**
- * Poll interval once the cart has been idle for a while. An untouched POS
- * (e.g. left open overnight) must not keep hammering the database every 3s —
- * every poll is paid Supabase egress.
+ * Slow safety-net poll. Supabase Realtime (`useCartStream`) is the primary
+ * update path — a scan on the phone reaches the register in <1s with zero
+ * Vercel cost. This poll only covers gaps the stream cannot: missing Supabase
+ * env, a revoked/expired socket, or a missed event.
  */
-const CART_IDLE_POLL_INTERVAL_MS = 15000
-
-/** How long without any cart action before the poll backs off. */
-const CART_IDLE_AFTER_MS = 60000
+export const CART_FALLBACK_POLL_MS = 60_000
 
 /**
  * The cashier "current sale" cart. No longer local-only: it is persisted
- * server-side and polled, so the phone (scanner) and the computer (display +
- * checkout) share one cart as long as both are signed into the same cashier.
- * The `UseCartReturn` shape is unchanged so every renderer keeps working.
+ * server-side and synced realtime, so the phone (scanner) and the computer
+ * (display + checkout) share one cart as long as both are signed into the
+ * same cashier. The `UseCartReturn` shape is unchanged so every renderer
+ * keeps working.
+ *
+ * Sync is event-driven: Supabase Realtime pushes the moment any device's
+ * change commits to the database, with a slow 60s fallback poll as safety net.
  *
  * Mutations are optimistic — the UI updates instantly from the action itself
  * and reconciles with the server in the background (fire-and-forget reload +
- * the regular poll), instead of freezing for several seconds per click.
+ * the stream/fallback reloads), instead of freezing for several seconds per
+ * click.
  */
 export function useCart() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [items, setItems] = useState<CartItem[]>([])
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash">("cash")
   const [amountPaid, setAmountPaid] = useState<string>("")
-  const [pollMs, setPollMs] = useState(CART_POLL_INTERVAL_MS)
 
-  // Sequence counter: bumped on every poll AND every mutation.
+  // Sequence counter: bumped on every load AND every mutation.
   // Stale GET responses resolving after a newer action are discarded.
   const loadSeqRef = useRef(0)
 
   // Track active in-flight user mutations (addItem, removeItem, updateQuantity).
-  // While > 0, background polling will NOT overwrite local optimistic state.
+  // While > 0, background reloads will NOT overwrite local optimistic state.
   const pendingMutationsRef = useRef(0)
 
-  // While a clear is in flight (DELETE /api/cashier/cart), ignore poll responses.
+  // While a clear is in flight (DELETE /api/cashier/cart), ignore reload responses.
   const pendingClearRef = useRef(false)
-
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Any cart action resets the poll to fast mode; after a minute of silence
-  // it backs off so idle devices stop burning paid DB egress.
-  const markActive = useCallback(() => {
-    setPollMs(CART_POLL_INTERVAL_MS)
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
-    idleTimerRef.current = setTimeout(() => {
-      setPollMs(CART_IDLE_POLL_INTERVAL_MS)
-    }, CART_IDLE_AFTER_MS)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
-    }
-  }, [])
 
   const loadCart = useCallback(async () => {
     if (!token) return
@@ -86,7 +67,7 @@ export function useCart() {
         setItems(json.data.items)
       }
     } catch {
-      // Keep the last known cart; the next poll tick retries.
+      // Keep the last known cart; the next reload retries.
     }
   }, [token])
 
@@ -101,12 +82,14 @@ export function useCart() {
     }
   }, [token, loadCart])
 
-  usePolling(loadCart, pollMs)
+  useCartStream(loadCart, token ?? null, user?.userId ?? null)
+
+  // Safety net only — the stream above is the primary update path.
+  usePolling(loadCart, token ? CART_FALLBACK_POLL_MS : null)
 
   const addItem = useCallback(
     (product: Product): boolean => {
       if (product.stock <= 0) return false
-      markActive()
 
       // 1. Immediately invalidate any pending GET requests so they cannot overwrite this add
       loadSeqRef.current++
@@ -179,12 +162,11 @@ export function useCart() {
 
       return true
     },
-    [token, loadCart, markActive]
+    [token, loadCart]
   )
 
   const removeItem = useCallback(
     (productId: string) => {
-      markActive()
       loadSeqRef.current++
       pendingMutationsRef.current++
 
@@ -214,12 +196,11 @@ export function useCart() {
           pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
         })
     },
-    [token, loadCart, markActive]
+    [token, loadCart]
   )
 
   const updateQuantity = useCallback(
     (productId: string, quantity: number) => {
-      markActive()
       loadSeqRef.current++
       pendingMutationsRef.current++
 
@@ -262,11 +243,10 @@ export function useCart() {
           pendingMutationsRef.current = Math.max(0, pendingMutationsRef.current - 1)
         })
     },
-    [token, loadCart, markActive]
+    [token, loadCart]
   )
 
   const clearCart = useCallback(() => {
-    markActive()
     loadSeqRef.current++
     setItems([])
     setAmountPaid("")
@@ -281,7 +261,7 @@ export function useCart() {
         pendingClearRef.current = false
         loadSeqRef.current++
       })
-  }, [token, markActive])
+  }, [token])
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
