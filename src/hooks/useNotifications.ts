@@ -5,6 +5,7 @@ import {
 } from "@/stores/notificationsStore"
 import { useAuth } from "./useAuth"
 import { usePolling, POLL_INTERVAL_MS } from "./use-polling"
+import { useNotificationsStream } from "./use-notifications-stream"
 
 function authHeaders(token: string): HeadersInit {
   return {
@@ -85,6 +86,14 @@ export function useNotifications() {
 
     fetchNotifications()
   }, [user, token, fetchNotifications])
+
+  // Primary update path: Supabase Realtime pushes the moment a notification
+  // is inserted or its read state changes. The 60s poll below is a safety net.
+  useNotificationsStream(
+    fetchNotifications,
+    token ?? null,
+    user?.userId ?? null
+  )
 
   usePolling(fetchNotifications, user && token ? POLL_INTERVAL_MS : null)
 
