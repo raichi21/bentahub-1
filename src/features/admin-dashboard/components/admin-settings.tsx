@@ -17,7 +17,6 @@ import {
 import { useAuth } from "@/hooks/useAuth"
 import { AddBranchModal } from "./add-branch-modal"
 import { EditBranchModal } from "./edit-branch-modal"
-import { MfaPanel } from "@/features/mfa"
 
 const MAX_LOGO_SIZE = 2_000_000
 
@@ -454,14 +453,6 @@ export function AdminSettings() {
             </div>
           )}
         </div>
-      </ContentCard>
-
-      {/* ── Account Security ── */}
-      <ContentCard
-        title="Account Security"
-        subtitle="Email code verification is mandatory for all admin logins."
-      >
-        <MfaPanel />
       </ContentCard>
 
       <AddBranchModal
