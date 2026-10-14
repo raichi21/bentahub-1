@@ -56,7 +56,6 @@ export function EditProductModal({
   const [price, setPrice] = useState("")
   const [bulkPrice, setBulkPrice] = useState("")
   const [description, setDescription] = useState("")
-  const [isActive, setIsActive] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -69,7 +68,6 @@ export function EditProductModal({
       setPrice(product.price)
       setBulkPrice(product.bulkPrice ?? "")
       setDescription(product.description || "")
-      setIsActive(product.isActive)
       setError("")
     }, 0)
     return () => clearTimeout(timer)
@@ -96,7 +94,6 @@ export function EditProductModal({
           price: Number(price),
           bulkPrice: bulkPrice.trim() ? Number(bulkPrice) : null,
           description,
-          isActive,
         }),
       })
       const data = await res.json()
@@ -239,28 +236,6 @@ export function EditProductModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  Product Status
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {isActive
-                    ? "Visible in the catalog"
-                    : "Hidden from the catalog"}
-                </p>
-              </div>
-              <label className="relative inline-flex cursor-pointer items-center">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
-                <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5"></div>
-              </label>
             </div>
           </div>
 
