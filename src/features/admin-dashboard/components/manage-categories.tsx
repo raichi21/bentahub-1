@@ -142,7 +142,11 @@ export function ManageCategories({ canManage }: ManageCategoriesProps) {
       })
       const data = await res.json()
       if (data.success) {
-        fetchItems()
+        // Optimistic local update — the categories table is tiny but this
+        // avoids a full refetch on every toggle.
+        setItems((prev) =>
+          prev.map((c) => (c.id === item.id ? { ...c, isActive: active } : c))
+        )
       } else {
         setError(data.message || "Failed to update category")
       }

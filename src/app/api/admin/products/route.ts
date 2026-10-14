@@ -8,7 +8,7 @@ import {
 import { db } from "@/servers/db"
 import { products, categories, unitTypes } from "@/servers/schemas"
 import { logActivity } from "@/lib/activity-log"
-import { eq, desc, sql } from "drizzle-orm"
+import { eq, desc, sql, and, or, ilike } from "drizzle-orm"
 
 const updateProductSchema = z.object({
   name: z.string().min(1, "Product name is required").max(255).optional(),
@@ -30,26 +30,43 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const search = searchParams.get("search")?.toLowerCase() || ""
     const category = searchParams.get("category") || ""
     const branch = searchParams.get("branch") || ""
+    // Server-side cap: the list UI renders a single scrollable table, so a
+    // bounded page keeps payloads (and pooler egress) flat as the catalog
+    // grows. Clients ignore the extra meta fields.
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "100"), 1),
+      200
+    )
+
+    const conditions = []
+    if (category) conditions.push(eq(products.category, category))
+    if (branch) conditions.push(eq(products.branch, branch))
+    if (search) {
+      const pattern = `%${search}%`
+      conditions.push(
+        or(ilike(products.name, pattern), ilike(products.sku, pattern))
+      )
+    }
 
     const list = await db.query.products.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
       orderBy: desc(products.createdAt),
+      limit,
     })
 
-    const filtered = list.filter((p) => {
-      if (category && p.category !== category) return false
-      if (branch && p.branch !== branch) return false
-      if (
-        search &&
-        !(
-          p.name.toLowerCase().includes(search) ||
-          (p.sku ?? "").toLowerCase().includes(search)
-        )
-      )
-        return false
-      return true
-    })
+    const [{ n: totalCount }] = await db
+      .select({ n: sql<number>`count(*)` })
+      .from(products)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
 
-    return NextResponse.json({ success: true, data: filtered }, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        data: list,
+        meta: { totalCount: Number(totalCount), limit },
+      },
+      { status: 200 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Get products error:", message)
