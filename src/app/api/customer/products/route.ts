@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
       bulkPrice: p.bulkPrice ? Number(p.bulkPrice) : undefined,
       unit: p.unit || "pcs",
       weight: p.weight,
-      image: p.image,
       sku: p.sku,
       barcode: p.barcode,
       isActive: p.isActive,

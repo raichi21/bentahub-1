@@ -5,7 +5,7 @@ import {
   inventoryBatches,
   transactions,
 } from "@/servers/schemas"
-import { eq, and, asc, sql, gt } from "drizzle-orm"
+import { eq, and, asc, sql, gt, inArray } from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 
 /** Raised when a product's available stock cannot cover the requested amount. */
@@ -87,65 +87,72 @@ export async function deductStockIn(
   branchId: string,
   items: { productId: string; quantity: number }[]
 ) {
+  const productIds = items
+    .map((i) => i.productId)
+    .filter((id) => id && items.find((i) => i.productId === id && i.quantity > 0))
+  if (productIds.length === 0) return
+
+  const allInv = await tx
+    .select()
+    .from(branchInventory)
+    .where(
+      and(
+        eq(branchInventory.branchId, branchId),
+        inArray(branchInventory.productId, productIds)
+      )
+    )
+  if (allInv.length === 0) {
+    throw new InsufficientStockError(productIds[0], 1, 0)
+  }
+
+  const invByProduct = new Map(allInv.map((i) => [i.productId, i]))
+
+  const allBatches = await tx
+    .select()
+    .from(inventoryBatches)
+    .where(
+      and(
+        inArray(
+          inventoryBatches.branchInventoryId,
+          allInv.map((i) => i.id)
+        ),
+        gt(inventoryBatches.quantity, 0)
+      )
+    )
+    .orderBy(
+      asc(inventoryBatches.expiryDate),
+      asc(inventoryBatches.receivedDate),
+      asc(inventoryBatches.createdAt)
+    )
+
+  const batchesByInv = new Map<string, typeof allBatches>()
+  for (const inv of allInv) {
+    batchesByInv.set(inv.id, [])
+  }
+  for (const batch of allBatches) {
+    batchesByInv.get(batch.branchInventoryId)?.push(batch)
+  }
+
+  const now = Date.now()
+  const batchUpdates = new Map<string, number>()
+  const invUpdates = new Map<string, number>()
+
   for (const item of items) {
     const requested = item.quantity
     if (requested <= 0) continue
 
-    const invRows = await tx
-      .select()
-      .from(branchInventory)
-      .where(
-        and(
-          eq(branchInventory.branchId, branchId),
-          eq(branchInventory.productId, item.productId)
-        )
-      )
-      .limit(1)
-
-    const inv = invRows[0]
+    const inv = invByProduct.get(item.productId)
     if (!inv || inv.quantity <= 0) {
-      throw new InsufficientStockError(
-        item.productId,
-        requested,
-        inv?.quantity ?? 0
-      )
+      throw new InsufficientStockError(item.productId, requested, inv?.quantity ?? 0)
     }
 
-    // Backfill: ensure legacy stock that predates batching has a default batch.
-    await ensureDefaultBatch(tx, inv.id, inv.quantity)
+    const batches = batchesByInv.get(inv.id) ?? []
+    const activeBatches = batches.filter(
+      (b) => !b.expiryDate || b.expiryDate.getTime() > now
+    )
 
-    // Active batches ordered FEFO first (expiry ASC, nulls last), then FIFO
-    // (receivedDate ASC, createdAt ASC).
-    const batches = await tx
-      .select()
-      .from(inventoryBatches)
-      .where(
-        and(
-          eq(inventoryBatches.branchInventoryId, inv.id),
-          gt(inventoryBatches.quantity, 0)
-        )
-      )
-      .orderBy(
-        asc(inventoryBatches.expiryDate),
-        asc(inventoryBatches.receivedDate),
-        asc(inventoryBatches.createdAt)
-      )
+    const { allocations, remaining } = allocateBatches(activeBatches, requested)
 
-    // Allocate FEFO first (expiry ASC, nulls last), then FIFO (receivedDate
-    // ASC, createdAt ASC) — batches are returned from SQL already ordered.
-    const { allocations, remaining } = allocateBatches(batches, requested)
-
-    for (const allocation of allocations) {
-      await tx
-        .update(inventoryBatches)
-        .set({
-          quantity: sql`${inventoryBatches.quantity} - ${allocation.quantity}`,
-        })
-        .where(eq(inventoryBatches.id, allocation.batchId))
-    }
-
-    // Never partially fulfill: if any demand is left unsatisfied, roll back
-    // the whole deduction (the enclosing transaction aborts).
     if (remaining > 0) {
       throw new InsufficientStockError(
         item.productId,
@@ -154,18 +161,45 @@ export async function deductStockIn(
       )
     }
 
-    // Deduct the branch inventory barrel by the amount actually consumed
-    // (== requested on success), keeping the barrel in sync with the ledger.
-    if (allocations.length > 0) {
-      const consumed = allocations.reduce((sum, a) => sum + a.quantity, 0)
-      await tx
-        .update(branchInventory)
-        .set({
-          quantity: sql`${branchInventory.quantity} - ${consumed}`,
-        })
-        .where(eq(branchInventory.id, inv.id))
+    if (allocations.length === 0) continue
+
+    const consumed = allocations.reduce((sum, a) => sum + a.quantity, 0)
+    for (const alloc of allocations) {
+      batchUpdates.set(
+        alloc.batchId,
+        (batchUpdates.get(alloc.batchId) ?? 0) + alloc.quantity
+      )
     }
+    invUpdates.set(inv.id, consumed)
   }
+
+  if (batchUpdates.size === 0) return
+
+  const batchIds = [...batchUpdates.keys()]
+  await tx
+    .update(inventoryBatches)
+    .set({
+      quantity: sql`CASE ${sql.join(
+        batchIds.map((id) =>
+          sql`WHEN ${id} THEN ${inventoryBatches.quantity} - ${batchUpdates.get(id)}`
+        ),
+        sql` `
+      )} ELSE ${inventoryBatches.quantity} END`,
+    })
+    .where(inArray(inventoryBatches.id, batchIds))
+
+  const invIds = [...invUpdates.keys()]
+  await tx
+    .update(branchInventory)
+    .set({
+      quantity: sql`CASE ${sql.join(
+        invIds.map((id) =>
+          sql`WHEN ${id} THEN ${branchInventory.quantity} - ${invUpdates.get(id)}`
+        ),
+        sql` `
+      )} ELSE ${branchInventory.quantity} END`,
+    })
+    .where(inArray(branchInventory.id, invIds))
 }
 
 /**
@@ -220,42 +254,6 @@ export async function restoreStockIn(
       supplier: null,
     })
   }
-}
-
-/**
- * If a product has positive stock but no batches with remaining quantity
- * (stock that was restocked before batching existed, or a batch ledger that
- * was fully consumed), create a single catch-all default batch so the stock
- * stays consistent with the batch ledger. The check must test for remaining
- * quantity — a completely exhausted legacy batch must not suppress backfill.
- */
-async function ensureDefaultBatch(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  branchInventoryId: string,
-  quantity: number
-) {
-  const active = await tx
-    .select({ id: inventoryBatches.id })
-    .from(inventoryBatches)
-    .where(
-      and(
-        eq(inventoryBatches.branchInventoryId, branchInventoryId),
-        gt(inventoryBatches.quantity, 0)
-      )
-    )
-    .limit(1)
-
-  if (active.length > 0 || quantity <= 0) return
-
-  await tx.insert(inventoryBatches).values({
-    id: generateId(),
-    branchInventoryId,
-    batchNumber: null,
-    quantity,
-    originalQuantity: quantity,
-    expiryDate: null,
-    supplier: null,
-  })
 }
 
 /**

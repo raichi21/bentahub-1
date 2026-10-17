@@ -193,8 +193,9 @@ export async function getStaffProducts(
     (p) => p.stockStatus === "out-of-stock"
   ).length
 
+  const productsWithoutImage = products.map(({ image: _, ...rest }) => rest)
   return {
-    products,
+    products: productsWithoutImage,
     summary: {
       total: products.length,
       inStock,

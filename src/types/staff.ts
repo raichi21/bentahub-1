@@ -32,7 +32,7 @@ export interface StaffProductItem {
   bulkPrice: number | null
   unit: string
   category: string
-  image: string | null
+  image?: string | null
   stock: number
   reorderLevel: number
   stockStatus: "in-stock" | "low-stock" | "out-of-stock"

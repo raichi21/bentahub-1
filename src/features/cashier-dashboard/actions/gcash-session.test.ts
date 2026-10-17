@@ -87,11 +87,9 @@ const baseTxn = {
 }
 
 function stockSelects() {
-  // deductStockIn: inv barrel, ensureDefaultBatch check, batch ledger.
   return [
-    [{ id: "inv-1", quantity: 100 }],
-    [{ id: "batch-0" }],
-    [{ id: "batch-1", quantity: 50, expiryDate: null }],
+    [{ id: "inv-1", productId: "prod-1", quantity: 100 }],
+    [{ id: "batch-1", branchInventoryId: "inv-1", quantity: 50, expiryDate: null }],
   ]
 }
 
