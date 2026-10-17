@@ -172,7 +172,6 @@ export async function getStaffProducts(
           : null,
       unit: inv.product.unit || "pcs",
       category: inv.product.category,
-      image: inv.product.image,
       stock: inv.quantity,
       reorderLevel: inv.lowStockThreshold,
       stockStatus,

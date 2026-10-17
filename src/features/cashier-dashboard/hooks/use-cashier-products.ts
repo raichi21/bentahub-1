@@ -43,7 +43,6 @@ export function useCashierProducts(): UseCashierProductsResult {
           category: p.category as Product["category"],
           stock: p.stock,
           reorderLevel: p.reorderLevel,
-          image: p.image || "",
           unit: p.unit || "pcs",
           nearestExpiry: p.nearestExpiry,
           sellByPack: p.sellByPack ?? false,
