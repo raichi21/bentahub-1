@@ -53,8 +53,11 @@ export interface AdminOverviewData {
   revenueChannels: {
     pos: number
     posDisplay: string
+    posPercentage: number
     reservations: number
     reservationsDisplay: string
+    reservationsPercentage: number
+    totalDisplay: string
   }
 }
 

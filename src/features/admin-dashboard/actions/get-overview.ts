@@ -376,11 +376,19 @@ export async function getAdminOverview(): Promise<AdminOverviewData> {
       gcashPercentage: gcashPct,
       totalDisplay: formatCurrency(totalPaymentRevenue),
     },
-    revenueChannels: {
-      pos: posCurrentMonthRevenue,
-      posDisplay: formatCurrency(posCurrentMonthRevenue),
-      reservations: resCurrentMonthRevenue,
-      reservationsDisplay: formatCurrency(resCurrentMonthRevenue),
-    },
+    revenueChannels: (() => {
+      const total = posCurrentMonthRevenue + resCurrentMonthRevenue
+      const posPct =
+        total > 0 ? Math.round((posCurrentMonthRevenue / total) * 100) : 0
+      return {
+        pos: posCurrentMonthRevenue,
+        posDisplay: formatCurrency(posCurrentMonthRevenue),
+        posPercentage: posPct,
+        reservations: resCurrentMonthRevenue,
+        reservationsDisplay: formatCurrency(resCurrentMonthRevenue),
+        reservationsPercentage: total > 0 ? 100 - posPct : 0,
+        totalDisplay: formatCurrency(total),
+      }
+    })(),
   }
 }

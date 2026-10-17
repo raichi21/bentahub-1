@@ -107,11 +107,8 @@ export function PaymentBreakdownCard({ data }: PaymentBreakdownCardProps) {
                 <span className="font-medium text-foreground">Cash</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="font-mono text-sm font-bold text-foreground">
                   {data!.cashTotalDisplay}
-                </span>
-                <span className="min-w-[3ch] text-right font-mono text-xs font-bold text-foreground">
-                  {data!.cashPercentage}%
                 </span>
               </div>
             </div>
@@ -121,17 +118,16 @@ export function PaymentBreakdownCard({ data }: PaymentBreakdownCardProps) {
                 <span className="font-medium text-foreground">GCash</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="font-mono text-sm font-bold text-foreground">
                   {data!.gcashTotalDisplay}
-                </span>
-                <span className="min-w-[3ch] text-right font-mono text-xs font-bold text-foreground">
-                  {data!.gcashPercentage}%
                 </span>
               </div>
             </div>
-            <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm">
-              <span className="font-medium text-muted-foreground">Total</span>
-              <span className="text-sm font-bold text-foreground">
+            <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
+              <span className="text-sm font-medium text-muted-foreground">
+                Total
+              </span>
+              <span className="text-xl font-bold text-foreground">
                 {data!.totalDisplay}
               </span>
             </div>

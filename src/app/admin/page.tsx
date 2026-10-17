@@ -7,6 +7,7 @@ import {
   TopProductsCard,
   LowStockByCategoryCard,
   PaymentBreakdownCard,
+  RevenueChannelCard,
 } from "@/features/admin-dashboard"
 import { CreditCard, Package, AlertTriangle } from "lucide-react"
 import type {
@@ -127,13 +128,6 @@ export default function AdminPage() {
         />
       </div>
 
-      {data?.revenueChannels && (
-        <p className="-mt-2 text-xs text-muted-foreground">
-          Kita ngayong buwan: Walk-in {data.revenueChannels.posDisplay} |
-          Reservations {data.revenueChannels.reservationsDisplay}
-        </p>
-      )}
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-12">
           <SalesChart
@@ -145,14 +139,20 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-6">
           <TopProductsCard data={topProducts} />
         </div>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-6">
           <LowStockByCategoryCard data={lowStockByCategory} />
         </div>
-        <div className="lg:col-span-4">
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-6">
           <PaymentBreakdownCard data={paymentBreakdown} />
+        </div>
+        <div className="lg:col-span-6">
+          <RevenueChannelCard data={data?.revenueChannels} />
         </div>
       </div>
     </div>
