@@ -172,6 +172,7 @@ export async function getStaffProducts(
           : null,
       unit: inv.product.unit || "pcs",
       category: inv.product.category,
+      image: inv.product.image,
       stock: inv.quantity,
       reorderLevel: inv.lowStockThreshold,
       stockStatus,
@@ -193,9 +194,8 @@ export async function getStaffProducts(
     (p) => p.stockStatus === "out-of-stock"
   ).length
 
-  const productsWithoutImage = products.map(({ image: _, ...rest }) => rest)
   return {
-    products: productsWithoutImage,
+    products,
     summary: {
       total: products.length,
       inStock,
