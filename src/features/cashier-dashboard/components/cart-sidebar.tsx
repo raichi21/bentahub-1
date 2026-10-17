@@ -128,7 +128,14 @@ export function CartSidebar({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          items,
+          items: items.map((item) => ({
+            ...item,
+            product: {
+              id: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+            },
+          })),
           totalAmount: total,
           paymentMethod,
           amountPaid: amountPaid || "0",

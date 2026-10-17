@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
         bulkPrice: products.bulkPrice,
         unit: products.unit,
         weight: products.weight,
-        image: products.image,
         sku: products.sku,
         barcode: products.barcode,
         isActive: products.isActive,
