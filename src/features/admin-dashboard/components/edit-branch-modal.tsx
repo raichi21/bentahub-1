@@ -28,7 +28,6 @@ export function EditBranchModal({
 }: EditBranchModalProps) {
   const [name, setName] = useState("")
   const [location, setLocation] = useState("")
-  const [capacity, setCapacity] = useState("500")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -37,7 +36,6 @@ export function EditBranchModal({
     const timer = setTimeout(() => {
       setName(branch?.name ?? "")
       setLocation(branch?.location ?? "")
-      setCapacity(String(branch?.capacity ?? 500))
       setError("")
     }, 0)
     return () => clearTimeout(timer)
@@ -64,7 +62,6 @@ export function EditBranchModal({
         body: JSON.stringify({
           name: name.trim(),
           location: location.trim() || null,
-          capacity: parseInt(capacity, 10) || 500,
         }),
       })
       const data = await res.json()
@@ -133,19 +130,6 @@ export function EditBranchModal({
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                  Capacity
-                </label>
-                <input
-                  className="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
-                  placeholder="500"
-                  type="number"
-                  min={1}
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
-                />
-              </div>
             </div>
           </div>
 

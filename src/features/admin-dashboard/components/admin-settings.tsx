@@ -186,7 +186,7 @@ export function AdminSettings() {
     }
   }
 
-  const activeCount = branches.filter((b) => b.isActive).length
+
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-8">
@@ -345,7 +345,7 @@ export function AdminSettings() {
       {/* ── Branch / Store Management ── */}
       <ContentCard
         title="Branch / Store Management"
-        subtitle={`${activeCount} active of ${branches.length} branches`}
+        subtitle={`${branches.length} branches`}
         actions={
           <Button type="button" size="sm" onClick={() => setAddModalOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -375,12 +375,6 @@ export function AdminSettings() {
                     <th className="pr-4 pb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                       Location
                     </th>
-                    <th className="pr-4 pb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                      Capacity
-                    </th>
-                    <th className="pr-4 pb-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                      Status
-                    </th>
                     <th className="pb-3 text-right text-xs font-bold tracking-wider text-muted-foreground uppercase">
                       Actions
                     </th>
@@ -390,7 +384,7 @@ export function AdminSettings() {
                   {branches.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={3}
                         className="py-10 text-center text-muted-foreground"
                       >
                         No branches yet. Click &quot;Add Branch&quot; to create
@@ -415,20 +409,6 @@ export function AdminSettings() {
                         </td>
                         <td className="py-3 pr-4 text-muted-foreground">
                           {branch.location ?? "—"}
-                        </td>
-                        <td className="py-3 pr-4 text-muted-foreground">
-                          {branch.capacity ?? 500}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                              branch.isActive
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {branch.isActive ? "Active" : "Inactive"}
-                          </span>
                         </td>
                         <td className="py-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
