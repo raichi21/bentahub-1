@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { users, branches } from "@/servers/schemas"
+import { branches } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
 import {
   createTransaction,
@@ -20,22 +20,16 @@ export async function POST(request: NextRequest) {
       return auth.error
     }
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, auth.userId),
-    })
+    // checkRoleAuthActive already looked the user up — reuse it instead of a
+    // second users query, and run the branch lookup alongside the body parse.
+    const branchName = auth.user.branch || "Lourdes Main Branch"
 
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      )
-    }
-
-    const branchName = user.branch || "Lourdes Main Branch"
-
-    const branchRecord = await db.query.branches.findFirst({
-      where: eq(branches.name, branchName),
-    })
+    const [branchRecord, body] = await Promise.all([
+      db.query.branches.findFirst({
+        where: eq(branches.name, branchName),
+      }),
+      request.json(),
+    ])
 
     if (!branchRecord) {
       return NextResponse.json(
@@ -44,7 +38,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
     const { items, totalAmount, paymentMethod, amountPaid, changeDue } = body
 
     if (!items || items.length === 0) {
@@ -70,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     const result = await createTransaction({
       branchId: branchRecord.id,
+      branchName,
       cashierId: auth.userId,
       items,
       totalAmount,

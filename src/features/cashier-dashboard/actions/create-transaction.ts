@@ -2,7 +2,6 @@ import { db } from "@/servers/db"
 import {
   transactions,
   transactionItems,
-  branches,
   cashDrawerSessions,
 } from "@/servers/schemas"
 import { eq, max, and } from "drizzle-orm"
@@ -13,6 +12,7 @@ import type { CartItem } from "@/types/cashier"
 
 export interface CreateTransactionInput {
   branchId: string
+  branchName: string
   cashierId: string
   items: CartItem[]
   totalAmount: number
@@ -29,7 +29,14 @@ export class NoOpenCashDrawerError extends Error {
 }
 
 export async function createTransaction(input: CreateTransactionInput) {
-  const { branchId, cashierId, items, totalAmount, paymentMethod } = input
+  const {
+    branchId,
+    branchName,
+    cashierId,
+    items,
+    totalAmount,
+    paymentMethod,
+  } = input
   const transactionId = generateId()
 
   // Every sale — cash or GCash — belongs to an open drawer session so the
@@ -62,7 +69,7 @@ export async function createTransaction(input: CreateTransactionInput) {
   // Wrap the receipt, the items, and the stock deduction in ONE transaction.
   // If stock can't fully cover the sale, nothing is committed — no orphan
   // "completed" transaction with stock never deducted.
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     // Get the next sequential receipt number for this branch
     const maxResult = await tx
       .select({ maxReceipt: max(transactions.receiptNumber) })
@@ -107,16 +114,19 @@ export async function createTransaction(input: CreateTransactionInput) {
       }))
     )
 
-    const branchRecord = await db.query.branches.findFirst({
-      where: eq(branches.id, branchId),
-    })
-
-    await notifyAdmins({
-      type: "payment-received",
-      title: `Payment Received: ${paymentMethod === "cash" ? "Cash" : "GCash"}`,
-      message: `A payment of ₱${totalAmount.toFixed(2)} was received via ${paymentMethod} at ${branchRecord?.name || "Unknown Branch"}. Receipt #${nextReceiptNumber}`,
-    })
-
     return { id: transactionId, receiptNumber: nextReceiptNumber }
   })
+
+  // The sale has committed and the transaction's locks are released — notify
+  // admins only now, fire-and-forget, so a notification hiccup never delays
+  // the receipt or holds transaction locks open. Failures are logged only.
+  void notifyAdmins({
+    type: "payment-received",
+    title: `Payment Received: ${paymentMethod === "cash" ? "Cash" : "GCash"}`,
+    message: `A payment of ₱${totalAmount.toFixed(2)} was received via ${paymentMethod} at ${branchName}. Receipt #${result.receiptNumber}`,
+  }).catch((err) => {
+    console.error("Failed to notify admins of payment:", err)
+  })
+
+  return result
 }
