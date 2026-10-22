@@ -1,6 +1,6 @@
 "use client"
 
-import { Edit3, Layers, MoreVertical, AlertTriangle } from "lucide-react"
+import { Edit3, Layers, MoreVertical } from "lucide-react"
 import type { Product } from "@/types/cashier"
 
 interface InventoryRowMenuProps {
@@ -8,7 +8,6 @@ interface InventoryRowMenuProps {
   open: boolean
   onToggle: () => void
   onEdit: () => void
-  onWaste: () => void
   onViewBatches: () => void
   saving: boolean
 }
@@ -18,7 +17,6 @@ export function InventoryRowMenu({
   open,
   onToggle,
   onEdit,
-  onWaste,
   onViewBatches,
   saving,
 }: InventoryRowMenuProps) {
@@ -48,14 +46,6 @@ export function InventoryRowMenu({
           >
             <Edit3 className="h-3.5 w-3.5 text-muted-foreground" />
             {saving ? "Saving..." : "Edit Stock"}
-          </button>
-          <button
-            role="menuitem"
-            onClick={onWaste}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
-          >
-            <AlertTriangle className="h-3.5 w-3.5 text-muted-foreground" />
-            Report Damage
           </button>
           <div className="border-t border-border/40" />
           <button

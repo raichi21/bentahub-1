@@ -13,7 +13,6 @@ import {
 import { QuickStockModal } from "./quick-stock-modal"
 import { AddStockModal } from "./add-stock-modal"
 import { ProductBatchesModal } from "./product-batches-modal"
-import { WasteStockModal, type WasteReason } from "./waste-stock-modal"
 import { TablePagination } from "@/components/data-table"
 import { InventoryToolbar } from "./inventory-toolbar"
 import { InventoryRowMenu } from "./inventory-row-menu"
@@ -53,12 +52,6 @@ interface InventoryUpdateTableProps {
   onAddProduct?: (
     product: AddProductData
   ) => string | null | undefined | Promise<string | null | undefined>
-  onWasteProduct?: (
-    productId: string,
-    quantity: number,
-    reason: WasteReason,
-    notes?: string
-  ) => number | null | undefined | Promise<number | null | undefined>
   savingId?: string | null
   categories?: string[]
   units?: string[]
@@ -69,7 +62,6 @@ export function InventoryUpdateTable({
   products: initialProducts,
   onStockUpdate,
   onAddProduct,
-  onWasteProduct,
   savingId,
   categories: masterCategories,
   units,
@@ -81,7 +73,6 @@ export function InventoryUpdateTable({
   const [currentPage, setCurrentPage] = useState(1)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [batchProduct, setBatchProduct] = useState<Product | null>(null)
-  const [wasteProduct, setWasteProduct] = useState<Product | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [highlightedSku, setHighlightedSku] = useState<string | null>(null)
   const [pendingSku, setPendingSku] = useState<string | null>(null)
@@ -199,21 +190,6 @@ export function InventoryUpdateTable({
         isOpen={!!batchProduct}
         onClose={() => setBatchProduct(null)}
         product={batchProduct}
-      />
-      <WasteStockModal
-        key={wasteProduct ? `waste-${wasteProduct.id}` : "waste-none"}
-        isOpen={!!wasteProduct}
-        onClose={() => setWasteProduct(null)}
-        product={wasteProduct}
-        onSave={async (productId, quantity, reason, notes) => {
-          const result = await onWasteProduct?.(
-            productId,
-            quantity,
-            reason,
-            notes
-          )
-          return result ?? null
-        }}
       />
       {showAddModal && (
         <AddStockModal
@@ -433,14 +409,6 @@ export function InventoryUpdateTable({
                         onEdit={() => {
                           if (canEdit) {
                             setEditingProduct(p)
-                          } else {
-                            showPermissionNotice()
-                          }
-                          setOpenMenuId(null)
-                        }}
-                        onWaste={() => {
-                          if (canEdit) {
-                            setWasteProduct(p)
                           } else {
                             showPermissionNotice()
                           }
