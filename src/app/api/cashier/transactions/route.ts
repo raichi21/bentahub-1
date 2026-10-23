@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { db } from "@/servers/db"
 import { branches } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // checkRoleAuthActive already looked the user up — reuse it instead of a
     // second users query, and run the branch lookup alongside the body parse.
-    const branchName = auth.user.branch || "Lourdes Main Branch"
+    const branchName = auth.user.branch || DEFAULT_BRANCH_NAME
 
     const [branchRecord, body] = await Promise.all([
       db.query.branches.findFirst({

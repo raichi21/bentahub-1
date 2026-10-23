@@ -32,19 +32,19 @@ export async function POST(request: NextRequest) {
     // ── Find or create the store branches ──
     const branchNames = [
       {
-        name: "Lourdes Main Branch",
+        name: "Lourdes Sari Sari Store",
         location:
           "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan",
         capacity: 500,
       },
       {
-        name: "Lourdes Second Branch",
+        name: "JLO Sari-Sari Store",
         location:
           "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan",
         capacity: 400,
       },
       {
-        name: "Lourdes Third Branch",
+        name: "Lourdes Frozen",
         location:
           "C. De Guzman St., Hortaleza, Poblacion, Santa Maria, Bulacan",
         capacity: 400,

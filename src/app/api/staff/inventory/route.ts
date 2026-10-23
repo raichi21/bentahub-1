@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requirePermission, generateId } from "@/lib/auth-utils"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { logActivity } from "@/lib/activity-log"
 import { notifyAdmins } from "@/lib/notifications"
 import { db } from "@/servers/db"
@@ -48,7 +49,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const branchName = user.branch || "Lourdes Main Branch"
+    const branchName = user.branch || DEFAULT_BRANCH_NAME
     const branchRecord = await db.query.branches.findFirst({
       where: eq(branches.name, branchName),
     })
@@ -197,7 +198,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const branchName = user.branch || "Lourdes Main Branch"
+    const branchName = user.branch || DEFAULT_BRANCH_NAME
     const branchRecord = await db.query.branches.findFirst({
       where: eq(branches.name, branchName),
     })

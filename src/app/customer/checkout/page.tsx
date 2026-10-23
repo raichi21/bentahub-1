@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useAuth } from "@/hooks/useAuth"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { useOrders } from "@/hooks/useOrders"
 import Link from "next/link"
 import { cn, formatOrderId } from "@/lib/utils"
@@ -46,7 +47,7 @@ function CheckoutPageInner() {
   const searchParams = useSearchParams()
   const { user, token } = useAuth()
   const branch =
-    searchParams.get("branch") || user?.branch || "Lourdes Main Branch"
+    searchParams.get("branch") || user?.branch || DEFAULT_BRANCH_NAME
 
   const {
     items,

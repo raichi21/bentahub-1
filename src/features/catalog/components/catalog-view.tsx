@@ -13,10 +13,11 @@ import Link from "next/link"
 import { useProducts } from "@/hooks/useProducts"
 import { useCart } from "@/hooks/useCart"
 import { useRouter, useSearchParams } from "next/navigation"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 
 const ITEMS_PER_PAGE = 12
 const DEFAULT_CATEGORY = "All Products"
-const DEFAULT_BRANCH = "Lourdes Main Branch"
+const DEFAULT_BRANCH = DEFAULT_BRANCH_NAME
 
 interface CatalogViewProps {
   /** Base route for links within the catalog (e.g. "/catalog" or "/customer/catalog"). */

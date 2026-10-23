@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
 import { deductStockIn } from "@/features/cashier-dashboard/actions/finalize-transaction"
 import { notifyUser, notifyAdmins } from "@/lib/notifications"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { db } from "@/servers/db"
 import {
   users,
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const branchName = user.branch || "Lourdes Main Branch"
+    const branchName = user.branch || DEFAULT_BRANCH_NAME
 
     const allOrders = (await db.query.orders.findMany({
       where: and(
@@ -154,7 +155,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Staff may only act on reservations belonging to their own branch.
-    const staffBranchName = staff.branch || "Lourdes Main Branch"
+    const staffBranchName = staff.branch || DEFAULT_BRANCH_NAME
     if (order.branch !== staffBranchName) {
       return NextResponse.json(
         {

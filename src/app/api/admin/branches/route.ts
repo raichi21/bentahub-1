@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { extractToken, checkAdminAuth, generateId } from "@/lib/auth-utils"
 import { db } from "@/servers/db"
-import { branches } from "@/servers/schemas"
+import {
+  activityLogs,
+  branches,
+  cartItems,
+  orders,
+  products,
+  stockWasteLogs,
+  users,
+} from "@/servers/schemas"
 import { eq, desc } from "drizzle-orm"
 
 const createBranchSchema = z.object({
@@ -146,11 +154,43 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     if (capacity !== undefined) updateData.capacity = capacity
     if (isActive !== undefined) updateData.isActive = isActive
 
-    const [updated] = await db
-      .update(branches)
-      .set(updateData)
-      .where(eq(branches.id, id))
-      .returning()
+    const [updated] = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(branches)
+        .set(updateData)
+        .where(eq(branches.id, id))
+        .returning()
+
+      const oldName = existing.name
+      if (name !== oldName) {
+        await tx
+          .update(users)
+          .set({ branch: name })
+          .where(eq(users.branch, oldName))
+        await tx
+          .update(products)
+          .set({ branch: name })
+          .where(eq(products.branch, oldName))
+        await tx
+          .update(orders)
+          .set({ branch: name })
+          .where(eq(orders.branch, oldName))
+        await tx
+          .update(cartItems)
+          .set({ branch: name })
+          .where(eq(cartItems.branch, oldName))
+        await tx
+          .update(activityLogs)
+          .set({ branch: name })
+          .where(eq(activityLogs.branch, oldName))
+        await tx
+          .update(stockWasteLogs)
+          .set({ branch: name })
+          .where(eq(stockWasteLogs.branch, oldName))
+      }
+
+      return [row]
+    })
 
     return NextResponse.json(
       { success: true, message: "Branch updated successfully", data: updated },

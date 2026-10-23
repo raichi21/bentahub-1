@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuth } from "@/lib/auth-utils"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { db } from "@/servers/db"
 import { users } from "@/servers/schemas"
 import { eq } from "drizzle-orm"
@@ -29,7 +30,7 @@ export async function GET(
       )
     }
 
-    const branch = user.branch || "Lourdes Main Branch"
+    const branch = user.branch || DEFAULT_BRANCH_NAME
 
     const data = await getStaffProducts(branch)
 

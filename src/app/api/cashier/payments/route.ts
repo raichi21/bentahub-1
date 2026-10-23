@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { db } from "@/servers/db"
 import {
   users,
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       return apiError("User not found", 404)
     }
 
-    const branchName = user.branch || "Lourdes Main Branch"
+    const branchName = user.branch || DEFAULT_BRANCH_NAME
     const branchRecord = await db.query.branches.findFirst({
       where: eq(branches.name, branchName),
     })

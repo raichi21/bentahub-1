@@ -39,7 +39,7 @@ vi.mock("@/servers/db", () => {
         users: {
           findFirst: async () => ({
             id: "cashier-1",
-            branch: "Lourdes Main Branch",
+            branch: "Lourdes Sari Sari Store",
             fullName: "Test Cashier",
             email: "cashier@test.local",
           }),

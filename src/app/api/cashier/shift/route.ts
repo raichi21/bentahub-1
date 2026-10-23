@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuth, generateId } from "@/lib/auth-utils"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { db } from "@/servers/db"
 import {
   cashDrawerSessions,
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const branchName = user.branch || "Lourdes Main Branch"
+    const branchName = user.branch || DEFAULT_BRANCH_NAME
     const branchRecord = await db.query.branches.findFirst({
       where: eq(branches.name, branchName),
     })
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const branchName = user.branch || "Lourdes Main Branch"
+    const branchName = user.branch || DEFAULT_BRANCH_NAME
     const branchRecord = await db.query.branches.findFirst({
       where: eq(branches.name, branchName),
     })

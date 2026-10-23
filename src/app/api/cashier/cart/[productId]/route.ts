@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import {
   setCashierCartQuantity,
   removeCashierCartItem,
@@ -17,7 +18,7 @@ async function resolveCashier(request: NextRequest) {
   // querying `users` a second time (one fewer paid DB round-trip).
   return {
     userId: auth.userId,
-    branchName: auth.user.branch || "Lourdes Main Branch",
+    branchName: auth.user.branch || DEFAULT_BRANCH_NAME,
   }
 }
 

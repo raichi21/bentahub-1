@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useCartStore } from "@/stores/cartStore"
 import { MAX_ITEM_QUANTITY } from "@/lib/cart"
 import { cn } from "@/lib/utils"
+import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { RoleGate } from "@/components/role-gate"
 
 export default function CartPage() {
@@ -102,7 +103,7 @@ function CartPageInner() {
     if (items.length === 0) return
     setIsProcessing(true)
     router.push(
-      `/customer/checkout?branch=${encodeURIComponent(items[0]?.branch || user?.branch || "Lourdes Main Branch")}`
+      `/customer/checkout?branch=${encodeURIComponent(items[0]?.branch || user?.branch || DEFAULT_BRANCH_NAME)}`
     )
   }
 
