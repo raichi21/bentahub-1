@@ -4,8 +4,18 @@ import {
   cashDrawerSessions,
   inventoryBatches,
   transactions,
+  products,
 } from "@/servers/schemas"
-import { eq, and, asc, sql, gt, inArray } from "drizzle-orm"
+import {
+  eq,
+  and,
+  asc,
+  sql,
+  gt,
+  inArray,
+  type SQL,
+  type SQLWrapper,
+} from "drizzle-orm"
 import { generateId } from "@/lib/auth-utils"
 
 /** Raised when a product's available stock cannot cover the requested amount. */
@@ -21,6 +31,28 @@ export class InsufficientStockError extends Error {
 export interface BatchAllocation {
   batchId: string
   quantity: number
+}
+
+/**
+ * Build a single-column UPDATE expression that applies a different value per
+ * row, keyed by id:
+ *
+ *   CASE <idColumn> WHEN <id1> THEN <value1> WHEN <id2> THEN <value2> ... END
+ *
+ * The id column MUST be the CASE base expression. Writing `CASE WHEN <id>` is
+ * wrong: `<id>` becomes a bound string parameter used as a boolean condition,
+ * so Postgres evaluates it false for every row and silently falls through to
+ * ELSE — the update becomes a no-op with no error.
+ */
+export function buildIdCase(
+  idColumn: SQLWrapper,
+  elseValue: SQLWrapper,
+  valuesById: Map<string, SQL>
+): SQL {
+  return sql`CASE ${idColumn} ${sql.join(
+    [...valuesById].map(([id, value]) => sql`WHEN ${id} THEN ${value}`),
+    sql` `
+  )} ELSE ${elseValue} END`
 }
 
 /**
@@ -151,6 +183,35 @@ export async function deductStockIn(
       (b) => !b.expiryDate || b.expiryDate.getTime() > now
     )
 
+    const activeTotal = activeBatches.reduce((sum, b) => sum + b.quantity, 0)
+    // If the batch ledger is short of branchInventory (e.g. unbatched stock),
+    // synthesize a catch-all batch so stock can be deducted properly.
+    if (activeTotal < requested && inv.quantity >= requested) {
+      const missingQty = inv.quantity - activeTotal
+      const fallbackBatchId = generateId()
+      await tx.insert(inventoryBatches).values({
+        id: fallbackBatchId,
+        branchInventoryId: inv.id,
+        batchNumber: "DEFAULT",
+        quantity: missingQty,
+        originalQuantity: missingQty,
+        expiryDate: null,
+        supplier: null,
+      })
+      activeBatches.push({
+        id: fallbackBatchId,
+        branchInventoryId: inv.id,
+        batchNumber: "DEFAULT",
+        quantity: missingQty,
+        originalQuantity: missingQty,
+        expiryDate: null,
+        receivedDate: new Date(),
+        supplier: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+
     const { allocations, remaining } = allocateBatches(activeBatches, requested)
 
     if (remaining > 0) {
@@ -173,33 +234,72 @@ export async function deductStockIn(
     invUpdates.set(inv.id, consumed)
   }
 
-  if (batchUpdates.size === 0) return
-
-  const batchIds = [...batchUpdates.keys()]
-  await tx
-    .update(inventoryBatches)
-    .set({
-      quantity: sql`CASE ${sql.join(
-        batchIds.map((id) =>
-          sql`WHEN ${id} THEN ${inventoryBatches.quantity} - ${batchUpdates.get(id)}`
+  if (batchUpdates.size > 0) {
+    const batchIds = [...batchUpdates.keys()]
+    await tx
+      .update(inventoryBatches)
+      .set({
+        quantity: buildIdCase(
+          inventoryBatches.id,
+          inventoryBatches.quantity,
+          new Map(
+            batchIds.map((id) => [
+              id,
+              sql`${inventoryBatches.quantity} - ${batchUpdates.get(id)}`,
+            ])
+          )
         ),
-        sql` `
-      )} ELSE ${inventoryBatches.quantity} END`,
-    })
-    .where(inArray(inventoryBatches.id, batchIds))
+      })
+      .where(inArray(inventoryBatches.id, batchIds))
+  }
 
-  const invIds = [...invUpdates.keys()]
-  await tx
-    .update(branchInventory)
-    .set({
-      quantity: sql`CASE ${sql.join(
-        invIds.map((id) =>
-          sql`WHEN ${id} THEN ${branchInventory.quantity} - ${invUpdates.get(id)}`
+  if (invUpdates.size > 0) {
+    const invIds = [...invUpdates.keys()]
+    await tx
+      .update(branchInventory)
+      .set({
+        quantity: buildIdCase(
+          branchInventory.id,
+          branchInventory.quantity,
+          new Map(
+            invIds.map((id) => [
+              id,
+              sql`${branchInventory.quantity} - ${invUpdates.get(id)}`,
+            ])
+          )
         ),
-        sql` `
-      )} ELSE ${branchInventory.quantity} END`,
-    })
-    .where(inArray(branchInventory.id, invIds))
+      })
+      .where(inArray(branchInventory.id, invIds))
+  }
+
+  // Keep products.quantity in sync with branchInventory
+  const prodUpdates = new Map<string, number>()
+  for (const item of items) {
+    if (item.quantity > 0) {
+      prodUpdates.set(
+        item.productId,
+        (prodUpdates.get(item.productId) ?? 0) + item.quantity
+      )
+    }
+  }
+  const prodIds = [...prodUpdates.keys()]
+  if (prodIds.length > 0) {
+    await tx
+      .update(products)
+      .set({
+        quantity: buildIdCase(
+          products.id,
+          products.quantity,
+          new Map(
+            prodIds.map((id) => [
+              id,
+              sql`GREATEST(0, ${products.quantity} - ${prodUpdates.get(id)})`,
+            ])
+          )
+        ),
+      })
+      .where(inArray(products.id, prodIds))
+  }
 }
 
 /**
@@ -219,9 +319,15 @@ export async function restoreStockIn(
   branchId: string,
   items: { productId: string; quantity: number }[]
 ) {
+  const prodRestores = new Map<string, number>()
   for (const item of items) {
     const quantity = item.quantity
     if (quantity <= 0) continue
+
+    prodRestores.set(
+      item.productId,
+      (prodRestores.get(item.productId) ?? 0) + quantity
+    )
 
     const invRows = await tx
       .select()
@@ -253,6 +359,25 @@ export async function restoreStockIn(
       expiryDate: null,
       supplier: null,
     })
+  }
+
+  const prodIds = [...prodRestores.keys()]
+  if (prodIds.length > 0) {
+    await tx
+      .update(products)
+      .set({
+        quantity: buildIdCase(
+          products.id,
+          products.quantity,
+          new Map(
+            prodIds.map((id) => [
+              id,
+              sql`${products.quantity} + ${prodRestores.get(id)}`,
+            ])
+          )
+        ),
+      })
+      .where(inArray(products.id, prodIds))
   }
 }
 

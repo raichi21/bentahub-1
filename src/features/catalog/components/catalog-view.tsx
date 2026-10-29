@@ -75,12 +75,8 @@ export function CatalogView({ basePath }: CatalogViewProps) {
   // Fetch products for the current branch. When the branch changes, abort
   // the previous in-flight request so its response can't overwrite the store
   // with products from the now-deselected branch.
-  const lastBranchRef = useRef("")
   const fetchControllerRef = useRef<AbortController | null>(null)
-  useEffect(() => {
-    if (lastBranchRef.current === currentBranch && fetchedProducts.length > 0)
-      return
-    lastBranchRef.current = currentBranch
+  const loadProducts = useCallback(() => {
     fetchControllerRef.current?.abort()
     const controller = new AbortController()
     fetchControllerRef.current = controller
@@ -97,7 +93,22 @@ export function CatalogView({ basePath }: CatalogViewProps) {
       if (fetchControllerRef.current === controller)
         fetchControllerRef.current = null
     }
-  }, [fetchProducts, currentBranch, fetchedProducts.length])
+  }, [fetchProducts, currentBranch])
+
+  useEffect(() => {
+    const cleanup = loadProducts()
+    return cleanup
+  }, [loadProducts])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        loadProducts()
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [loadProducts])
 
   const categoryChanged = useCallback(
     (category: string) => {

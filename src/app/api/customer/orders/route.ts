@@ -11,6 +11,10 @@ import { eq, and, inArray, isNull, desc } from "drizzle-orm"
 import { generateId, getRoleScopedUserId } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
 import { nextPickupDeadline } from "@/lib/date"
+import {
+  deductStockIn,
+  InsufficientStockError,
+} from "@/features/cashier-dashboard/actions/finalize-transaction"
 
 /** Thrown by the checkout transaction when stock cannot fulfil an order. */
 class CheckoutError extends Error {}
@@ -135,6 +139,7 @@ export async function POST(request: NextRequest) {
       isPaid: false,
       paidAt: null,
       pickupDeadline,
+      stockDeducted: true,
     }
 
     // Create order items from cart items
@@ -149,7 +154,7 @@ export async function POST(request: NextRequest) {
     }))
 
     // #10: Wrap inserts in a DB transaction — if server crashes mid-way,
-    // no orphaned orders or uncleared carts. Stock is re-validated inside
+    // no orphaned orders or uncleared carts. Stock is deducted inside
     // the transaction so a concurrent purchase can't be oversold.
     let createdOrder: typeof orders.$inferSelect
     try {
@@ -158,27 +163,37 @@ export async function POST(request: NextRequest) {
           where: eq(branches.name, effectiveBranch),
         })
 
-        if (branchRecord) {
-          for (const item of userCartItems) {
-            const inv = await tx.query.branchInventory.findFirst({
-              where: and(
-                eq(branchInventory.productId, item.productId),
-                eq(branchInventory.branchId, branchRecord.id)
-              ),
-            })
-            if (inv) {
-              const available = Number(inv.quantity)
-              if (available <= 0) {
-                throw new CheckoutError(`"${item.productName}" is out of stock`)
-              }
-              if (Number(item.quantity) > available) {
-                throw new CheckoutError(
-                  `Only ${available} unit(s) of "${item.productName}" are available`
-                )
-              }
-            }
+        if (!branchRecord) {
+          throw new CheckoutError(`Branch "${effectiveBranch}" not found`)
+        }
+
+        for (const item of userCartItems) {
+          const inv = await tx.query.branchInventory.findFirst({
+            where: and(
+              eq(branchInventory.productId, item.productId),
+              eq(branchInventory.branchId, branchRecord.id)
+            ),
+          })
+          const available = inv ? Number(inv.quantity) : 0
+          if (available <= 0) {
+            throw new CheckoutError(`"${item.productName}" is out of stock`)
+          }
+          if (Number(item.quantity) > available) {
+            throw new CheckoutError(
+              `Only ${available} unit(s) of "${item.productName}" are available`
+            )
           }
         }
+
+        // Deduct inventory batches and branchInventory immediately
+        await deductStockIn(
+          tx,
+          branchRecord.id,
+          userCartItems.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          }))
+        )
 
         const [order] = await tx.insert(orders).values(newOrder).returning()
 
@@ -191,6 +206,13 @@ export async function POST(request: NextRequest) {
     } catch (txError) {
       if (txError instanceof CheckoutError) {
         return apiError(txError.message, 400)
+      }
+      if (txError instanceof InsufficientStockError) {
+        const item = userCartItems.find((i) =>
+          txError.message.includes(i.productId)
+        )
+        const name = item ? `"${item.productName}"` : "product"
+        return apiError(`Not enough stock available for ${name}`, 400)
       }
       throw txError
     }

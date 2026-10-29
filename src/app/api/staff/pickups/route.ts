@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
 import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { db } from "@/servers/db"
-import { users, branches, orders } from "@/servers/schemas"
+import { users, branches, orders, orderItems } from "@/servers/schemas"
+import { restoreStockIn } from "@/features/cashier-dashboard/actions/finalize-transaction"
 import { eq, and, or, desc } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
@@ -160,10 +161,38 @@ export async function PATCH(request: NextRequest) {
         })
         .where(eq(orders.id, orderId))
     } else if (action === "cancel") {
-      await db
-        .update(orders)
-        .set({ status: "cancelled" })
-        .where(eq(orders.id, orderId))
+      const order = await db.query.orders.findFirst({
+        where: eq(orders.id, orderId),
+      })
+      if (order?.stockDeducted) {
+        await db.transaction(async (tx) => {
+          const branchRecord = await tx.query.branches.findFirst({
+            where: eq(branches.name, order.branch),
+          })
+          const lines = await tx.query.orderItems.findMany({
+            where: eq(orderItems.orderId, orderId),
+          })
+          if (branchRecord && lines.length > 0) {
+            await restoreStockIn(
+              tx,
+              branchRecord.id,
+              lines.map((l) => ({
+                productId: l.productId,
+                quantity: l.quantity,
+              }))
+            )
+          }
+          await tx
+            .update(orders)
+            .set({ status: "cancelled", stockDeducted: false })
+            .where(eq(orders.id, orderId))
+        })
+      } else {
+        await db
+          .update(orders)
+          .set({ status: "cancelled" })
+          .where(eq(orders.id, orderId))
+      }
     } else {
       return NextResponse.json(
         { success: false, message: "Invalid action" },

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractToken, checkRoleAuthActive } from "@/lib/auth-utils"
-import { deductStockIn } from "@/features/cashier-dashboard/actions/finalize-transaction"
+import {
+  deductStockIn,
+  restoreStockIn,
+} from "@/features/cashier-dashboard/actions/finalize-transaction"
 import { notifyUser, notifyAdmins } from "@/lib/notifications"
 import { DEFAULT_BRANCH_NAME } from "@/lib/branches"
 import { db } from "@/servers/db"
@@ -192,36 +195,41 @@ export async function PATCH(request: NextRequest) {
       const orderLines = await db.query.orderItems.findMany({
         where: eq(orderItems.orderId, orderId),
       })
-      for (const line of orderLines) {
-        const inv = await db.query.branchInventory.findFirst({
-          where: and(
-            eq(branchInventory.branchId, branchRecord.id),
-            eq(branchInventory.productId, line.productId)
-          ),
-        })
-        const have = inv?.quantity ?? 0
-        if (have < line.quantity) {
-          return NextResponse.json(
-            {
-              success: false,
-              message: `Insufficient stock for ${line.productName} (have ${have}, need ${line.quantity})`,
-            },
-            { status: 400 }
-          )
+
+      // If stock was not yet deducted at checkout, validate and deduct it now.
+      if (!order.stockDeducted) {
+        for (const line of orderLines) {
+          const inv = await db.query.branchInventory.findFirst({
+            where: and(
+              eq(branchInventory.branchId, branchRecord.id),
+              eq(branchInventory.productId, line.productId)
+            ),
+          })
+          const have = inv?.quantity ?? 0
+          if (have < line.quantity) {
+            return NextResponse.json(
+              {
+                success: false,
+                message: `Insufficient stock for ${line.productName} (have ${have}, need ${line.quantity})`,
+              },
+              { status: 400 }
+            )
+          }
         }
       }
 
-      // Deduct stock and flip the order status in ONE transaction so the
-      // reservation can never be confirmed without its stock being reserved.
+      // Flip the order status and deduct stock if not already deducted
       await db.transaction(async (tx) => {
-        await deductStockIn(
-          tx,
-          branchRecord.id,
-          orderLines.map((l) => ({
-            productId: l.productId,
-            quantity: l.quantity,
-          }))
-        )
+        if (!order.stockDeducted) {
+          await deductStockIn(
+            tx,
+            branchRecord.id,
+            orderLines.map((l) => ({
+              productId: l.productId,
+              quantity: l.quantity,
+            }))
+          )
+        }
 
         await tx
           .update(orders)
@@ -260,10 +268,35 @@ export async function PATCH(request: NextRequest) {
 
       const cancelReason = reason?.trim() || "Pickup deadline exceeded"
 
-      await db
-        .update(orders)
-        .set({ status: "cancelled", cancelledReason: cancelReason })
-        .where(eq(orders.id, orderId))
+      await db.transaction(async (tx) => {
+        if (order.stockDeducted) {
+          const branchRecord = await tx.query.branches.findFirst({
+            where: eq(branches.name, order.branch || staffBranchName),
+          })
+          const lines = await tx.query.orderItems.findMany({
+            where: eq(orderItems.orderId, orderId),
+          })
+          if (branchRecord && lines.length > 0) {
+            await restoreStockIn(
+              tx,
+              branchRecord.id,
+              lines.map((l) => ({
+                productId: l.productId,
+                quantity: l.quantity,
+              }))
+            )
+          }
+        }
+
+        await tx
+          .update(orders)
+          .set({
+            status: "cancelled",
+            cancelledReason: cancelReason,
+            stockDeducted: false,
+          })
+          .where(eq(orders.id, orderId))
+      })
 
       await notifyUser(order.userId, {
         type: "order-status",

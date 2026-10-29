@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server"
 import { db } from "@/drizzle/db"
-import { orders, orderItems } from "@/drizzle/schema"
+import { orders, orderItems, branches } from "@/drizzle/schema"
 import { eq, and, isNull } from "drizzle-orm"
 import { getRoleScopedUserId } from "@/lib/auth-utils"
 import { apiResponse, apiError } from "@/lib/api-response"
+import { restoreStockIn } from "@/features/cashier-dashboard/actions/finalize-transaction"
 
 /**
  * GET /api/customer/orders/[orderId]
@@ -82,11 +83,30 @@ export async function PATCH(
       return apiError("Order cannot be cancelled in its current state")
     }
 
-    const [updated] = await db
-      .update(orders)
-      .set({ status: "cancelled" })
-      .where(eq(orders.id, orderId))
-      .returning()
+    const updated = await db.transaction(async (tx) => {
+      if (order.stockDeducted) {
+        const branchRecord = await tx.query.branches.findFirst({
+          where: eq(branches.name, order.branch),
+        })
+        const items = await tx.query.orderItems.findMany({
+          where: eq(orderItems.orderId, orderId),
+        })
+        if (branchRecord && items.length > 0) {
+          await restoreStockIn(
+            tx,
+            branchRecord.id,
+            items.map((i) => ({ productId: i.productId, quantity: i.quantity }))
+          )
+        }
+      }
+
+      const [res] = await tx
+        .update(orders)
+        .set({ status: "cancelled", stockDeducted: false })
+        .where(eq(orders.id, orderId))
+        .returning()
+      return res
+    })
 
     return apiResponse({
       success: true,

@@ -82,8 +82,8 @@ export async function GET(request: NextRequest) {
 
         if (flipped.length === 0) return
 
-        // Stock was committed only when staff confirmed the reservation.
-        if (match.status !== "pending" && match.stockDeducted) {
+        // Stock was committed if stockDeducted is true.
+        if (match.stockDeducted) {
           const branchRecord = await tx.query.branches.findFirst({
             where: eq(branches.name, match.branch),
           })

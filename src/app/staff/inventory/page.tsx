@@ -102,6 +102,16 @@ export default function InventoryPage() {
     return () => clearTimeout(timer)
   }, [token, authLoading, fetchProducts, fetchMasterData])
 
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && token) {
+        fetchProducts(token)
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [token, fetchProducts])
+
   const isLoading = authLoading || (token !== null && !fetched && !error)
 
   const handleStockUpdate = async (
