@@ -85,14 +85,26 @@ function LoginPageInner() {
       })
 
       if (!response.ok) {
-        const message = data?.message || text || "Login failed"
+        let message = data?.message
+        if (!message) {
+          if (
+            text.includes("<!DOCTYPE") ||
+            text.includes("<html") ||
+            response.status === 404
+          ) {
+            message =
+              "Unable to connect to the login service. Please verify your connection or refresh the page."
+          } else {
+            message = text || "Login failed"
+          }
+        }
         setError(typeof message === "string" ? message : "Login failed")
         setIsLoading(false)
         return
       }
 
       if (!data) {
-        setError("Login endpoint returned non-JSON response")
+        setError("Unable to process login response. Please try again.")
         setIsLoading(false)
         return
       }

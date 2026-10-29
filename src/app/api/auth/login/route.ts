@@ -21,6 +21,14 @@ import type {
 } from "@/types/auth"
 
 /**
+ * GET /api/auth/login
+ * Redirects any direct browser navigation to the actual login page.
+ */
+export async function GET(request: NextRequest) {
+  return NextResponse.redirect(new URL("/login", request.url))
+}
+
+/**
  * POST /api/auth/login
  *
  * Authenticates a user with email + password.
