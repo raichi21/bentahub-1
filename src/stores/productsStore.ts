@@ -8,6 +8,8 @@ export interface Product {
   price: number
   bulkPrice?: number
   weight: string
+  /** Unit of measure (e.g., pcs, dozen, box, kg) */
+  unit?: string
   image: string
   stockStatus: "in-stock" | "low-stock" | "out-of-stock"
   quantity: number

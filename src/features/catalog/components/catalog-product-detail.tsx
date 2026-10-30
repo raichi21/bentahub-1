@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ShoppingCart,
   Package,
+  Ruler,
   Store,
   Tag,
   Weight,
@@ -253,6 +254,15 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
                 <p className="text-xs text-muted-foreground">Category</p>
                 <p className="text-sm font-medium text-foreground">
                   {product.category}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+              <Ruler className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Unit</p>
+                <p className="text-sm font-medium text-foreground">
+                  {product.unit || "pcs"}
                 </p>
               </div>
             </div>
