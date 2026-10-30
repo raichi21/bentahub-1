@@ -161,6 +161,7 @@ export function CatalogView({ basePath }: CatalogViewProps) {
       stockStatus: p.stockStatus,
       weight: p.weight,
       branch: p.branch,
+      unit: p.unit,
       availableStock: p.quantity ?? null,
     }))
   }, [fetchedProducts, currentCategory, searchQuery])

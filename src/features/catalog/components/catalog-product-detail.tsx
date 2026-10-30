@@ -93,6 +93,7 @@ export function CatalogProductDetail({ basePath }: CatalogProductDetailProps) {
       image: product.image,
       category: product.category,
       availableStock: product.quantity ?? null,
+      unit: product.unit,
       packSize,
       sellByPack: product.sellByPack,
       packPrice: product.packPrice,

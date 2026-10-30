@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
         sellByPack: products.sellByPack,
         packSize: products.packSize,
         packPrice: products.packPrice,
+        // Unit of measure (pcs, dozen, box…) so the cart can render
+        // "2 dozen" instead of a bare quantity.
+        unit: products.unit,
       })
       .from(cartItems)
       .leftJoin(branches, eq(branches.name, cartItems.branch))
@@ -123,6 +126,7 @@ export async function POST(request: NextRequest) {
           sellByPack: products.sellByPack,
           packSize: products.packSize,
           packPrice: products.packPrice,
+          unit: products.unit,
           productBranch: products.branch,
           cartId: cartItems.id,
           cartQuantity: cartItems.quantity,
@@ -232,6 +236,7 @@ export async function POST(request: NextRequest) {
             sellByPack: row.sellByPack ?? false,
             packSize: row.packSize ?? 1,
             packPrice: row.packPrice ? Number(row.packPrice) : undefined,
+            unit: row.unit ?? "pcs",
           },
         },
         { status: 200 }
@@ -295,6 +300,7 @@ export async function POST(request: NextRequest) {
           sellByPack: row.sellByPack ?? false,
           packSize: row.packSize ?? 1,
           packPrice: row.packPrice ? Number(row.packPrice) : undefined,
+          unit: row.unit ?? "pcs",
         },
       },
       { status: 201 }

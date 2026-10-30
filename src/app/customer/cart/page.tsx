@@ -184,39 +184,45 @@ function CartPageInner() {
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-2">
-                        <div className="flex h-10 items-center overflow-hidden rounded-lg border border-border">
-                          <button
-                            onClick={() => handleDecrement(item.id)}
-                            className="flex h-full items-center px-3 transition-colors hover:bg-muted"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <input
-                            className="h-full w-12 border-x border-border bg-transparent text-center font-mono text-foreground"
-                            type="text"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleQuantityChange(item.id, e.target.value)
-                            }
-                            onBlur={() => handleQuantityBlur(item.id)}
-                          />
-                          <button
-                            onClick={() => handleIncrement(item.id)}
-                            disabled={atMax}
-                            title={atMax ? "Maximum stock reached" : undefined}
-                            className={cn(
-                              "flex h-full items-center px-3 transition-colors",
-                              atMax
-                                ? "cursor-not-allowed opacity-40"
-                                : "hover:bg-muted"
-                            )}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-10 items-center overflow-hidden rounded-lg border border-border">
+                            <button
+                              onClick={() => handleDecrement(item.id)}
+                              className="flex h-full items-center px-3 transition-colors hover:bg-muted"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <input
+                              className="h-full w-12 border-x border-border bg-transparent text-center font-mono text-foreground"
+                              type="text"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleQuantityChange(item.id, e.target.value)
+                              }
+                              onBlur={() => handleQuantityBlur(item.id)}
+                            />
+                            <button
+                              onClick={() => handleIncrement(item.id)}
+                              disabled={atMax}
+                              title={atMax ? "Maximum stock reached" : undefined}
+                              className={cn(
+                                "flex h-full items-center px-3 transition-colors",
+                                atMax
+                                  ? "cursor-not-allowed opacity-40"
+                                  : "hover:bg-muted"
+                              )}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <span className="w-14 text-sm text-muted-foreground">
+                            {item.unit ?? "pcs"}
+                          </span>
                         </div>
                         {atMax && (
                           <span className="text-[10px] text-muted-foreground">
-                            Max {item.availableStock} in stock
+                            Max {item.availableStock} {item.unit ?? "pcs"} in
+                            stock
                           </span>
                         )}
                         <button

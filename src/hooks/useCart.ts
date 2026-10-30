@@ -21,6 +21,8 @@ export interface CartItemSnapshot {
   category?: string | null
   /** Branch stock limit for this product (from the catalog's per-branch quantity). */
   availableStock?: number | null
+  /** Unit of measure (pcs, dozen, box…) so the cart renders "2 dozen". */
+  unit?: string
   /** Pack size for products sold in packs (e.g., 12 for dozen) */
   packSize?: number
   /** Whether the product is sold by pack (e.g., per dozen) */
@@ -210,6 +212,7 @@ export function useCartActions() {
             category: snapshot.category ?? "",
             branch,
             availableStock: snapshot.availableStock ?? null,
+            unit: snapshot.unit,
             packSize,
             sellByPack: snapshot.sellByPack ?? false,
             addedAt: new Date(),

@@ -18,6 +18,8 @@ export interface CartItem {
    * server-side validation stays as the backstop in that case.
    */
   availableStock?: number | null
+  /** Unit of measure (pcs, dozen, box…) sourced from the product. */
+  unit?: string
   /** Pack size for products sold in packs (e.g., 12 for dozen) */
   packSize?: number
   /** Whether the product is sold by pack (e.g., per dozen) */

@@ -20,6 +20,8 @@ export interface CatalogProductCardProps {
   stockStatus: "in-stock" | "low-stock" | "out-of-stock"
   weight?: string
   branch: string
+  /** Unit of measure (pcs, dozen, box…) sourced from the product. */
+  unit?: string
   /** Per-branch stock limit (null = unknown). */
   availableStock?: number | null
   /** Base route for the detail link (e.g. "/catalog" or "/customer/catalog"). */
@@ -35,6 +37,7 @@ export function CatalogProductCard({
   stockStatus,
   weight,
   branch,
+  unit,
   availableStock,
   basePath = "/catalog",
 }: CatalogProductCardProps) {
@@ -73,6 +76,7 @@ export function CatalogProductCard({
       image,
       category,
       availableStock,
+      unit,
     }).catch((err) => {
       const message =
         err instanceof Error ? err.message : "Failed to add to cart"
